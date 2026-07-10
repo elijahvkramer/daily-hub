@@ -722,6 +722,18 @@ function pCompute(){
   });
 }
 const pView = () => P.acct === "all" ? P.pos : P.pos.filter(p => p.account === P.acct);
+/* In the All Accounts view, the cash sweep (SPAXX) appears once, merged across accounts */
+function pViewMerged(){
+  const list = pView();
+  if(P.acct !== "all") return list;
+  const cash = list.filter(p => p.type === "cash");
+  if(cash.length <= 1) return list;
+  const merged = {...cash[0], account:"all",
+    shares: cash.reduce((s,p)=>s+p.shares,0),
+    marketValue: cash.reduce((s,p)=>s+p.marketValue,0),
+    costBasis:null, gainDollar:null, gainPct:null, dayDollar:0, dayPct:0};
+  return [...list.filter(p => p.type !== "cash"), merged];
+}
 function pTotals(list){
   const t = {value:0, gain:0, cost:0, day:0, anyLive:false};
   list.forEach(p => { t.value += p.marketValue; t.day += p.dayDollar;
@@ -856,7 +868,7 @@ function drawPBars(t){
   const day = P.perf === "day";
   // metric that drives direction and length, sector-chart style
   const metric = p => p.type === "cash" ? 0 : (day ? p.dayPct : (p.hasCost ? p.gainPct : p.dayPct));
-  const list = pView().slice().sort((a,b) => metric(b) - metric(a));   // best to worst
+  const list = pViewMerged().slice().sort((a,b) => metric(b) - metric(a));   // best to worst
   const posMax = Math.max(0, ...list.map(p => metric(p)));
   const negMax = Math.max(0, ...list.map(p => -metric(p)));
   const range = Math.max(.1, posMax + negMax);
@@ -911,7 +923,7 @@ function pHead(){
 }
 function pTable(){
   const tb = $("#pBody"); if(!tb) return; tb.innerHTML = "";
-  let rows = pView().slice();
+  let rows = pViewMerged().slice();
   if(P.filter) rows = rows.filter(p => p.ticker === P.filter);
   if(P.search){ const s = P.search.toLowerCase(); rows = rows.filter(p => p.ticker.toLowerCase().includes(s) || p.name.toLowerCase().includes(s)); }
   const nv = v => v == null ? -Infinity : v;
@@ -921,7 +933,7 @@ function pTable(){
   if(!rows.length){ tb.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">No holdings match.</td></tr>`; return; }
   rows.forEach(p => {
     const isCash = p.type === "cash";
-    const ab = p.account === "roth" ? "ROTH" : p.account === "crypto" ? "CRYPTO" : "INDIV";
+    const ab = p.account === "all" ? "ALL" : p.account === "roth" ? "ROTH" : p.account === "crypto" ? "CRYPTO" : "INDIV";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><div class="ptk"><div class="mk" style="background:${pcolor(p.ticker)}">${esc(p.ticker.slice(0,4))}</div>

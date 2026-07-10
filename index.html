@@ -684,7 +684,7 @@ function renderCalendarBody(p, d){
    and are decrypted at the site gate. */
 let HOLDINGS = null;
 
-const P = { pos:[], live:{}, mode:"live", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false };
+const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false };
 const PPAL = ["#C8A24B","#3E4C59","#5C7A6B","#8A9BA8","#A08339","#7B6D8D","#C97B63","#B5A78C","#4A5568","#6B7177","#D9C7A0","#2F4858"];
 function pcolor(t){ let x = 0; for(const c of t) x = (x*31 + c.charCodeAt(0)) >>> 0; return PPAL[x % PPAL.length]; }
 const usd = (n,dec=2) => "$" + Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
@@ -711,7 +711,7 @@ function pCompute(){
     const hasCost = p.avgCost != null && p.type !== "cash";
     let price = p.snapshotPrice, prev = p.snapshotPrice, src = "snap";
     if(p.type === "cash"){ price = 1; prev = 1; src = "cash"; }
-    else if(P.mode === "live"){ const q = P.live[p.fetchSymbol||p.ticker]; if(q){ price = q.price; prev = q.prev; src = "live"; } }
+    else{ const q = P.live[p.fetchSymbol||p.ticker]; if(q){ price = q.price; prev = q.prev; src = "live"; } }
     const marketValue = p.shares * price;
     const costBasis = hasCost ? p.shares * p.avgCost : null;
     const gainDollar = hasCost ? marketValue - costBasis : null;
@@ -747,32 +747,34 @@ function renderPortfolio(){
 
   /* hero */
   $("#heroTitle").textContent = usd(t.value);
-  $("#heroSub").textContent = `${usdS(t.gain)} all-time (${pctS(t.gainPct)} on cost) · ${usdS(t.day)} today (${pctS(t.dayPct)}) · ${acctLabel}`;
+  $("#heroSub").textContent = `${usdS(t.day)} today (${pctS(t.dayPct)}) · ${usdS(t.gain)} all-time (${pctS(t.gainPct)} on cost) · ${acctLabel}`;
   $("#heroDateline").textContent = `Live prices via Yahoo Finance (unofficial) · Fidelity snapshot ${HOLDINGS.meta.snapshotLabel} · educational, not investment advice`;
 
   const panel = $("#panel-portfolio");
   let h = "";
 
-  /* toolbar */
-  const statusTxt = P.mode === "snapshot" ? `Fidelity export · ${HOLDINGS.meta.snapshotLabel}`
-    : P.fetching ? "fetching live prices…"
+  /* toolbar: Day vs All-Time performance view */
+  const statusTxt = P.fetching ? "fetching live prices…"
     : t.anyLive ? "Live · " + new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})
-    : "Snapshot (live unavailable)";
-  const ledCls = P.mode === "snapshot" ? "snap" : (P.fetching ? "" : (t.anyLive ? "live" : "snap"));
+    : `Live unavailable · showing ${HOLDINGS.meta.snapshotLabel} snapshot`;
+  const ledCls = P.fetching ? "" : (t.anyLive ? "live" : "snap");
   h += `<div class="ptoolbar">
-    <div class="seg"><button data-m="live" class="${P.mode==="live"?"on":""}">Live</button><button data-m="snapshot" class="${P.mode==="snapshot"?"on":""}">Snapshot</button></div>
+    <div class="seg"><button data-p="day" class="${P.perf==="day"?"on":""}">Day</button><button data-p="all" class="${P.perf==="all"?"on":""}">All-Time</button></div>
     <button class="pbtn" id="pRefresh">⟳ Refresh</button>
     <span class="pstatus"><span class="led ${ledCls}"></span>${esc(statusTxt)}</span>
   </div>`;
 
   /* account cards */
+  const day = P.perf === "day";
   h += `<div class="kicker">Accounts</div><div class="grid cols-4">`;
   [{id:"all",label:"All Accounts"}, ...HOLDINGS.accounts].forEach(a => {
-    const lt = pTotals(a.id === "all" ? P.pos : P.pos.filter(p => p.account === a.id));
     const list = a.id === "all" ? P.pos : P.pos.filter(p => p.account === a.id);
-    const sub = lt.cost > 0
-      ? `<span class="${pcls(lt.gain)}">${usdS(lt.gain)} (${pctS(lt.gainPct)})</span>`
-      : `<span class="neutral">${list.length} holding${list.length===1?"":"s"}</span>`;
+    const lt = pTotals(list);
+    const sub = day
+      ? `<span class="${pcls(lt.day)}">${usdS(lt.day)} (${pctS(lt.dayPct)}) today</span>`
+      : (lt.cost > 0
+          ? `<span class="${pcls(lt.gain)}">${usdS(lt.gain)} (${pctS(lt.gainPct)})</span>`
+          : `<span class="neutral">${list.length} holding${list.length===1?"":"s"}</span>`);
     h += `<div class="card acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">
       <div class="lbl">${esc(a.label)}</div><div class="big" style="font-size:21px">${usd(lt.value,0)}</div><div class="sub">${sub}</div></div>`;
   });
@@ -789,7 +791,9 @@ function renderPortfolio(){
 
   /* positions bars */
   h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
-    <div class="chart-cap">Bar length = share of the current view · color = total gain (green) or loss (red); cash in grey, Bitcoin in gold (no cost basis on record).</div></div>`;
+    <div class="chart-cap">${day
+      ? "Bar length = share of the current view · color = today's move (green up, red down); cash in grey. Switch to All-Time above for total gain/loss since purchase."
+      : "Bar length = share of the current view · color = total gain (green) or loss (red) since purchase; cash in grey, Bitcoin in gold (no cost basis on record)."}</div></div>`;
 
   /* holdings table */
   h += `<div class="kicker">Holdings</div>
@@ -802,8 +806,7 @@ function renderPortfolio(){
 
   /* wire toolbar */
   panel.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
-    P.mode = b.dataset.m;
-    if(P.mode === "live" && !P.fetched) pFetchLive(); else renderPortfolio();
+    P.perf = b.dataset.p; renderPortfolio();
   }));
   $("#pRefresh").addEventListener("click", pFetchLive);
   panel.querySelectorAll(".acct-card").forEach(c => c.addEventListener("click", () => { P.acct = c.dataset.acct; P.filter = null; renderPortfolio(); }));
@@ -815,7 +818,7 @@ function renderPortfolio(){
   drawPBars(t);
   pHead(); pTable();
 
-  if(P.mode === "live" && !P.fetched && !P.fetching) pFetchLive();
+  if(!P.fetched && !P.fetching) pFetchLive();
 }
 
 function drawDonut(groups, t, acctLabel){
@@ -853,10 +856,12 @@ function drawPBars(t){
   const list = pView().slice().sort((a,b) => b.marketValue - a.marketValue);
   const max = Math.max(1, ...list.map(p => p.marketValue));
   el.innerHTML = "";
+  const day = P.perf === "day";
   list.forEach(p => {
     const share = t.value > 0 ? p.marketValue/t.value*100 : 0;
     let col = "var(--up)", label;
     if(p.type === "cash"){ col = "#9BA0A6"; label = "Cash"; }
+    else if(day){ col = p.dayDollar >= 0 ? "var(--up)" : "var(--down)"; label = pctS(p.dayPct); }
     else if(!p.hasCost){ col = "var(--gold)"; label = pctS(p.dayPct) + " today"; }
     else { col = p.gainDollar >= 0 ? "var(--up)" : "var(--down)"; label = pctS(p.gainPct); }
     const w = Math.max(2.5, p.marketValue/max*96);

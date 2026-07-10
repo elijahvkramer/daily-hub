@@ -792,8 +792,8 @@ function renderPortfolio(){
   /* positions bars */
   h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
     <div class="chart-cap">${day
-      ? "Bar length = share of the current view · color = today's move (green up, red down); cash in grey. Switch to All-Time above for total gain/loss since purchase."
-      : "Bar length = share of the current view · color = total gain (green) or loss (red) since purchase; cash in grey, Bitcoin in gold (no cost basis on record)."}</div></div>`;
+      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
+      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</div></div>`;
 
   /* holdings table */
   h += `<div class="kicker">Holdings</div>
@@ -853,24 +853,38 @@ function drawDonut(groups, t, acctLabel){
 
 function drawPBars(t){
   const el = $("#pBars"); if(!el) return;
-  const list = pView().slice().sort((a,b) => b.marketValue - a.marketValue);
-  const max = Math.max(1, ...list.map(p => p.marketValue));
-  el.innerHTML = "";
   const day = P.perf === "day";
+  // metric that drives direction and length, sector-chart style
+  const metric = p => p.type === "cash" ? 0 : (day ? p.dayPct : (p.hasCost ? p.gainPct : p.dayPct));
+  const list = pView().slice().sort((a,b) => metric(b) - metric(a));   // best to worst
+  const posMax = Math.max(0, ...list.map(p => metric(p)));
+  const negMax = Math.max(0, ...list.map(p => -metric(p)));
+  const range = Math.max(.1, posMax + negMax);
+  const negShare = negMax > 0 ? Math.max(8, negMax/range*100) : 5;    // midline position (%)
+  el.innerHTML = "";
   list.forEach(p => {
+    const m = metric(p);
     const share = t.value > 0 ? p.marketValue/t.value*100 : 0;
-    let col = "var(--up)", label;
-    if(p.type === "cash"){ col = "#9BA0A6"; label = "Cash"; }
-    else if(day){ col = p.dayDollar >= 0 ? "var(--up)" : "var(--down)"; label = pctS(p.dayPct); }
-    else if(!p.hasCost){ col = "var(--gold)"; label = pctS(p.dayPct) + " today"; }
-    else { col = p.gainDollar >= 0 ? "var(--up)" : "var(--down)"; label = pctS(p.gainPct); }
-    const w = Math.max(2.5, p.marketValue/max*96);
-    const inside = w >= 40;   // short bars get their label outside, in color
+    const isCash = p.type === "cash";
+    const noCost = !day && !p.hasCost && !isCash;
+    const col = isCash ? "#9BA0A6" : noCost ? "var(--gold)" : (m >= 0 ? "var(--up)" : "var(--down)");
+    const label = isCash ? "Cash" : pctS(m) + (noCost ? " today" : "");
+    const w = isCash ? 1.4 : Math.max(1.4, Math.abs(m)/range * 94);
+    const pos = m >= 0;
+    const inside = !pos && w >= 12;   // negative labels sit inside the bar in white, like the sector chart
+    const barStyle = pos
+      ? `background:${col};left:${negShare}%;justify-content:flex-end`
+      : `background:${col};right:${100-negShare}%;justify-content:flex-start`;
+    const labelStyle = inside
+      ? "color:#fff"
+      : pos
+        ? `color:${isCash ? "var(--muted)" : col};position:absolute;left:calc(100% + 8px);white-space:nowrap`
+        : `color:${col};position:absolute;right:calc(100% + 8px);white-space:nowrap`;
     const row = document.createElement("div"); row.className = "hrow";
     row.style.cursor = "pointer";
     row.innerHTML = `<div class="hname"><b>${esc(p.ticker)}</b> <span style="color:var(--muted);font-weight:400;font-size:11px">${share.toFixed(1)}%</span></div>
-      <div class="htrack"><div class="hbar" style="background:${col};left:0;justify-content:flex-end;width:0;overflow:visible">
-        <span style="${inside ? "color:#fff" : `color:${col};position:absolute;left:calc(100% + 8px);white-space:nowrap`}">${esc(label)}</span></div></div>`;
+      <div class="htrack"><div class="hmid" style="left:${negShare}%"></div>
+      <div class="hbar" style="${barStyle};width:0;overflow:visible"><span style="${labelStyle}">${esc(label)}</span></div></div>`;
     row.addEventListener("click", () => { P.filter = P.filter === p.ticker ? null : p.ticker; renderPortfolio(); });
     el.appendChild(row);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ row.querySelector(".hbar").style.width = w + "%"; }));

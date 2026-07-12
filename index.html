@@ -194,7 +194,7 @@
 
   /* ---------- quiz ---------- */
   .qwrap{max-width:640px;margin:0 auto}
-  .qstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+  .qstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
   .qcard{background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:30px 34px;box-shadow:var(--shadow)}
   .qbig{appearance:none;width:100%;font:inherit;font-size:14px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--gold);border:none;border-radius:10px;padding:16px;cursor:pointer;transition:background .18s}
   .qbig:hover{background:#2A2E36}
@@ -220,7 +220,22 @@
   .qscore-hero .qs-big{font-size:52px;font-weight:900;letter-spacing:-.02em}
   .qscore-hero .qs-sub{color:var(--muted);font-size:14px;margin-top:4px}
   .qscore-hero .qs-msg{font-size:16px;font-weight:700;margin-top:14px}
-  .bank-row{display:grid;grid-template-columns:120px 1fr 84px;gap:14px;padding:13px 4px;border-bottom:1px solid var(--hairline);font-size:13.5px;line-height:1.55;align-items:baseline}
+  .bank-row{display:grid;grid-template-columns:110px 1fr 100px 74px;gap:14px;padding:13px 4px;border-bottom:1px solid var(--hairline);font-size:13.5px;line-height:1.55;align-items:baseline}
+  .mast{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:900;color:var(--muted)}
+  .mast .mtrack{width:40px;height:5px;border-radius:3px;background:var(--hairline);overflow:hidden;flex-shrink:0}
+  .mast .mfill{height:100%;border-radius:3px;transition:width .4s}
+  .mast.new{color:#A08339}
+
+  /* portfolio history chart */
+  .hist-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;font-weight:700;padding:7px 11px;border-radius:7px;transform:translate(-50%,-120%);white-space:nowrap;display:none;z-index:5}
+  .hist-tip .tv{color:var(--gold);font-weight:900}
+  .hist-delta{font-weight:900;font-size:13px}
+
+  /* holdings in the news */
+  .hn-row{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 2px;border-bottom:1px solid var(--hairline);font-size:14.5px;line-height:1.6;color:#3A3E45;align-items:start}
+  .hn-row:last-child{border-bottom:none}
+  .hn-tk{background:var(--ink);color:var(--gold);font-weight:900;font-size:11.5px;letter-spacing:.06em;border-radius:6px;text-align:center;padding:7px 4px;margin-top:2px}
+  .hn-row b{color:var(--ink)}
   .bank-row:last-child{border-bottom:none}
   .bank-row .bt{font-weight:900}
   .bank-row .bp{color:var(--muted);font-size:11px;font-weight:400}
@@ -831,6 +846,25 @@ function renderPortfolio(){
   });
   h += `</div>`;
 
+  /* portfolio value history */
+  h += `<div class="kicker">Portfolio Value · History</div><div class="chart-card" id="histCard">
+    <div class="ptoolbar" style="margin-bottom:10px">
+      <div class="seg" id="histSeg">${["1W","1M","3M","6M","1Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+      <span class="pstatus" id="histHead"></span>
+    </div>
+    <div id="histBody" style="position:relative"></div>
+    <div class="chart-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</div>
+  </div>`;
+
+  /* your holdings in the news */
+  h += `<div class="kicker">Your Holdings in the News</div><div id="hnews"><div class="spinner" style="margin:24px auto"></div></div>`;
+
+  /* positions bars */
+  h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
+    <div class="chart-cap">${day
+      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
+      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</div></div>`;
+
   /* allocation donut */
   const groups = pGroups(pView());
   h += `<div class="kicker">Allocation</div><div class="chart-card"><div class="donut-flex">
@@ -839,12 +873,6 @@ function renderPortfolio(){
     <div><div class="plegend" id="pLegend"></div>
       <div class="chart-cap" style="margin-top:18px">Slice = share of the current view. Hover for detail; click a slice or chip to filter the holdings table.</div></div>
   </div></div>`;
-
-  /* positions bars */
-  h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
-    <div class="chart-cap">${day
-      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
-      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</div></div>`;
 
   /* holdings table */
   h += `<div class="kicker">Holdings</div>
@@ -856,8 +884,13 @@ function renderPortfolio(){
   panel.innerHTML = h;
 
   /* wire toolbar */
-  panel.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  panel.querySelectorAll(".ptoolbar .seg button[data-p]").forEach(b => b.addEventListener("click", () => {
     P.perf = b.dataset.p; renderPortfolio();
+  }));
+  panel.querySelectorAll("#histSeg button").forEach(b => b.addEventListener("click", () => {
+    P.histRange = b.dataset.r;
+    panel.querySelectorAll("#histSeg button").forEach(x => x.classList.toggle("on", x === b));
+    renderHistory();
   }));
   $("#pRefresh").addEventListener("click", pFetchLive);
   panel.querySelectorAll(".acct-card").forEach(c => c.addEventListener("click", () => { P.acct = c.dataset.acct; P.filter = null; renderPortfolio(); }));
@@ -868,8 +901,137 @@ function renderPortfolio(){
   drawDonut(groups, t, acctLabel);
   drawPBars(t);
   pHead(); pTable();
+  renderHistory();
+  renderHoldingsNews();
 
   if(!P.fetched && !P.fetching) pFetchLive();
+}
+
+/* ---------- portfolio value history ---------- */
+async function fetchHistSym(sym){
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1y`;
+  const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  for(const u of urls){
+    try{
+      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
+      const j = await r.json(); const res = j?.chart?.result?.[0];
+      if(res?.timestamp && res?.indicators?.quote?.[0]?.close) return {t:res.timestamp, c:res.indicators.quote[0].close};
+    }catch(e){}
+  }
+  return null;
+}
+async function loadHistory(){
+  if(P.histReady || P.histLoading) return;
+  P.histLoading = true;
+  P.histData = {};
+  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
+  await Promise.all(syms.map(async s => { const h = await fetchHistSym(s); if(h) P.histData[s] = h; }));
+  P.histLoading = false; P.histReady = true;
+  if(S.tab === "portfolio") renderHistory();
+}
+function histSeries(){
+  const spineSym = P.histData["SPY"] ? "SPY" : Object.keys(P.histData)[0];
+  if(!spineSym) return null;
+  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA");
+  const spine = P.histData[spineSym].t.map(dstr);
+  const maps = {};
+  for(const [sym,h] of Object.entries(P.histData)){
+    const m = {}; h.t.forEach((ts,i) => { if(h.c[i] != null) m[dstr(ts)] = h.c[i]; });
+    maps[sym] = m;
+  }
+  const positions = pView(), last = {};
+  const pts = spine.map(d => {
+    let total = 0;
+    positions.forEach(p => {
+      if(p.type === "cash"){ total += p.shares; return; }
+      const sym = p.fetchSymbol || p.ticker;
+      let c = maps[sym] ? maps[sym][d] : undefined;
+      if(c == null) c = last[sym];
+      if(c == null) c = p.snapshotPrice;
+      last[sym] = c;
+      total += p.shares * c;
+    });
+    return {d, v: total};
+  });
+  // append a live "now" point if today's prices are in and the spine ends earlier
+  const today = new Date().toLocaleDateString("en-CA");
+  if(P.fetched && pts.length && pts[pts.length-1].d < today) pts.push({d: today, v: pTotals(positions).value});
+  return pts;
+}
+const HIST_RANGES = {"1W":7, "1M":31, "3M":93, "6M":186, "1Y":370};
+function renderHistory(){
+  const body = $("#histBody"); if(!body) return;
+  if(!P.histReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadHistory(); return; }
+  const all = histSeries();
+  if(!all || all.length < 2){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; $("#histHead").textContent = ""; return; }
+  const days = HIST_RANGES[P.histRange || "1M"];
+  const cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA");
+  let pts = all.filter(p => p.d >= cutoff);
+  if(pts.length < 2) pts = all.slice(-2);
+
+  const first = pts[0].v, lastV = pts[pts.length-1].v, delta = lastV - first;
+  const dPct = first > 0 ? delta/first*100 : 0;
+  $("#histHead").innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(pts[0].d))} → ${esc(shortDate(pts[pts.length-1].d))}`;
+
+  const W = 800, H = 250, PL = 62, PR = 14, PT = 12, PB = 30;
+  const vals = pts.map(p => p.v);
+  let min = Math.min(...vals), max = Math.max(...vals);
+  const pad = (max-min)*0.06 || max*0.005; min -= pad; max += pad;
+  const X = i => PL + (W-PL-PR) * (pts.length === 1 ? 0 : i/(pts.length-1));
+  const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
+  const col = delta >= 0 ? "#18996B" : "#DC4B43";
+  let line = "", area = `M ${X(0)} ${H-PB}`;
+  pts.forEach((p,i) => { line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)} `; area += ` L ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`; });
+  area += ` L ${X(pts.length-1).toFixed(1)} ${H-PB} Z`;
+  const grid = [min+pad, (min+max)/2, max-pad].map(v =>
+    `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#E7E7E1" stroke-width="1"/>
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6B7177" font-family="Lato">${usd(v,0)}</text>`).join("");
+  body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="histSvg">
+    <defs><linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    <path d="${area}" fill="url(#histGrad)"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts.length-1).toFixed(1)}" cy="${Y(lastV).toFixed(1)}" r="4" fill="${col}"/>
+    <line id="histHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="#C8A24B" stroke-width="1" style="display:none"/>
+    <circle id="histDot" r="4.5" fill="#C8A24B" style="display:none"/>
+    <text x="${PL}" y="${H-8}" font-size="11" fill="#6B7177" font-family="Lato">${esc(shortDate(pts[0].d))}</text>
+    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="#6B7177" font-family="Lato">${esc(shortDate(pts[pts.length-1].d))}</text>
+    <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="histHit"/>
+  </svg><div class="hist-tip" id="histTip"></div>`;
+  const svg = $("#histSvg"), tip = $("#histTip"), hair = $("#histHair"), dot = $("#histDot");
+  $("#histHit").addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width * W;
+    const i = Math.max(0, Math.min(pts.length-1, Math.round((fx-PL)/((W-PL-PR)/(pts.length-1)))));
+    const px = X(i), py = Y(pts[i].v);
+    hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
+    dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
+    tip.style.display = "block";
+    tip.style.left = (px/W*100) + "%";
+    tip.style.top = (py/H*r.height) + "px";
+    tip.innerHTML = `${esc(shortDate(pts[i].d))} · <span class="tv">${usd(pts[i].v,0)}</span>`;
+  });
+  $("#histHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
+}
+
+/* ---------- your holdings in the news ---------- */
+async function renderHoldingsNews(){
+  const el = $("#hnews"); if(!el) return;
+  try{
+    const latest = (S.manifest?.market || [])[0];
+    if(!latest){ el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Appears here once the next market brief publishes.</p>`; return; }
+    const d = await fetchDay("market", latest);
+    const items = d.holdingsNews || [];
+    if(!items.length){
+      el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No notable news on your holdings in the latest brief (${esc(shortDate(latest))}).</p>`;
+      return;
+    }
+    el.innerHTML = items.map(i => `<div class="hn-row"><div class="hn-tk">${esc(i.ticker)}</div><div><b>${esc(i.lead)}</b> ${esc(i.body)}</div></div>`).join("")
+      + `<p class="chart-cap" style="border:none;padding-top:10px">From the ${esc(shortDate(latest))} Daily Market Brief.</p>`;
+  }catch(e){
+    el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Couldn't load the latest brief.</p>`;
+  }
 }
 
 function drawDonut(groups, t, acctLabel){
@@ -1003,6 +1165,38 @@ async function pFetchLive(){
 const Q = { words:null, round:[], idx:0, score:0, results:[] };
 const shuffle = a => { const x = a.slice(); for(let i=x.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [x[i],x[j]] = [x[j],x[i]]; } return x; };
 
+/* spaced repetition: per-word stats live in localStorage */
+const qStats = () => JSON.parse(localStorage.getItem("dh-quiz-stats") || "{}");
+function qRecord(term, right){
+  const all = qStats(); const st = all[term] || {s:0, c:0, k:0};
+  st.s++; if(right){ st.c++; st.k++; } else st.k = 0;
+  all[term] = st; localStorage.setItem("dh-quiz-stats", JSON.stringify(all));
+}
+function qWeight(term){
+  const st = qStats()[term];
+  if(!st) return 3;                              // never seen — prioritize
+  const acc = st.c / st.s;
+  let w = 0.6 + (1-acc)*4 + (st.k === 0 ? 1.5 : 0) - Math.min(st.k,4)*0.35;
+  return Math.max(0.3, w);                       // mastered words still appear, just rarely
+}
+function weightedPick(pool, n){
+  const out = [], p = pool.slice();
+  while(out.length < n && p.length){
+    const ws = p.map(w => qWeight(w.term));
+    let r = Math.random() * ws.reduce((a,b)=>a+b,0);
+    let i = 0; while(r > ws[i] && i < p.length-1){ r -= ws[i]; i++; }
+    out.push(p.splice(i,1)[0]);
+  }
+  return out;
+}
+function masteryHtml(term){
+  const st = qStats()[term];
+  if(!st) return `<span class="mast new">NEW</span>`;
+  const pct = Math.round(st.c/st.s*100);
+  const col = pct >= 80 ? "var(--up)" : pct >= 50 ? "var(--gold)" : "var(--down)";
+  return `<span class="mast"><span class="mtrack"><span class="mfill" style="width:${pct}%;background:${col};display:block"></span></span>${pct}%</span>`;
+}
+
 async function fetchWords(){
   if(Q.words) return Q.words;
   const r = await fetch("data/words.json.enc?t="+Date.now());
@@ -1033,16 +1227,19 @@ function quizHome(words){
   const panel = $("#panel-quiz");
   const best = localStorage.getItem("dh-quiz-best") || "—";
   const plays = localStorage.getItem("dh-quiz-plays") || "0";
+  const stats = qStats();
+  const mastered = words.filter(w => { const st = stats[w.term]; return st && st.k >= 2 && st.c/st.s >= 0.75; }).length;
   const n = Math.min(10, words.length);
   let h = `<div class="qwrap">
     <div class="qstats">
       <div class="card"><div class="lbl">Words in Bank</div><div class="big">${words.length}</div></div>
+      <div class="card"><div class="lbl">Mastered</div><div class="big">${mastered}<span style="color:var(--muted);font-size:14px">/${words.length}</span></div></div>
       <div class="card"><div class="lbl">Best Score</div><div class="big">${esc(String(best))}</div></div>
       <div class="card"><div class="lbl">Rounds Played</div><div class="big">${esc(plays)}</div></div>
     </div>
     <div class="qcard">
       <div class="qprompt-label">Ready?</div>
-      <div class="qprompt">${n} questions, drawn from your ${words.length} words — today's newest word is always in the mix.</div>
+      <div class="qprompt">${n} questions, weighted toward words you haven't seen or have missed — today's newest word is always in the mix. Master a word (streak of 2+, 75%+ accuracy) and it shows up less often.</div>
       <button class="qbig qnext" id="qStart">Start Quiz</button>
     </div>
     <div class="kicker">Word Bank</div>
@@ -1059,16 +1256,16 @@ function quizHome(words){
     if(!open && !b.innerHTML){
       b.innerHTML = words.slice().sort((a,b2) => (b2.date||"").localeCompare(a.date||"")).map(w =>
         `<div class="bank-row"><span><span class="bt">${esc(w.term)}</span> <span class="bp">(${esc(w.pos||"")})</span></span>
-         <span class="bd">${esc(w.definition)}</span><span class="bdate">${esc(shortDate(w.date))}</span></div>`).join("");
+         <span class="bd">${esc(w.definition)}</span>${masteryHtml(w.term)}<span class="bdate">${esc(shortDate(w.date))}</span></div>`).join("");
     }
   });
 }
 
 function startRound(words){
   const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
-  const rest = shuffle(words.filter(w => w !== newest));
   const n = Math.min(10, words.length);
-  Q.round = shuffle([newest, ...rest.slice(0, n-1)]);
+  const rest = weightedPick(words.filter(w => w !== newest), n-1);   // spaced repetition
+  Q.round = shuffle([newest, ...rest]);
   Q.idx = 0; Q.score = 0; Q.results = [];
   renderQuestion(words);
 }
@@ -1099,6 +1296,7 @@ function renderQuestion(words){
     const right = pick.term === w.term;
     if(right) Q.score++;
     Q.results.push(right);
+    qRecord(w.term, right);
     panel.querySelectorAll(".qopt").forEach(b2 => {
       b2.disabled = true;
       const o = options[Number(b2.dataset.i)];
@@ -1131,11 +1329,16 @@ function finishRound(words){
     pct >= 80 ? "Sharp — your lexicon is in fine form." :
     pct >= 60 ? "Solid. A few more rounds and it's mastered." :
     "The word bank below is your friend. Run it back.";
+  const missed = Q.round.filter((_,i) => !Q.results[i]);
+  const missedHtml = missed.length ? `<div class="qreveal" style="text-align:left;margin-top:22px">
+    <b>Worth another look:</b>${missed.map(w => `<div style="margin-top:8px"><b>${esc(w.term)}</b> — ${esc(w.definition)}</div>`).join("")}
+    <div class="qex" style="margin-top:10px">These words will come around more often until you've got them.</div></div>` : "";
   panel.innerHTML = `<div class="qwrap"><div class="qcard qscore-hero">
     <div class="qprompt-label">Round Complete${isBest ? " · New Best" : ""}</div>
     <div class="qs-big">${Q.score}<span style="color:var(--muted);font-size:26px">/${Q.round.length}</span></div>
     <div class="qs-sub">${pct}% correct</div>
     <div class="qs-msg">${esc(msg)}</div>
+    ${missedHtml}
     <button class="qbig qnext" id="qAgain">Play Again</button>
     <button class="pbtn qnext" id="qHome" style="width:100%">Back to Quiz Home</button>
   </div></div>`;

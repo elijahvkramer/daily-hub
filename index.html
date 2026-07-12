@@ -192,6 +192,42 @@
   .lock-btn{appearance:none;background:none;border:1px solid rgba(200,162,75,.35);border-radius:6px;color:#9BA0A6;font:inherit;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:7px 11px;cursor:pointer;transition:all .15s}
   .lock-btn:hover{color:var(--gold);border-color:var(--gold)}
 
+  /* ---------- quiz ---------- */
+  .qwrap{max-width:640px;margin:0 auto}
+  .qstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+  .qcard{background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:30px 34px;box-shadow:var(--shadow)}
+  .qbig{appearance:none;width:100%;font:inherit;font-size:14px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--gold);border:none;border-radius:10px;padding:16px;cursor:pointer;transition:background .18s}
+  .qbig:hover{background:#2A2E36}
+  .qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+  .qdots{display:flex;gap:5px}
+  .qdot{width:8px;height:8px;border-radius:50%;background:var(--hairline);transition:background .2s}
+  .qdot.hit{background:var(--up)} .qdot.miss{background:var(--down)} .qdot.now{background:var(--gold)}
+  .qprompt-label{color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;margin-bottom:10px}
+  .qprompt{font-size:19px;font-weight:900;line-height:1.45;margin-bottom:6px}
+  .qprompt .qipa{color:var(--muted);font-weight:400;font-size:14px}
+  .qopts{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+  .qopt{appearance:none;text-align:left;font:inherit;font-size:14.5px;line-height:1.5;background:var(--paper);border:1px solid var(--hairline);border-radius:10px;padding:13px 16px;cursor:pointer;transition:all .15s;color:#3A3E45}
+  .qopt:hover:not(:disabled){border-color:var(--gold);transform:translateX(3px)}
+  .qopt:disabled{cursor:default}
+  .qopt.correct{background:rgba(24,153,107,.10);border-color:var(--up);color:var(--ink);font-weight:700}
+  .qopt.wrong{background:rgba(220,75,67,.10);border-color:var(--down)}
+  .qopt.dim{opacity:.45}
+  .qreveal{background:var(--cream);border-radius:10px;padding:16px 18px;margin-top:16px;font-size:13.5px;line-height:1.6;color:#33363C;animation:fadein .3s ease}
+  .qreveal b{color:var(--ink)}
+  .qreveal .qex{font-style:italic;margin-top:6px}
+  .qnext{margin-top:16px;width:100%}
+  .qscore-hero{text-align:center;padding:14px 0 4px}
+  .qscore-hero .qs-big{font-size:52px;font-weight:900;letter-spacing:-.02em}
+  .qscore-hero .qs-sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .qscore-hero .qs-msg{font-size:16px;font-weight:700;margin-top:14px}
+  .bank-row{display:grid;grid-template-columns:120px 1fr 84px;gap:14px;padding:13px 4px;border-bottom:1px solid var(--hairline);font-size:13.5px;line-height:1.55;align-items:baseline}
+  .bank-row:last-child{border-bottom:none}
+  .bank-row .bt{font-weight:900}
+  .bank-row .bp{color:var(--muted);font-size:11px;font-weight:400}
+  .bank-row .bd{color:#3A3E45}
+  .bank-row .bdate{color:var(--muted);font-size:11.5px;text-align:right;white-space:nowrap}
+  @media(max-width:640px){.bank-row{grid-template-columns:100px 1fr}.bank-row .bdate{display:none}.qstats{grid-template-columns:1fr}}
+
   /* ---------- portfolio ---------- */
   .ptoolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
   .seg{display:inline-flex;border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:var(--card)}
@@ -298,6 +334,7 @@
       <button class="tab" data-tab="news" role="tab">News</button>
       <button class="tab" data-tab="market" role="tab">Markets</button>
       <button class="tab" data-tab="portfolio" role="tab">Portfolio</button>
+      <button class="tab" data-tab="quiz" role="tab">Quiz</button>
     </div>
     <div class="top-right">
       <select class="date-select" id="dateSelect" aria-label="Choose date"></select>
@@ -322,6 +359,7 @@
   <section class="panel" id="panel-news"><div class="spinner"></div></section>
   <section class="panel" id="panel-market"><div class="spinner"></div></section>
   <section class="panel" id="panel-portfolio"><div class="spinner"></div></section>
+  <section class="panel" id="panel-quiz"><div class="spinner"></div></section>
 </main>
 
 <footer>
@@ -340,7 +378,7 @@ const $ = s => document.querySelector(s);
 const esc = t => String(t??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
 const cls = v => v>0?"up":v<0?"down":"neutral";
-const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Today · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings" };
+const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Today · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Word Quiz · Vocabulary Trainer" };
 
 function niceDate(d){
   const dt = new Date(d+"T12:00:00");
@@ -362,7 +400,7 @@ async function boot(){
     });
     $("#footUpdated").textContent = S.manifest.updated ? "Last update " + new Date(S.manifest.updated).toLocaleString("en-US",{timeZone:"America/Chicago",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " CT" : "";
     const savedTab = localStorage.getItem("dh-tab");
-    if(savedTab && ["market","news","calendar","portfolio"].includes(savedTab)) S.tab = savedTab;
+    if(savedTab && ["market","news","calendar","portfolio","quiz"].includes(savedTab)) S.tab = savedTab;
     document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab===S.tab));
     document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
     fillDates(); await show();
@@ -382,7 +420,7 @@ $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.targe
 
 function fillDates(){
   const sel = $("#dateSelect"); sel.innerHTML = "";
-  if(S.tab === "portfolio"){ sel.style.visibility = "hidden"; return; }
+  if(S.tab === "portfolio" || S.tab === "quiz"){ sel.style.visibility = "hidden"; return; }
   (S.manifest[S.tab]||[]).forEach(d => {
     const o = document.createElement("option"); o.value = d; o.textContent = shortDate(d);
     if(d === S.date[S.tab]) o.selected = true; sel.appendChild(o);
@@ -417,6 +455,7 @@ async function show(){
   const panel = $("#panel-"+kind);
   $("#heroEyebrow").textContent = NICE[kind];
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
+  if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderQuizTab(); return; }
   if(!date){
     $("#heroTitle").textContent = "Nothing published yet";
     $("#heroSub").textContent = "This section fills in automatically once its scheduled task runs.";
@@ -958,6 +997,150 @@ async function pFetchLive(){
   await Promise.all(syms.map(async s => { const q = await pQuote(s); if(q) P.live[s] = q; }));
   P.fetching = false; P.fetched = true;
   if(S.tab === "portfolio") renderPortfolio();
+}
+
+/* ================= quiz ================= */
+const Q = { words:null, round:[], idx:0, score:0, results:[] };
+const shuffle = a => { const x = a.slice(); for(let i=x.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [x[i],x[j]] = [x[j],x[i]]; } return x; };
+
+async function fetchWords(){
+  if(Q.words) return Q.words;
+  const r = await fetch("data/words.json.enc?t="+Date.now());
+  if(!r.ok) throw new Error("missing");
+  Q.words = await decryptEntry(await r.json(), PASS);
+  return Q.words;
+}
+
+async function renderQuizTab(){
+  const panel = $("#panel-quiz");
+  panel.innerHTML = `<div class="spinner"></div>`;
+  try{
+    const words = await fetchWords();
+    const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
+    $("#heroTitle").textContent = "How Sharp Is Your Lexicon?";
+    $("#heroSub").textContent = `A multiple-choice quiz built from every Word of the Day in your news briefings — ${words.length} words and counting. Each weekday's new word joins the bank automatically.`;
+    $("#heroDateline").textContent = `Newest word: ${newest.term} · added ${niceDate(newest.date)}`;
+    quizHome(words);
+  }catch(e){
+    $("#heroTitle").textContent = "Word Quiz";
+    $("#heroSub").textContent = "The word bank hasn't been published yet.";
+    $("#heroDateline").textContent = "";
+    panel.innerHTML = `<div class="empty">No word bank found. It will appear after the next news briefing publishes.</div>`;
+  }
+}
+
+function quizHome(words){
+  const panel = $("#panel-quiz");
+  const best = localStorage.getItem("dh-quiz-best") || "—";
+  const plays = localStorage.getItem("dh-quiz-plays") || "0";
+  const n = Math.min(10, words.length);
+  let h = `<div class="qwrap">
+    <div class="qstats">
+      <div class="card"><div class="lbl">Words in Bank</div><div class="big">${words.length}</div></div>
+      <div class="card"><div class="lbl">Best Score</div><div class="big">${esc(String(best))}</div></div>
+      <div class="card"><div class="lbl">Rounds Played</div><div class="big">${esc(plays)}</div></div>
+    </div>
+    <div class="qcard">
+      <div class="qprompt-label">Ready?</div>
+      <div class="qprompt">${n} questions, drawn from your ${words.length} words — today's newest word is always in the mix.</div>
+      <button class="qbig qnext" id="qStart">Start Quiz</button>
+    </div>
+    <div class="kicker">Word Bank</div>
+    <button class="pbtn" id="qBankToggle" style="margin-bottom:14px">Show all ${words.length} words</button>
+    <div id="qBank" style="display:none"></div>
+  </div>`;
+  panel.innerHTML = h;
+  $("#qStart").addEventListener("click", () => startRound(words));
+  $("#qBankToggle").addEventListener("click", () => {
+    const b = $("#qBank");
+    const open = b.style.display !== "none";
+    b.style.display = open ? "none" : "block";
+    $("#qBankToggle").textContent = open ? `Show all ${words.length} words` : "Hide word bank";
+    if(!open && !b.innerHTML){
+      b.innerHTML = words.slice().sort((a,b2) => (b2.date||"").localeCompare(a.date||"")).map(w =>
+        `<div class="bank-row"><span><span class="bt">${esc(w.term)}</span> <span class="bp">(${esc(w.pos||"")})</span></span>
+         <span class="bd">${esc(w.definition)}</span><span class="bdate">${esc(shortDate(w.date))}</span></div>`).join("");
+    }
+  });
+}
+
+function startRound(words){
+  const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
+  const rest = shuffle(words.filter(w => w !== newest));
+  const n = Math.min(10, words.length);
+  Q.round = shuffle([newest, ...rest.slice(0, n-1)]);
+  Q.idx = 0; Q.score = 0; Q.results = [];
+  renderQuestion(words);
+}
+
+function renderQuestion(words){
+  const panel = $("#panel-quiz");
+  const w = Q.round[Q.idx];
+  const mode = Math.random() < 0.5 ? "def2word" : "word2def";
+  const pool = shuffle(words.filter(x => x.term !== w.term)).slice(0, Math.min(3, words.length-1));
+  const options = shuffle([w, ...pool]);
+  const dots = Q.round.map((_,i) =>
+    `<span class="qdot ${i < Q.idx ? (Q.results[i] ? "hit" : "miss") : i === Q.idx ? "now" : ""}"></span>`).join("");
+  let h = `<div class="qwrap"><div class="qcard">
+    <div class="qmeta"><span>Question ${Q.idx+1} / ${Q.round.length}</span><div class="qdots">${dots}</div><span>Score ${Q.score}</span></div>`;
+  if(mode === "def2word"){
+    h += `<div class="qprompt-label">Which word means…</div>
+      <div class="qprompt">“${esc(w.definition)}”</div><div class="qopts">`;
+    options.forEach((o,i) => h += `<button class="qopt" data-i="${i}"><b>${esc(o.term)}</b> <span style="color:var(--muted);font-size:12px">${esc(o.respell||"")}</span></button>`);
+  }else{
+    h += `<div class="qprompt-label">What does this word mean?</div>
+      <div class="qprompt">${esc(w.term)} <span class="qipa">${esc(w.ipa||"")} ${esc(w.respell||"")} · ${esc(w.pos||"")}</span></div><div class="qopts">`;
+    options.forEach((o,i) => h += `<button class="qopt" data-i="${i}">${esc(o.definition)}</button>`);
+  }
+  h += `</div><div id="qReveal"></div></div></div>`;
+  panel.innerHTML = h;
+  panel.querySelectorAll(".qopt").forEach(btn => btn.addEventListener("click", () => {
+    const pick = options[Number(btn.dataset.i)];
+    const right = pick.term === w.term;
+    if(right) Q.score++;
+    Q.results.push(right);
+    panel.querySelectorAll(".qopt").forEach(b2 => {
+      b2.disabled = true;
+      const o = options[Number(b2.dataset.i)];
+      if(o.term === w.term) b2.classList.add("correct");
+      else if(b2 === btn) b2.classList.add("wrong");
+      else b2.classList.add("dim");
+    });
+    $("#qReveal").innerHTML = `<div class="qreveal">
+      <b>${esc(w.term)}</b> ${esc(w.ipa||"")} ${esc(w.respell||"")} (${esc(w.pos||"")}) — ${esc(w.definition)}
+      <div class="qex">“${esc(w.example||"")}”</div></div>
+      <button class="qbig qnext" id="qNext">${Q.idx+1 < Q.round.length ? "Next Question" : "See Results"}</button>`;
+    $("#qNext").addEventListener("click", () => {
+      Q.idx++;
+      if(Q.idx < Q.round.length) renderQuestion(words);
+      else finishRound(words);
+    });
+    $("#qNext").focus();
+  }));
+}
+
+function finishRound(words){
+  const panel = $("#panel-quiz");
+  const pct = Math.round(Q.score/Q.round.length*100);
+  const prevBest = localStorage.getItem("dh-quiz-best");
+  const bestScore = prevBest ? Math.max(Number(prevBest.split("/")[0]), Q.score) : Q.score;
+  const isBest = !prevBest || Q.score >= Number(prevBest.split("/")[0]);
+  localStorage.setItem("dh-quiz-best", `${bestScore}/${Q.round.length}`);
+  localStorage.setItem("dh-quiz-plays", String(Number(localStorage.getItem("dh-quiz-plays")||"0") + 1));
+  const msg = pct === 100 ? "Flawless. Perspicacious, even." :
+    pct >= 80 ? "Sharp — your lexicon is in fine form." :
+    pct >= 60 ? "Solid. A few more rounds and it's mastered." :
+    "The word bank below is your friend. Run it back.";
+  panel.innerHTML = `<div class="qwrap"><div class="qcard qscore-hero">
+    <div class="qprompt-label">Round Complete${isBest ? " · New Best" : ""}</div>
+    <div class="qs-big">${Q.score}<span style="color:var(--muted);font-size:26px">/${Q.round.length}</span></div>
+    <div class="qs-sub">${pct}% correct</div>
+    <div class="qs-msg">${esc(msg)}</div>
+    <button class="qbig qnext" id="qAgain">Play Again</button>
+    <button class="pbtn qnext" id="qHome" style="width:100%">Back to Quiz Home</button>
+  </div></div>`;
+  $("#qAgain").addEventListener("click", () => startRound(words));
+  $("#qHome").addEventListener("click", () => quizHome(words));
 }
 
 /* ================= site gate ================= */

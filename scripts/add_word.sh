@@ -11,13 +11,28 @@ SRC="$1"
 [[ -s "$SRC" ]] || { echo "missing word file: $SRC" >&2; exit 1; }
 SRC="$(cd "$(dirname "$SRC")" && pwd)/$(basename "$SRC")"
 
+# Secrets: prefer pre-fetched local files (GH_TOKEN_FILE / CAL_PASS_FILE env vars).
+# Callers should set these when the mounted 00_Resources path has thrown
+# "Resource deadlock avoided" (EDEADLK) on direct reads -- fetch the values via
+# the Read tool instead and write them to local temp files, then point these
+# env vars at them. Falls back to auto-discovering the mounted files if unset.
 RES_DIR=""
 for c in "/sessions/"*"/mnt/Cowork OS/00_Resources" "$HOME/Documents/Cowork OS/00_Resources"; do
   [[ -f "$c/.github-token" ]] && RES_DIR="$c" && break
 done
-[[ -n "$RES_DIR" ]] || { echo "resources dir with .github-token not found" >&2; exit 1; }
-TOKEN="$(tr -d '[:space:]' < "$RES_DIR/.github-token")"
-PASS_FILE="$RES_DIR/.calendar-passphrase"
+
+TOKEN_FILE="${GH_TOKEN_FILE:-}"
+if [[ -z "$TOKEN_FILE" ]]; then
+  [[ -n "$RES_DIR" ]] || { echo "resources dir with .github-token not found (and GH_TOKEN_FILE not set)" >&2; exit 1; }
+  TOKEN_FILE="$RES_DIR/.github-token"
+fi
+TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+
+PASS_FILE="${CAL_PASS_FILE:-}"
+if [[ -z "$PASS_FILE" ]]; then
+  [[ -n "$RES_DIR" ]] || { echo "resources dir with .calendar-passphrase not found (and CAL_PASS_FILE not set)" >&2; exit 1; }
+  PASS_FILE="$RES_DIR/.calendar-passphrase"
+fi
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT

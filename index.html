@@ -226,6 +226,17 @@
   .mast .mfill{height:100%;border-radius:3px;transition:width .4s}
   .mast.new{color:#A08339}
 
+  /* ---------- games launcher ---------- */
+  .game-back{margin-bottom:20px}
+  .game-grid{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .game-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:26px 16px;box-shadow:var(--shadow);text-decoration:none;color:inherit;cursor:pointer;font:inherit;transition:transform .18s, box-shadow .18s, border-color .18s}
+  .game-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 2px 4px rgba(22,24,29,.06),0 14px 34px -10px rgba(22,24,29,.16)}
+  .game-icon{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--paper)}
+  .game-icon-quiz{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--gold);font-size:20px}
+  .game-name{font-size:14.5px;font-weight:900;letter-spacing:.01em}
+  .game-tag{font-size:12px;line-height:1.5;color:var(--muted)}
+  @media(max-width:640px){.game-grid{grid-template-columns:repeat(2,1fr)}}
+
   /* portfolio history chart */
   .hist-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;font-weight:700;padding:7px 11px;border-radius:7px;transform:translate(-50%,-120%);white-space:nowrap;display:none;z-index:5}
   .hist-tip .tv{color:var(--gold);font-weight:900}
@@ -349,7 +360,7 @@
       <button class="tab" data-tab="news" role="tab">News</button>
       <button class="tab" data-tab="market" role="tab">Markets</button>
       <button class="tab" data-tab="portfolio" role="tab">Portfolio</button>
-      <button class="tab" data-tab="quiz" role="tab">Quiz</button>
+      <button class="tab" data-tab="quiz" role="tab">Games</button>
     </div>
     <div class="top-right">
       <select class="date-select" id="dateSelect" aria-label="Choose date"></select>
@@ -388,12 +399,13 @@
 "use strict";
 /* ================= state ================= */
 const S = { manifest:null, tab:"calendar", date:{market:null,news:null,calendar:null}, cache:{}, holdEnc:null };
+let gamesView = "launcher"; // "launcher" | "quiz" — sub-view within the Games tab
 let PASS = null;
 const $ = s => document.querySelector(s);
 const esc = t => String(t??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
 const cls = v => v>0?"up":v<0?"down":"neutral";
-const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Today · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Word Quiz · Vocabulary Trainer" };
+const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Today · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers" };
 
 function niceDate(d){
   const dt = new Date(d+"T12:00:00");
@@ -427,6 +439,7 @@ async function boot(){
 
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", async () => {
   S.tab = b.dataset.tab; localStorage.setItem("dh-tab", S.tab);
+  if(S.tab === "quiz") gamesView = "launcher";
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===b));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
   fillDates(); await show();
@@ -470,7 +483,7 @@ async function show(){
   const panel = $("#panel-"+kind);
   $("#heroEyebrow").textContent = NICE[kind];
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
-  if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderQuizTab(); return; }
+  if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderGamesTab(); return; }
   if(!date){
     $("#heroTitle").textContent = "Nothing published yet";
     $("#heroSub").textContent = "This section fills in automatically once its scheduled task runs.";
@@ -1205,12 +1218,46 @@ async function fetchWords(){
   return Q.words;
 }
 
+function renderGamesTab(){
+  if(gamesView === "quiz"){ renderQuizTab(); return; }
+  renderGamesLauncher();
+}
+
+function renderGamesLauncher(){
+  const panel = $("#panel-quiz");
+  $("#heroEyebrow").textContent = "Games";
+  $("#heroTitle").textContent = "Game Room";
+  $("#heroSub").textContent = "Quick launchers for your daily games — vocab, geography, and word puzzles in one place.";
+  $("#heroDateline").textContent = "";
+  $("#staleNote").style.display = "none";
+  const favicon = d => `https://www.google.com/s2/favicons?domain=${d}&sz=64`;
+  const games = [
+    { name:"Word Quiz", tag:"Vocabulary trainer built from your daily briefings", internal:true },
+    { name:"Wordle", tag:"Guess the five-letter word in six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
+    { name:"Worldle", tag:"Guess the country from its silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
+    { name:"Tradle", tag:"Guess the country from its top exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
+    { name:"Travle", tag:"Chain neighboring countries to reach the target", url:"https://travle.earth/", domain:"travle.earth" },
+    { name:"Globle", tag:"Guess the mystery country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
+  ];
+  panel.innerHTML = `<div class="game-grid">${games.map((g,i) => {
+    const icon = g.internal
+      ? `<div class="game-icon-quiz">◆</div>`
+      : `<img class="game-icon" src="${favicon(g.domain)}" alt="" loading="lazy">`;
+    const inner = `${icon}<div class="game-name">${esc(g.name)}</div><div class="game-tag">${esc(g.tag)}</div>`;
+    return g.internal
+      ? `<button class="game-card" id="gc-${i}">${inner}</button>`
+      : `<a class="game-card" href="${g.url}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+  }).join("")}</div>`;
+  $("#gc-0").addEventListener("click", () => { gamesView = "quiz"; renderQuizTab(); });
+}
+
 async function renderQuizTab(){
   const panel = $("#panel-quiz");
   panel.innerHTML = `<div class="spinner"></div>`;
   try{
     const words = await fetchWords();
     const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
+    $("#heroEyebrow").textContent = "Word Quiz";
     $("#heroTitle").textContent = "How Sharp Is Your Lexicon?";
     $("#heroSub").textContent = `A multiple-choice quiz built from every Word of the Day in your news briefings — ${words.length} words and counting. Each weekday's new word joins the bank automatically.`;
     $("#heroDateline").textContent = `Newest word: ${newest.term} · added ${niceDate(newest.date)}`;
@@ -1231,6 +1278,7 @@ function quizHome(words){
   const mastered = words.filter(w => { const st = stats[w.term]; return st && st.k >= 2 && st.c/st.s >= 0.75; }).length;
   const n = Math.min(10, words.length);
   let h = `<div class="qwrap">
+    <button class="pbtn game-back" id="qBackGames">← Back to Games</button>
     <div class="qstats">
       <div class="card"><div class="lbl">Words in Bank</div><div class="big">${words.length}</div></div>
       <div class="card"><div class="lbl">Mastered</div><div class="big">${mastered}<span style="color:var(--muted);font-size:14px">/${words.length}</span></div></div>
@@ -1247,6 +1295,7 @@ function quizHome(words){
     <div id="qBank" style="display:none"></div>
   </div>`;
   panel.innerHTML = h;
+  $("#qBackGames").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
   $("#qStart").addEventListener("click", () => startRound(words));
   $("#qBankToggle").addEventListener("click", () => {
     const b = $("#qBank");

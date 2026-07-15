@@ -794,17 +794,35 @@ function pCompute(){
   });
 }
 const pView = () => P.acct === "all" ? P.pos : P.pos.filter(p => p.account === P.acct);
-/* In the All Accounts view, the cash sweep (SPAXX) appears once, merged across accounts */
+/* In the All Accounts view, combine every ticker held in more than one account into a single
+   row (cash sweeps like SPAXX included) — shares/value/gain roll up, avg cost is recomputed
+   from the combined cost basis so the merged row's numbers stay accurate. */
 function pViewMerged(){
   const list = pView();
   if(P.acct !== "all") return list;
-  const cash = list.filter(p => p.type === "cash");
-  if(cash.length <= 1) return list;
-  const merged = {...cash[0], account:"all",
-    shares: cash.reduce((s,p)=>s+p.shares,0),
-    marketValue: cash.reduce((s,p)=>s+p.marketValue,0),
-    costBasis:null, gainDollar:null, gainPct:null, dayDollar:0, dayPct:0};
-  return [...list.filter(p => p.type !== "cash"), merged];
+  const groups = {}, order = [];
+  list.forEach(p => {
+    if(!groups[p.ticker]){ groups[p.ticker] = []; order.push(p.ticker); }
+    groups[p.ticker].push(p);
+  });
+  return order.map(tk => {
+    const g = groups[tk];
+    if(g.length === 1) return g[0];
+    const shares = g.reduce((s,p)=>s+p.shares,0);
+    const marketValue = g.reduce((s,p)=>s+p.marketValue,0);
+    const dayDollar = g.reduce((s,p)=>s+p.dayDollar,0);
+    const allHaveCost = g.every(p => p.hasCost);
+    const costBasis = allHaveCost ? g.reduce((s,p)=>s+p.costBasis,0) : null;
+    const gainDollar = allHaveCost ? marketValue - costBasis : null;
+    const gainPct = allHaveCost && costBasis > 0 ? gainDollar/costBasis*100 : null;
+    const avgCost = allHaveCost && shares > 0 ? costBasis/shares : null;
+    const price = shares > 0 ? marketValue/shares : g[0].price;
+    const prevValue = marketValue - dayDollar;
+    const dayPct = prevValue > 0 ? dayDollar/prevValue*100 : 0;
+    return {...g[0], account:"all", shares, marketValue, dayDollar, dayPct,
+      hasCost: allHaveCost, costBasis, gainDollar, gainPct, avgCost, price,
+      src: g.some(p => p.src === "live") ? "live" : g[0].src};
+  });
 }
 function pTotals(list){
   const t = {value:0, gain:0, cost:0, day:0, anyLive:false};
@@ -867,7 +885,7 @@ function renderPortfolio(){
   /* portfolio value history */
   h += `<div class="kicker">Portfolio Value · History</div><div class="chart-card" id="histCard">
     <div class="ptoolbar" style="margin-bottom:10px">
-      <div class="seg" id="histSeg">${["1W","1M","3M","6M","1Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+      <div class="seg" id="histSeg">${["1W","1M","3M","6M","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
       <span class="pstatus" id="histHead"></span>
     </div>
     <div id="histBody" style="position:relative"></div>
@@ -927,7 +945,7 @@ function renderPortfolio(){
 
 /* ---------- portfolio value history ---------- */
 async function fetchHistSym(sym){
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1y`;
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5y`;
   const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{
@@ -976,7 +994,7 @@ function histSeries(){
   if(P.fetched && pts.length && pts[pts.length-1].d < today) pts.push({d: today, v: pTotals(positions).value});
   return pts;
 }
-const HIST_RANGES = {"1W":7, "1M":31, "3M":93, "6M":186, "1Y":370};
+const HIST_RANGES = {"1W":7, "1M":31, "3M":93, "6M":186, "1Y":370, "5Y":1856};
 function renderHistory(){
   const body = $("#histBody"); if(!body) return;
   if(!P.histReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadHistory(); return; }
@@ -1092,6 +1110,10 @@ function drawPBars(t){
   const negMax = Math.max(0, ...list.map(p => -metric(p)));
   const range = Math.max(.1, posMax + negMax);
   const negShare = negMax > 0 ? Math.max(8, negMax/range*100) : 5;    // midline position (%)
+  const posLane = 100 - negShare, negLane = negShare;
+  // Reserve a hard margin (% of the full track) on whichever side a bar's value label sits,
+  // so the label can never render past the card edge, no matter how the data shakes out.
+  const LABEL_RESERVE = 11;
   el.innerHTML = "";
   list.forEach(p => {
     const m = metric(p);
@@ -1100,8 +1122,10 @@ function drawPBars(t){
     const noCost = !day && !p.hasCost && !isCash;
     const col = isCash ? "#9BA0A6" : noCost ? "var(--gold)" : (m >= 0 ? "var(--up)" : "var(--down)");
     const label = isCash ? "Cash" : pctS(m) + (noCost ? " today" : "");
-    const w = isCash ? 1.4 : Math.max(1.4, Math.abs(m)/range * 94);
     const pos = m >= 0;
+    const lane = pos ? posLane : negLane;
+    const rawW = isCash ? 1.4 : Math.abs(m)/range * 94;
+    const w = isCash ? 1.4 : Math.max(1.4, Math.min(rawW, Math.max(1.4, lane - LABEL_RESERVE)));
     const inside = !pos && w >= 12;   // negative labels sit inside the bar in white, like the sector chart
     const barStyle = pos
       ? `background:${col};left:${negShare}%;justify-content:flex-end`

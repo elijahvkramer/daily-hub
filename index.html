@@ -41,6 +41,7 @@
 
   /* ---------- hero ---------- */
   .hero{background:var(--ink);color:var(--cream);overflow:hidden;position:relative}
+  .hero-in{transition:opacity .16s ease}
   .hero-in{max-width:1080px;margin:0 auto;padding:52px 24px 46px}
   .eyebrow{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.3em;text-transform:uppercase;margin-bottom:16px}
   .hero h1{font-size:clamp(28px,4.4vw,44px);font-weight:900;line-height:1.14;letter-spacing:-.01em;max-width:820px}
@@ -51,7 +52,7 @@
 
   /* ---------- main ---------- */
   main{max-width:1080px;margin:0 auto;padding:36px 24px 80px}
-  .panel{display:none;animation:fadein .35s ease}
+  .panel{display:none;animation:fadein .35s ease;transition:opacity .16s ease}
   .panel.active{display:block}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .kicker{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.28em;text-transform:uppercase;margin:44px 0 18px;display:flex;align-items:center;gap:14px;scroll-margin-top:78px}
@@ -442,13 +443,59 @@ async function boot(){
   }
 }
 
-document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", async () => {
+/* ---------- smooth tab transitions ---------- */
+/* FLIP-style height animation for the hero block (the black title/subtitle area), plus a
+   quick crossfade of its text and the panel underneath, so switching tabs glides instead of
+   jumping straight to the new heights. Token-guarded so rapid tab clicks never leave a stale
+   transitionend handler fighting a newer animation. */
+let heroAnimToken = 0;
+async function animatedTabSwitch(mutate){
+  const myToken = ++heroAnimToken;
+  const hero = document.querySelector(".hero");
+  const heroIn = document.querySelector(".hero-in");
+  const oldPanel = document.querySelector(".panel.active");
+
+  hero.style.transition = "none";
+  hero.style.height = hero.getBoundingClientRect().height + "px";
+  heroIn.style.opacity = "0";
+  if(oldPanel){ oldPanel.style.transition = "opacity .14s ease"; oldPanel.style.opacity = "0"; }
+
+  await new Promise(r => setTimeout(r, 140));
+  if(myToken !== heroAnimToken) return;   // a newer tab click has taken over
+
+  await mutate();   // updates S.tab, active classes, hero text (title/sub/dateline), and panel content
+  if(myToken !== heroAnimToken) return;
+
+  const startH = parseFloat(hero.style.height);
+  hero.style.height = "auto";
+  const endH = hero.getBoundingClientRect().height;
+  hero.style.height = startH + "px";
+  void hero.offsetHeight;   // force reflow so the height change below actually animates
+
+  requestAnimationFrame(() => {
+    if(myToken !== heroAnimToken) return;
+    hero.style.transition = "height .38s cubic-bezier(.4,0,.2,1)";
+    hero.style.height = endH + "px";
+    heroIn.style.opacity = "1";
+  });
+  const newPanel = document.querySelector(".panel.active");
+  if(newPanel){ newPanel.style.opacity = ""; newPanel.style.transition = ""; }   // let its own fade-in keyframe run clean
+
+  hero.addEventListener("transitionend", function te(e){
+    if(e.propertyName !== "height") return;
+    hero.removeEventListener("transitionend", te);
+    if(myToken !== heroAnimToken) return;
+    hero.style.transition = "none"; hero.style.height = "auto";
+  });
+}
+
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => animatedTabSwitch(async () => {
   S.tab = b.dataset.tab; localStorage.setItem("dh-tab", S.tab);
   if(S.tab === "quiz") gamesView = "launcher";
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===b));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
   fillDates(); await show();
-}));
+})));
 $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.target.value; await show(); });
 
 function fillDates(){

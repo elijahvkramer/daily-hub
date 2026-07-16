@@ -185,10 +185,6 @@
   .weather-band.rainy .wicon{color:#A08339}
   .today-grid{display:grid;grid-template-columns:1.32fr 1fr;gap:26px;align-items:start;margin-top:36px}
   .evt-wrap{position:relative}
-  .evt-actions{position:absolute;top:12px;right:14px;display:flex;align-items:center;gap:8px}
-  .ics-link{color:var(--muted);font-size:15px;text-decoration:none;opacity:0;transition:opacity .15s, color .15s}
-  .event:hover .ics-link{opacity:1}
-  .ics-link:hover{color:#A08339}
   .countdown{display:inline-block;margin-top:3px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#A08339;background:rgba(200,162,75,.14);border-radius:5px;padding:2px 7px}
   .todo-kicker-row{display:flex;align-items:center;gap:9px}
   .todo-ring{flex-shrink:0}
@@ -761,31 +757,13 @@ function parseEventLead(lead, body, fallbackDate){
   return {tw, td, small, timeLine, title, dateStr, startMin, endMin};
 }
 
-function icsHref(title, dateStr, startMin, endMin){
-  if(!dateStr) return null;
-  const d = dateStr.replace(/-/g,"");
-  const pad = n => String(n).padStart(2,"0");
-  const mm2hm = m => pad(Math.floor(m/60)%24) + pad(m%60) + "00";
-  let body;
-  if(startMin == null){
-    body = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY:${title}\r\nDTSTART;VALUE=DATE:${d}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
-  }else{
-    const end = endMin != null ? endMin : startMin + 60;
-    body = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY:${title}\r\nDTSTART:${d}T${mm2hm(startMin)}\r\nDTEND:${d}T${mm2hm(end)}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
-  }
-  return "data:text/calendar;charset=utf8,"+encodeURIComponent(body);
-}
-
-/* renders a calendar-tile row; opts.ics adds an "add to calendar" download link, opts.countdown ticks a live "in Xh Ym" badge */
+/* renders a calendar-tile row; opts.countdown ticks a live "in Xh Ym" badge */
 function eventTile(lead, body, fallbackDate, opts){
   opts = opts || {};
   const ev = parseEventLead(lead, body, fallbackDate);
-  const icsTitle = (ev.title || body || "Event").replace(/[\r\n,]/g," ").slice(0,120);
-  const icsUrl = opts.ics ? icsHref(icsTitle, ev.dateStr, ev.startMin, ev.endMin) : null;
   const cdId = opts.countdown ? "cd-"+Math.random().toString(36).slice(2) : "";
   return `<div class="event evt-wrap"><div class="tile"><div class="tw">${esc(ev.tw||"·")}</div><div class="td${ev.small?" small":""}">${esc(ev.td)}</div></div>
-    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div>
-    ${icsUrl?`<div class="evt-actions"><a class="ics-link" href="${icsUrl}" download="event.ics" title="Add to calendar"><i>&#128198;</i></a></div>`:""}</div>`;
+    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div></div>`;
 }
 
 function startCountdowns(){
@@ -851,11 +829,11 @@ function renderCalendarBody(p, d){
   /* left column: Today, This Week, On Your Radar — all as a running agenda */
   h += `<div class="today-col" id="colToday">`;
   h += `<div class="kicker">Today</div>`;
-  h += (d.today||[]).length ? events(d.today, d.date, {ics:true, countdown:true})
+  h += (d.today||[]).length ? events(d.today, d.date, {countdown:true})
        : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`;
   if((d.week||[]).length){
     h += `<div class="kicker">This Week</div>`;
-    h += events(d.week, null, {ics:true});
+    h += events(d.week, null);
   }
   h += `<div class="kicker">On Your Radar</div>`;
   h += (d.radar||[]).length ? events(d.radar, null)

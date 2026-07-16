@@ -181,11 +181,9 @@
   .locknote button{appearance:none;background:none;border:none;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
 
   /* ---------- today tab: two-column dashboard ---------- */
-  .today-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:14px}
   .weather-band.rainy{background:var(--cream);border-color:rgba(200,162,75,.45)}
   .weather-band.rainy .wicon{color:#A08339}
-  .today-grid{display:grid;grid-template-columns:1.32fr 1fr;gap:26px;align-items:start}
-  .today-col .kicker:first-child{margin-top:0}
+  .today-grid{display:grid;grid-template-columns:1.32fr 1fr;gap:26px;align-items:start;margin-top:36px}
   .evt-wrap{position:relative}
   .evt-actions{position:absolute;top:12px;right:14px;display:flex;align-items:center;gap:8px}
   .ics-link{color:var(--muted);font-size:15px;text-decoration:none;opacity:0;transition:opacity .15s, color .15s}
@@ -194,20 +192,16 @@
   .countdown{display:inline-block;margin-top:3px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#A08339;background:rgba(200,162,75,.14);border-radius:5px;padding:2px 7px}
   .todo-kicker-row{display:flex;align-items:center;gap:9px}
   .todo-ring{flex-shrink:0}
-  .acc-card{background:var(--card);border:1px solid var(--hairline);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:10px}
-  .acc-toggle{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none}
-  .acc-toggle .atitle{font-size:13px;font-weight:900;color:var(--ink)}
-  .acc-toggle .acount{color:var(--muted);font-weight:400;margin-left:5px}
-  .acc-chev{color:var(--muted);font-size:13px;transition:transform .18s}
-  .acc-card.open .acc-chev{transform:rotate(180deg)}
-  .acc-panel{display:none;padding:0 16px 14px}
-  .acc-card.open .acc-panel{display:block}
+  .todos.big .todo{padding:16px 20px;font-size:15.5px}
+  .inbox.big .mail{padding:17px 20px}
+  .inbox.big .mail .env{width:42px;height:42px;font-size:16px}
+  .inbox.big .mail .mfrom{font-size:15px}
+  .inbox.big .mail .msnip{font-size:14.5px}
   .mail{cursor:pointer;transition:background .15s}
   .mail:hover{background:var(--paper)}
   .mail .go{margin-left:auto;color:var(--muted);opacity:0;transition:opacity .15s;font-size:13px;padding-left:8px}
   .mail:hover .go{opacity:1}
   @media(max-width:760px){.today-grid{grid-template-columns:1fr}}
-  .focus-hidden{display:none !important}
 
   /* ---------- site gate ---------- */
   #gate{position:fixed;inset:0;z-index:200;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -827,8 +821,6 @@ function renderCalendarBody(p, d){
   const maxPrecip = Math.max(0, ...(d.hourly||[]).map(x => Number(x.precip ?? x.p ?? 0)));
   const rainy = maxPrecip >= 40;
 
-  h += `<div class="today-toolbar"><button class="pbtn" id="focusToggle">Focus mode</button></div>`;
-
   /* weather band with hourly strip */
   if(d.weather || (d.hourly||[]).length){
     h += `<div class="weather-band${rainy?" rainy":""}">`;
@@ -853,32 +845,30 @@ function renderCalendarBody(p, d){
     });
     return x + `</div>`;
   };
-  const accordion = (id, title, count, bodyHtml, openByDefault) => `
-    <div class="acc-card${openByDefault?" open":""}" id="acc-${id}">
-      <div class="acc-toggle" data-acc="${id}"><span class="atitle">${esc(title)}<span class="acount">(${count})</span></span><span class="acc-chev">▾</span></div>
-      <div class="acc-panel">${bodyHtml}</div>
-    </div>`;
 
   h += `<div class="today-grid">`;
 
-  /* left column: Today + This Week agenda */
+  /* left column: Today, This Week, On Your Radar — all as a running agenda */
   h += `<div class="today-col" id="colToday">`;
   h += `<div class="kicker">Today</div>`;
   h += (d.today||[]).length ? events(d.today, d.date, {ics:true, countdown:true})
        : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`;
   if((d.week||[]).length){
-    h += `<div class="kicker focusable">This Week</div>`;
-    h += `<div class="focusable">${events(d.week, null, {ics:true})}</div>`;
+    h += `<div class="kicker">This Week</div>`;
+    h += events(d.week, null, {ics:true});
   }
+  h += `<div class="kicker">On Your Radar</div>`;
+  h += (d.radar||[]).length ? events(d.radar, null)
+       : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`;
   h += `</div>`;
 
-  /* right column: Urgent To-Dos, On Your Radar (accordion), Emails */
+  /* right column: Urgent To-Dos, then Emails to Know About right beneath it — both plain, slightly larger */
   h += `<div class="today-col" id="colAction">`;
   const doneCount = (d.urgent||[]).filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
   h += `<div class="kicker"><span class="todo-kicker-row">Urgent To-Dos${(d.urgent||[]).length?`<span class="todo-ring">${ringSvg(doneCount,(d.urgent||[]).length)}</span><span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:12px">${doneCount}/${(d.urgent||[]).length}</span>`:""}</span></div>`;
   if(!(d.urgent||[]).length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing urgent flagged today.</p>`;
   else{
-    h += `<div class="todos" id="todoList">`;
+    h += `<div class="todos big">`;
     d.urgent.forEach((t,i) => {
       const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
       h += `<div class="todo${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
@@ -886,29 +876,21 @@ function renderCalendarBody(p, d){
     h += `</div>`;
   }
 
-  h += `<div class="focusable">`;
-  const radarCount = (d.radar||[]).length;
-  const radarBody = radarCount ? events(d.radar, null) : `<p style="color:var(--muted);font-size:14px;padding:10px 2px 4px">Nothing needs attention this week.</p>`;
-  h += accordion("radar", "On Your Radar", radarCount, radarBody, false);
-
-  const emailCount = (d.emails||[]).length;
-  let emailBody;
-  if(!emailCount) emailBody = `<p style="color:var(--muted);font-size:14px;padding:10px 2px 4px">Nothing in your inbox that needs attention.</p>`;
+  h += `<div class="kicker">Emails to Know About</div>`;
+  if(!(d.emails||[]).length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing in your inbox that needs attention.</p>`;
   else{
-    emailBody = `<div class="inbox">` + d.emails.map(m => {
+    h += `<div class="inbox big">` + d.emails.map(m => {
       const lead = typeof m === "string" ? m : m.lead, body = typeof m === "string" ? "" : m.body;
       const gmailUrl = "https://mail.google.com/mail/u/0/#search/" + encodeURIComponent(String(lead||"").replace(/\s*[—–-]\s*$/,""));
       return `<div class="mail" data-href="${esc(gmailUrl)}"><div class="env">✉</div><div><div class="mfrom"><span class="unread"></span>${esc(lead||"")}</div><div class="msnip">${esc(body||"")}</div></div><span class="go">Open in Gmail ↗</span></div>`;
     }).join("") + `</div>`;
   }
-  h += accordion("emails", "Emails to Know About", emailCount, emailBody, emailCount > 0);
-  h += `</div>`;
   h += `</div>`;
   h += `</div>`;
 
   /* The Close: fun fact / history tidbit / word of the day (moved here from the News tab) */
   if(d.close){
-    h += `<div class="kicker focusable">The Close</div><div class="close-grid focusable">`;
+    h += `<div class="kicker">The Close</div><div class="close-grid">`;
     if(d.close.funFact) h += `<div class="callout"><div class="lbl">Fun Fact</div><p>${esc(d.close.funFact)}</p></div>`;
     if(d.close.historyTidbit) h += `<div class="callout"><div class="lbl">History Tidbit</div><p>${esc(d.close.historyTidbit)}</p></div>`;
     if(d.close.word) h += `<div class="callout"><div class="lbl">Word of the Day</div><p><b>${esc(d.close.word.term)}</b> ${esc(d.close.word.ipa||"")} ${esc(d.close.word.respell||"")} (${esc(d.close.word.pos||"")}) — ${esc(d.close.word.definition)}</p><p style="margin-top:8px;font-style:italic">Example: ${esc(d.close.word.example||"")}</p></div>`;
@@ -927,18 +909,7 @@ function renderCalendarBody(p, d){
     const countEl = p.querySelector(".todo-kicker-row > span[style*='font-weight:400']");
     if(countEl) countEl.textContent = `${nowDone}/${total}`;
   }));
-  p.querySelectorAll("[data-acc]").forEach(t => t.addEventListener("click", () => {
-    document.getElementById("acc-"+t.dataset.acc)?.classList.toggle("open");
-  }));
   p.querySelectorAll(".mail[data-href]").forEach(m => m.addEventListener("click", () => window.open(m.dataset.href, "_blank", "noopener")));
-
-  let focusOn = false;
-  const focusBtn = $("#focusToggle");
-  focusBtn?.addEventListener("click", () => {
-    focusOn = !focusOn;
-    p.querySelectorAll(".focusable").forEach(el => el.classList.toggle("focus-hidden", focusOn));
-    focusBtn.textContent = focusOn ? "Show everything" : "Focus mode";
-  });
 
   startCountdowns();
 }

@@ -135,17 +135,6 @@
   .cal-row{display:flex;gap:14px;padding:13px 2px;border-bottom:1px solid var(--hairline);font-size:14.5px;line-height:1.6;color:#3A3E45}
   .cal-row:last-child{border-bottom:none}
   .cal-row .dot{color:var(--gold);font-weight:900}
-  .weather-band{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:16px 20px;box-shadow:var(--shadow)}
-  .weather-now{display:flex;align-items:center;gap:14px;font-size:14.5px}
-  .weather-band .wicon{font-size:22px}
-  .hourly{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline);overflow-x:auto;scrollbar-width:thin}
-  .hr-chip{flex:1;min-width:58px;text-align:center;background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:9px 4px;transition:transform .15s}
-  .hr-chip:hover{transform:translateY(-2px)}
-  .hr-chip .hh{color:var(--muted);font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-  .hr-chip .hicon{font-size:15px;margin:4px 0 2px}
-  .hr-chip .ht{font-size:14px;font-weight:900}
-  .hr-chip .hp{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px}
-  .hr-chip .hp.wet{color:#A08339}
 
   /* calendar-style event rows */
   .events{display:flex;flex-direction:column;gap:10px}
@@ -169,35 +158,42 @@
   .todo.done span.txt{text-decoration:line-through;color:var(--muted)}
 
   /* inbox-style email rows */
-  .inbox{background:var(--card);border:1px solid var(--hairline);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
-  .mail{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hairline);align-items:center}
-  .mail:last-child{border-bottom:none}
-  .mail .env{width:38px;height:38px;border-radius:50%;background:var(--cream);color:#A08339;display:grid;place-items:center;font-size:15px}
-  .mail .mfrom{font-size:14px;font-weight:900;display:flex;align-items:center;gap:8px}
-  .mail .mfrom .unread{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0}
-  .mail .msnip{font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:2px}
 
   .locknote{margin-top:26px;text-align:center}
   .locknote button{appearance:none;background:none;border:none;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
 
-  /* ---------- today tab: two-column dashboard ---------- */
-  .weather-band.rainy{background:var(--cream);border-color:rgba(200,162,75,.45)}
-  .weather-band.rainy .wicon{color:#A08339}
-  .today-grid{display:grid;grid-template-columns:1.32fr 1fr;gap:26px;align-items:start;margin-top:36px}
+  /* ---------- today tab: bento dashboard ---------- */
   .evt-wrap{position:relative}
   .countdown{display:inline-block;margin-top:3px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#A08339;background:rgba(200,162,75,.14);border-radius:5px;padding:2px 7px}
-  .todo-kicker-row{display:flex;align-items:center;gap:9px}
-  .todo-ring{flex-shrink:0}
-  .todos.big .todo{padding:16px 20px;font-size:15.5px}
-  .inbox.big .mail{padding:17px 20px}
-  .inbox.big .mail .env{width:42px;height:42px;font-size:16px}
-  .inbox.big .mail .mfrom{font-size:15px}
-  .inbox.big .mail .msnip{font-size:14.5px}
-  .mail{cursor:pointer;transition:background .15s}
-  .mail:hover{background:var(--paper)}
-  .mail .go{margin-left:auto;color:var(--muted);opacity:0;transition:opacity .15s;font-size:13px;padding-left:8px}
-  .mail:hover .go{opacity:1}
-  @media(max-width:760px){.today-grid{grid-template-columns:1fr}}
+  .bento-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:14px;margin-top:36px}
+  .bento-hero{grid-row:span 2;background:var(--ink);border-radius:14px;padding:22px 24px;color:var(--cream);position:relative}
+  .bh-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9BA0A6;font-weight:900}
+  .bh-temp{font-size:32px;font-weight:900;margin-top:8px;line-height:1}
+  .bh-cond{font-size:13px;color:var(--gold-soft);margin-top:4px}
+  .bh-spark{width:100%;height:64px;margin-top:18px;display:block}
+  .bh-axis{display:flex;justify-content:space-between;font-size:10.5px;color:#8A8F95;margin-top:4px}
+  .bh-tip{position:absolute;pointer-events:none;background:var(--cream);color:var(--ink);font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:7px;transform:translate(-50%,-118%);white-space:nowrap;display:none;z-index:5}
+  .bh-tip b{color:#A08339}
+  .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .bento-card.center{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
+  .bc-num{font-size:27px;font-weight:900;color:var(--ink);margin-top:6px;line-height:1}
+  .bc-unit{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
+  .bc-bar{height:5px;background:var(--hairline);border-radius:3px;margin-top:14px;overflow:hidden}
+  .bc-bar-fill{height:100%;background:var(--up);transition:width .5s}
+  .bc-ring-txt{font-size:12.5px;font-weight:900;color:var(--ink);margin-top:6px}
+  .bento-wide{grid-column:span 2}
+  .wk-bars{display:flex;align-items:flex-end;gap:8px;height:58px;margin-top:12px}
+  .wk-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .wk-bar{width:100%;border-radius:4px;background:var(--paper);min-height:3px;transition:height .5s}
+  .wk-bar.hi{background:var(--gold)}
+  .wk-day{font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:700}
+  .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:6px 18px 4px;margin-top:20px}
+  .agenda-tabs{display:flex;gap:22px;border-bottom:1px solid var(--hairline)}
+  .agenda-tab{appearance:none;background:none;border:none;font:inherit;font-size:12.5px;font-weight:900;color:var(--muted);padding:12px 0 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .agenda-tab.active{color:var(--ink);border-bottom-color:var(--gold)}
+  .agenda-panel{padding:14px 0 6px}
+  @media(max-width:760px){.bento-grid{grid-template-columns:1fr 1fr}.bento-hero{grid-column:span 2;grid-row:auto}.bento-wide{grid-column:span 2}}
 
   /* ---------- site gate ---------- */
   #gate{position:fixed;inset:0;z-index:200;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -788,31 +784,82 @@ function startCountdowns(){
   clearInterval(window.__cdTimer); window.__cdTimer = setInterval(tick, 30000);
 }
 
-function ringSvg(done, total){
-  const r = 7, c = 2*Math.PI*r;
+function ringSvg(done, total, size){
+  size = size || 16;
+  const r = size/2 - 1, c = 2*Math.PI*r, cx = size/2, sw = size <= 20 ? 2.5 : Math.round(size/9);
   const frac = total > 0 ? done/total : 0;
-  return `<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="2.5"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-dasharray="${(frac*c).toFixed(1)} ${c.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 8 8)"/></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${sw}" stroke-dasharray="${(frac*c).toFixed(1)} ${c.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})"/></svg>`;
+}
+
+function buildSparkline(hourly){
+  const W = 300, H = 64;
+  const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
+  let min = Math.min(...vals), max = Math.max(...vals);
+  if(min === max){ min -= 1; max += 1; }
+  const X = i => hourly.length > 1 ? i/(hourly.length-1)*W : 0;
+  const Y = v => H - ((v-min)/(max-min))*H;
+  let line = "";
+  hourly.forEach((x,i) => { const v = Number(x.temp ?? x.tF ?? 0); line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)} `; });
+  const first = hourly[0], last = hourly[hourly.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark">
+    <path d="${line}" fill="none" stroke="#C8A24B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <line id="wxHair" x1="0" x2="0" y1="0" y2="${H}" stroke="#C8A24B" stroke-width="1" opacity=".5" style="display:none"/>
+    <circle id="wxDot" r="3.5" fill="#C8A24B" style="display:none"/>
+    <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="wxHit"/>
+  </svg>
+  <div class="bh-axis"><span>${esc(fmtHour(first.t ?? first.h))}</span><span>${esc(fmtHour(last.t ?? last.h))}</span></div>
+  <div class="bh-tip" id="wxTip"></div>`;
+}
+
+function wireSparkline(hourly){
+  const svg = $("#wxSpark"); if(!svg) return;
+  const W = 300, H = 64;
+  const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
+  let min = Math.min(...vals), max = Math.max(...vals);
+  if(min === max){ min -= 1; max += 1; }
+  const X = i => hourly.length > 1 ? i/(hourly.length-1)*W : 0;
+  const Y = v => H - ((v-min)/(max-min))*H;
+  const hit = $("#wxHit"), hair = $("#wxHair"), dot = $("#wxDot"), tip = $("#wxTip");
+  hit.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width * W;
+    const i = Math.max(0, Math.min(hourly.length-1, Math.round(fx/(W/(hourly.length-1||1)))));
+    const x = hourly[i];
+    const v = Number(x.temp ?? x.tF ?? 0);
+    const px = X(i), py = Y(v);
+    hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
+    dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
+    tip.style.display = "block";
+    tip.style.left = (px/W*100) + "%";
+    tip.style.top = (py/H*r.height) + "px";
+    tip.innerHTML = `${esc(fmtHour(x.t ?? x.h))} · <b>${esc(String(v))}°</b> · ${esc(wxGlyph(x.cond||x.c))} ☂${esc(String(x.precip ?? x.p ?? 0))}%`;
+  });
+  hit.addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
+}
+
+function buildWeekBars(radarList){
+  const order = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+  const counts = {}; order.forEach(dw => counts[dw] = 0);
+  (radarList||[]).forEach(item => {
+    const lead = typeof item === "string" ? item : item.lead;
+    const ev = parseEventLead(lead, "", null);
+    if(ev.tw && counts[ev.tw] != null) counts[ev.tw]++;
+  });
+  const max = Math.max(1, ...order.map(dw => counts[dw]));
+  return `<div class="wk-bars">` + order.map(dw => {
+    const c = counts[dw];
+    const hgt = c ? Math.max(10, c/max*100) : 3;
+    return `<div class="wk-bar-wrap"><div class="wk-bar${c===max && c>0?" hi":""}" style="height:${hgt}%"></div><div class="wk-day">${dw[0]}</div></div>`;
+  }).join("") + `</div>`;
 }
 
 function renderCalendarBody(p, d){
   let h = "";
-  const maxPrecip = Math.max(0, ...(d.hourly||[]).map(x => Number(x.precip ?? x.p ?? 0)));
-  const rainy = maxPrecip >= 40;
-
-  /* weather band with hourly strip */
-  if(d.weather || (d.hourly||[]).length){
-    h += `<div class="weather-band${rainy?" rainy":""}">`;
-    if(d.weather) h += `<div class="weather-now"><span class="wicon">${wxGlyph(d.weather)}</span><span>${esc(d.weather)}</span></div>`;
-    if((d.hourly||[]).length){
-      h += `<div class="hourly">`;
-      d.hourly.forEach(x => {
-        const wet = Number(x.precip||x.p||0) >= 40;
-        h += `<div class="hr-chip"><div class="hh">${fmtHour(x.t ?? x.h)}</div><div class="hicon">${wxGlyph(x.cond||x.c)}</div><div class="ht">${esc(String(x.temp ?? x.tF ?? ""))}°</div><div class="hp${wet?" wet":""}">☂ ${esc(String(x.precip ?? x.p ?? 0))}%</div></div>`;
-      });
-      h += `</div>`;
-    }
-    h += `</div>`;
-  }
+  const hourly = d.hourly || [];
+  const todayList = d.today || [];
+  const radarList = d.radar || [];
+  const urgentList = d.urgent || [];
+  const doneCount = urgentList.filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
 
   const events = (arr, fallbackDate, opts) => {
     if(!(arr||[]).length) return "";
@@ -824,49 +871,61 @@ function renderCalendarBody(p, d){
     return x + `</div>`;
   };
 
-  h += `<div class="today-grid">`;
-
-  /* left column: Today, This Week, On Your Radar — all as a running agenda */
-  h += `<div class="today-col" id="colToday">`;
-  h += `<div class="kicker">Today</div>`;
-  h += (d.today||[]).length ? events(d.today, d.date, {countdown:true})
-       : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`;
-  if((d.week||[]).length){
-    h += `<div class="kicker">This Week</div>`;
-    h += events(d.week, null);
+  /* bento grid: weather hero, to-do ring, today count, weekly radar bars */
+  h += `<div class="bento-grid">`;
+  h += `<div class="bento-hero" id="wxHero">`;
+  if(d.weather || hourly.length){
+    const cur = hourly[0] || {};
+    h += `<div class="bh-label">Weather</div>`;
+    if(cur.temp != null || cur.tF != null) h += `<div class="bh-temp">${esc(String(cur.temp ?? cur.tF))}°F</div>`;
+    h += `<div class="bh-cond">${esc(d.weather||"")}</div>`;
+    if(hourly.length) h += buildSparkline(hourly);
+  }else{
+    h += `<div class="bh-label">Weather</div><p style="color:#9BA0A6;font-size:13px;margin-top:12px">No forecast available.</p>`;
   }
-  h += `<div class="kicker">On Your Radar</div>`;
-  h += (d.radar||[]).length ? events(d.radar, null)
-       : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`;
   h += `</div>`;
 
-  /* right column: Urgent To-Dos, then Emails to Know About right beneath it — both plain, slightly larger */
-  h += `<div class="today-col" id="colAction">`;
-  const doneCount = (d.urgent||[]).filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
-  h += `<div class="kicker"><span class="todo-kicker-row">Urgent To-Dos${(d.urgent||[]).length?`<span class="todo-ring">${ringSvg(doneCount,(d.urgent||[]).length)}</span><span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:12px">${doneCount}/${(d.urgent||[]).length}</span>`:""}</span></div>`;
-  if(!(d.urgent||[]).length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing urgent flagged today.</p>`;
+  h += `<div class="bento-card center" id="todoRingCard">
+    <div class="bc-label">Urgent to-dos</div>
+    <div id="todoRingWrap" style="margin:10px 0 4px">${ringSvg(doneCount, urgentList.length, 68)}</div>
+    <div class="bc-ring-txt" id="todoRingTxt">${doneCount} / ${urgentList.length} done</div>
+  </div>`;
+
+  h += `<div class="bento-card">
+    <div class="bc-label">Today</div>
+    <div class="bc-num">${todayList.length}<span class="bc-unit">event${todayList.length===1?"":"s"}</span></div>
+    <div class="bc-bar"><div class="bc-bar-fill" style="width:${todayList.length ? Math.min(100, todayList.length*34) : 3}%"></div></div>
+  </div>`;
+
+  h += `<div class="bento-card bento-wide">
+    <div class="bc-label">On your radar this week</div>
+    ${buildWeekBars(radarList)}
+  </div>`;
+  h += `</div>`;
+
+  /* tabbed agenda: Today / On Your Radar */
+  h += `<div class="agenda-card">
+    <div class="agenda-tabs">
+      <button class="agenda-tab active" data-atab="today">Today</button>
+      <button class="agenda-tab" data-atab="radar">On your radar</button>
+    </div>
+    <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+    <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
+  </div>`;
+
+  /* urgent to-dos checklist */
+  h += `<div class="kicker">Urgent To-Dos</div>`;
+  if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing urgent flagged today.</p>`;
   else{
     h += `<div class="todos big">`;
-    d.urgent.forEach((t,i) => {
+    urgentList.forEach((t,i) => {
       const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
       h += `<div class="todo${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
     });
     h += `</div>`;
   }
 
-  h += `<div class="kicker">Emails to Know About</div>`;
-  if(!(d.emails||[]).length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing in your inbox that needs attention.</p>`;
-  else{
-    h += `<div class="inbox big">` + d.emails.map(m => {
-      const lead = typeof m === "string" ? m : m.lead, body = typeof m === "string" ? "" : m.body;
-      const gmailUrl = "https://mail.google.com/mail/u/0/#search/" + encodeURIComponent(String(lead||"").replace(/\s*[—–-]\s*$/,""));
-      return `<div class="mail" data-href="${esc(gmailUrl)}"><div class="env">✉</div><div><div class="mfrom"><span class="unread"></span>${esc(lead||"")}</div><div class="msnip">${esc(body||"")}</div></div><span class="go">Open in Gmail ↗</span></div>`;
-    }).join("") + `</div>`;
-  }
-  h += `</div>`;
-  h += `</div>`;
-
-  /* The Close: fun fact / history tidbit / word of the day (moved here from the News tab) */
+  /* The Close: fun fact / history tidbit / word of the day — unchanged */
   if(d.close){
     h += `<div class="kicker">The Close</div><div class="close-grid">`;
     if(d.close.funFact) h += `<div class="callout"><div class="lbl">Fun Fact</div><p>${esc(d.close.funFact)}</p></div>`;
@@ -880,15 +939,20 @@ function renderCalendarBody(p, d){
   p.querySelectorAll(".todo").forEach(el => el.addEventListener("click", () => {
     el.classList.toggle("done");
     localStorage.setItem(`dh-todo-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
-    const total = (d.urgent||[]).length;
+    const total = urgentList.length;
     const nowDone = p.querySelectorAll(".todo.done").length;
-    const ringHost = p.querySelector(".todo-ring");
-    if(ringHost) ringHost.innerHTML = ringSvg(nowDone, total);
-    const countEl = p.querySelector(".todo-kicker-row > span[style*='font-weight:400']");
-    if(countEl) countEl.textContent = `${nowDone}/${total}`;
+    const ringWrap = p.querySelector("#todoRingWrap");
+    if(ringWrap) ringWrap.innerHTML = ringSvg(nowDone, total, 68);
+    const txt = p.querySelector("#todoRingTxt");
+    if(txt) txt.textContent = `${nowDone} / ${total} done`;
   }));
-  p.querySelectorAll(".mail[data-href]").forEach(m => m.addEventListener("click", () => window.open(m.dataset.href, "_blank", "noopener")));
 
+  p.querySelectorAll(".agenda-tab").forEach(btn => btn.addEventListener("click", () => {
+    p.querySelectorAll(".agenda-tab").forEach(b => b.classList.toggle("active", b === btn));
+    p.querySelectorAll(".agenda-panel").forEach(pan => { pan.style.display = pan.dataset.apanel === btn.dataset.atab ? "block" : "none"; });
+  }));
+
+  if(hourly.length) wireSparkline(hourly);
   startCountdowns();
 }
 

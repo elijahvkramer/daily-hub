@@ -121,6 +121,47 @@
   .glance .card{cursor:pointer}
   .glance .card .tz{font-size:14.5px;font-weight:900;line-height:1.35;margin-top:2px}
 
+  /* ---------- news: front-page masthead ---------- */
+  .masthead{background:var(--ink);color:var(--cream);border-radius:16px;text-align:center;padding:26px 24px 22px;margin-bottom:22px;position:relative;overflow:hidden}
+  .masthead .mh-date{color:var(--gold);font-size:10.5px;font-weight:900;letter-spacing:.34em;text-transform:uppercase}
+  .masthead .mh-name{font-size:clamp(26px,4.6vw,40px);font-weight:900;letter-spacing:.12em;margin-top:8px;line-height:1}
+  .masthead .mh-rule{width:46px;height:3px;background:var(--gold);margin:12px auto 8px;border-radius:2px}
+  .masthead .mh-sub{color:#A6ABB1;font-size:12px;letter-spacing:.05em;font-weight:700}
+  .news-hero{display:grid;grid-template-columns:1.7fr 1fr;gap:0;background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+  .nh-lead{padding:24px 26px;border-right:1px solid var(--hairline)}
+  .nh-kick{color:#A08339;font-size:10.5px;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+  .nh-title{font-size:clamp(21px,3vw,29px);font-weight:900;line-height:1.14;letter-spacing:-.01em;margin:8px 0 10px;color:var(--ink)}
+  .nh-body{font-size:14.5px;line-height:1.66;color:#3A3E45}
+  .nh-quote{border-left:3px solid var(--gold);padding-left:14px;margin-top:16px;font-style:italic;font-size:15px;line-height:1.55;color:#33363C}
+  .nh-rail{padding:22px 22px;background:var(--paper)}
+  .nh-rail .rl-h{color:var(--muted);font-size:10.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;border-bottom:1px solid var(--hairline);padding-bottom:8px;margin-bottom:12px}
+  .rl-item{padding:9px 0;border-bottom:1px solid var(--hairline);cursor:pointer;transition:transform .15s}
+  .rl-item:last-child{border-bottom:none}
+  .rl-item:hover{transform:translateX(3px)}
+  .rl-item .rl-t{font-size:13.5px;font-weight:900;line-height:1.32;color:var(--ink)}
+  .rl-item .rl-s{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+  @media(max-width:760px){.news-hero{grid-template-columns:1fr}.nh-lead{border-right:none;border-bottom:1px solid var(--hairline)}}
+
+  /* section header with category pill */
+  .sec-head{display:flex;align-items:center;gap:12px;margin:36px 0 16px;scroll-margin-top:78px}
+  .sec-pill{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:20px;white-space:nowrap}
+  .sec-head .sh-line{flex:1;height:1px;background:var(--hairline)}
+  .sec-head .sh-n{color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.1em}
+  .news-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .ncard{background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);transition:transform .18s, box-shadow .18s;display:flex;gap:14px}
+  .ncard:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(22,24,29,.06),0 12px 32px -8px rgba(22,24,29,.14)}
+  .ncard .nc-num{color:var(--gold);font-weight:900;font-size:15px;min-width:22px;padding-top:1px}
+  .ncard .nc-t{font-size:14.5px;font-weight:900;line-height:1.32;color:var(--ink);margin-bottom:4px}
+  .ncard .nc-b{font-size:13.5px;line-height:1.55;color:#3A3E45}
+  @media(max-width:760px){.news-cards{grid-template-columns:1fr}}
+
+  /* markets section divider inside news */
+  .mkt-banner{background:var(--ink);color:var(--cream);border-radius:14px;padding:20px 24px;margin:44px 0 4px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .mkt-banner .mb-l .mb-k{color:var(--gold);font-size:10.5px;font-weight:900;letter-spacing:.24em;text-transform:uppercase}
+  .mkt-banner .mb-l .mb-t{font-size:20px;font-weight:900;margin-top:4px;line-height:1.15}
+  .mkt-banner .mb-l .mb-s{color:#A6ABB1;font-size:12.5px;margin-top:5px;max-width:520px;line-height:1.5}
+  .mkt-banner .mb-date{color:#8A8F95;font-size:11.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+
   /* calendar */
   .lockbox{max-width:420px;margin:30px auto;text-align:center;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:44px 36px;box-shadow:var(--shadow)}
   .lockbox .padlock{font-size:26px;color:var(--gold);margin-bottom:14px}
@@ -165,35 +206,75 @@
   /* ---------- today tab: bento dashboard ---------- */
   .evt-wrap{position:relative}
   .countdown{display:inline-block;margin-top:3px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#A08339;background:rgba(200,162,75,.14);border-radius:5px;padding:2px 7px}
-  .bento-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:14px;margin-top:36px}
-  .bento-hero{grid-row:span 2;background:var(--ink);border-radius:14px;padding:22px 24px;color:var(--cream);position:relative}
-  .bh-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9BA0A6;font-weight:900}
-  .bh-temp{font-size:32px;font-weight:900;margin-top:8px;line-height:1}
-  .bh-cond{font-size:13px;color:var(--gold-soft);margin-top:4px}
-  .bh-spark{width:100%;height:64px;margin-top:18px;display:block}
-  .bh-axis{display:flex;justify-content:space-between;font-size:10.5px;color:#8A8F95;margin-top:4px}
-  .bh-tip{position:absolute;pointer-events:none;background:var(--cream);color:var(--ink);font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:7px;transform:translate(-50%,-118%);white-space:nowrap;display:none;z-index:5}
+
+  /* weather hero — full-width, richer */
+  .wx-hero{background:var(--ink);border-radius:16px;padding:24px 26px;color:var(--cream);position:relative;margin-top:34px;overflow:hidden}
+  .wx-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .wx-now{display:flex;align-items:center;gap:18px}
+  .wx-glyph{font-size:46px;line-height:1;color:var(--gold)}
+  .wx-temp{font-size:52px;font-weight:900;line-height:.95;letter-spacing:-.02em}
+  .wx-cond{font-size:14px;color:var(--gold-soft);font-weight:700;margin-top:2px}
+  .wx-loc{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A8F95;font-weight:900;margin-top:6px}
+  .wx-meta{display:flex;gap:26px;flex-wrap:wrap}
+  .wx-meta .m{text-align:right}
+  .wx-meta .mk{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8A8F95;font-weight:900}
+  .wx-meta .mv{font-size:16px;font-weight:900;color:var(--cream);margin-top:3px}
+  .wx-chart-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8A8F95;font-weight:900;margin:22px 0 2px}
+  .bh-spark{width:100%;height:76px;display:block}
+  .bh-axis{display:flex;justify-content:space-between;font-size:10.5px;color:#8A8F95;margin-top:2px}
+  .bh-tip{position:absolute;pointer-events:none;background:var(--cream);color:var(--ink);font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:7px;transform:translate(-50%,-118%);white-space:nowrap;display:none;z-index:5;box-shadow:0 6px 18px -6px rgba(0,0,0,.45)}
   .bh-tip b{color:#A08339}
-  .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-  .bento-card.center{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+  /* today grid: to-dos + ring, portfolio snapshot, radar */
+  .today-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
+  .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
   .bc-num{font-size:27px;font-weight:900;color:var(--ink);margin-top:6px;line-height:1}
   .bc-unit{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
-  .bc-bar{height:5px;background:var(--hairline);border-radius:3px;margin-top:14px;overflow:hidden}
-  .bc-bar-fill{height:100%;background:var(--up);transition:width .5s}
-  .bc-ring-txt{font-size:12.5px;font-weight:900;color:var(--ink);margin-top:6px}
-  .bento-wide{grid-column:span 2}
-  .wk-bars{display:flex;align-items:flex-end;gap:8px;height:58px;margin-top:12px}
-  .wk-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
-  .wk-bar{width:100%;border-radius:4px;background:var(--paper);min-height:3px;transition:height .5s}
+  .bc-ring-txt{font-size:12.5px;font-weight:900;color:var(--ink);margin-top:8px}
+
+  /* to-do card with side ring */
+  .todo-card{display:flex;gap:20px;align-items:stretch}
+  .todo-card .tc-list{flex:1;min-width:0}
+  .todo-card .tc-ring{flex-shrink:0;width:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-left:1px solid var(--hairline);padding-left:18px}
+  .todo-card .tc-ring svg{overflow:visible;display:block}
+  .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .tc-head .h{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .todo-inline{display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px solid var(--hairline);cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
+  .todo-inline:last-child{border-bottom:none}
+  .todo-inline:hover{background:var(--paper)}
+  .todo-inline .box{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:900;color:transparent;transition:all .15s}
+  .todo-inline.done .box{background:var(--gold);color:var(--ink)}
+  .todo-inline.done span.txt{text-decoration:line-through;color:var(--muted)}
+
+  /* portfolio snapshot */
+  .psnap{cursor:pointer;position:relative;display:flex;flex-direction:column}
+  .psnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
+  .psnap .ps-head{display:flex;align-items:center;justify-content:space-between}
+  .psnap .ps-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#A08339;display:inline-flex;align-items:center;gap:4px}
+  .psnap .ps-val{font-size:30px;font-weight:900;letter-spacing:-.01em;color:var(--ink);margin-top:8px;line-height:1}
+  .psnap .ps-chg{font-size:13.5px;font-weight:900;margin-top:6px}
+  .psnap .ps-spark{width:100%;height:46px;margin-top:12px;display:block}
+  .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
+
+  /* radar week bars with hover */
+  .radar-card{position:relative}
+  .wk-bars{display:flex;align-items:flex-end;gap:10px;height:66px;margin-top:14px}
+  .wk-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;cursor:default}
+  .wk-bar{width:100%;border-radius:4px;background:var(--paper);min-height:3px;transition:height .5s, background .15s}
+  .wk-bar-wrap:hover .wk-bar{background:var(--gold-soft)}
   .wk-bar.hi{background:var(--gold)}
-  .wk-day{font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:700}
+  .wk-day{font-size:10.5px;color:var(--muted);margin-top:7px;font-weight:700}
+  .wk-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:9px 12px;border-radius:8px;max-width:230px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
+  .wk-tip b{color:var(--gold-soft)}
+  .wk-tip .wt-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:4px}
+
   .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:6px 18px 4px;margin-top:20px}
   .agenda-tabs{display:flex;gap:22px;border-bottom:1px solid var(--hairline)}
   .agenda-tab{appearance:none;background:none;border:none;font:inherit;font-size:12.5px;font-weight:900;color:var(--muted);padding:12px 0 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
   .agenda-tab.active{color:var(--ink);border-bottom-color:var(--gold)}
   .agenda-panel{padding:14px 0 6px}
-  @media(max-width:760px){.bento-grid{grid-template-columns:1fr 1fr}.bento-hero{grid-column:span 2;grid-row:auto}.bento-wide{grid-column:span 2}}
+  @media(max-width:760px){.today-grid{grid-template-columns:1fr}.todo-card{flex-direction:column}.todo-card .tc-ring{border-left:none;border-top:1px solid var(--hairline);padding-left:0;padding-top:16px;width:100%;flex-direction:row;gap:16px}}
 
   /* ---------- site gate ---------- */
   #gate{position:fixed;inset:0;z-index:200;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -249,14 +330,60 @@
 
   /* ---------- games launcher ---------- */
   .game-back{margin-bottom:20px}
-  .game-grid{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .game-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:26px 16px;box-shadow:var(--shadow);text-decoration:none;color:inherit;cursor:pointer;font:inherit;transition:transform .18s, box-shadow .18s, border-color .18s}
+  .games-wrap{max-width:860px;margin:0 auto}
+  .game-cat{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin:32px 0 14px;display:flex;align-items:center;gap:12px}
+  .game-cat::after{content:"";flex:1;height:1px;background:var(--hairline)}
+  .game-cat:first-child{margin-top:0}
+
+  /* spotlight */
+  .spotlight{background:var(--ink);color:var(--cream);border-radius:16px;padding:26px 28px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;position:relative;overflow:hidden;cursor:pointer;transition:transform .18s}
+  .spotlight:hover{transform:translateY(-2px)}
+  .spotlight .sp-k{color:var(--gold);font-size:10.5px;font-weight:900;letter-spacing:.24em;text-transform:uppercase}
+  .spotlight .sp-t{font-size:25px;font-weight:900;margin-top:8px;line-height:1.1}
+  .spotlight .sp-s{color:#A6ABB1;font-size:13.5px;line-height:1.55;margin-top:8px;max-width:440px}
+  .spotlight .sp-go{margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:11px 18px;border-radius:9px}
+  .spotlight .sp-badge{width:96px;height:96px;border-radius:20px;background:rgba(200,162,75,.14);border:1px solid rgba(200,162,75,.4);display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--gold)}
+  @media(max-width:560px){.spotlight{grid-template-columns:1fr}.spotlight .sp-badge{display:none}}
+
+  .game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .game-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:9px;background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:20px 20px;box-shadow:var(--shadow);text-decoration:none;color:inherit;cursor:pointer;font:inherit;transition:transform .18s, box-shadow .18s, border-color .18s;position:relative}
   .game-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 2px 4px rgba(22,24,29,.06),0 14px 34px -10px rgba(22,24,29,.16)}
-  .game-icon{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--paper)}
-  .game-icon-quiz{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--gold);font-size:20px}
+  .game-card.built{border-color:rgba(200,162,75,.4)}
+  .gc-top{display:flex;align-items:center;gap:12px;width:100%}
+  .game-icon{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--paper);flex-shrink:0}
+  .game-icon-b{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--gold);font-size:20px;flex-shrink:0}
   .game-name{font-size:14.5px;font-weight:900;letter-spacing:.01em}
+  .gc-ext{margin-left:auto;color:var(--muted);font-size:13px}
   .game-tag{font-size:12px;line-height:1.5;color:var(--muted)}
+  .gc-chip{position:absolute;top:14px;right:14px;font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#A08339;background:var(--cream);padding:3px 8px;border-radius:20px}
   @media(max-width:640px){.game-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:440px){.game-grid{grid-template-columns:1fr}}
+
+  /* built-in: Daily Grid */
+  .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
+  .dg-target{font-size:15px;color:var(--muted);font-weight:700;margin:6px 0 4px}
+  .dg-target b{color:var(--ink);font-size:22px}
+  .dg-sum{font-size:13.5px;font-weight:900;margin-bottom:16px;min-height:20px}
+  .dg-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 auto 20px;max-width:360px}
+  .dg-cell{aspect-ratio:1;border:1px solid var(--hairline);border-radius:12px;background:var(--card);font:inherit;font-size:22px;font-weight:900;color:var(--ink);cursor:pointer;transition:all .14s;box-shadow:var(--shadow)}
+  .dg-cell:hover:not(:disabled){border-color:var(--gold);transform:translateY(-2px)}
+  .dg-cell.sel{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .dg-cell.solved{background:rgba(24,153,107,.12);border-color:var(--up);color:var(--up);cursor:default}
+  .dg-cell:disabled{cursor:default}
+
+  /* built-in: Bull or Bear */
+  .bb-wrap{max-width:560px;margin:0 auto;text-align:center}
+  .bb-cards{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:22px 0}
+  .bb-card{background:var(--card);border:1px solid var(--hairline);border-radius:16px;padding:26px 18px;box-shadow:var(--shadow);cursor:pointer;transition:all .16s}
+  .bb-card:hover:not(.locked){border-color:var(--gold);transform:translateY(-3px)}
+  .bb-card.locked{cursor:default}
+  .bb-tk{font-size:22px;font-weight:900;letter-spacing:.02em}
+  .bb-nm{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.4;min-height:32px}
+  .bb-reveal{font-size:20px;font-weight:900;margin-top:10px;opacity:0;transition:opacity .3s}
+  .bb-card.show .bb-reveal{opacity:1}
+  .bb-vs{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.1em}
+  .bb-q{font-size:15px;font-weight:900;color:var(--ink)}
+  .bb-score{font-size:13px;color:var(--muted);font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 
   /* portfolio history chart */
   .hist-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;font-weight:700;padding:7px 11px;border-radius:7px;transform:translate(-50%,-120%);white-space:nowrap;display:none;z-index:5}
@@ -379,8 +506,6 @@
     <div class="tabs" role="tablist">
       <button class="tab active" data-tab="calendar" role="tab">Today</button>
       <button class="tab" data-tab="news" role="tab">News</button>
-      <button class="tab" data-tab="market" role="tab">Markets</button>
-      <button class="tab" data-tab="portfolio" role="tab">Portfolio</button>
       <button class="tab" data-tab="quiz" role="tab">Games</button>
     </div>
     <div class="top-right">
@@ -419,7 +544,7 @@
 <script>
 "use strict";
 /* ================= state ================= */
-const S = { manifest:null, tab:"calendar", date:{market:null,news:null,calendar:null}, cache:{}, holdEnc:null };
+const S = { manifest:null, tab:"calendar", date:{market:null,news:null,calendar:null}, cache:{}, holdEnc:null, wx:null };
 let gamesView = "launcher"; // "launcher" | "quiz" — sub-view within the Games tab
 let PASS = null;
 const $ = s => document.querySelector(s);
@@ -447,8 +572,9 @@ async function boot(){
       S.date[k] = S.manifest[k][0] || null;
     });
     $("#footUpdated").textContent = S.manifest.updated ? "Last update " + new Date(S.manifest.updated).toLocaleString("en-US",{timeZone:"America/Chicago",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " CT" : "";
-    const savedTab = localStorage.getItem("dh-tab");
-    if(savedTab && ["market","news","calendar","portfolio","quiz"].includes(savedTab)) S.tab = savedTab;
+    let savedTab = localStorage.getItem("dh-tab");
+    if(savedTab === "market" || savedTab === "portfolio") savedTab = null;   // no longer top-level tabs
+    if(savedTab && ["news","calendar","quiz"].includes(savedTab)) S.tab = savedTab;
     document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab===S.tab));
     document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
     fillDates(); await show();
@@ -513,6 +639,18 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
 })));
 $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.target.value; await show(); });
 
+/* Portfolio is no longer a top-level tab — it's reached from the Today snapshot card.
+   This routes into the portfolio panel (deactivating the nav tabs) and back. */
+function goPortfolio(){
+  animatedTabSwitch(async () => {
+    S.tab = "portfolio";
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-portfolio"));
+    fillDates(); await show();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+}
+
 function fillDates(){
   const sel = $("#dateSelect"); sel.innerHTML = "";
   if(S.tab === "portfolio" || S.tab === "quiz"){ sel.style.visibility = "hidden"; return; }
@@ -562,8 +700,7 @@ async function show(){
   staleCheck(kind, date);
   try{
     const d = await fetchDay(kind, date);
-    if(kind==="market") renderMarket(d);
-    else if(kind==="news") renderNews(d);
+    if(kind==="news") renderNews(d);
     else{
       $("#heroTitle").textContent = "Your Day, Briefed";
       $("#heroSub").textContent = "Calendar, to-dos, weather, and inbox highlights for the day.";
@@ -576,11 +713,9 @@ async function show(){
 }
 
 /* ================= market ================= */
-function renderMarket(d){
-  $("#heroTitle").innerHTML = esc(d.headline).replace(/\n/g,"<br>");
-  $("#heroSub").textContent = d.subtitle || "";
-  $("#heroDateline").textContent = (d.dateline || niceDate(d.date)) + " · U.S. Equities Close";
-  const p = $("#panel-market");
+/* Markets is no longer a standalone tab — buildMarketHTML(d) returns the full
+   markets section markup so it can be embedded inside the News front page. */
+function buildMarketHTML(d){
   let h = "";
 
   h += `<div class="kicker">Index Scoreboard</div><div class="grid cols-5">`;
@@ -622,8 +757,9 @@ function renderMarket(d){
   h += `</div>`;
 
   if(d.bottomLine) h += `<div class="kicker">Bottom Line</div><div class="callout"><div class="lbl">Bottom Line</div><p>${esc(d.bottomLine)}</p></div>`;
-  if(d.sources) h += `<p class="sources">Sources: ${esc(d.sources)}</p>`;
-  p.innerHTML = h;
+  return h;
+}
+function wireMarketCharts(d){
   drawVChart(d.indices||[]); drawHChart(d.sectors||[]);
 }
 
@@ -675,30 +811,111 @@ function drawHChart(sectors){
   });
 }
 
-/* ================= news ================= */
-function renderNews(d){
-  $("#heroTitle").innerHTML = esc(d.headline).replace(/\n/g,"<br>");
-  $("#heroSub").textContent = d.subtitle || "";
+/* ================= news (front-page) ================= */
+/* category → pill color, keyed off section title keywords */
+function secPill(title){
+  const t = (title||"").toLowerCase();
+  const map = [
+    [/market|econom|wall st|business|financ|earning/, ["#F4EDE0","#8A6D2F"]],
+    [/tech|ai|science|chip|space/,                    ["#EDEAF2","#6B5B8A"]],
+    [/world|global|internat|geopolit|middle east|ukraine|china/, ["#E1EFEA","#2F6B54"]],
+    [/politic|policy|election|congress|white house|law/, ["#F0E7E4","#8A5A3F"]],
+    [/climate|weather|energy|environ/,                ["#E6EEF4","#3A5A78"]],
+    [/sport|culture|arts|entertain/,                  ["#F4E9EE","#8A4B63"]],
+    [/health|medic/,                                  ["#E9F0E4","#5A7A2F"]]
+  ];
+  for(const [re,c] of map) if(re.test(t)) return c;
+  return ["#F1EFE8","#5F5E5A"];
+}
+
+async function renderNews(d){
+  $("#heroEyebrow").textContent = NICE.news;
+  $("#heroTitle").textContent = "The Front Page";
+  $("#heroSub").textContent = "Today's news and markets — one edition.";
   $("#heroDateline").textContent = (d.dateline || niceDate(d.date)) + " · Global & U.S. Roundup";
   const p = $("#panel-news");
-  let h = "";
+  const dateLabel = (d.dateline || niceDate(d.date));
+  const sections = d.sections || [];
 
-  if((d.glance||[]).length){
-    h += `<div class="kicker">At a Glance</div><div class="grid cols-4 glance">`;
-    d.glance.forEach((g,i) => h += `<div class="card" data-goto="sec-${i}"><div class="lbl">${esc(g.label)}</div><div class="tz">${esc(g.teaser)}</div></div>`);
-    h += `</div>`;
+  /* pick a lead story: the headline + first item of the first section as the deck */
+  const leadSec = sections[0] || {items:[]};
+  const leadItem = (leadSec.items||[])[0] || {lead:"", body:""};
+  const leadBody = d.subtitle || ((leadItem.lead? leadItem.lead+" ":"") + (leadItem.body||""));
+
+  /* rail: use glance teasers if present, else the next few section-one items */
+  let rail = [];
+  if((d.glance||[]).length) rail = d.glance.map((g,i) => ({t:g.teaser, s:g.label, goto:`sec-${i}`}));
+  else {
+    sections.slice(0,4).forEach((s,si) => { const it=(s.items||[])[0]; if(it) rail.push({t:it.lead||s.title, s:s.title, goto:`sec-${si}`}); });
   }
-  (d.sections||[]).forEach((sec,si) => {
-    h += `<div class="kicker" id="sec-${si}">${esc(sec.title)}</div><div class="items">`;
-    (sec.items||[]).forEach((it,i) => h += `<div class="item"><div class="num">${String(i+1).padStart(2,"0")}</div><p><b>${esc(it.lead)}</b> ${esc(it.body)}</p></div>`);
+
+  let h = "";
+  h += `<div class="masthead">
+    <div class="mh-date">${esc(dateLabel)}</div>
+    <div class="mh-name">THE DAILY HUB</div>
+    <div class="mh-rule"></div>
+    <div class="mh-sub">Global &amp; U.S. Roundup · Evening Edition</div>
+  </div>`;
+
+  h += `<div class="news-hero">
+    <div class="nh-lead">
+      <div class="nh-kick">Lead Story</div>
+      <div class="nh-title">${esc(d.headline||"").replace(/\n/g," ")}</div>
+      <div class="nh-body">${esc(leadBody)}</div>
+      ${d.bottomLine ? `<div class="nh-quote">“${esc(d.bottomLine)}”</div>` : ""}
+    </div>
+    <div class="nh-rail">
+      <div class="rl-h">More Headlines</div>
+      ${rail.slice(0,5).map(r => `<div class="rl-item" data-goto="${esc(r.goto||"")}"><div class="rl-t">${esc(r.t)}</div>${r.s?`<div class="rl-s">${esc(r.s)}</div>`:""}</div>`).join("")}
+    </div>
+  </div>`;
+
+  /* category-pilled sections, first section's remaining items + all others */
+  sections.forEach((sec,si) => {
+    const [bg,fg] = secPill(sec.title);
+    let items = sec.items || [];
+    if(si === 0) items = items.slice(1);   // first item already used as the lead
+    if(!items.length) return;
+    h += `<div class="sec-head" id="sec-${si}">
+      <span class="sec-pill" style="background:${bg};color:${fg}">${esc(sec.title)}</span>
+      <span class="sh-line"></span><span class="sh-n">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
+    h += `<div class="news-cards">`;
+    items.forEach((it,i) => h += `<div class="ncard"><div class="nc-num">${String(i+1).padStart(2,"0")}</div>
+      <div><div class="nc-t">${esc(it.lead)}</div><div class="nc-b">${esc(it.body)}</div></div></div>`);
     h += `</div>`;
   });
-  /* Fun Fact / History Tidbit / Word of the Day moved to the Today tab (see renderCalendarBody). */
+
   if(d.sources) h += `<p class="sources">Sources: ${esc(d.sources)}</p>`;
+
+  /* ---- Markets section, embedded ---- */
+  h += `<div id="mktMount"><div class="mkt-banner"><div class="mb-l"><div class="mb-k">Markets</div><div class="mb-t">Loading the day's market brief…</div></div></div></div>`;
+
   p.innerHTML = h;
   p.querySelectorAll("[data-goto]").forEach(c => c.addEventListener("click", () => {
-    document.getElementById(c.dataset.goto)?.scrollIntoView({behavior:"smooth",block:"start"});
+    const id = c.dataset.goto; if(id) document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});
   }));
+
+  /* fetch + embed the latest market brief */
+  try{
+    const latest = (S.manifest?.market || [])[0];
+    const mount = $("#mktMount");
+    if(!latest){ if(mount) mount.innerHTML = ""; return; }
+    const md = await fetchDay("market", latest);
+    if(!$("#mktMount")) return;
+    let mh = `<div class="mkt-banner">
+      <div class="mb-l"><div class="mb-k">Markets · Day Close</div>
+        <div class="mb-t">${esc((md.headline||"").replace(/\n/g," "))}</div>
+        <div class="mb-s">${esc(md.subtitle||"")}</div></div>
+      <div class="mb-date">${esc(md.dateline || niceDate(md.date))} · U.S. Equities Close</div>
+    </div>`;
+    mh += buildMarketHTML(md);
+    if(md.sources) mh += `<p class="sources">Market sources: ${esc(md.sources)}</p>`;
+    $("#mktMount").innerHTML = mh;
+    wireMarketCharts(md);
+  }catch(e){
+    const mount = $("#mktMount");
+    if(mount) mount.innerHTML = `<div class="mkt-banner"><div class="mb-l"><div class="mb-k">Markets</div><div class="mb-t" style="font-size:15px">The latest market brief couldn't be loaded.</div></div></div>`;
+  }
 }
 
 /* ================= calendar (encrypted) ================= */
@@ -727,6 +944,64 @@ function wxGlyph(cond){
   return "◦";
 }
 function fmtHour(hh){ const h = Number(hh); if(isNaN(h)) return esc(String(hh)); const ap = h>=12?"pm":"am"; const v = h%12===0?12:h%12; return v+ap; }
+
+/* ---------- live weather (Open-Meteo, no key) ----------
+   The scheduled task's hourly[] is empty on many days, so the site pulls its own
+   forecast for Franklin, TN (ZIP 37064). WMO weather codes are mapped to the same
+   condition strings wxGlyph() already understands. Cached on S.wx for the session. */
+const WX_LOC = { lat: 35.925, lon: -86.869, label: "Franklin, TN" };
+function wmoText(code, isDay){
+  const c = Number(code);
+  if(c === 0) return isDay ? "Sunny" : "Clear";
+  if(c === 1) return isDay ? "Mostly Sunny" : "Mostly Clear";
+  if(c === 2) return "Partly Cloudy";
+  if(c === 3) return "Overcast";
+  if(c === 45 || c === 48) return "Fog";
+  if(c >= 51 && c <= 57) return "Drizzle";
+  if(c >= 61 && c <= 67) return "Rain";
+  if(c >= 71 && c <= 77) return "Snow";
+  if(c >= 80 && c <= 82) return "Showers";
+  if(c >= 85 && c <= 86) return "Snow Showers";
+  if(c >= 95) return "Thunderstorm";
+  return "Clouds";
+}
+async function fetchWeather(){
+  if(S.wx) return S.wx;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LOC.lat}&longitude=${WX_LOC.lon}`
+    + `&hourly=temperature_2m,precipitation_probability,weather_code,is_day`
+    + `&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m`
+    + `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
+    + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=1`;
+  const r = await fetch(url, {cache:"no-store"});
+  if(!r.ok) throw new Error("weather http "+r.status);
+  const j = await r.json();
+  const times = j.hourly.time;
+  const nowHour = new Date().toLocaleString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit"}).slice(0,2);
+  const nowH = parseInt(nowHour,10);
+  const hourly = [];
+  times.forEach((t,i) => {
+    const hh = parseInt(t.slice(11,13),10);
+    if(hh < nowH && hourly.length === 0) return;   // start at the current hour
+    hourly.push({ t: hh, temp: Math.round(j.hourly.temperature_2m[i]),
+      cond: wmoText(j.hourly.weather_code[i], j.hourly.is_day[i]===1),
+      precip: j.hourly.precipitation_probability[i] ?? 0 });
+  });
+  const cur = j.current || {};
+  const d0 = j.daily || {};
+  S.wx = {
+    label: WX_LOC.label,
+    curTemp: Math.round(cur.temperature_2m),
+    curCond: wmoText(cur.weather_code, cur.is_day===1),
+    feels: Math.round(cur.apparent_temperature),
+    humidity: cur.relative_humidity_2m,
+    wind: Math.round(cur.wind_speed_10m),
+    hi: Math.round((d0.temperature_2m_max||[])[0]),
+    lo: Math.round((d0.temperature_2m_min||[])[0]),
+    rainMax: (d0.precipitation_probability_max||[])[0] ?? null,
+    hourly
+  };
+  return S.wx;
+}
 
 /* parse a lead like "Wed 7/15, 11:45am–1pm CT —" into its pieces (date tile + time range + title) */
 function parseEventLead(lead, body, fallbackDate){
@@ -792,19 +1067,23 @@ function ringSvg(done, total, size){
 }
 
 function buildSparkline(hourly){
-  const W = 300, H = 64;
+  const W = 300, H = 76;
   const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
   let min = Math.min(...vals), max = Math.max(...vals);
   if(min === max){ min -= 1; max += 1; }
+  const PT = 8, PB = 8;                                    // vertical breathing room so the line/dot never clip
   const X = i => hourly.length > 1 ? i/(hourly.length-1)*W : 0;
-  const Y = v => H - ((v-min)/(max-min))*H;
-  let line = "";
-  hourly.forEach((x,i) => { const v = Number(x.temp ?? x.tF ?? 0); line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)} `; });
+  const Y = v => PT + (H-PT-PB) - ((v-min)/(max-min))*(H-PT-PB);
+  let line = "", area = `M ${X(0).toFixed(1)} ${H}`;
+  hourly.forEach((x,i) => { const v = Number(x.temp ?? x.tF ?? 0); line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)} `; area += ` L ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`; });
+  area += ` L ${X(hourly.length-1).toFixed(1)} ${H} Z`;
   const first = hourly[0], last = hourly[hourly.length-1];
-  return `<svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark">
-    <path d="${line}" fill="none" stroke="#C8A24B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    <line id="wxHair" x1="0" x2="0" y1="0" y2="${H}" stroke="#C8A24B" stroke-width="1" opacity=".5" style="display:none"/>
-    <circle id="wxDot" r="3.5" fill="#C8A24B" style="display:none"/>
+  return `<svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark" preserveAspectRatio="none">
+    <defs><linearGradient id="wxGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C8A24B" stop-opacity=".28"/><stop offset="100%" stop-color="#C8A24B" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#wxGrad)"/>
+    <path d="${line}" fill="none" stroke="#C8A24B" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <line id="wxHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="#E3CE9A" stroke-width="1" opacity=".6" style="display:none"/>
+    <circle id="wxDot" r="3.8" fill="#E3CE9A" style="display:none"/>
     <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="wxHit"/>
   </svg>
   <div class="bh-axis"><span>${esc(fmtHour(first.t ?? first.h))}</span><span>${esc(fmtHour(last.t ?? last.h))}</span></div>
@@ -813,12 +1092,12 @@ function buildSparkline(hourly){
 
 function wireSparkline(hourly){
   const svg = $("#wxSpark"); if(!svg) return;
-  const W = 300, H = 64;
+  const W = 300, H = 76, PT = 8, PB = 8;
   const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
   let min = Math.min(...vals), max = Math.max(...vals);
   if(min === max){ min -= 1; max += 1; }
   const X = i => hourly.length > 1 ? i/(hourly.length-1)*W : 0;
-  const Y = v => H - ((v-min)/(max-min))*H;
+  const Y = v => PT + (H-PT-PB) - ((v-min)/(max-min))*(H-PT-PB);
   const hit = $("#wxHit"), hair = $("#wxHair"), dot = $("#wxDot"), tip = $("#wxTip");
   hit.addEventListener("mousemove", e => {
     const r = svg.getBoundingClientRect();
@@ -832,30 +1111,113 @@ function wireSparkline(hourly){
     tip.style.display = "block";
     tip.style.left = (px/W*100) + "%";
     tip.style.top = (py/H*r.height) + "px";
-    tip.innerHTML = `${esc(fmtHour(x.t ?? x.h))} · <b>${esc(String(v))}°</b> · ${esc(wxGlyph(x.cond||x.c))} ☂${esc(String(x.precip ?? x.p ?? 0))}%`;
+    tip.innerHTML = `${esc(fmtHour(x.t ?? x.h))} · <b>${esc(String(v))}°</b> · ${esc(x.cond||x.c||"")} · ☂${esc(String(x.precip ?? x.p ?? 0))}%`;
   });
   hit.addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
 
-function buildWeekBars(radarList){
+/* week radar bars — hovering a day pops a tooltip listing that day's events */
+function buildWeekBars(radarList, todayList, todayDate){
   const order = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
-  const counts = {}; order.forEach(dw => counts[dw] = 0);
+  const items = {}; order.forEach(dw => items[dw] = []);
+  const todayDow = todayDate ? new Date(todayDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"}).slice(0,3).toUpperCase() : "";
+  (todayList||[]).forEach(item => {
+    const body = typeof item === "string" ? item : ((item.title? item.title+" ":"")+(item.body||item.lead||""));
+    if(todayDow && items[todayDow]) items[todayDow].push(typeof item==="string"?item:(item.body||item.lead||""));
+  });
   (radarList||[]).forEach(item => {
     const lead = typeof item === "string" ? item : item.lead;
-    const ev = parseEventLead(lead, "", null);
-    if(ev.tw && counts[ev.tw] != null) counts[ev.tw]++;
+    const body = typeof item === "string" ? item : (item.body||item.lead||"");
+    const ev = parseEventLead(lead, body, null);
+    if(ev.tw && items[ev.tw]){
+      const label = ev.title || (typeof item==="string"?item:(item.body||item.lead||""));
+      items[ev.tw].push(label);
+    }
   });
+  const counts = {}; order.forEach(dw => counts[dw] = items[dw].length);
   const max = Math.max(1, ...order.map(dw => counts[dw]));
+  const full = {MON:"Monday",TUE:"Tuesday",WED:"Wednesday",THU:"Thursday",FRI:"Friday",SAT:"Saturday",SUN:"Sunday"};
   return `<div class="wk-bars">` + order.map(dw => {
     const c = counts[dw];
-    const hgt = c ? Math.max(10, c/max*100) : 3;
-    return `<div class="wk-bar-wrap"><div class="wk-bar${c===max && c>0?" hi":""}" style="height:${hgt}%"></div><div class="wk-day">${dw[0]}</div></div>`;
+    const hgt = c ? Math.max(12, c/max*100) : 3;
+    const evJson = esc(JSON.stringify({day:full[dw], list:items[dw]}));
+    return `<div class="wk-bar-wrap" data-wk='${evJson}' data-today="${dw===todayDow?"1":""}"><div class="wk-bar${c===max && c>0?" hi":""}" style="height:${hgt}%"></div><div class="wk-day">${dw[0]}</div></div>`;
   }).join("") + `</div>`;
+}
+function wireWeekBars(card){
+  const tip = card.querySelector(".wk-tip"); if(!tip) return;
+  card.querySelectorAll(".wk-bar-wrap").forEach(w => {
+    w.addEventListener("mouseenter", () => {
+      let data; try{ data = JSON.parse(w.dataset.wk); }catch(e){ return; }
+      const isToday = w.dataset.today === "1";
+      const rows = (data.list||[]).length
+        ? data.list.map(t => `• ${esc(t)}`).join("<br>")
+        : `<span style="color:#8A8F95">Nothing scheduled</span>`;
+      tip.innerHTML = `<div class="wt-day">${esc(data.day)}${isToday?" · Today":""}</div>${rows}`;
+      tip.style.display = "block";
+      const cr = card.getBoundingClientRect(), wr = w.getBoundingClientRect();
+      let left = wr.left - cr.left + wr.width/2;
+      tip.style.left = "0px"; tip.style.top = "0px";
+      const tw = tip.offsetWidth;
+      left = Math.max(6, Math.min(cr.width - tw - 6, left - tw/2));
+      tip.style.left = left + "px";
+      tip.style.top = (wr.top - cr.top - tip.offsetHeight - 8) + "px";
+    });
+    w.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+}
+
+/* portfolio snapshot for the Today tab — mirrors the Portfolio tab's day/total math,
+   rendered compactly with a mini sparkline. Clicking anywhere opens the Portfolio view. */
+function buildPortfolioSnapshot(){
+  if(!HOLDINGS) return "";
+  return `<div class="bento-card psnap" id="psnap" title="Open full portfolio">
+    <div class="ps-head"><div class="bc-label">Portfolio</div><span class="ps-open">Open <span style="font-size:13px">→</span></span></div>
+    <div class="ps-val" id="psVal">—</div>
+    <div class="ps-chg neutral" id="psChg">Loading live prices…</div>
+    <div id="psSparkWrap"></div>
+    <div class="ps-foot" id="psFoot"></div>
+  </div>`;
+}
+function wirePortfolioSnapshot(){
+  const card = $("#psnap"); if(!card || !HOLDINGS) return;
+  card.addEventListener("click", goPortfolio);
+  const paint = () => {
+    pCompute();
+    const t = pTotals(P.pos);
+    $("#psVal").textContent = usd(t.value, 0);
+    const chg = $("#psChg");
+    chg.className = "ps-chg " + pcls(t.day);
+    chg.innerHTML = `${t.day>=0?"▲":"▼"} ${usdS(t.day)} <span style="color:var(--muted);font-weight:700">(${pctS(t.dayPct)}) today</span>`;
+    $("#psFoot").textContent = t.anyLive ? "Live prices · tap to explore" : `${HOLDINGS.meta.snapshotLabel} snapshot · tap to explore`;
+    // mini sparkline from value history once loaded
+    const sw = $("#psSparkWrap");
+    if(P.histReady){
+      const all = histSeries();
+      if(all && all.length >= 2){
+        const pts = all.slice(-30);
+        const W = 260, H = 46, vals = pts.map(p=>p.v);
+        let mn = Math.min(...vals), mx = Math.max(...vals); if(mn===mx){mn-=1;mx+=1;}
+        const X = i => i/(pts.length-1)*W, Y = v => H-4 - ((v-mn)/(mx-mn))*(H-8);
+        let line = "", area = `M 0 ${H}`;
+        pts.forEach((p,i)=>{ line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)} `; area += ` L ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`; });
+        area += ` L ${W} ${H} Z`;
+        const up = pts[pts.length-1].v >= pts[0].v;
+        const col = up ? "#18996B" : "#DC4B43";
+        sw.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
+          <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+          <path d="${area}" fill="url(#psGrad)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+      }
+    } else { loadHistory(); }
+  };
+  paint();
+  if(!P.fetched && !P.fetching) pFetchLive().then(() => { if($("#psnap")) paint(); });
+  // repaint when history finishes loading
+  const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.histReady){ paint(); clearInterval(hi); } }, 500);
 }
 
 function renderCalendarBody(p, d){
   let h = "";
-  const hourly = d.hourly || [];
   const todayList = d.today || [];
   const radarList = d.radar || [];
   const urgentList = d.urgent || [];
@@ -871,61 +1233,58 @@ function renderCalendarBody(p, d){
     return x + `</div>`;
   };
 
-  /* bento grid: weather hero, to-do ring, today count, weekly radar bars */
-  h += `<div class="bento-grid">`;
-  h += `<div class="bento-hero" id="wxHero">`;
-  if(d.weather || hourly.length){
-    const cur = hourly[0] || {};
-    h += `<div class="bh-label">Weather</div>`;
-    if(cur.temp != null || cur.tF != null) h += `<div class="bh-temp">${esc(String(cur.temp ?? cur.tF))}°F</div>`;
-    h += `<div class="bh-cond">${esc(d.weather||"")}</div>`;
-    if(hourly.length) h += buildSparkline(hourly);
-  }else{
-    h += `<div class="bh-label">Weather</div><p style="color:#9BA0A6;font-size:13px;margin-top:12px">No forecast available.</p>`;
-  }
+  /* ---- weather hero (live; filled in async) ---- */
+  h += `<div class="wx-hero" id="wxHero">
+    <div class="wx-top">
+      <div class="wx-now"><div class="wx-glyph" id="wxGlyph">◦</div>
+        <div><div class="wx-temp" id="wxTemp">—</div><div class="wx-cond" id="wxCond">Loading forecast…</div>
+        <div class="wx-loc" id="wxLoc"></div></div></div>
+      <div class="wx-meta" id="wxMeta"></div>
+    </div>
+    <div class="wx-chart-lbl">Hourly · hover for detail</div>
+    <div id="wxSparkWrap" style="position:relative"><div style="color:#8A8F95;font-size:12.5px;padding:14px 0">Fetching hourly forecast…</div></div>
+  </div>`;
+
+  /* ---- to-do card (list + side ring) at the top ---- */
+  h += `<div class="today-grid" style="grid-template-columns:1fr">
+    <div class="bento-card todo-card" id="todoCard">
+      <div class="tc-list">
+        <div class="tc-head"><span class="h">Urgent To-Dos</span></div>
+        <div id="todoInlineWrap">`;
+  if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing urgent flagged today.</p>`;
+  else urgentList.forEach((t,i) => {
+    const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
+    h += `<div class="todo-inline${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
+  });
+  h += `</div></div>
+      <div class="tc-ring">
+        <div id="todoRingWrap">${ringSvg(doneCount, urgentList.length, 74)}</div>
+        <div class="bc-ring-txt" id="todoRingTxt">${doneCount} / ${urgentList.length} done</div>
+      </div>
+    </div>
+  </div>`;
+
+  /* ---- portfolio snapshot + weekly radar ---- */
+  h += `<div class="today-grid">`;
+  h += buildPortfolioSnapshot();
+  h += `<div class="bento-card radar-card">
+      <div class="bc-label">On your radar this week</div>
+      ${buildWeekBars(radarList, todayList, d.date)}
+      <div class="wk-tip"></div>
+    </div>`;
   h += `</div>`;
 
-  h += `<div class="bento-card center" id="todoRingCard">
-    <div class="bc-label">Urgent to-dos</div>
-    <div id="todoRingWrap" style="margin:10px 0 4px">${ringSvg(doneCount, urgentList.length, 68)}</div>
-    <div class="bc-ring-txt" id="todoRingTxt">${doneCount} / ${urgentList.length} done</div>
-  </div>`;
-
-  h += `<div class="bento-card">
-    <div class="bc-label">Today</div>
-    <div class="bc-num">${todayList.length}<span class="bc-unit">event${todayList.length===1?"":"s"}</span></div>
-    <div class="bc-bar"><div class="bc-bar-fill" style="width:${todayList.length ? Math.min(100, todayList.length*34) : 3}%"></div></div>
-  </div>`;
-
-  h += `<div class="bento-card bento-wide">
-    <div class="bc-label">On your radar this week</div>
-    ${buildWeekBars(radarList)}
-  </div>`;
-  h += `</div>`;
-
-  /* tabbed agenda: Today / On Your Radar */
+  /* ---- tabbed agenda: Today / On Your Radar ---- */
   h += `<div class="agenda-card">
     <div class="agenda-tabs">
       <button class="agenda-tab active" data-atab="today">Today</button>
-      <button class="agenda-tab" data-atab="radar">On your radar</button>
+      <button class="agenda-tab" data-atab="radar">Next 7 days</button>
     </div>
     <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
     <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
   </div>`;
 
-  /* urgent to-dos checklist */
-  h += `<div class="kicker">Urgent To-Dos</div>`;
-  if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing urgent flagged today.</p>`;
-  else{
-    h += `<div class="todos big">`;
-    urgentList.forEach((t,i) => {
-      const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
-      h += `<div class="todo${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
-    });
-    h += `</div>`;
-  }
-
-  /* The Close: fun fact / history tidbit / word of the day — unchanged */
+  /* ---- The Close ---- */
   if(d.close){
     h += `<div class="kicker">The Close</div><div class="close-grid">`;
     if(d.close.funFact) h += `<div class="callout"><div class="lbl">Fun Fact</div><p>${esc(d.close.funFact)}</p></div>`;
@@ -936,13 +1295,14 @@ function renderCalendarBody(p, d){
 
   p.innerHTML = h;
 
-  p.querySelectorAll(".todo").forEach(el => el.addEventListener("click", () => {
+  /* to-do checkboxes update the side ring live */
+  p.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", () => {
     el.classList.toggle("done");
     localStorage.setItem(`dh-todo-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
     const total = urgentList.length;
-    const nowDone = p.querySelectorAll(".todo.done").length;
+    const nowDone = p.querySelectorAll(".todo-inline.done").length;
     const ringWrap = p.querySelector("#todoRingWrap");
-    if(ringWrap) ringWrap.innerHTML = ringSvg(nowDone, total, 68);
+    if(ringWrap) ringWrap.innerHTML = ringSvg(nowDone, total, 74);
     const txt = p.querySelector("#todoRingTxt");
     if(txt) txt.textContent = `${nowDone} / ${total} done`;
   }));
@@ -952,8 +1312,49 @@ function renderCalendarBody(p, d){
     p.querySelectorAll(".agenda-panel").forEach(pan => { pan.style.display = pan.dataset.apanel === btn.dataset.atab ? "block" : "none"; });
   }));
 
-  if(hourly.length) wireSparkline(hourly);
+  const radarCard = p.querySelector(".radar-card");
+  if(radarCard) wireWeekBars(radarCard);
+  wirePortfolioSnapshot();
+  loadTodayWeather(d);
   startCountdowns();
+}
+
+/* fill the weather hero: live Open-Meteo first, task hourly[] as fallback */
+async function loadTodayWeather(d){
+  const hero = $("#wxHero"); if(!hero) return;
+  const paint = (wx) => {
+    if(!$("#wxHero")) return;
+    $("#wxGlyph").textContent = wxGlyph(wx.curCond);
+    $("#wxTemp").textContent = wx.curTemp + "°";
+    $("#wxCond").textContent = wx.curCond + (wx.hi!=null && wx.lo!=null ? ` · H ${wx.hi}° / L ${wx.lo}°` : "");
+    $("#wxLoc").textContent = wx.label || "";
+    const meta = $("#wxMeta");
+    const cells = [];
+    if(wx.feels!=null && !isNaN(wx.feels)) cells.push(["Feels", wx.feels+"°"]);
+    if(wx.rainMax!=null) cells.push(["Rain", wx.rainMax+"%"]);
+    if(wx.humidity!=null) cells.push(["Humidity", wx.humidity+"%"]);
+    if(wx.wind!=null && !isNaN(wx.wind)) cells.push(["Wind", wx.wind+" mph"]);
+    meta.innerHTML = cells.map(c => `<div class="m"><div class="mk">${esc(c[0])}</div><div class="mv">${esc(String(c[1]))}</div></div>`).join("");
+    const sw = $("#wxSparkWrap");
+    if(wx.hourly && wx.hourly.length){ sw.innerHTML = buildSparkline(wx.hourly); wireSparkline(wx.hourly); }
+    else sw.innerHTML = `<div style="color:#8A8F95;font-size:12.5px;padding:8px 0">Hourly detail unavailable.</div>`;
+  };
+  try{
+    const wx = await fetchWeather();
+    paint(wx);
+  }catch(e){
+    // fallback to whatever the task published
+    const hourly = d.hourly || [];
+    const cur = hourly[0] || {};
+    paint({
+      label: WX_LOC.label,
+      curTemp: cur.temp ?? cur.tF ?? "—",
+      curCond: (d.weather || "Forecast").split("—")[0].trim(),
+      feels:null, humidity:null, wind:null, hi:null, lo:null, rainMax:null,
+      hourly
+    });
+    if(!hourly.length && $("#wxCond")) $("#wxCond").textContent = d.weather || "Forecast unavailable.";
+  }
 }
 
 /* ================= portfolio ================= */
@@ -1060,6 +1461,8 @@ function renderPortfolio(){
   const panel = $("#panel-portfolio");
   let h = "";
 
+  h += `<button class="pbtn game-back" id="pBackToday" style="margin-bottom:16px">← Back to Today</button>`;
+
   /* toolbar: Day vs All-Time performance view */
   const statusTxt = P.fetching ? "fetching live prices…"
     : t.anyLive ? "Live · " + new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})
@@ -1132,6 +1535,13 @@ function renderPortfolio(){
     P.histRange = b.dataset.r;
     panel.querySelectorAll("#histSeg button").forEach(x => x.classList.toggle("on", x === b));
     renderHistory();
+  }));
+  const backBtn = $("#pBackToday");
+  if(backBtn) backBtn.addEventListener("click", () => animatedTabSwitch(async () => {
+    S.tab = "calendar"; localStorage.setItem("dh-tab","calendar");
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab==="calendar"));
+    document.querySelectorAll(".panel").forEach(pn => pn.classList.toggle("active", pn.id==="panel-calendar"));
+    fillDates(); await show(); window.scrollTo({top:0,behavior:"smooth"});
   }));
   $("#pRefresh").addEventListener("click", pFetchLive);
   panel.querySelectorAll(".acct-card").forEach(c => c.addEventListener("click", () => { P.acct = c.dataset.acct; P.filter = null; renderPortfolio(); }));
@@ -1454,35 +1864,194 @@ async function fetchWords(){
 
 function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
+  if(gamesView === "grid"){ renderDailyGrid(); return; }
+  if(gamesView === "bull"){ renderBullBear(); return; }
   renderGamesLauncher();
+}
+
+/* seeded RNG so built-in daily puzzles are the same for the whole day */
+function daySeed(salt){
+  const d = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+  let x = 0; for(const c of (d+(salt||""))) x = (x*31 + c.charCodeAt(0)) >>> 0;
+  return () => { x = (x*1103515245 + 12345) & 0x7fffffff; return x/0x7fffffff; };
 }
 
 function renderGamesLauncher(){
   const panel = $("#panel-quiz");
   $("#heroEyebrow").textContent = "Games";
-  $("#heroTitle").textContent = "Game Room";
-  $("#heroSub").textContent = "Quick launchers for your daily games — vocab, geography, and word puzzles in one place.";
-  $("#heroDateline").textContent = "";
+  $("#heroTitle").textContent = "The Game Room";
+  $("#heroSub").textContent = "Built-in puzzles plus quick launchers for your daily rotation — vocab, numbers, markets, geography, and word games in one place.";
+  $("#heroDateline").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
   $("#staleNote").style.display = "none";
   const favicon = d => `https://www.google.com/s2/favicons?domain=${d}&sz=64`;
-  const games = [
-    { name:"Word Quiz", tag:"Vocabulary trainer built from your daily briefings", internal:true },
-    { name:"Wordle", tag:"Guess the five-letter word in six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
-    { name:"Worldle", tag:"Guess the country from its silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
-    { name:"Tradle", tag:"Guess the country from its top exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
-    { name:"Travle", tag:"Chain neighboring countries to reach the target", url:"https://travle.earth/", domain:"travle.earth" },
-    { name:"Globle", tag:"Guess the mystery country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
+
+  // rotating "game of the day" among the built-ins
+  const spot = [
+    {id:"quiz", k:"Game of the Day · Vocabulary", t:"Word Quiz", s:"A multiple-choice trainer built from every Word of the Day in your briefings, with spaced repetition so tricky words come back around.", badge:"◆"},
+    {id:"grid", k:"Game of the Day · Numbers", t:"Daily Grid", s:"A fresh 4×4 logic puzzle each day: tap cells that add up to the target. One solution, pure focus.", badge:"▦"},
+    {id:"bull", k:"Game of the Day · Markets", t:"Bull or Bear", s:"Higher-or-lower with your own holdings — guess which ticker moved more today. Uses live prices from your portfolio.", badge:"↕"}
+  ][new Date().getDate() % 3];
+
+  const built = [
+    { id:"quiz", name:"Word Quiz", tag:"Vocabulary trainer from your briefings", icon:"◆" },
+    { id:"grid", name:"Daily Grid", tag:"4×4 sum-to-target number puzzle", icon:"▦" },
+    { id:"bull", name:"Bull or Bear", tag:"Higher-or-lower with your holdings", icon:"↕" }
   ];
-  panel.innerHTML = `<div class="game-grid">${games.map((g,i) => {
-    const icon = g.internal
-      ? `<div class="game-icon-quiz">◆</div>`
-      : `<img class="game-icon" src="${favicon(g.domain)}" alt="" loading="lazy">`;
-    const inner = `${icon}<div class="game-name">${esc(g.name)}</div><div class="game-tag">${esc(g.tag)}</div>`;
-    return g.internal
-      ? `<button class="game-card" id="gc-${i}">${inner}</button>`
-      : `<a class="game-card" href="${g.url}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-  }).join("")}</div>`;
-  $("#gc-0").addEventListener("click", () => { gamesView = "quiz"; renderQuizTab(); });
+  const words = [
+    { name:"Wordle", tag:"Five-letter word in six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
+    { name:"Connections", tag:"Sort sixteen words into four groups", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
+    { name:"Mini Crossword", tag:"A quick daily crossword", url:"https://www.nytimes.com/crosswords/game/mini", domain:"nytimes.com" },
+    { name:"Nerdle", tag:"Wordle, but for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
+    { name:"Costcodle", tag:"Guess the Costco item's price", url:"https://costcodle.com/", domain:"costcodle.com" }
+  ];
+  const geo = [
+    { name:"Worldle", tag:"Country from its silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
+    { name:"Tradle", tag:"Country from its top exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
+    { name:"Travle", tag:"Chain countries to the target", url:"https://travle.earth/", domain:"travle.earth" },
+    { name:"Globle", tag:"Mystery country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
+  ];
+  const extCard = g => `<a class="game-card" href="${g.url}" target="_blank" rel="noopener noreferrer">
+    <div class="gc-top"><img class="game-icon" src="${favicon(g.domain)}" alt="" loading="lazy"><div class="game-name">${esc(g.name)}</div><span class="gc-ext">↗</span></div>
+    <div class="game-tag">${esc(g.tag)}</div></a>`;
+  const builtCard = g => `<button class="game-card built" data-game="${g.id}">
+    <span class="gc-chip">Built-in</span>
+    <div class="gc-top"><div class="game-icon-b">${g.icon}</div><div class="game-name">${esc(g.name)}</div></div>
+    <div class="game-tag">${esc(g.tag)}</div></button>`;
+
+  panel.innerHTML = `<div class="games-wrap">
+    <div class="spotlight" data-game="${spot.id}">
+      <div><div class="sp-k">${esc(spot.k)}</div><div class="sp-t">${esc(spot.t)}</div><div class="sp-s">${esc(spot.s)}</div>
+        <div class="sp-go">Play now →</div></div>
+      <div class="sp-badge">${spot.badge}</div>
+    </div>
+    <div class="game-cat">Play here</div>
+    <div class="game-grid">${built.map(builtCard).join("")}</div>
+    <div class="game-cat">Word &amp; number puzzles</div>
+    <div class="game-grid">${words.map(extCard).join("")}</div>
+    <div class="game-cat">Geography</div>
+    <div class="game-grid">${geo.map(extCard).join("")}</div>
+  </div>`;
+
+  const open = id => { if(id==="quiz"){ gamesView="quiz"; renderQuizTab(); } else if(id==="grid"){ gamesView="grid"; renderDailyGrid(); } else if(id==="bull"){ gamesView="bull"; renderBullBear(); } };
+  panel.querySelectorAll("[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+}
+
+/* ---------- built-in: Daily Grid (sum-to-target) ---------- */
+function renderDailyGrid(){
+  const panel = $("#panel-quiz");
+  $("#heroEyebrow").textContent = "Daily Grid";
+  $("#heroTitle").textContent = "Daily Grid";
+  $("#heroSub").textContent = "Tap cells that add up to today's target. There's exactly one winning set — same puzzle for everyone, every day.";
+  $("#heroDateline").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+  $("#staleNote").style.display = "none";
+
+  const rnd = daySeed("grid");
+  const cells = Array.from({length:16}, () => 1 + Math.floor(rnd()*9));
+  // choose a solution set of 4–6 cells; target is their sum
+  const idx = Array.from({length:16},(_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  const solSize = 4 + Math.floor(rnd()*3);
+  const solution = new Set(idx.slice(0,solSize));
+  const target = [...solution].reduce((s,i)=>s+cells[i],0);
+  const done = localStorage.getItem("dh-grid-"+new Date().toLocaleDateString("en-CA")) === "1";
+
+  let sel = new Set();
+  const paint = () => {
+    const sum = [...sel].reduce((s,i)=>s+cells[i],0);
+    const sumEl = $("#dgSum");
+    if(sumEl){
+      sumEl.style.color = sum===target ? "var(--up)" : sum>target ? "var(--down)" : "var(--muted)";
+      sumEl.textContent = sel.size ? `Selected: ${sum}` : "Select cells to begin";
+    }
+    panel.querySelectorAll(".dg-cell").forEach((c,i)=>c.classList.toggle("sel", sel.has(i)));
+  };
+  const win = () => {
+    localStorage.setItem("dh-grid-"+new Date().toLocaleDateString("en-CA"),"1");
+    panel.querySelectorAll(".dg-cell").forEach((c,i)=>{ c.disabled=true; c.classList.remove("sel"); if(sel.has(i)) c.classList.add("solved"); });
+    $("#dgSum").innerHTML = `<span style="color:var(--up)">Solved — nice. Come back tomorrow for a new grid.</span>`;
+  };
+
+  panel.innerHTML = `<div class="dg-wrap">
+    <button class="pbtn game-back" id="dgBack">← Back to Games</button>
+    <div class="dg-target">Target <b>${target}</b></div>
+    <div class="dg-sum" id="dgSum">${done?'<span style="color:var(--up)">Today’s grid is already solved ✓</span>':"Select cells to begin"}</div>
+    <div class="dg-board">${cells.map((v,i)=>`<button class="dg-cell" data-i="${i}" ${done?"disabled":""}>${v}</button>`).join("")}</div>
+    <button class="pbtn" id="dgClear" ${done?"disabled":""}>Clear selection</button>
+  </div>`;
+  $("#dgBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+  if(!done){
+    panel.querySelectorAll(".dg-cell").forEach(c => c.addEventListener("click", () => {
+      const i = +c.dataset.i;
+      if(sel.has(i)) sel.delete(i); else sel.add(i);
+      paint();
+      const sum = [...sel].reduce((s,k)=>s+cells[k],0);
+      if(sum===target && sel.size>=2){
+        // must be the exact intended solution set OR any set summing to target — accept any valid sum
+        win();
+      }
+    }));
+    $("#dgClear").addEventListener("click", () => { sel = new Set(); paint(); });
+  }
+}
+
+/* ---------- built-in: Bull or Bear (higher-or-lower on holdings) ---------- */
+async function renderBullBear(){
+  const panel = $("#panel-quiz");
+  $("#heroEyebrow").textContent = "Bull or Bear";
+  $("#heroTitle").textContent = "Bull or Bear";
+  $("#heroSub").textContent = "Two of your holdings, head to head. Tap the one you think moved more today (up or down — biggest absolute move wins). Uses live prices.";
+  $("#heroDateline").textContent = "";
+  $("#staleNote").style.display = "none";
+  panel.innerHTML = `<div class="bb-wrap"><button class="pbtn game-back" id="bbBack">← Back to Games</button><div class="spinner"></div></div>`;
+  $("#bbBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+
+  if(!P.fetched && !P.fetching){ try{ await pFetchLive(); }catch(e){} }
+  pCompute();
+  const pool = P.pos.filter(p => p.type !== "cash" && p.dayPct != null && Math.abs(p.dayPct) > 0);
+  // merge duplicate tickers so we compare distinct companies
+  const seen = {}, uniq = [];
+  pool.forEach(p => { if(!seen[p.ticker]){ seen[p.ticker]=1; uniq.push(p); } });
+  if(uniq.length < 2){
+    panel.innerHTML = `<div class="bb-wrap"><button class="pbtn game-back" id="bbBack2">← Back to Games</button>
+      <div class="empty">Need at least two holdings with live moves today to play. Try again once markets are open and prices load.</div></div>`;
+    $("#bbBack2").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    return;
+  }
+
+  let score = 0, streak = 0, best = Number(localStorage.getItem("dh-bb-best")||"0");
+  const pick2 = () => { const s = uniq.slice(); for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];} return [s[0],s[1]]; };
+
+  const round = () => {
+    const [a,b] = pick2();
+    panel.innerHTML = `<div class="bb-wrap">
+      <button class="pbtn game-back" id="bbBack3">← Back to Games</button>
+      <div class="bb-score">Score ${score} · Streak ${streak} · Best ${best}</div>
+      <div class="bb-q">Which moved more today?</div>
+      <div class="bb-cards">
+        <div class="bb-card" data-tk="a"><div class="bb-tk">${esc(a.ticker)}</div><div class="bb-nm">${esc(a.name)}</div><div class="bb-reveal" id="revA"></div></div>
+        <div class="bb-vs">VS</div>
+        <div class="bb-card" data-tk="b"><div class="bb-tk">${esc(b.ticker)}</div><div class="bb-nm">${esc(b.name)}</div><div class="bb-reveal" id="revB"></div></div>
+      </div>
+      <div id="bbNext"></div>
+    </div>`;
+    $("#bbBack3").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    const cards = panel.querySelectorAll(".bb-card");
+    cards.forEach(c => c.addEventListener("click", () => {
+      const am = Math.abs(a.dayPct), bm = Math.abs(b.dayPct);
+      const winner = am >= bm ? "a" : "b";
+      const right = c.dataset.tk === winner;
+      cards.forEach(x => x.classList.add("locked","show"));
+      const setRev = (el, p) => { el.textContent = pctS(p.dayPct); el.style.color = p.dayPct>=0 ? "var(--up)" : "var(--down)"; };
+      setRev($("#revA"), a); setRev($("#revB"), b);
+      cards.forEach(x => { if(x.dataset.tk===winner) x.style.borderColor="var(--gold)"; });
+      if(right){ score++; streak++; if(streak>best){ best=streak; localStorage.setItem("dh-bb-best",String(best)); } }
+      else streak = 0;
+      $("#bbNext").innerHTML = `<div style="font-size:14px;font-weight:900;margin:14px 0 6px;color:${right?"var(--up)":"var(--down)"}">${right?"Correct":"Nope"} — ${esc((am>=bm?a:b).ticker)} moved ${pctS((am>=bm?a:b).dayPct)}</div>
+        <button class="qbig qnext" id="bbAgain" style="max-width:280px;margin:0 auto">Next Matchup</button>`;
+      $("#bbAgain").addEventListener("click", round);
+    }));
+  };
+  round();
 }
 
 async function renderQuizTab(){

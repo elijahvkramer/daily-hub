@@ -281,7 +281,8 @@
   .psnap-hero .ps-left{min-width:0}
   .psnap .ps-val{font-size:38px;font-weight:900;letter-spacing:-.015em;color:var(--ink);margin-top:8px;line-height:1}
   .psnap .ps-chg{font-size:15px;font-weight:900;margin-top:8px}
-  .psnap .ps-spark{width:100%;height:74px;display:block}
+  .psnap .ps-spark{width:100%;height:62px;display:block}
+  .psnap .ps-axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.02em}
   .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
   @media(max-width:640px){.psnap-hero{grid-template-columns:1fr;gap:14px}}
 
@@ -1409,31 +1410,19 @@ function wirePortfolioSnapshot(){
     const chg = $("#psChg");
     chg.className = "ps-chg " + pcls(t.day);
     chg.innerHTML = `${t.day>=0?"▲":"▼"} ${usdS(t.day)} <span style="color:var(--muted);font-weight:700">(${pctS(t.dayPct)}) today</span>`;
-    $("#psFoot").textContent = t.anyLive ? "Live prices · tap to explore" : `${HOLDINGS.meta.snapshotLabel} snapshot · tap to explore`;
-    // mini sparkline from value history once loaded
+    $("#psFoot").textContent = t.anyLive ? "Today's session · open to now · tap to explore" : `${HOLDINGS.meta.snapshotLabel} snapshot · tap to explore`;
+    // intraday value line for today's session (fills left→right through the trading day)
     const sw = $("#psSparkWrap");
-    if(P.histReady){
-      const all = histSeries();
-      if(all && all.length >= 2){
-        const pts = all.slice(-30);
-        const W = 380, H = 74, vals = pts.map(p=>p.v);
-        let mn = Math.min(...vals), mx = Math.max(...vals); if(mn===mx){mn-=1;mx+=1;}
-        const X = i => i/(pts.length-1)*W, Y = v => H-5 - ((v-mn)/(mx-mn))*(H-10);
-        let line = "", area = `M 0 ${H}`;
-        pts.forEach((p,i)=>{ line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)} `; area += ` L ${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`; });
-        area += ` L ${W} ${H} Z`;
-        const up = pts[pts.length-1].v >= pts[0].v;
-        const col = up ? "#18996B" : "#DC4B43";
-        sw.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
-          <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-          <path d="${area}" fill="url(#psGrad)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
-      }
-    } else { loadHistory(); }
+    if(P.intraReady){
+      const ser = intradaySeries();
+      sw.innerHTML = ser ? buildIntradayChart(ser)
+        : `<div style="font-size:11.5px;color:var(--muted);padding:20px 0;text-align:center">Intraday chart unavailable right now.</div>`;
+    } else { loadIntraday(); }
   };
   paint();
   if(!P.fetched && !P.fetching) pFetchLive().then(() => { if($("#psnap")) paint(); });
-  // repaint when history finishes loading
-  const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.histReady){ paint(); clearInterval(hi); } }, 500);
+  // repaint once the intraday data finishes loading
+  const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.intraReady){ paint(); clearInterval(hi); } }, 600);
 }
 
 function renderCalendarBody(p, d){
@@ -1833,6 +1822,82 @@ async function loadHistory(){
   await Promise.all(syms.map(async s => { const h = await fetchHistSym(s); if(h) P.histData[s] = h; }));
   P.histLoading = false; P.histReady = true;
   if(S.tab === "portfolio") renderHistory();
+}
+
+/* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
+async function fetchIntradaySym(sym){
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=5m&range=1d`;
+  const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  for(const u of urls){
+    try{
+      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
+      const j = await r.json(); const res = j?.chart?.result?.[0];
+      if(res?.timestamp && res?.indicators?.quote?.[0]?.close){
+        const reg = res.meta?.currentTradingPeriod?.regular;
+        return {t:res.timestamp, c:res.indicators.quote[0].close, start:reg?.start, end:reg?.end};
+      }
+    }catch(e){}
+  }
+  return null;
+}
+async function loadIntraday(){
+  if(P.intraReady || P.intraLoading) return;
+  P.intraLoading = true; P.intraday = {}; P.intraMeta = null;
+  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
+  await Promise.all(syms.map(async s => { const h = await fetchIntradaySym(s); if(h){ P.intraday[s] = h; if(!P.intraMeta && h.start && h.end) P.intraMeta = {start:h.start, end:h.end}; } }));
+  P.intraLoading = false; P.intraReady = true;
+}
+/* Combine each holding's intraday prices (forward-filled onto a common timestamp spine) into
+   the portfolio's total market value at each 5-min mark through the session. */
+function intradaySeries(){
+  if(!P.intraday) return null;
+  const syms = Object.keys(P.intraday); if(!syms.length) return null;
+  const spineSym = P.intraday["SPY"] ? "SPY" : syms[0];
+  const spine = P.intraday[spineSym].t;
+  const meta = P.intraMeta || {start:spine[0], end:spine[spine.length-1]};
+  const aligned = {};
+  for(const s of syms){
+    const {t,c} = P.intraday[s]; const arr = []; let j=0, last=null;
+    for(const ts of spine){ while(j<t.length && t[j]<=ts){ if(c[j]!=null) last=c[j]; j++; } arr.push(last); }
+    aligned[s] = arr;
+  }
+  const positions = P.pos, pts = [];
+  spine.forEach((ts,i) => {
+    let total = 0;
+    positions.forEach(p => {
+      if(p.type==="cash"){ total += p.shares; return; }
+      const sym = p.fetchSymbol||p.ticker;
+      let px = aligned[sym] ? aligned[sym][i] : null;
+      if(px==null) px = (p.price!=null ? p.price : p.snapshotPrice);
+      total += p.shares * px;
+    });
+    if(!isNaN(total) && total > 0) pts.push({ts, v:total});
+  });
+  if(pts.length < 2) return null;
+  return {pts, start:meta.start, end:meta.end};
+}
+/* draws the intraday value line on a fixed open→close axis; the line only reaches "now",
+   leaving the rest of the session's width empty to fill as the day goes on. */
+function buildIntradayChart(ser){
+  const {pts, start, end} = ser;
+  const W=380, H=62, PT=6, PB=6, PR=5;
+  const span = (end - start) || 1;
+  const fx = ts => Math.max(0, Math.min(1, (ts - start)/span)) * (W - PR);
+  const vals = pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); if(mn===mx){ mn-=1; mx+=1; }
+  const fy = v => PT + (H-PT-PB) - ((v-mn)/(mx-mn))*(H-PT-PB);
+  const first = pts[0].v, last = pts[pts.length-1].v, col = last>=first ? "#18996B" : "#DC4B43";
+  let line = "", area = `M ${fx(pts[0].ts).toFixed(1)} ${(H-PB).toFixed(1)}`;
+  pts.forEach((p,i) => { const X=fx(p.ts).toFixed(1), Y=fy(p.v).toFixed(1); line += `${i?"L":"M"} ${X} ${Y} `; area += ` L ${X} ${Y}`; });
+  area += ` L ${fx(pts[pts.length-1].ts).toFixed(1)} ${(H-PB).toFixed(1)} Z`;
+  const lx = fx(pts[pts.length-1].ts), ly = fy(last);
+  const fmt = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
+  return `<svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
+    <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#psGrad)"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${col}"/>
+  </svg>
+  <div class="ps-axis"><span>Open</span><span>${esc(fmt(start + span/2))}</span><span>Close</span></div>`;
 }
 function histSeries(){
   const spineSym = P.histData["SPY"] ? "SPY" : Object.keys(P.histData)[0];

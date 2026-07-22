@@ -1635,18 +1635,27 @@ async function pQuote(sym){
       const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
       const j = await r.json(); const m = j?.chart?.result?.[0]?.meta;
       if(m && typeof m.regularMarketPrice === "number")
-        return {price:m.regularMarketPrice, prev:(m.chartPreviousClose ?? m.previousClose ?? m.regularMarketPrice)};
+        return {price:m.regularMarketPrice, prev:(m.chartPreviousClose ?? m.previousClose ?? m.regularMarketPrice), time:m.regularMarketTime};
     }catch(e){}
   }
   return null;
 }
 
+/* A quote whose last trade/NAV timestamp isn't from today (ET) hasn't moved yet today, so it has
+   NO day change — this is how Fidelity shows it. Mutual funds (BPTRX) only reprice after the close,
+   so intraday their last NAV is yesterday's; without this we'd count yesterday's NAV move as today's
+   (~-$24 on BPTRX) and the day total wouldn't match the brokerage. Same logic zeroes pre-market. */
+function quoteIsToday(ts){
+  if(!ts) return true;                                  // unknown timestamp → assume fresh
+  const et = d => d.toLocaleDateString("en-CA", {timeZone:"America/New_York"});
+  return et(new Date(ts*1000)) === et(new Date());
+}
 function pCompute(){
   P.pos = HOLDINGS.positions.map(p => {
     const hasCost = p.avgCost != null && p.type !== "cash";
     let price = p.snapshotPrice, prev = p.snapshotPrice, src = "snap";
     if(p.type === "cash"){ price = 1; prev = 1; src = "cash"; }
-    else{ const q = P.live[p.fetchSymbol||p.ticker]; if(q){ price = q.price; prev = q.prev; src = "live"; } }
+    else{ const q = P.live[p.fetchSymbol||p.ticker]; if(q){ price = q.price; prev = quoteIsToday(q.time) ? q.prev : q.price; src = "live"; } }
     const marketValue = p.shares * price;
     const costBasis = hasCost ? p.shares * p.avgCost : null;
     const gainDollar = hasCost ? marketValue - costBasis : null;

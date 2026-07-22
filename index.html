@@ -380,6 +380,11 @@
   /* built-in game boxes — colorful + game-y */
   .pz-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .pz-box{position:relative;border:1px solid var(--hairline);border-top:4px solid var(--pcol);border-radius:12px;background:var(--card);padding:20px 16px 16px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .16s, box-shadow .16s}
+  .pz-box.played{border-top-color:var(--up)}
+  .pz-box.played::before{content:"";position:absolute;inset:0;background:rgba(24,153,107,.05);border-radius:12px;pointer-events:none}
+  .pz-done-badge{display:none}
+  .pz-box.played .pz-done-badge{display:flex;position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--up);color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 2px 5px rgba(24,153,107,.35)}
+  .pz-box.played .pz-st{color:var(--up)}
   .pz-box:hover{transform:translateY(-4px);box-shadow:0 3px 6px rgba(22,24,29,.07),0 16px 36px -12px rgba(22,24,29,.22)}
   .pz-box .pz-ic{width:52px;height:52px;margin:0 auto;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;background:var(--pcol)}
   .pz-box .pz-nm{font-family:Georgia,serif;font-weight:900;font-size:17px;margin-top:11px;color:var(--ink)}
@@ -405,6 +410,10 @@
   /* external puzzle links — large icon buttons */
   .pz-links{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .pz-link{display:flex;align-items:center;gap:13px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);transition:transform .15s, border-color .15s, box-shadow .15s}
+  .pz-link.played{border-color:var(--up);background:rgba(24,153,107,.06)}
+  .pz-link .pl-done{display:none}
+  .pz-link.played .pl-done{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:11px;font-weight:900;letter-spacing:.04em;color:var(--up);text-transform:uppercase}
+  .pz-link.played .pl-ext{display:none}
   .pz-link:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 2px 4px rgba(22,24,29,.06),0 12px 28px -10px rgba(22,24,29,.16)}
   .pz-link img{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:var(--paper)}
   .pz-link .pl-nm{font-weight:900;font-size:14.5px}
@@ -2243,6 +2252,21 @@ function closeStripHTML(close){
     <div class="bf-grid">${items}</div></div>` : "";
 }
 
+function gamesTodayKey(){ return new Date().toISOString().slice(0,10); }
+function getPlayedGames(){
+  try{
+    const raw = JSON.parse(localStorage.getItem("dh-games-played")||"null");
+    if(raw && raw.date === gamesTodayKey()) return new Set(raw.ids||[]);
+  }catch(e){}
+  return new Set();
+}
+function markGamePlayed(id){
+  const key = gamesTodayKey();
+  let raw; try{ raw = JSON.parse(localStorage.getItem("dh-games-played")||"null"); }catch(e){ raw = null; }
+  const ids = (raw && raw.date === key) ? new Set(raw.ids||[]) : new Set();
+  ids.add(id);
+  localStorage.setItem("dh-games-played", JSON.stringify({date:key, ids:[...ids]}));
+}
 function renderGamesLauncher(){
   const panel = $("#panel-quiz");
   $("#heroEyebrow").textContent = "";
@@ -2251,6 +2275,7 @@ function renderGamesLauncher(){
   $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
   const favicon = d => `https://www.google.com/s2/favicons?domain=${d}&sz=64`;
+  const played = getPlayedGames();
 
   const built = [
     { id:"quiz",  name:"Word Quiz",   tag:"Vocabulary trainer from your briefings", icon:"◆", col:"#C8A24B", stat:qBestLabel() },
@@ -2270,10 +2295,13 @@ function renderGamesLauncher(){
     { name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
     { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
   ];
-  const linkBtn = g => `<a class="pz-link" href="${g.url}" target="_blank" rel="noopener noreferrer">
+  const linkBtn = g => `<a class="pz-link${played.has(g.name)?" played":""}" href="${g.url}" target="_blank" rel="noopener noreferrer" data-game="${esc(g.name)}">
       <img src="${favicon(g.domain)}" alt="" loading="lazy">
-      <div><div class="pl-nm">${esc(g.name)}</div><div class="pl-tg">${esc(g.tag)}</div></div><span class="pl-ext">↗</span></a>`;
-  const box = g => `<button class="pz-box" data-game="${g.id}" style="--pcol:${g.col}">
+      <div><div class="pl-nm">${esc(g.name)}</div><div class="pl-tg">${esc(g.tag)}</div></div>
+      <span class="pl-done">✓ Played</span>
+      <span class="pl-ext">↗</span></a>`;
+  const box = g => `<button class="pz-box${played.has(g.id)?" played":""}" data-game="${g.id}" style="--pcol:${g.col}">
+      <div class="pz-done-badge">✓</div>
       <div class="pz-ic">${g.icon}</div>
       <div class="pz-nm">${esc(g.name)}</div>
       <div class="pz-tg">${esc(g.tag)}</div>
@@ -2292,8 +2320,9 @@ function renderGamesLauncher(){
     <div class="pz-links">${geo.map(linkBtn).join("")}</div>
   </div>`;
 
-  const open = id => { gamesView = id; if(id==="quiz") renderQuizTab(); else if(id==="code") renderCodebreaker(); else if(id==="chart") renderChartMaster(); };
+  const open = id => { markGamePlayed(id); gamesView = id; if(id==="quiz") renderQuizTab(); else if(id==="code") renderCodebreaker(); else if(id==="chart") renderChartMaster(); };
   panel.querySelectorAll(".pz-box[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+  panel.querySelectorAll(".pz-link[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
 
   // load Brain Food (async) and drop it in
   fetchLatestClose().then(close => { const slot = $("#gamesClose"); if(slot && close) slot.innerHTML = closeStripHTML(close); });

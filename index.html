@@ -263,6 +263,7 @@
   .todo-card .tc-list{flex:1;min-width:0}
   .todo-card .tc-ring{flex-shrink:0;width:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-left:1px solid var(--hairline);padding-left:18px}
   .todo-card .tc-ring svg{overflow:visible;display:block}
+  .ring-arc{transition:stroke-dashoffset .6s cubic-bezier(.34,1.2,.4,1)}
   .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .tc-head .h{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .todo-inline{display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px solid var(--hairline);cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
@@ -1255,7 +1256,9 @@ function ringSvg(done, total, size){
   size = size || 16;
   const r = size/2 - 1, c = 2*Math.PI*r, cx = size/2, sw = size <= 20 ? 2.5 : Math.round(size/9);
   const frac = total > 0 ? done/total : 0;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${sw}" stroke-dasharray="${(frac*c).toFixed(1)} ${c.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})"/></svg>`;
+  const off = c*(1-frac);
+  // full-circumference dasharray + animatable dashoffset so the gold arc sweeps into place
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/><circle class="ring-arc" cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${sw}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" data-c="${c.toFixed(2)}"/></svg>`;
 }
 
 function buildSparkline(hourly, lineColor){
@@ -1495,14 +1498,25 @@ function renderCalendarBody(p, d){
 
   p.innerHTML = h;
 
-  /* to-do checkboxes update the side ring live */
+  /* animate the ring filling in on first paint (sweep from empty to the current fraction) */
+  const arc0 = p.querySelector("#todoRingWrap .ring-arc");
+  if(arc0){
+    const c = parseFloat(arc0.dataset.c);
+    arc0.setAttribute("stroke-dashoffset", c);   // start empty
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const frac = urgentList.length > 0 ? doneCount/urgentList.length : 0;
+      arc0.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2));
+    }));
+  }
+
+  /* to-do checkboxes update the side ring live — mutate the existing arc so it animates (no innerHTML swap) */
   p.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", () => {
     el.classList.toggle("done");
     localStorage.setItem(`dh-todo-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
     const total = urgentList.length;
     const nowDone = p.querySelectorAll(".todo-inline.done").length;
-    const ringWrap = p.querySelector("#todoRingWrap");
-    if(ringWrap) ringWrap.innerHTML = ringSvg(nowDone, total, 74);
+    const arc = p.querySelector("#todoRingWrap .ring-arc");
+    if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
     const txt = p.querySelector("#todoRingTxt");
     if(txt) txt.textContent = `${nowDone} / ${total} done`;
   }));

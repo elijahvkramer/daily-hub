@@ -39,19 +39,19 @@
   .portfolio-link{display:inline-flex;align-items:center;gap:7px;color:var(--gold);text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(200,162,75,.5);padding:7px 14px;border-radius:6px;transition:background .18s,color .18s;white-space:nowrap}
   .portfolio-link:hover{background:var(--gold);color:var(--ink)}
 
-  /* ---------- hero ---------- */
-  .hero{background:var(--ink);color:var(--cream);overflow:hidden;position:relative}
+  /* ---------- hero (compact, in-flow, light — no more chunky black bar) ---------- */
+  .hero{background:var(--paper);overflow:hidden;position:relative}
   .hero-in{transition:opacity .16s ease}
-  .hero-in{max-width:1080px;margin:0 auto;padding:52px 24px 46px}
-  .eyebrow{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.3em;text-transform:uppercase;margin-bottom:16px}
-  .hero h1{font-size:clamp(28px,4.4vw,44px);font-weight:900;line-height:1.14;letter-spacing:-.01em;max-width:820px}
-  .hero .subtitle{color:#A6ABB1;font-size:15.5px;line-height:1.65;max-width:760px;margin-top:16px;font-weight:400}
-  .gold-rule{width:44px;height:3px;background:var(--gold);margin:22px 0 14px;border-radius:2px}
-  .dateline{color:#8A8F95;font-size:13px;font-weight:700;letter-spacing:.06em}
-  .stale-note{display:none;margin-top:14px;font-size:12.5px;color:var(--gold-soft);background:rgba(200,162,75,.12);border:1px solid rgba(200,162,75,.3);border-radius:6px;padding:7px 12px;width:fit-content}
+  .hero-in{max-width:1080px;margin:0 auto;padding:24px 24px 0}
+  .eyebrow{color:#A08339;font-size:10.5px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px}
+  .hero h1{font-size:clamp(19px,2.4vw,25px);font-weight:900;line-height:1.15;letter-spacing:-.01em;color:var(--ink);max-width:820px}
+  .hero .subtitle{color:var(--muted);font-size:13px;line-height:1.5;max-width:760px;margin-top:4px;font-weight:400}
+  .gold-rule{display:none}
+  .dateline{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;margin-top:4px}
+  .stale-note{display:none;margin-top:12px;font-size:12.5px;color:#A08339;background:rgba(200,162,75,.12);border:1px solid rgba(200,162,75,.3);border-radius:6px;padding:7px 12px;width:fit-content}
 
   /* ---------- main ---------- */
-  main{max-width:1080px;margin:0 auto;padding:36px 24px 80px}
+  main{max-width:1080px;margin:0 auto;padding:22px 24px 80px}
   .panel{display:none;animation:fadein .35s ease;transition:opacity .16s ease}
   .panel.active{display:block}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -148,18 +148,24 @@
   .np-rail-item:hover{opacity:.65}
   .np-rail-item .rt{font-family:Georgia,serif;font-size:14.5px;font-weight:900;line-height:1.26;color:var(--ink)}
   .np-rail-item .rs{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
-  @media(max-width:720px){.np-front{grid-template-columns:1fr}.np-lead-col{padding-right:0;border-right:none;border-bottom:1px solid var(--hairline);padding-bottom:18px;margin-bottom:16px}.np-rail{padding-left:0}.np-cols{column-count:1}}
-  /* section view: lead story + story list */
-  .np-sec-title{font-family:Georgia,serif;font-size:24px;font-weight:900;color:var(--ink);border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:16px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .np-standfirst{font-family:Georgia,serif;font-style:italic;font-size:15px;line-height:1.5;color:#4A4E55;margin:2px 0 12px}
+  .np-cols{font-size:14px;line-height:1.68;color:#33363C;margin-top:10px}
+  .np-cols.two{column-count:2;column-gap:24px}
+  .np-cont{display:block;margin-top:12px;color:#A08339;font-weight:900;cursor:pointer;font-size:13px}
+  @media(max-width:720px){.np-front{grid-template-columns:1fr}.np-lead-col{padding-right:0;border-right:none;border-bottom:1px solid var(--hairline);padding-bottom:18px;margin-bottom:16px}.np-rail{padding-left:0}.np-cols.two{column-count:1}}
+  /* section view: front-page treatment — lead story + a 2-column newspaper flow */
+  .np-sec-title{font-family:Georgia,serif;font-size:25px;font-weight:900;color:var(--ink);border-bottom:3px double var(--ink);padding-bottom:8px;margin-bottom:16px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
   .np-sec-title .np-count{font-family:'Lato',sans-serif;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .np-story{padding:16px 0;border-bottom:1px solid var(--hairline)}
-  .np-story:first-child{padding-top:0}
-  .np-story:last-child{border-bottom:none}
-  .np-story .st-t{font-family:Georgia,serif;font-size:18px;font-weight:900;line-height:1.24;color:var(--ink)}
-  .np-story .st-b{font-size:14px;line-height:1.66;color:#33363C;margin-top:6px}
-  .np-story.lead .st-t{font-size:23px}
-  .np-story.lead .st-b{column-count:2;column-gap:22px}
-  @media(max-width:720px){.np-story.lead .st-b{column-count:1}}
+  .np-lead-story{border-bottom:1px solid var(--hairline);padding-bottom:18px;margin-bottom:16px}
+  .np-lead-story .ls-t{font-family:Georgia,serif;font-size:clamp(21px,3vw,27px);font-weight:900;line-height:1.14;color:var(--ink);margin-bottom:8px}
+  .np-lead-story .ls-b{font-size:14.5px;line-height:1.7;color:#33363C}
+  .np-lead-story .ls-b.two{column-count:2;column-gap:24px}
+  @media(max-width:640px){.np-lead-story .ls-b.two{column-count:1}}
+  .np-secflow{column-count:2;column-gap:28px}
+  .np-col-story{break-inside:avoid;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--hairline)}
+  .np-col-story .cs-t{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.24;color:var(--ink)}
+  .np-col-story .cs-b{font-size:13.5px;line-height:1.62;color:#33363C;margin-top:5px}
+  @media(max-width:640px){.np-secflow{column-count:1}}
   .np-back{appearance:none;background:none;border:none;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:var(--muted);cursor:pointer;margin-bottom:14px}
   .np-back:hover{color:#A08339}
 
@@ -215,8 +221,11 @@
   .evt-wrap{position:relative}
   .countdown{display:inline-block;margin-top:3px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#A08339;background:rgba(200,162,75,.14);border-radius:5px;padding:2px 7px}
 
-  /* weather hero — sky-colored, changes with conditions */
-  .wx-hero{background:var(--ink);border-radius:18px;padding:24px 26px 22px;position:relative;margin-top:20px;overflow:hidden;transition:background .5s ease;box-shadow:var(--shadow)}
+  /* weather hero — sky-colored, changes with conditions (crossfade, not snap) */
+  .wx-hero{border-radius:18px;padding:24px 26px 22px;position:relative;margin-top:14px;overflow:hidden;box-shadow:var(--shadow);transition:color .45s ease}
+  .wx-sky{position:absolute;inset:0;z-index:0}
+  .wx-sky-ov{opacity:0}
+  .wx-content{position:relative;z-index:1}
   .wx-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
   .wx-now{display:flex;align-items:center;gap:18px}
   .wx-glyph{font-size:50px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
@@ -227,16 +236,22 @@
   .wx-meta .m{text-align:right}
   .wx-meta .mk{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:900;opacity:.8}
   .wx-meta .mv{font-size:17px;font-weight:900;margin-top:3px}
-  .wx-hour-badge{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-top:10px;background:rgba(255,255,255,.16);opacity:0;transition:opacity .2s}
+  .wx-hour-badge{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-top:10px;background:rgba(255,255,255,.18);opacity:0;transition:opacity .2s}
   .wx-hero.hovering .wx-hour-badge{opacity:1}
-  .wx-chart-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;margin:20px 0 2px;opacity:.75}
-  .bh-spark{width:100%;height:84px;display:block}
-  .bh-axis{display:flex;justify-content:space-between;font-size:10.5px;margin-top:2px;opacity:.7}
+  .wx-chart-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;margin:18px 0 2px;opacity:.75}
+  .wx-chart{position:relative}
+  .wx-hours{position:relative;height:22px;margin-bottom:1px}
+  .wx-hours span{position:absolute;transform:translateX(-50%);font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  .bh-spark{width:100%;height:80px;display:block}
+  .bh-axis{position:relative;height:14px;margin-top:2px;font-size:10px;opacity:.72;font-weight:700}
+  .bh-axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
   .bh-tip{position:absolute;pointer-events:none;background:rgba(255,255,255,.96);color:#16223A;font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:8px;transform:translate(-50%,-118%);white-space:nowrap;display:none;z-index:5;box-shadow:0 6px 18px -6px rgba(0,0,0,.45)}
   .bh-tip b{color:#A0651B}
 
   /* today grid */
   .today-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
+  .today-bottom{display:grid;grid-template-columns:minmax(250px,320px) 1fr;gap:14px;margin-top:14px;align-items:start}
+  @media(max-width:720px){.today-bottom{grid-template-columns:1fr}}
   .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
   .bc-num{font-size:27px;font-weight:900;color:var(--ink);margin-top:6px;line-height:1}
@@ -270,26 +285,28 @@
   .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
   @media(max-width:640px){.psnap-hero{grid-template-columns:1fr;gap:14px}}
 
-  /* mini calendar (replaces the radar bars) */
+  /* mini calendar — this week + next week, dots per event, times on hover */
   .cal-card{position:relative}
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .cal-head .cm{font-size:14px;font-weight:900;color:var(--ink);letter-spacing:.02em}
-  .cal-head .cl{font-size:11px;color:var(--muted);font-weight:700}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-  .cal-dow{font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
-  .cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s}
-  .cal-cell.pad{color:transparent;pointer-events:none}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cal-head .cm{font-size:12px;font-weight:900;color:var(--ink);letter-spacing:.06em;text-transform:uppercase}
+  .cal-head .cl{font-size:10.5px;color:var(--muted);font-weight:700}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-dow{font-size:9px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
+  .cal-cell{min-height:40px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:5px 0 4px}
+  .cal-cell.dim{color:var(--muted);opacity:.55}
   .cal-cell.has{cursor:pointer;background:var(--paper)}
   .cal-cell.has:hover{background:var(--gold-soft)}
-  .cal-cell.today{background:var(--ink);color:var(--cream)}
-  .cal-cell.today.has{background:var(--ink)}
-  .cal-cell .cd-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);margin-top:3px}
-  .cal-cell.today .cd-dot{background:var(--gold-soft)}
-  .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:9px 12px;border-radius:8px;max-width:240px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
-  .cal-tip b{color:var(--gold-soft)}
-  .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:4px}
+  .cal-cell.today{outline:2px solid var(--gold);outline-offset:-2px}
+  .cal-cell.today .cn{color:#A08339;font-weight:900}
+  .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
+  .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
+  .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:10px 13px;border-radius:9px;max-width:250px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
+  .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:5px}
+  .cal-tip .ct-row{margin-top:5px}
+  .cal-tip .ct-time{color:var(--gold-soft);font-weight:900;font-size:11px}
 
-  .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:6px 18px 4px;margin-top:20px}
+  .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:6px 18px 4px}
+  .today-bottom .agenda-card{margin-top:0}
   .agenda-tabs{display:flex;gap:22px;border-bottom:1px solid var(--hairline)}
   .agenda-tab{appearance:none;background:none;border:none;font:inherit;font-size:12.5px;font-weight:900;color:var(--muted);padding:12px 0 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
   .agenda-tab.active{color:var(--ink);border-bottom-color:var(--gold)}
@@ -348,65 +365,51 @@
   .mast .mfill{height:100%;border-radius:3px;transition:width .4s}
   .mast.new{color:#A08339}
 
-  /* ---------- games: arcade ---------- */
+  /* ---------- games: newspaper "Puzzles & Diversions" (game-y) ---------- */
   .game-back{margin-bottom:20px}
-  .games-wrap{max-width:860px;margin:0 auto}
-  .game-cat{color:#9BA0A6;font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin:30px 0 14px;display:flex;align-items:center;gap:12px}
-  .game-cat::after{content:"";flex:1;height:1px;background:var(--hairline)}
+  .games-wrap{max-width:900px;margin:0 auto}
+  .game-cat{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;margin:26px 0 14px;display:flex;align-items:center;gap:12px}
+  .game-cat::after{content:"";flex:1;height:2px;background:var(--ink);opacity:.12}
 
-  /* The Close — playful cards at the top of the arcade */
-  .close-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .close-tile{border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;border:1px solid transparent}
-  .close-tile .ct-k{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:inline-flex;align-items:center;gap:6px}
-  .close-tile .ct-emoji{font-size:15px}
-  .close-tile p{font-size:13px;line-height:1.55}
-  .close-tile.fact{background:#EAF3DE;border-color:#C0DD97}
-  .close-tile.fact .ct-k{color:#3B6D11}
-  .close-tile.fact p{color:#27500A}
-  .close-tile.hist{background:#F4EDE0;border-color:#E9D2A0}
-  .close-tile.hist .ct-k{color:#8A6D2F}
-  .close-tile.hist p{color:#5A4718}
-  .close-tile.word{background:#EDEAF6;border-color:#CBC2E8}
-  .close-tile.word .ct-k{color:#534AB7}
-  .close-tile.word p{color:#3C3489}
-  .close-tile.word b{color:#26215C}
-  @media(max-width:640px){.close-strip{grid-template-columns:1fr}}
+  .pz-masthead{text-align:center;padding:6px 0 14px;border-bottom:3px double var(--ink);margin-bottom:6px}
+  .pz-masthead .pz-name{font-family:Georgia,serif;font-size:clamp(26px,5vw,38px);font-weight:900;letter-spacing:.01em;line-height:1}
+  .pz-masthead .pz-sub{font-size:10.5px;letter-spacing:.28em;color:#A08339;font-weight:900;text-transform:uppercase;margin-top:7px}
 
-  /* marquee header */
-  .marquee{position:relative;background:linear-gradient(#1a1d24,#111318);border:1px solid rgba(200,162,75,.35);border-bottom:none;border-radius:16px 16px 0 0;padding:22px 26px 18px;text-align:center;overflow:hidden}
-  .marquee-bulbs{position:absolute;top:8px;left:16px;right:16px;display:flex;justify-content:space-between}
-  .marquee-bulbs i{width:7px;height:7px;border-radius:50%;background:var(--gold);opacity:.5;animation:bulb 1.1s infinite}
-  @keyframes bulb{0%,100%{opacity:.28}50%{opacity:1;box-shadow:0 0 7px currentColor}}
-  .marquee .mq-sign{font-family:Georgia,serif;font-size:clamp(26px,5vw,34px);font-weight:900;letter-spacing:.14em;color:var(--gold);text-shadow:0 0 12px rgba(200,162,75,.45)}
-  .marquee .mq-sub{color:#7FE3C4;font-size:11px;letter-spacing:.28em;margin-top:6px;text-transform:uppercase}
-  .arcade-body{background:#0F1319;border:1px solid rgba(200,162,75,.35);border-top:none;border-radius:0 0 16px 16px;padding:18px}
-  .cab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .cabinet{position:relative;border-radius:14px;padding:20px 14px 16px;text-align:center;cursor:pointer;border:2px solid var(--gcol);background:radial-gradient(circle at 50% 22%,color-mix(in srgb,var(--gcol) 16%,#15181e),#15181e);transition:transform .16s, box-shadow .16s;color:#F4F1EA}
-  .cabinet:hover{transform:translateY(-4px);box-shadow:0 0 22px -6px var(--gcol)}
-  .cabinet .cab-glyph{font-size:32px;color:var(--gcol);line-height:1;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--gcol) 55%,transparent))}
-  .cabinet .cab-name{font-weight:900;font-size:14px;margin-top:9px;letter-spacing:.03em}
-  .cabinet .cab-tag{font-size:11px;color:#9BA0A6;margin-top:4px;line-height:1.4;min-height:30px}
-  .cabinet .cab-stat{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gcol);margin-top:8px}
-  .cabinet .cab-play{margin-top:12px;font-size:10px;font-weight:900;letter-spacing:.16em;color:#0C0E12;background:var(--gcol);border-radius:20px;padding:7px 0}
-  .cabinet .cab-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#0C0E12;background:var(--gold-soft);padding:3px 10px;border-radius:20px;white-space:nowrap}
-  @media(max-width:560px){.cab-grid{grid-template-columns:1fr}}
-  /* neon pill external links */
-  .neon-pills{display:flex;flex-wrap:wrap;gap:10px}
-  .neon-pill{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:#C9CDD2;background:#14171d;border:1px solid #2A2E36;border-radius:22px;padding:9px 15px;transition:all .15s}
-  .neon-pill:hover{color:var(--gold);border-color:rgba(200,162,75,.6);box-shadow:0 0 14px -5px rgba(200,162,75,.6)}
-  .neon-pill img{width:16px;height:16px;border-radius:4px}
-  .neon-pill .np-ext{opacity:.5;font-size:11px}
+  /* built-in game boxes — colorful + game-y */
+  .pz-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .pz-box{position:relative;border:1px solid var(--hairline);border-top:4px solid var(--pcol);border-radius:12px;background:var(--card);padding:20px 16px 16px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .16s, box-shadow .16s}
+  .pz-box:hover{transform:translateY(-4px);box-shadow:0 3px 6px rgba(22,24,29,.07),0 16px 36px -12px rgba(22,24,29,.22)}
+  .pz-box .pz-ic{width:52px;height:52px;margin:0 auto;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;background:var(--pcol)}
+  .pz-box .pz-nm{font-family:Georgia,serif;font-weight:900;font-size:17px;margin-top:11px;color:var(--ink)}
+  .pz-box .pz-tg{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;min-height:34px}
+  .pz-box .pz-st{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--pcol);margin-top:8px}
+  .pz-box .pz-play{margin-top:12px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#fff;background:var(--ink);border-radius:9px;padding:9px 0;transition:background .15s}
+  .pz-box:hover .pz-play{background:var(--pcol)}
+  @media(max-width:560px){.pz-boxes{grid-template-columns:1fr}}
 
-  .game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .game-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:9px;background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:20px;box-shadow:var(--shadow);text-decoration:none;color:inherit;cursor:pointer;font:inherit;transition:transform .18s, box-shadow .18s, border-color .18s;position:relative}
-  .game-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 2px 4px rgba(22,24,29,.06),0 14px 34px -10px rgba(22,24,29,.16)}
-  .gc-top{display:flex;align-items:center;gap:12px;width:100%}
-  .game-icon{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--paper);flex-shrink:0}
-  .game-name{font-size:14.5px;font-weight:900;letter-spacing:.01em}
-  .gc-ext{margin-left:auto;color:var(--muted);font-size:13px}
-  .game-tag{font-size:12px;line-height:1.5;color:var(--muted)}
-  @media(max-width:640px){.game-grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:440px){.game-grid{grid-template-columns:1fr}}
+  /* Brain Food — distinct boxed feature, clearly set apart */
+  .brainfood{border:2px solid var(--ink);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+  .brainfood .bf-hd{background:var(--ink);color:var(--cream);padding:11px 18px;display:flex;align-items:center;gap:9px;font-family:Georgia,serif;font-weight:900;font-size:16px;letter-spacing:.02em}
+  .brainfood .bf-hd .bf-em{font-size:17px}
+  .brainfood .bf-hd .bf-tag{margin-left:auto;font-family:'Lato',sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .bf-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+  .bf-item{padding:15px 18px;border-right:1px solid var(--hairline)}
+  .bf-item:last-child{border-right:none}
+  .bf-item .bf-k{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;color:#A08339}
+  .bf-item p{font-size:12.5px;line-height:1.55;color:#3A3E45}
+  .bf-item b{color:var(--ink)}
+  @media(max-width:640px){.bf-grid{grid-template-columns:1fr}.bf-item{border-right:none;border-bottom:1px solid var(--hairline)}.bf-item:last-child{border-bottom:none}}
+
+  /* external puzzle links — large icon buttons */
+  .pz-links{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .pz-link{display:flex;align-items:center;gap:13px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);transition:transform .15s, border-color .15s, box-shadow .15s}
+  .pz-link:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 2px 4px rgba(22,24,29,.06),0 12px 28px -10px rgba(22,24,29,.16)}
+  .pz-link img{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:var(--paper)}
+  .pz-link .pl-nm{font-weight:900;font-size:14.5px}
+  .pz-link .pl-tg{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+  .pz-link .pl-ext{margin-left:auto;color:var(--muted);font-size:14px}
+  @media(max-width:640px){.pz-links{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:420px){.pz-links{grid-template-columns:1fr}}
 
   /* built-in: Daily Grid */
   .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
@@ -735,6 +738,9 @@ function staleCheck(kind, date){
 async function show(){
   const kind = S.tab, date = S.date[kind];
   const panel = $("#panel-"+kind);
+  // News and Games carry their own mastheads — hide the global compact header there so content fills the space
+  const heroEl = document.querySelector(".hero");
+  if(heroEl) heroEl.style.display = (kind==="news" || kind==="quiz") ? "none" : "block";
   $("#heroEyebrow").textContent = NICE[kind];
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
   if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderGamesTab(); return; }
@@ -751,9 +757,12 @@ async function show(){
     const d = await fetchDay(kind, date);
     if(kind==="news") renderNews(d);
     else{
-      $("#heroTitle").textContent = "Your Day, Briefed";
-      $("#heroSub").textContent = "Calendar, to-dos, weather, and inbox highlights for the day.";
-      $("#heroDateline").textContent = niceDate(date) + " · Central Time";
+      const hr = new Date().getHours();
+      const greet = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
+      $("#heroEyebrow").textContent = niceDate(date);
+      $("#heroTitle").textContent = `${greet}, Eli`;
+      $("#heroSub").textContent = "";
+      $("#heroDateline").textContent = "";
       renderCalendarBody($("#panel-calendar"), d);
     }
   }catch(e){
@@ -940,20 +949,23 @@ function showNewsView(view){
     setNavActive("front");
     const lead = sections[0] || {title:"", items:[]};
     const leadItem = (lead.items||[])[0] || {lead:"", body:""};
-    const deck = (d.subtitle ? d.subtitle+" " : "") + (leadItem.body||"");
+    const para = ((leadItem.lead ? leadItem.lead + " " : "") + (leadItem.body||"")).trim();
+    const twoCol = para.length > 260 ? " two" : "";
     /* rail: one headline from every section (skip the lead item already shown), + a markets teaser */
     let rail = "";
     sections.forEach((s,si) => {
       const it = si===0 ? (s.items||[])[1] : (s.items||[])[0];
       if(!it) return;
-      rail += `<div class="np-rail-item" data-goto="${si}"><div class="rt">${esc(it.lead)}</div><div class="rs">${esc(secShort(s.title))}</div></div>`;
+      rail += `<div class="np-rail-item" data-goto="${si}"><div class="rt">${esc(headline(it.lead))}</div><div class="rs">${esc(secShort(s.title))}</div></div>`;
     });
     rail += `<div class="np-rail-item" data-goto="markets"><div class="rt">Markets: the day's close</div><div class="rs">Business</div></div>`;
     body.innerHTML = `<div class="np-front">
       <div class="np-lead-col">
         <div class="np-kick">${esc(secShort(lead.title))} · Lead Story</div>
         <div class="np-lead-title">${esc((d.headline||"").replace(/\n/g," "))}</div>
-        <div class="np-cols">${esc(deck)} <span class="np-cont" data-goto="0">Continued in ${esc(secShort(lead.title))} →</span></div>
+        ${d.subtitle ? `<div class="np-standfirst">${esc(d.subtitle)}</div>` : ""}
+        <div class="np-cols${twoCol}">${esc(para)}</div>
+        <span class="np-cont" data-goto="0">Full story in ${esc(secShort(lead.title))} →</span>
       </div>
       <div class="np-rail">
         <div class="np-rail-h">Also in this edition</div>
@@ -992,19 +1004,31 @@ function showNewsView(view){
     return;
   }
 
-  /* a section view: lead story (full) + the rest as a newspaper story list */
+  /* a section view — same front-page treatment: a serif lead story, then a 2-column newspaper flow */
   const si = Number(view);
   setNavActive(si);
   const sec = sections[si] || {title:"", items:[]};
   const items = sec.items || [];
+  const leadIt = items[0] || {lead:"", body:""};
+  const leadPara = ((leadIt.lead ? leadIt.lead + " " : "") + (leadIt.body||"")).trim();
   let h = `<button class="np-back" id="npBack">← Back to Front Page</button>
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
-  items.forEach((it,i) => {
-    h += `<div class="np-story${i===0?" lead":""}"><div class="st-t">${esc(it.lead)}</div><div class="st-b">${esc(it.body)}</div></div>`;
-  });
+  if(items.length){
+    h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
+      <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div></div>`;
+  }
+  if(items.length > 1){
+    h += `<div class="np-secflow">`;
+    items.slice(1).forEach(it => {
+      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
+    });
+    h += `</div>`;
+  }
   body.innerHTML = h;
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
 }
+/* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
+function headline(s){ return String(s||"").replace(/\s*\.\s*$/,""); }
 
 /* ================= calendar (encrypted) ================= */
 async function deriveKey(pass, salt){
@@ -1208,7 +1232,7 @@ function ringSvg(done, total, size){
 
 function buildSparkline(hourly, lineColor){
   lineColor = lineColor || "#C8A24B";
-  const W = 300, H = 84, PT = 10, PB = 10, PL = 8, PR = 8;   // padding so the first/last point + dot never clip
+  const W = 300, H = 80, PT = 10, PB = 8, PL = 8, PR = 8;   // padding so the first/last point + dot never clip
   const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
   let min = Math.min(...vals), max = Math.max(...vals);
   if(min === max){ min -= 1; max += 1; }
@@ -1217,8 +1241,15 @@ function buildSparkline(hourly, lineColor){
   let line = "", area = `M ${X(0).toFixed(1)} ${H}`;
   hourly.forEach((x,i) => { const v = Number(x.temp ?? x.tF ?? 0); line += `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)} `; area += ` L ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`; });
   area += ` L ${X(hourly.length-1).toFixed(1)} ${H} Z`;
-  const first = hourly[0], last = hourly[hourly.length-1];
-  return `<svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark" preserveAspectRatio="none">
+  // per-hour weather thumbnails above the line
+  const gstep = hourly.length > 12 ? 2 : 1;
+  let glyphs = "";
+  hourly.forEach((x,i) => { if(i % gstep !== 0 && i !== hourly.length-1) return; glyphs += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${esc(wxGlyph(x.cond||x.c))}</span>`; });
+  // multi-tick time axis
+  const nTicks = Math.min(6, hourly.length); let axis = "";
+  for(let k=0;k<nTicks;k++){ const i = Math.round(k*(hourly.length-1)/(nTicks-1||1)); axis += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${esc(fmtHour(hourly[i].t ?? hourly[i].h))}</span>`; }
+  return `<div class="wx-hours">${glyphs}</div>
+  <svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark" preserveAspectRatio="none">
     <defs><linearGradient id="wxGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lineColor}" stop-opacity=".30"/><stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/></linearGradient></defs>
     <path d="${area}" fill="url(#wxGrad)"/>
     <path d="${line}" fill="none" stroke="${lineColor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
@@ -1226,13 +1257,13 @@ function buildSparkline(hourly, lineColor){
     <circle id="wxDot" r="4" fill="#fff" stroke="${lineColor}" stroke-width="2" style="display:none"/>
     <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="wxHit"/>
   </svg>
-  <div class="bh-axis"><span>${esc(fmtHour(first.t ?? first.h))}</span><span>${esc(fmtHour(last.t ?? last.h))}</span></div>
+  <div class="bh-axis">${axis}</div>
   <div class="bh-tip" id="wxTip"></div>`;
 }
 
 function wireSparkline(hourly, onHover, onLeave){
   const svg = $("#wxSpark"); if(!svg) return;
-  const W = 300, H = 84, PT = 10, PB = 10, PL = 8, PR = 8;
+  const W = 300, H = 80, PT = 10, PB = 8, PL = 8, PR = 8;
   const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
   let min = Math.min(...vals), max = Math.max(...vals);
   if(min === max){ min -= 1; max += 1; }
@@ -1265,42 +1296,42 @@ function wireSparkline(hourly, onHover, onLeave){
   });
 }
 
-/* mini month calendar — hovering a day with events pops a tooltip listing them */
+/* mini calendar — this week + next week (14 days). Each day shows a dot per event;
+   hovering a day pops a tooltip listing each event with its time (or "All day"). */
+function eventTimeText(lead){
+  const m = String(lead||"").match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)(?:\s*[–-]\s*\d{1,2}(?::\d{2})?\s*(?:am|pm))?/i);
+  return m ? m[0].replace(/\s+/g,"") : "All day";
+}
 function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
-  const year = base.getFullYear(), month = base.getMonth(), todayNum = base.getDate();
-  const byDay = {};
-  const add = (dstr, label) => {
-    if(!dstr || !label) return;
-    const dt = new Date(dstr+"T12:00:00");
-    if(dt.getFullYear()===year && dt.getMonth()===month){ const dd = dt.getDate(); (byDay[dd] = byDay[dd]||[]).push(label); }
-  };
+  const byDate = {};
+  const add = (dstr, label, time) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time}); };
   (todayList||[]).forEach(item => {
-    const label = typeof item==="string" ? item : (parseEventLead(item.lead,item.body,todayDate).title || item.body || item.lead || "");
-    add(todayDate, label);
+    const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
+    const ev = parseEventLead(lead, body, todayDate);
+    add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, null);
-    const label = ev.title || body || (typeof item==="string"?item:"");
-    add(ev.dateStr, label);
+    add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
   });
-  const firstDow = new Date(year, month, 1).getDay();
-  const daysIn = new Date(year, month+1, 0).getDate();
-  const monthName = base.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+  const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
   const dows = ["S","M","T","W","T","F","S"];
   let cells = dows.map(dw => `<div class="cal-dow">${dw}</div>`).join("");
-  for(let i=0;i<firstDow;i++) cells += `<div class="cal-cell pad"></div>`;
-  for(let dnum=1; dnum<=daysIn; dnum++){
-    const evs = byDay[dnum] || [];
-    const has = evs.length>0, isToday = dnum===todayNum;
-    const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"");
-    const data = (has || isToday)
-      ? esc(JSON.stringify({day: new Date(year,month,dnum).toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday}))
-      : "";
-    cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}>${dnum}${has?'<span class="cd-dot"></span>':""}</div>`;
+  for(let i=0;i<14;i++){
+    const dt = new Date(start); dt.setDate(start.getDate()+i);
+    const key = dt.toLocaleDateString("en-CA");
+    const evs = byDate[key] || [];
+    const has = evs.length>0, isToday = key===todayDate, isPast = key<todayDate && !isToday;
+    const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
+    const dots = evs.slice(0,6).map(()=>`<i></i>`).join("");
+    const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
+    cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }
-  return `<div class="cal-head"><span class="cm">${esc(monthName)}</span><span class="cl">Hover a day for events</span></div>
+  const end = new Date(start); end.setDate(start.getDate()+13);
+  const label = `${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`;
+  return `<div class="cal-head"><span class="cm">Two-Week View</span><span class="cl">${esc(label)}</span></div>
     <div class="cal-grid">${cells}</div><div class="cal-tip"></div>`;
 }
 function wireMiniCal(card){
@@ -1308,7 +1339,9 @@ function wireMiniCal(card){
   card.querySelectorAll(".cal-cell[data-cal]").forEach(c => {
     c.addEventListener("mouseenter", () => {
       let data; try{ data = JSON.parse(c.dataset.cal); }catch(e){ return; }
-      const rows = (data.list||[]).length ? data.list.map(t => `• ${esc(t)}`).join("<br>") : `<span style="color:#8A8F95">Nothing scheduled</span>`;
+      const rows = (data.list||[]).length
+        ? data.list.map(e => `<div class="ct-row"><span class="ct-time">${esc(e.time||"All day")}</span> ${esc(e.label)}</div>`).join("")
+        : `<span style="color:#8A8F95">Nothing scheduled</span>`;
       tip.innerHTML = `<div class="ct-day">${esc(data.day)}${data.today?" · Today":""}</div>${rows}`;
       tip.style.display = "block";
       const cr = card.getBoundingClientRect(), wr = c.getBoundingClientRect();
@@ -1393,7 +1426,10 @@ function renderCalendarBody(p, d){
     return x + `</div>`;
   };
 
-  /* ---- to-do card (list + side ring) at the very top ---- */
+  /* ---- portfolio snapshot (full-width; at the top now, swapped above to-dos) ---- */
+  h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
+
+  /* ---- to-do card (list + side ring) ---- */
   h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
       <div class="tc-list">
         <div class="tc-head"><span class="h">Urgent To-Dos</span></div>
@@ -1410,34 +1446,33 @@ function renderCalendarBody(p, d){
       </div>
   </div>`;
 
-  /* ---- portfolio snapshot (full-width; swapped above weather) ---- */
-  h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
-
-  /* ---- weather hero (live; filled in async) ---- */
+  /* ---- weather hero (live; filled in async). Two stacked sky layers crossfade instead of snapping ---- */
   h += `<div class="wx-hero" id="wxHero">
-    <div class="wx-top">
-      <div class="wx-now"><div class="wx-glyph" id="wxGlyph">◦</div>
-        <div><div class="wx-temp" id="wxTemp">—</div><div class="wx-cond" id="wxCond">Loading forecast…</div>
-        <div class="wx-loc" id="wxLoc"></div></div></div>
-      <div style="text-align:right"><div class="wx-meta" id="wxMeta"></div><span class="wx-hour-badge" id="wxHourBadge"></span></div>
+    <div class="wx-sky" id="wxSky"></div>
+    <div class="wx-sky wx-sky-ov" id="wxSkyOv"></div>
+    <div class="wx-content">
+      <div class="wx-top">
+        <div class="wx-now"><div class="wx-glyph" id="wxGlyph">◦</div>
+          <div><div class="wx-temp" id="wxTemp">—</div><div class="wx-cond" id="wxCond">Loading forecast…</div>
+          <div class="wx-loc" id="wxLoc"></div></div></div>
+        <div style="text-align:right"><div class="wx-meta" id="wxMeta"></div><span class="wx-hour-badge" id="wxHourBadge"></span></div>
+      </div>
+      <div class="wx-chart-lbl">Hourly · hover to scrub the day</div>
+      <div id="wxSparkWrap" class="wx-chart"><div style="font-size:12.5px;padding:14px 0;opacity:.7">Fetching hourly forecast…</div></div>
     </div>
-    <div class="wx-chart-lbl">Hourly · hover to scrub the day</div>
-    <div id="wxSparkWrap" style="position:relative"><div style="font-size:12.5px;padding:14px 0;opacity:.7">Fetching hourly forecast…</div></div>
   </div>`;
 
-  /* ---- mini calendar (replaces the radar bars) ---- */
-  h += `<div class="bento-card cal-card" style="margin-top:14px">
-      ${buildMiniCal(todayList, radarList, d.date)}
-    </div>`;
-
-  /* ---- tabbed agenda: Today / Next 7 days ---- */
-  h += `<div class="agenda-card">
-    <div class="agenda-tabs">
-      <button class="agenda-tab active" data-atab="today">Today</button>
-      <button class="agenda-tab" data-atab="radar">Next 7 days</button>
+  /* ---- bottom: two-week calendar side-by-side with the Today / Next 7 days agenda ---- */
+  h += `<div class="today-bottom">
+    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
+    <div class="agenda-card">
+      <div class="agenda-tabs">
+        <button class="agenda-tab active" data-atab="today">Today</button>
+        <button class="agenda-tab" data-atab="radar">Next 7 days</button>
+      </div>
+      <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+      <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
     </div>
-    <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
-    <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
   </div>`;
 
   /* The Close now lives on the Games tab — see renderGamesLauncher(). */
@@ -1482,14 +1517,27 @@ function setWxMeta(feels, rain, hum, wind){
 }
 async function loadTodayWeather(d){
   const hero = $("#wxHero"); if(!hero) return;
-  const applyTheme = (cond, day) => {
+  const sky = $("#wxSky"), ov = $("#wxSkyOv");
+  let skyTimer;
+  /* crossfade between sky gradients (CSS can't transition gradients, so we fade an overlay) */
+  const setSky = (grad, animate) => {
+    if(!sky) return;
+    if(!animate){ sky.style.background = grad; ov.style.transition = "none"; ov.style.opacity = "0"; return; }
+    ov.style.transition = "opacity .35s ease";
+    ov.style.background = grad;
+    void ov.offsetWidth;
+    ov.style.opacity = "1";
+    clearTimeout(skyTimer);
+    skyTimer = setTimeout(() => { sky.style.background = grad; ov.style.transition = "none"; ov.style.opacity = "0"; }, 360);
+  };
+  const applyTheme = (cond, day, animate) => {
     const th = wxTheme(cond, day);
-    hero.style.background = th.bg;
+    setSky(th.bg, animate);
     hero.style.color = th.text;
   };
   const paint = (wx) => {
     if(!$("#wxHero")) return;
-    applyTheme(wx.curCond, wx.curDay);
+    applyTheme(wx.curCond, wx.curDay, false);
     $("#wxGlyph").textContent = wxGlyph(wx.curCond);
     $("#wxTemp").textContent = (wx.curTemp==null||wx.curTemp==="—") ? "—" : wx.curTemp + "°";
     $("#wxCond").textContent = wx.curCond + (wx.hi!=null && wx.lo!=null && !isNaN(wx.hi) ? ` · H ${wx.hi}° / L ${wx.lo}°` : "");
@@ -1499,15 +1547,21 @@ async function loadTodayWeather(d){
     if(wx.hourly && wx.hourly.length){
       sw.innerHTML = buildSparkline(wx.hourly, "#C8A24B");
       wireSparkline(wx.hourly,
-        hr => {   // onHover: re-skin + swap readouts to this hour
-          applyTheme(hr.cond, hr.day);
+        hr => {   // onHover: re-skin (gradual) + swap the top-left temp/glyph/condition + readouts to this hour
+          applyTheme(hr.cond, hr.day, true);
           hero.classList.add("hovering");
-          const b = $("#wxHourBadge"); if(b) b.textContent = fmtHour(hr.t ?? hr.h) + " forecast";
+          $("#wxGlyph").textContent = wxGlyph(hr.cond);
+          $("#wxTemp").textContent = (hr.temp ?? hr.tF) + "°";
+          $("#wxCond").textContent = hr.cond || "";
+          const b = $("#wxHourBadge"); if(b) b.textContent = fmtHour(hr.t ?? hr.h);
           setWxMeta(hr.feels, hr.precip, hr.humidity, hr.wind);
         },
         () => {   // onLeave: back to current conditions
-          applyTheme(wx.curCond, wx.curDay);
+          applyTheme(wx.curCond, wx.curDay, true);
           hero.classList.remove("hovering");
+          $("#wxGlyph").textContent = wxGlyph(wx.curCond);
+          $("#wxTemp").textContent = (wx.curTemp==null||wx.curTemp==="—") ? "—" : wx.curTemp + "°";
+          $("#wxCond").textContent = wx.curCond + (wx.hi!=null && wx.lo!=null && !isNaN(wx.hi) ? ` · H ${wx.hi}° / L ${wx.lo}°` : "");
           setWxMeta(wx.feels, wx.rainMax, wx.humidity, wx.wind);
         });
     } else sw.innerHTML = `<div style="font-size:12.5px;padding:8px 0;opacity:.7">Hourly detail unavailable.</div>`;
@@ -2064,72 +2118,68 @@ async function fetchLatestClose(){
 }
 function closeStripHTML(close){
   if(!close) return "";
-  let cards = "";
-  if(close.funFact) cards += `<div class="close-tile fact"><div class="ct-k"><span class="ct-emoji">✨</span> Fun Fact</div><p>${esc(close.funFact)}</p></div>`;
-  if(close.historyTidbit) cards += `<div class="close-tile hist"><div class="ct-k"><span class="ct-emoji">📜</span> History Tidbit</div><p>${esc(close.historyTidbit)}</p></div>`;
-  if(close.word) cards += `<div class="close-tile word"><div class="ct-k"><span class="ct-emoji">📖</span> Word of the Day</div><p><b>${esc(close.word.term)}</b> ${esc(close.word.respell||close.word.ipa||"")} — ${esc(close.word.definition)}</p></div>`;
-  return cards ? `<div class="game-cat">Today's Close</div><div class="close-strip">${cards}</div>` : "";
+  let items = "";
+  if(close.funFact) items += `<div class="bf-item"><div class="bf-k">Fun Fact</div><p>${esc(close.funFact)}</p></div>`;
+  if(close.historyTidbit) items += `<div class="bf-item"><div class="bf-k">History Tidbit</div><p>${esc(close.historyTidbit)}</p></div>`;
+  if(close.word) items += `<div class="bf-item"><div class="bf-k">Word of the Day</div><p><b>${esc(close.word.term)}</b> ${esc(close.word.respell||close.word.ipa||"")} — ${esc(close.word.definition)}</p></div>`;
+  return items ? `<div class="game-cat">Brain Food</div>
+    <div class="brainfood"><div class="bf-hd"><span class="bf-em">🧠</span> Brain Food<span class="bf-tag">Today's tidbits</span></div>
+    <div class="bf-grid">${items}</div></div>` : "";
 }
 
 function renderGamesLauncher(){
   const panel = $("#panel-quiz");
-  $("#heroEyebrow").textContent = "Games";
-  $("#heroTitle").textContent = "The Game Room";
-  $("#heroSub").textContent = "Built-in puzzles plus quick launchers for your daily rotation — and today's Close up top.";
-  $("#heroDateline").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+  $("#heroEyebrow").textContent = "";
+  $("#heroTitle").textContent = "";
+  $("#heroSub").textContent = "";
+  $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
   const favicon = d => `https://www.google.com/s2/favicons?domain=${d}&sz=64`;
 
-  const gotdId = ["quiz","grid","bull"][new Date().getDate() % 3];   // rotating game of the day
   const built = [
     { id:"quiz", name:"Word Quiz",  tag:"Vocabulary trainer from your briefings", icon:"◆", col:"#C8A24B", stat:qBestLabel() },
-    { id:"grid", name:"Daily Grid", tag:"4×4 sum-to-target number puzzle",       icon:"▦", col:"#5DCAA5", stat: localStorage.getItem("dh-grid-"+new Date().toLocaleDateString("en-CA"))==="1" ? "Solved today" : "New today" },
+    { id:"grid", name:"Daily Grid", tag:"4×4 sum-to-target number puzzle",       icon:"▦", col:"#1D9E75", stat: localStorage.getItem("dh-grid-"+new Date().toLocaleDateString("en-CA"))==="1" ? "Solved today" : "New today" },
     { id:"bull", name:"Bull or Bear", tag:"Higher-or-lower with your holdings",   icon:"↕", col:"#D4537E", stat:"Best streak " + (localStorage.getItem("dh-bb-best")||"0") }
   ];
   const words = [
-    { name:"Wordle", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
-    { name:"Connections", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
-    { name:"Mini Crossword", url:"https://www.nytimes.com/crosswords/game/mini", domain:"nytimes.com" },
-    { name:"Nerdle", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
-    { name:"Costcodle", url:"https://costcodle.com/", domain:"costcodle.com" }
+    { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
+    { name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
+    { name:"Mini Crossword", tag:"A quick crossword", url:"https://www.nytimes.com/crosswords/game/mini", domain:"nytimes.com" },
+    { name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
+    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" }
   ];
   const geo = [
-    { name:"Worldle", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
-    { name:"Tradle", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
-    { name:"Travle", url:"https://travle.earth/", domain:"travle.earth" },
-    { name:"Globle", url:"https://globle-game.com/game", domain:"globle-game.com" }
+    { name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
+    { name:"Tradle", tag:"Country by exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
+    { name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
+    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
   ];
-  const pill = g => `<a class="neon-pill" href="${g.url}" target="_blank" rel="noopener noreferrer"><img src="${favicon(g.domain)}" alt="" loading="lazy">${esc(g.name)}<span class="np-ext">↗</span></a>`;
-  const cabinet = g => `<button class="cabinet" data-game="${g.id}" style="--gcol:${g.col}">
-      ${g.id===gotdId?`<span class="cab-badge">★ Game of the Day</span>`:""}
-      <div class="cab-glyph">${g.icon}</div>
-      <div class="cab-name">${esc(g.name)}</div>
-      <div class="cab-tag">${esc(g.tag)}</div>
-      <div class="cab-stat">${esc(g.stat)}</div>
-      <div class="cab-play">▶ Play</div>
+  const linkBtn = g => `<a class="pz-link" href="${g.url}" target="_blank" rel="noopener noreferrer">
+      <img src="${favicon(g.domain)}" alt="" loading="lazy">
+      <div><div class="pl-nm">${esc(g.name)}</div><div class="pl-tg">${esc(g.tag)}</div></div><span class="pl-ext">↗</span></a>`;
+  const box = g => `<button class="pz-box" data-game="${g.id}" style="--pcol:${g.col}">
+      <div class="pz-ic">${g.icon}</div>
+      <div class="pz-nm">${esc(g.name)}</div>
+      <div class="pz-tg">${esc(g.tag)}</div>
+      <div class="pz-st">${esc(g.stat)}</div>
+      <div class="pz-play">PLAY ▶</div>
     </button>`;
-  const bulbs = Array.from({length:14},(_,i)=>`<i style="animation-delay:${(i*0.08).toFixed(2)}s;color:${["#C8A24B","#5DCAA5","#D4537E"][i%3]}"></i>`).join("");
 
   panel.innerHTML = `<div class="games-wrap">
+    <div class="pz-masthead"><div class="pz-name">Puzzles &amp; Diversions</div><div class="pz-sub">The Daily Hub · Play Here</div></div>
+    <div class="game-cat">Featured Puzzles</div>
+    <div class="pz-boxes">${built.map(box).join("")}</div>
     <div id="gamesClose"></div>
-    <div class="marquee">
-      <div class="marquee-bulbs">${bulbs}</div>
-      <div class="mq-sign">GAME ROOM</div>
-      <div class="mq-sub">▚ Insert coin · select player ▞</div>
-    </div>
-    <div class="arcade-body">
-      <div class="cab-grid">${built.map(cabinet).join("")}</div>
-    </div>
-    <div class="game-cat">Word &amp; number puzzles</div>
-    <div class="neon-pills">${words.map(pill).join("")}</div>
-    <div class="game-cat">Geography</div>
-    <div class="neon-pills">${geo.map(pill).join("")}</div>
+    <div class="game-cat">Word &amp; Number</div>
+    <div class="pz-links">${words.map(linkBtn).join("")}</div>
+    <div class="game-cat">Around the World</div>
+    <div class="pz-links">${geo.map(linkBtn).join("")}</div>
   </div>`;
 
   const open = id => { if(id==="quiz"){ gamesView="quiz"; renderQuizTab(); } else if(id==="grid"){ gamesView="grid"; renderDailyGrid(); } else if(id==="bull"){ gamesView="bull"; renderBullBear(); } };
-  panel.querySelectorAll(".cabinet[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+  panel.querySelectorAll(".pz-box[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
 
-  // load The Close (async) and drop it in above the marquee
+  // load Brain Food (async) and drop it in
   fetchLatestClose().then(close => { const slot = $("#gamesClose"); if(slot && close) slot.innerHTML = closeStripHTML(close); });
 }
 function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }

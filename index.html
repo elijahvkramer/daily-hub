@@ -545,17 +545,18 @@
   .bx-boardwrap{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:flex;justify-content:center}
   .bx-board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;width:100%;max-width:430px;aspect-ratio:1}
   .bx-c{border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:900;user-select:none}
-  .bx-edge{background:var(--paper);border:1px solid var(--hairline);cursor:pointer;color:var(--muted);transition:background .12s,transform .1s}
-  .bx-edge:hover{background:var(--gold-soft);transform:scale(1.06)}
+  .bx-edge{background:#EFECE3;border:1px solid #DDD8C9;cursor:pointer;color:#8A8579;transition:background .12s,transform .1s;font-size:11px}
+  .bx-edge:hover{background:var(--gold);color:var(--ink);transform:scale(1.08)}
   .bx-edge.done{cursor:default}
-  .bx-edge.hit{background:var(--ink);color:#E8746C;border-color:var(--ink)}
-  .bx-edge.refl{background:#F0E7E4;color:#8A5A3F;border-color:#DDCFC7}
+  .bx-edge.hit{background:#C0463E;color:#fff;border-color:#A93A33}
+  .bx-edge.refl{background:#8A5A3F;color:#fff;border-color:#754C35}
   .bx-corner{background:transparent}
-  .bx-in{background:#F2F1EC;border:1px solid #E4E3DC;cursor:pointer;transition:background .12s}
-  .bx-in:hover{background:var(--gold-soft)}
-  .bx-in.atom{background:var(--ink);color:var(--gold);font-size:15px}
-  .bx-in.reveal-hit{background:rgba(24,153,107,.22);color:var(--up);font-size:15px}
-  .bx-in.reveal-miss{background:rgba(220,75,67,.16);color:var(--down);font-size:15px}
+  .bx-in{background:#20232A;border:1px solid #2C3038;cursor:pointer;transition:background .12s;color:#4A505C}
+  .bx-in:hover{background:#333944}
+  .bx-in.atom{background:var(--gold);color:var(--ink);font-size:16px}
+  .bx-in.reveal-hit{background:var(--up);color:#fff;font-size:16px}
+  .bx-in.reveal-miss{background:#C0463E;color:#fff;font-size:16px}
+  .bx-in.reveal-missed{background:#20232A;color:var(--gold);font-size:16px;box-shadow:inset 0 0 0 2px var(--gold)}
   .bx-side{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px}
   .bx-key{font-size:12.5px;line-height:1.65;color:#3A3E45}
   .bx-key i{font-style:normal;font-weight:900;color:var(--ink)}
@@ -3153,7 +3154,7 @@ function renderBlackBox(){
         let kl = "bx-in", txt = "";
         if(revealed){
           if(atoms.has(idx) && guess.has(idx)){ kl += " reveal-hit"; txt = "●"; }
-          else if(atoms.has(idx)){ kl += " reveal-miss"; txt = "●"; }
+          else if(atoms.has(idx)){ kl += " reveal-missed"; txt = "●"; }   // an atom you never found
           else if(guess.has(idx)){ kl += " reveal-miss"; txt = "✕"; }
         } else if(guess.has(idx)){ kl += " atom"; txt = "●"; }
         cells += `<div class="bx-c ${kl}" data-i="${idx}">${txt}</div>`;

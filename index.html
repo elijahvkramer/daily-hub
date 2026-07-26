@@ -1042,6 +1042,7 @@ function drawHChart(sectors){
 function secPill(title){
   const t = (title||"").toLowerCase();
   const map = [
+    [/military|conflict|war\b|defen[cs]e|security/,   ["#F0E6E2","#8A4034"]],
     [/market|econom|wall st|business|financ|earning/, ["#F4EDE0","#8A6D2F"]],
     [/tech|ai|science|chip|space/,                    ["#EDEAF2","#6B5B8A"]],
     [/world|global|internat|geopolit|middle east|ukraine|china/, ["#E1EFEA","#2F6B54"]],
@@ -1131,13 +1132,13 @@ function entityScan(txt, weight, score){
   });
 }
 const ENT_SKIP = new Set(["US","U.S.","USA","American","Americans","Reuters","AP","CNN","NPR","Axios","Bloomberg"]);
-function newsEntity(item){
+function newsEntities(item){
   const score = {};
   entityScan(item && item.lead, 3, score);      // the lead sentence names the real subject
   entityScan(item && item.body, 1, score);
-  const best = Object.entries(score).sort((a,b) => b[1]-a[1])[0];
-  return best ? best[0] : null;
+  return Object.entries(score).sort((a,b) => b[1]-a[1]).slice(0,3).map(x => x[0]);
 }
+function newsEntity(item){ return newsEntities(item)[0] || null; }
 
 const IMG_TTL = 1000*60*60*24*21;
 function imgCacheGet(k){
@@ -1193,9 +1194,11 @@ function runFigQueue(){
     const el = document.getElementById(job.id); if(!el) return;
     let url = job.item.img || null;                       // 1. an explicit URL from the task
     if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);   // 2. the task's chosen subject
-    if(!url){                                             // 3. best guess from the text itself
-      const ent = newsEntity(job.item);
-      if(ent) url = await wikiImage(ent);
+    if(!url){                                             // 3. best guesses from the text itself
+      for(const ent of newsEntities(job.item)){
+        url = await wikiImage(ent);
+        if(url) break;
+      }
     }
     if(!url) return;                                   // keep the generated plate
     const node = document.getElementById(job.id); if(!node) return;

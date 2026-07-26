@@ -176,6 +176,51 @@
   .mkt-banner .mb-l .mb-s{color:#A6ABB1;font-size:12.5px;margin-top:5px;max-width:520px;line-height:1.5}
   .mkt-banner .mb-date{color:#8A8F95;font-size:11.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
 
+  /* ---------- news: wide edition + photography ---------- */
+  body.news-wide .topbar-in{max-width:1320px}
+  body.news-wide main{max-width:1320px;padding-top:14px}
+  body.news-wide .np-body{padding:28px 34px}
+  body.news-wide .np-front{grid-template-columns:2.1fr 1fr}
+  @media(max-width:1000px){body.news-wide .np-body{padding:22px 24px}}
+
+  /* photo plates */
+  .np-fig{margin:0;position:relative;overflow:hidden;border-radius:10px;background:var(--paper)}
+  .np-fig img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .35s ease;opacity:0}
+  .np-fig img.in{opacity:1}
+  .np-fig svg{display:block;width:100%;height:100%}
+  .np-lead-fig{aspect-ratio:16/8.4;margin:0 0 14px}
+  .np-lead-fig:hover img{transform:scale(1.03)}
+  .np-cap{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:6px;font-weight:700;letter-spacing:.01em}
+  .np-cap em{font-style:normal;color:#A08339}
+  .np-rail-item{display:flex;gap:11px;align-items:flex-start}
+  .np-rail-item .rtx{min-width:0;flex:1}
+  .np-rail-fig{width:74px;height:56px;flex-shrink:0;border-radius:7px;overflow:hidden}
+  .np-secflow .np-col-story{break-inside:avoid}
+  .np-col-fig{aspect-ratio:16/9;margin:0 0 8px}
+  .np-sec-fig{aspect-ratio:16/7.6;margin:0 0 14px}
+  .np-fig-ph{position:absolute;inset:0;display:grid;place-items:center}
+
+  /* ---------- Today: markets snapshot card ---------- */
+  .msnap{cursor:pointer;position:relative;margin-top:14px}
+  .msnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
+  .msnap .ms-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .msnap .ms-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#A08339;display:inline-flex;align-items:center;gap:4px}
+  .msnap .ms-head-line{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.3;color:var(--ink);margin-top:10px}
+  .ms-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  @media(max-width:760px){.ms-grid{grid-template-columns:repeat(2,1fr)}}
+  .ms-tile{background:var(--paper);border:1px solid var(--hairline);border-radius:10px;padding:11px 12px;position:relative;overflow:hidden}
+  .ms-tile .mt-n{font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .ms-tile .mt-v{font-size:18px;font-weight:900;color:var(--ink);margin-top:5px;letter-spacing:-.01em;line-height:1}
+  .ms-tile .mt-c{font-size:12px;font-weight:900;margin-top:4px}
+  .ms-tile .mt-c.up{color:var(--up)}.ms-tile .mt-c.down{color:var(--down)}.ms-tile .mt-c.neutral{color:var(--muted)}
+  .ms-tile .mt-bar{position:absolute;left:0;bottom:0;height:3px;border-radius:0 3px 3px 0;transition:width .7s cubic-bezier(.2,.7,.2,1);width:0}
+  .ms-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:11px}
+  .ms-movers{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .ms-mv{font-size:11px;font-weight:900;border-radius:20px;padding:5px 10px;border:1px solid var(--hairline);background:var(--card)}
+  .ms-mv.up{color:var(--up);border-color:rgba(24,153,107,.3)}
+  .ms-mv.down{color:var(--down);border-color:rgba(220,75,67,.3)}
+  .ms-mv span{color:var(--muted);font-weight:700;margin-left:5px}
+
   /* calendar */
   .lockbox{max-width:420px;margin:30px auto;text-align:center;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:44px 36px;box-shadow:var(--shadow)}
   .lockbox .padlock{font-size:26px;color:var(--gold);margin-bottom:14px}
@@ -378,7 +423,8 @@
   .pz-masthead .pz-sub{font-size:10.5px;letter-spacing:.28em;color:#A08339;font-weight:900;text-transform:uppercase;margin-top:7px}
 
   /* built-in game boxes — colorful + game-y */
-  .pz-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .pz-boxes{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:900px){.pz-boxes{grid-template-columns:repeat(2,1fr)}}
   .pz-box{position:relative;border:1px solid var(--hairline);border-top:4px solid var(--pcol);border-radius:12px;background:var(--card);padding:20px 16px 16px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .16s, box-shadow .16s}
   .pz-box.played{border-top-color:var(--up)}
   .pz-box.played::before{content:"";position:absolute;inset:0;background:rgba(24,153,107,.05);border-radius:12px;pointer-events:none}
@@ -438,16 +484,86 @@
   .cb-check{appearance:none;font:inherit;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--cream);border:none;border-radius:8px;padding:10px 16px;cursor:pointer;transition:background .15s}
   .cb-check:hover{background:#2A2E36}
 
-  /* built-in: Chart Master */
-  .cm-wrap{max-width:560px;margin:0 auto;text-align:center}
-  .cm-chart{background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:16px 16px 10px;box-shadow:var(--shadow)}
-  .cm-cap{font-size:11px;color:var(--muted);font-weight:700;margin-top:6px}
-  .cm-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-  .cm-opt{appearance:none;font:inherit;font-size:15px;font-weight:900;background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:14px;cursor:pointer;transition:all .14s;color:var(--ink)}
-  .cm-opt:hover:not(:disabled){border-color:var(--gold);transform:translateY(-2px)}
-  .cm-opt:disabled{cursor:default}
-  .cm-opt.correct{background:rgba(24,153,107,.1);border-color:var(--up);color:var(--up)}
-  .cm-opt.wrong{background:rgba(220,75,67,.1);border-color:var(--down)}
+  /* ---------- built-in: The Case File (logic-grid mystery) ---------- */
+  .cf-wrap{max-width:1000px;margin:0 auto}
+  .cf-file{background:#FBF9F4;border:1px solid #DED8C9;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+  .cf-tab{background:var(--ink);color:var(--cream);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .cf-tab .cf-no{font-size:9.5px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+  .cf-tab .cf-stamp{margin-left:auto;font-size:9.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#C0463E;border:2px solid #C0463E;border-radius:4px;padding:3px 8px;transform:rotate(-2deg)}
+  .cf-title{font-family:Georgia,serif;font-size:clamp(21px,3.2vw,29px);font-weight:900;line-height:1.15;padding:16px 22px 0}
+  .cf-brief{font-size:14px;line-height:1.65;color:#3A3E45;padding:8px 22px 18px;max-width:760px}
+  .cf-brief b{color:var(--ink)}
+  .cf-cols{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:start}
+  @media(max-width:900px){.cf-cols{grid-template-columns:1fr}}
+  .cf-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
+  .cf-ph{font-size:10.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--ink);padding-bottom:7px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cf-clue{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:13.5px;line-height:1.55;color:#33363C;cursor:pointer;transition:opacity .15s}
+  .cf-clue:last-child{border-bottom:none}
+  .cf-clue .cn{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--gold);font-size:10.5px;font-weight:900;display:grid;place-items:center;margin-top:1px}
+  .cf-clue.used{opacity:.38}
+  .cf-clue.used .cn{background:var(--up);color:#fff}
+  .cf-clue:hover{background:var(--paper)}
+  .cf-legend{font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px}
+  /* the staircase deduction grid */
+  .cf-gridwrap{overflow-x:auto;padding-bottom:4px}
+  table.cf-grid{border-collapse:collapse;font-size:11px;margin:0 auto}
+  table.cf-grid th,table.cf-grid td{padding:0}
+  table.cf-grid th.cf-vh{height:86px;width:26px;vertical-align:bottom;padding-bottom:5px}
+  table.cf-grid th.cf-vh span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:700;letter-spacing:.02em;color:#3A3E45;white-space:nowrap}
+  table.cf-grid th.cf-rh{text-align:right;padding-right:8px;font-size:10.5px;font-weight:700;color:#3A3E45;white-space:nowrap;max-width:118px;overflow:hidden;text-overflow:ellipsis}
+  table.cf-grid th.cf-cat{font-size:8.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#A08339;padding-bottom:4px}
+  table.cf-grid th.cf-catr{font-size:8.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#A08339;writing-mode:vertical-rl;transform:rotate(180deg);padding-right:3px}
+  .cf-cell{width:26px;height:26px;border:1px solid #E2E0D8;background:var(--card);cursor:pointer;text-align:center;font-size:13px;font-weight:900;line-height:24px;color:var(--muted);user-select:none;transition:background .1s}
+  .cf-cell:hover{background:var(--gold-soft)}
+  .cf-cell.yes{background:rgba(24,153,107,.15);color:var(--up)}
+  .cf-cell.no{background:rgba(220,75,67,.08);color:#C87E79}
+  .cf-blk{border-left:2px solid var(--ink)}
+  .cf-blkt{border-top:2px solid var(--ink)}
+  .cf-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .cf-tool{appearance:none;font:inherit;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:var(--paper);border:1px solid var(--hairline);border-radius:7px;padding:8px 11px;cursor:pointer;color:#3A3E45;transition:all .14s}
+  .cf-tool:hover{border-color:var(--gold);background:var(--gold-soft)}
+  .cf-tool.on{background:var(--ink);color:var(--gold);border-color:var(--ink)}
+  /* accusation */
+  .cf-acc{background:var(--ink);color:var(--cream);border-radius:12px;padding:18px 20px;margin-top:18px}
+  .cf-acc .cf-ah{font-size:10.5px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+  .cf-acc .cf-aq{font-family:Georgia,serif;font-size:17px;font-weight:900;line-height:1.35;margin-bottom:14px}
+  .cf-arow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:640px){.cf-arow{grid-template-columns:1fr}}
+  .cf-arow label{display:block;font-size:9.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#9BA0A6;margin-bottom:5px}
+  .cf-arow select{width:100%;font:inherit;font-size:13.5px;font-weight:700;padding:10px 12px;border-radius:8px;background:var(--ink2);color:var(--cream);border:1px solid rgba(200,162,75,.35);cursor:pointer}
+  .cf-submit{appearance:none;font:inherit;width:100%;margin-top:14px;font-size:12.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;background:var(--gold);color:var(--ink);border:none;border-radius:9px;padding:14px;cursor:pointer;transition:filter .15s}
+  .cf-submit:hover{filter:brightness(1.07)}
+  .cf-verdict{margin-top:14px;background:var(--ink2);border-left:3px solid var(--gold);border-radius:8px;padding:14px 16px;font-size:13.5px;line-height:1.6;color:#D8DADD}
+  .cf-verdict b{color:var(--cream)}
+  .cf-solved{color:var(--up)}
+  .cf-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);justify-content:center;margin-top:14px}
+
+  /* ---------- built-in: Black Box ---------- */
+  .bx-wrap{max-width:760px;margin:0 auto}
+  .bx-top{display:grid;grid-template-columns:1fr 250px;gap:18px;align-items:start}
+  @media(max-width:820px){.bx-top{grid-template-columns:1fr}}
+  .bx-boardwrap{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:flex;justify-content:center}
+  .bx-board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;width:100%;max-width:430px;aspect-ratio:1}
+  .bx-c{border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:900;user-select:none}
+  .bx-edge{background:var(--paper);border:1px solid var(--hairline);cursor:pointer;color:var(--muted);transition:background .12s,transform .1s}
+  .bx-edge:hover{background:var(--gold-soft);transform:scale(1.06)}
+  .bx-edge.done{cursor:default}
+  .bx-edge.hit{background:var(--ink);color:#E8746C;border-color:var(--ink)}
+  .bx-edge.refl{background:#F0E7E4;color:#8A5A3F;border-color:#DDCFC7}
+  .bx-corner{background:transparent}
+  .bx-in{background:#F2F1EC;border:1px solid #E4E3DC;cursor:pointer;transition:background .12s}
+  .bx-in:hover{background:var(--gold-soft)}
+  .bx-in.atom{background:var(--ink);color:var(--gold);font-size:15px}
+  .bx-in.reveal-hit{background:rgba(24,153,107,.22);color:var(--up);font-size:15px}
+  .bx-in.reveal-miss{background:rgba(220,75,67,.16);color:var(--down);font-size:15px}
+  .bx-side{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px}
+  .bx-key{font-size:12.5px;line-height:1.65;color:#3A3E45}
+  .bx-key i{font-style:normal;font-weight:900;color:var(--ink)}
+  .bx-score{display:flex;gap:16px;justify-content:center;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0}
+  .bx-log{max-height:190px;overflow-y:auto;margin-top:10px;font-size:11.5px}
+  .bx-log div{padding:5px 0;border-bottom:1px solid var(--hairline);display:flex;gap:8px;align-items:center;color:#3A3E45}
+  .bx-log b{font-weight:900;color:var(--ink)}
+  .bx-btns{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;justify-content:center}
 
   /* built-in: Daily Grid */
   .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
@@ -741,6 +857,19 @@ function goPortfolio(){
   });
 }
 
+/* Markets lives inside the News edition — this routes straight to that view from the
+   Today tab's markets card. */
+function goMarkets(){
+  animatedTabSwitch(async () => {
+    S.tab = "news"; localStorage.setItem("dh-tab", "news");
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === "news"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-news"));
+    fillDates(); await show();
+    showNewsView("markets"); setNavActive("markets");
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+}
+
 function fillDates(){
   const sel = $("#dateSelect"); sel.innerHTML = "";
   if(S.tab === "portfolio" || S.tab === "quiz"){ sel.style.visibility = "hidden"; return; }
@@ -779,6 +908,7 @@ async function show(){
   // News and Games carry their own mastheads — hide the global compact header there so content fills the space
   const heroEl = document.querySelector(".hero");
   if(heroEl) heroEl.style.display = (kind==="news" || kind==="quiz") ? "none" : "block";
+  document.body.classList.toggle("news-wide", kind==="news");   // the edition gets a wider measure
   $("#heroEyebrow").textContent = NICE[kind];
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
   if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderGamesTab(); return; }
@@ -937,6 +1067,126 @@ function secShort(title){
   return (title||"News").split(/[\s&]+/)[0];
 }
 
+/* ================= news photography =================
+   Three tiers, in order:
+     1. `item.img` supplied by the daily-news-briefing task (a real news photo URL)
+     2. a live Wikimedia lookup on the story's main proper noun (cached in localStorage)
+     3. a deterministic generated "plate" in the section's palette — always on-brand
+   The plate renders instantly; a photo, once resolved, cross-fades over the top. */
+function hashStr(s){ let h = 2166136261>>>0; for(let i=0;i<String(s).length;i++){ h ^= String(s).charCodeAt(i); h = Math.imul(h,16777619)>>>0; } return h>>>0; }
+function seedRand(seed){ let x = (seed>>>0) || 1; return () => { x ^= x<<13; x>>>=0; x ^= x>>17; x ^= x<<5; x>>>=0; return x/4294967296; }; }
+
+/* generated editorial plate — layered arcs and bands in the section's two-tone palette */
+function plateSvg(seedStr, secTitle){
+  const [bg, fg] = secPill(secTitle||"");
+  const r = seedRand(hashStr(seedStr||"plate"));
+  const W = 400, H = 225;
+  let sh = "";
+  const bands = 2 + Math.floor(r()*3);
+  for(let i=0;i<bands;i++){
+    const cx = r()*W, cy = H*(0.25+r()*0.9), rad = H*(0.35+r()*0.7);
+    sh += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rad.toFixed(1)}" fill="${fg}" opacity="${(0.05+r()*0.10).toFixed(3)}"/>`;
+  }
+  const rays = 3 + Math.floor(r()*4);
+  for(let i=0;i<rays;i++){
+    const x = r()*W, w = 6+r()*26, sk = -18+r()*36;
+    sh += `<rect x="${x.toFixed(1)}" y="-40" width="${w.toFixed(1)}" height="${H+80}" fill="${fg}" opacity="${(0.04+r()*0.07).toFixed(3)}" transform="rotate(${sk.toFixed(1)} ${x.toFixed(1)} ${(H/2).toFixed(1)})"/>`;
+  }
+  const dotY = H*(0.2+r()*0.6), dotX = W*(0.12+r()*0.7);
+  sh += `<circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="${(10+r()*18).toFixed(1)}" fill="${fg}" opacity=".22"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="${W}" height="${H}" fill="${bg}"/>${sh}
+    <rect width="${W}" height="${H}" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="2"/></svg>`;
+}
+
+/* pull the story's most likely subject: the longest / most repeated proper-noun run */
+const CAP_STOP = new Set(["The","A","An","In","On","At","But","And","Or","For","After","Before","While","With","From","By","As","It","He","She","They","We","This","That","These","Those","His","Her","Their","Its","Also","Meanwhile","However","Both","One","Two","Three","Four","Five","Now","Over","Under","New","More","Most","Some","Many","Several","Following","During","Amid","Despite","Since","Until","Both","When","Where","What","Who","Why","How","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","January","February","March","April","May","June","July","August","September","October","November","December"]);
+function entityScan(txt, weight, score){
+  const runs = String(txt||"").replace(/\s+/g," ").match(/[A-Z][A-Za-z.'\u2019-]+(?:\s+(?:of\s+|the\s+)?[A-Z][A-Za-z.'\u2019-]+){0,3}/g) || [];
+  runs.forEach(raw => {
+    const words = raw.split(/\s+/)
+      .map(w => w.replace(/['\u2019]s$/,"").replace(/[.,;:]+$/,""))
+      .filter(w => w && !CAP_STOP.has(w));
+    if(!words.length) return;
+    const key = words.join(" ").trim();
+    if(key.length < 3 || ENT_SKIP.has(key)) return;
+    score[key] = (score[key]||0) + weight * (1 + Math.min(words.length,3)*0.55 + Math.min(key.length,22)/44);
+  });
+}
+const ENT_SKIP = new Set(["US","U.S.","USA","American","Americans","Reuters","AP","CNN","NPR","Axios","Bloomberg"]);
+function newsEntity(item){
+  const score = {};
+  entityScan(item && item.lead, 3, score);      // the lead sentence names the real subject
+  entityScan(item && item.body, 1, score);
+  const best = Object.entries(score).sort((a,b) => b[1]-a[1])[0];
+  return best ? best[0] : null;
+}
+
+const IMG_TTL = 1000*60*60*24*21;
+function imgCacheGet(k){
+  try{ const v = JSON.parse(localStorage.getItem("dh-nimg:"+k)||"null");
+    if(v && Date.now()-v.t < IMG_TTL) return v.u; }catch(e){}
+  return undefined;
+}
+function imgCacheSet(k,u){ try{ localStorage.setItem("dh-nimg:"+k, JSON.stringify({t:Date.now(), u:u})); }catch(e){} }
+
+async function wikiImage(q){
+  const key = String(hashStr(q));
+  const hit = imgCacheGet(key);
+  if(hit !== undefined) return hit;
+  let out = null;
+  try{
+    const url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" +
+      encodeURIComponent(q) + "&gsrlimit=1&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*";
+    const r = await fetch(url);
+    const j = await r.json();
+    const pages = j && j.query && j.query.pages;
+    if(pages){
+      const p = Object.values(pages)[0];
+      if(p && p.thumbnail && p.thumbnail.source) out = p.thumbnail.source;
+    }
+  }catch(e){ out = null; }
+  imgCacheSet(key, out);
+  return out;
+}
+
+/* figures are emitted with a plate already drawn, then upgraded in place */
+let figSeq = 0, figQueue = [];
+function newsFig(item, secTitle, klass){
+  const id = "npfig" + (++figSeq);
+  const seed = (item && (item.lead||"")) + "|" + (secTitle||"");
+  figQueue.push({ id, item: item||{}, secTitle: secTitle||"" });
+  return `<figure class="np-fig ${klass}" id="${id}">${plateSvg(seed, secTitle)}</figure>`;
+}
+function newsCap(item){
+  if(item && item.caption) return `<div class="np-cap">${esc(item.caption)}${item.credit?` <em>${esc(item.credit)}</em>`:""}</div>`;
+  return "";
+}
+function runFigQueue(){
+  const jobs = figQueue.slice(); figQueue = [];
+  jobs.forEach(async job => {
+    const el = document.getElementById(job.id); if(!el) return;
+    let url = job.item.img || null;                       // 1. an explicit URL from the task
+    if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);   // 2. the task's chosen subject
+    if(!url){                                             // 3. best guess from the text itself
+      const ent = newsEntity(job.item);
+      if(ent) url = await wikiImage(ent);
+    }
+    if(!url) return;                                   // keep the generated plate
+    const node = document.getElementById(job.id); if(!node) return;
+    const img = new Image();
+    img.alt = "";
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    img.onload = () => {
+      const live = document.getElementById(job.id); if(!live) return;
+      live.appendChild(img);
+      requestAnimationFrame(() => img.classList.add("in"));
+    };
+    img.src = url;
+  });
+}
+
 let newsState = { d:null, view:"front" };
 async function renderNews(d){
   $("#heroEyebrow").textContent = NICE.news;
@@ -979,7 +1229,7 @@ function setNavActive(v){
 }
 
 function showNewsView(view){
-  newsState.view = view;
+  newsState.view = view; figQueue = [];
   const d = newsState.d, body = $("#npBody"); if(!body) return;
   const sections = (d.sections||[]).filter(s => (s.items||[]).length);
 
@@ -994,14 +1244,16 @@ function showNewsView(view){
     sections.forEach((s,si) => {
       const it = si===0 ? (s.items||[])[1] : (s.items||[])[0];
       if(!it) return;
-      rail += `<div class="np-rail-item" data-goto="${si}"><div class="rt">${esc(headline(it.lead))}</div><div class="rs">${esc(secShort(s.title))}</div></div>`;
+      rail += `<div class="np-rail-item" data-goto="${si}">${newsFig(it, s.title, "np-rail-fig")}
+        <div class="rtx"><div class="rt">${esc(headline(it.lead))}</div><div class="rs">${esc(secShort(s.title))}</div></div></div>`;
     });
-    rail += `<div class="np-rail-item" data-goto="markets"><div class="rt">Markets: the day's close</div><div class="rs">Business</div></div>`;
+    rail += `<div class="np-rail-item" data-goto="markets"><div class="rtx"><div class="rt">Markets: the day's close</div><div class="rs">Business</div></div></div>`;
     body.innerHTML = `<div class="np-front">
       <div class="np-lead-col">
         <div class="np-kick">${esc(secShort(lead.title))} · Lead Story</div>
         <div class="np-lead-title">${esc((d.headline||"").replace(/\n/g," "))}</div>
         ${d.subtitle ? `<div class="np-standfirst">${esc(d.subtitle)}</div>` : ""}
+        ${newsFig(leadItem, lead.title, "np-lead-fig")}${newsCap(leadItem)}
         <div class="np-cols${twoCol}">${esc(para)}</div>
         <span class="np-cont" data-goto="0">Full story in ${esc(secShort(lead.title))} →</span>
       </div>
@@ -1013,6 +1265,7 @@ function showNewsView(view){
     body.querySelectorAll("[data-goto]").forEach(el => el.addEventListener("click", () => {
       const g = el.dataset.goto; showNewsView(g==="markets"?"markets":Number(g)); setNavActive(g==="markets"?"markets":Number(g));
     }));
+    runFigQueue();
     return;
   }
 
@@ -1053,16 +1306,18 @@ function showNewsView(view){
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
   if(items.length){
     h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
+      ${newsFig(leadIt, sec.title, "np-sec-fig")}${newsCap(leadIt)}
       <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div></div>`;
   }
   if(items.length > 1){
     h += `<div class="np-secflow">`;
     items.slice(1).forEach(it => {
-      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
+      h += `<div class="np-col-story">${newsFig(it, sec.title, "np-col-fig")}<div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
     });
     h += `</div>`;
   }
   body.innerHTML = h;
+  runFigQueue();
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
 }
 /* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
@@ -1437,6 +1692,55 @@ function wirePortfolioSnapshot(){
   const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.intraReady){ paint(); clearInterval(hi); } }, 600);
 }
 
+/* markets snapshot for the Today tab — index scoreboard + the day's biggest movers,
+   pulled from the latest published market brief. Clicking opens the full Markets view. */
+function buildMarketsSnapshot(){
+  return `<div class="bento-card msnap" id="msnap" title="Open the full market brief">
+    <div class="ms-head"><div class="bc-label">Markets · Day Close</div>
+      <span class="ms-open">Open full market brief <span style="font-size:13px">→</span></span></div>
+    <div id="msBody"><div class="ms-foot">Loading the latest close…</div></div>
+  </div>`;
+}
+function wireMarketsSnapshot(){
+  const card = $("#msnap"); if(!card) return;
+  card.addEventListener("click", goMarkets);
+
+  const fill = md => {
+    const mount = $("#msBody"); if(!mount) return;
+    const idx = (md.indices||[]).slice(0,5);
+    const maxAbs = Math.max(.15, ...idx.map(i => Math.abs(i.pct||0)));
+    let tiles = "";
+    idx.forEach(ix => {
+      const neutral = /vix/i.test(ix.name||"");
+      const c = neutral ? "neutral" : cls(ix.pct);
+      const arrow = ix.pct>0 ? "▲" : ix.pct<0 ? "▼" : "—";
+      const col = neutral ? "#9BA0A6" : ix.pct>=0 ? "var(--up)" : "var(--down)";
+      const w = Math.max(8, Math.abs(ix.pct||0)/maxAbs*100);
+      tiles += `<div class="ms-tile"><div class="mt-n">${esc((ix.name||"").replace(/\s*composite/i,""))}</div>
+        <div class="mt-v">${esc(ix.level||"")}</div>
+        <div class="mt-c ${c}">${arrow} ${fmtPct(ix.pct||0)}</div>
+        <div class="mt-bar" style="background:${col}" data-w="${w.toFixed(1)}"></div></div>`;
+    });
+    const mv = [].concat((md.winners||[]).slice(0,2).map(m => ({...m, up:true})),
+                         (md.losers||[]).slice(0,2).map(m => ({...m, up:false})));
+    const movers = mv.length ? `<div class="ms-movers">` + mv.map(m =>
+        `<span class="ms-mv ${m.up?"up":"down"}">${esc(m.ticker)} ${fmtPct(m.pct)}<span>${esc((m.name||"").split(/[ ,]/)[0])}</span></span>`).join("") + `</div>` : "";
+    mount.innerHTML = `<div class="ms-head-line">${esc((md.headline||"").replace(/\n/g," "))}</div>
+      <div class="ms-grid">${tiles}</div>${movers}
+      <div class="ms-foot">${esc(md.dateline || niceDate(md.date))} · U.S. equities close · tap for the full brief</div>`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      mount.querySelectorAll(".mt-bar").forEach(b => { b.style.width = b.dataset.w + "%"; });
+    }));
+  };
+
+  if(S.marketBrief){ fill(S.marketBrief); return; }
+  const latest = (S.manifest && S.manifest.market || [])[0];
+  if(!latest){ const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">No market brief published yet.</div>`; return; }
+  fetchDay("market", latest)
+    .then(md => { S.marketBrief = md; if($("#msBody")) fill(md); })
+    .catch(() => { const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">The latest market brief couldn't be loaded.</div>`; });
+}
+
 function renderCalendarBody(p, d){
   let h = "";
   const todayList = d.today || [];
@@ -1456,6 +1760,9 @@ function renderCalendarBody(p, d){
 
   /* ---- portfolio snapshot (full-width; at the top now, swapped above to-dos) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
+
+  /* ---- markets snapshot — the day's close, straight from the Today page ---- */
+  h += buildMarketsSnapshot();
 
   /* ---- to-do card (list + side ring) ---- */
   h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
@@ -1538,6 +1845,7 @@ function renderCalendarBody(p, d){
   const calCard = p.querySelector(".cal-card");
   if(calCard) wireMiniCal(calCard);
   wirePortfolioSnapshot();
+  wireMarketsSnapshot();
   loadTodayWeather(d);
   startCountdowns();
 }
@@ -2217,7 +2525,8 @@ async function fetchWords(){
 function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
   if(gamesView === "code"){ renderCodebreaker(); return; }
-  if(gamesView === "chart"){ renderChartMaster(); return; }
+  if(gamesView === "case"){ renderCaseFile(); return; }
+  if(gamesView === "box"){ renderBlackBox(); return; }
   renderGamesLauncher();
 }
 
@@ -2280,7 +2589,8 @@ function renderGamesLauncher(){
   const built = [
     { id:"quiz",  name:"Word Quiz",   tag:"Vocabulary trainer from your briefings", icon:"◆", col:"#C8A24B", stat:qBestLabel() },
     { id:"code",  name:"Codebreaker", tag:"Crack the hidden color code by deduction", icon:"🔐", col:"#1D9E75", stat: localStorage.getItem("dh-code-best") ? "Best "+localStorage.getItem("dh-code-best")+" tries" : "Not cracked yet" },
-    { id:"chart", name:"Chart Master", tag:"Name your holding from its price line", icon:"📈", col:"#D4537E", stat:"Best streak " + (localStorage.getItem("dh-chart-best")||"0") }
+    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() },
+    { id:"box",  name:"Black Box",     tag:"Find 4 hidden atoms by firing beams into the dark", icon:"◎", col:"#2F6B8A", stat: bxStatLabel() }
   ];
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
@@ -2320,7 +2630,7 @@ function renderGamesLauncher(){
     <div class="pz-links">${geo.map(linkBtn).join("")}</div>
   </div>`;
 
-  const open = id => { markGamePlayed(id); gamesView = id; if(id==="quiz") renderQuizTab(); else if(id==="code") renderCodebreaker(); else if(id==="chart") renderChartMaster(); };
+  const open = id => { markGamePlayed(id); gamesView = id; renderGamesTab(); };
   panel.querySelectorAll(".pz-box[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
   panel.querySelectorAll(".pz-link[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
 
@@ -2397,61 +2707,519 @@ function renderCodebreaker(){
   render();
 }
 
-/* ---------- built-in: Chart Master (name the holding from its price line) ---------- */
-async function renderChartMaster(){
+/* ================= built-in: The Case File (logic-grid mystery) =================
+   A generated whodunit. Four suspects are each tied to one room, one object left
+   behind, and one time they were seen. The generator picks a random solution, builds
+   a pool of true statements about it, then greedily selects the smallest set of clues
+   that brute-force verification proves admits exactly ONE consistent solution — so the
+   case is always solvable by pure deduction and never by guessing. */
+
+const CF_THEMES = [
+  {
+    id:"manor",
+    title:"The Wraysbury Manor Affair",
+    crime:"the Ashcroft diamond was lifted from the drawing-room safe",
+    place:"Wraysbury Manor",
+    suspects:["Colonel Aldridge","Miss Devereux","Dr. Halloran","Mrs. Pemberton"],
+    rooms:["the Library","the Conservatory","the Wine Cellar","the Boat House"],
+    objs:["a torn kid glove","a brass cellar key","a spent match","a wine-stained napkin"],
+    times:["9:10 PM","9:45 PM","10:20 PM","11:05 PM"]
+  },
+  {
+    id:"liner",
+    title:"The Meridian Line Crossing",
+    crime:"the purser's strongbox was emptied somewhere between Lisbon and New York",
+    place:"the RMS Meridian",
+    suspects:["Captain Voss","The Contessa","Mr. Sallow","Nurse Whitlock"],
+    rooms:["the Radio Room","the Grand Saloon","the Cargo Hold","the Promenade Deck"],
+    objs:["a soaked telegram","a jade cigarette holder","a length of cut rope","a first-class ticket stub"],
+    times:["1:15 AM","2:00 AM","3:40 AM","4:25 AM"]
+  },
+  {
+    id:"museum",
+    title:"The Aldwych Gallery Job",
+    crime:"the Ordway bronze walked out of a sealed gallery overnight",
+    place:"the Aldwych Museum",
+    suspects:["Curator Bly","The Night Guard","Dr. Ferreira","The Restorer"],
+    rooms:["the Antiquities Wing","the Loading Dock","the Archive","the Rooftop Plant Room"],
+    objs:["a cut zip tie","a cotton conservation glove","a museum lanyard","a dropped scalpel"],
+    times:["11:30 PM","12:50 AM","2:10 AM","3:05 AM"]
+  },
+  {
+    id:"observatory",
+    title:"The Cold Ridge Observatory Incident",
+    crime:"six months of survey data was wiped from the array's only archive",
+    place:"Cold Ridge Observatory",
+    suspects:["Dr. Okonkwo","The Grad Student","Station Chief Reyes","The Visiting Fellow"],
+    rooms:["the Dome","the Server Vault","the Generator Shed","the Mess Hall"],
+    objs:["a snapped keycard","a thermos of cold coffee","a torn logbook page","a pair of snow goggles"],
+    times:["10:40 PM","11:55 PM","1:20 AM","2:35 AM"]
+  }
+];
+
+const CF_PERMS = (() => { const out=[]; const p=[0,1,2,3];
+  const rec = (arr, rest) => { if(!rest.length){ out.push(arr.slice()); return; }
+    rest.forEach((v,i) => rec(arr.concat(v), rest.slice(0,i).concat(rest.slice(i+1)))); };
+  rec([], p); return out; })();   // 24 permutations of 0..3
+
+function cfRandFrom(rnd){ return n => Math.floor(rnd()*n); }
+
+/* build one puzzle: {theme, sol:{r,o,t}, clues:[{text,test}], answerTime} */
+function cfBuild(seedStr, depth){
+  depth = depth || 0;
+  const rnd = seedRand(hashStr(seedStr));
+  const ri = cfRandFrom(rnd);
+  const theme = CF_THEMES[ri(CF_THEMES.length)];
+  const sol = { r: CF_PERMS[ri(24)], o: CF_PERMS[ri(24)], t: CF_PERMS[ri(24)] };
+
+  const S = i => theme.suspects[i], R = i => theme.rooms[i], O = i => theme.objs[i], T = i => theme.times[i];
+  const capF = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const who = (arr, v) => arr.indexOf(v);            // suspect index holding value v
+
+  /* --- candidate clue pool, all true of `sol` --- */
+  const pool = [];
+  const add = (rank, text, test) => pool.push({rank, text, test});
+
+  for(let a=0;a<4;a++) for(let b=0;b<4;b++){
+    /* negatives: suspect vs. category */
+    if(sol.r[a] !== b) add(2, `${S(a)} was never in ${R(b)}.`,      (r,o,t) => r[a] !== b);
+    if(sol.o[a] !== b) add(2, `${S(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[a] !== b);
+    if(sol.t[a] !== b) add(2, `${S(a)} was not the one seen at ${T(b)}.`, (r,o,t) => t[a] !== b);
+
+    /* cross-category links (the good stuff — these chain together) */
+    const sr = who(sol.r, a);          // suspect in room a
+    const so = who(sol.o, a);          // suspect who left object a
+    const st = who(sol.t, a);          // suspect seen at time a
+    if(sol.o[sr] === b) add(1, `Whoever was in ${R(a)} left ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] === b);
+    else               add(2, `The person in ${R(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] !== b);
+    if(sol.t[sr] === b) add(1, `The person in ${R(a)} was seen at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] === b);
+    else               add(2, `${capF(R(a))} was empty at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] !== b);
+    if(sol.t[so] === b) add(1, `${capF(O(a))} was left by the person seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] === b);
+    else               add(2, `The person who left ${O(a)} was not seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] !== b);
+    if(sol.r[so] === b) add(1, `${capF(O(a))} was left by whoever was in ${R(b)}.`, (r,o,t) => r[o.indexOf(a)] === b);
+
+    /* ordering (times are chronological) */
+    if(a !== b && sol.t[a] < sol.t[b]) add(1, `${S(a)} was seen before ${S(b)}.`, (r,o,t) => t[a] < t[b]);
+    if(a !== b && sol.t[sr] < sol.t[who(sol.r,b)]) add(1, `The person in ${R(a)} was seen before the person in ${R(b)}.`, (r,o,t) => t[r.indexOf(a)] < t[r.indexOf(b)]);
+    if(a !== b && sol.t[so] < sol.t[who(sol.o,b)]) add(1, `Whoever left ${O(a)} was seen before whoever left ${O(b)}.`, (r,o,t) => t[o.indexOf(a)] < t[o.indexOf(b)]);
+    if(a !== b && sol.t[a] === sol.t[who(sol.r,b)] - 1) add(1, `${S(a)} was seen immediately before the person in ${R(b)}.`, (r,o,t) => t[a] === t[r.indexOf(b)] - 1);
+    if(a !== b && sol.t[a] === sol.t[who(sol.o,b)] + 1) add(1, `${S(a)} was seen immediately after whoever left ${O(b)}.`, (r,o,t) => t[a] === t[o.indexOf(b)] + 1);
+
+    /* last-resort anchors (rank 3 — only used if the deduction won't close without one) */
+    if(sol.r[a] === b) add(3, `${S(a)} was in ${R(b)}.`, (r,o,t) => r[a] === b);
+  }
+
+  /* shuffle within rank so cross-links come first, anchors last */
+  const rndSort = pool.map(c => ({c, k: c.rank + rnd()*0.9})).sort((x,y) => x.k - y.k).map(x => x.c);
+
+  /* brute force: 24^3 candidate worlds */
+  const worlds = [];
+  for(let a=0;a<24;a++) for(let b=0;b<24;b++) for(let c=0;c<24;c++) worlds.push([a,b,c]);
+  const countLeft = (list, chosen) => {
+    let n = 0, first = null;
+    for(const w of list){
+      const r = CF_PERMS[w[0]], o = CF_PERMS[w[1]], t = CF_PERMS[w[2]];
+      let ok = true;
+      for(const cl of chosen){ if(!cl.test(r,o,t)){ ok = false; break; } }
+      if(ok){ n++; first = w; if(n > 1) return {n, first}; }
+    }
+    return {n, first};
+  };
+
+  const chosen = [];
+  let live = worlds;
+  for(const cl of rndSort){
+    if(chosen.length > 22) break;
+    const next = live.filter(w => cl.test(CF_PERMS[w[0]], CF_PERMS[w[1]], CF_PERMS[w[2]]));
+    if(next.length === live.length) continue;         // clue tells us nothing new
+    chosen.push(cl); live = next;
+    if(live.length === 1) break;
+  }
+  if(live.length !== 1 && depth < 8) return cfBuild(seedStr + "x", depth+1);   // vanishingly rare; reroll
+
+  /* prune: drop any clue the rest already implies */
+  for(let i = chosen.length - 1; i >= 0; i--){
+    const trial = chosen.slice(0,i).concat(chosen.slice(i+1));
+    if(countLeft(worlds, trial).n === 1) chosen.splice(i,1);
+  }
+  /* a minimal set is technically solvable but often needs case-splitting; add a few
+     true, redundant clues so there are more footholds and the chain stays fair */
+  const have = new Set(chosen.map(c => c.text));
+  const extras = rndSort.filter(c => c.rank <= 2 && !have.has(c.text));
+  for(let i=0; i<extras.length && chosen.length < 11; i++){ chosen.push(extras[i]); have.add(extras[i].text); }
+
+  /* present them in a readable order: links, then negatives */
+  chosen.sort((a,b) => a.rank - b.rank);
+
+  const answerTime = ri(4);                            // the culprit is whoever was seen at this time
+  const culprit = sol.t.indexOf(answerTime);
+  return { theme, sol, clues: chosen, answerTime, culprit,
+           id: theme.id + "-" + hashStr(seedStr) };
+}
+
+function caseStatLabel(){
+  const s = Number(localStorage.getItem("dh-case-solved")||"0");
+  return s ? s + (s===1?" case closed":" cases closed") : "No cases closed";
+}
+
+let CF = null;
+function renderCaseFile(fresh){
   const panel = $("#panel-quiz");
   $("#staleNote").style.display = "none";
-  panel.innerHTML = `<div class="cm-wrap"><button class="pbtn game-back" id="cmBack">← Back to Games</button><div class="spinner"></div></div>`;
-  $("#cmBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+  const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+  const seed = fresh ? ("free-" + Date.now()) : ("case-" + today);
+  if(!CF || CF.seed !== seed){ CF = cfBuild(seed); CF.seed = seed; }
+  const P0 = CF.theme;
+  const gridKey = "dh-case-grid-" + CF.id;
+  const doneKey = "dh-case-done-" + CF.id;
 
-  if(!P.histReady){
-    await new Promise(res => { loadHistory(); const iv = setInterval(() => { if(P.histReady){ clearInterval(iv); res(); } }, 300); setTimeout(() => { clearInterval(iv); res(); }, 9000); });
-  }
-  const symMeta = {};
-  HOLDINGS.positions.forEach(p => { if(p.type==="cash") return; const sym = p.fetchSymbol||p.ticker; if(!symMeta[sym]) symMeta[sym] = {ticker:p.ticker, name:p.name}; });
-  const pool = Object.keys(symMeta).filter(s => P.histData && P.histData[s] && (P.histData[s].c||[]).filter(v=>v!=null).length >= 30);
-  if(pool.length < 4){
-    panel.innerHTML = `<div class="cm-wrap"><button class="pbtn game-back" id="cmBack2">← Back to Games</button>
-      <div class="empty">Couldn't load enough price history to play right now — open the Portfolio tab once to warm it up, then try again.</div></div>`;
-    $("#cmBack2").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
-    return;
-  }
-  let score=0, streak=0, best=Number(localStorage.getItem("dh-chart-best")||"0");
-  const shuffle = a => { const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];} return x; };
-  const chartSvg = closes => {
-    const pts = closes.filter(v=>v!=null).slice(-60);
-    const W=520,H=150,PT=12,PB=12; let mn=Math.min(...pts),mx=Math.max(...pts); if(mn===mx){mn-=1;mx+=1;}
-    const X=i=>i/(pts.length-1)*W, Y=v=>PT+(H-PT-PB)-((v-mn)/(mx-mn))*(H-PT-PB);
-    const up = pts[pts.length-1]>=pts[0], col = up?"#18996B":"#DC4B43";
-    let line=""; pts.forEach((v,i)=>line+=`${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)} `);
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><path d="${line}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  let marks = {};
+  try{ marks = JSON.parse(localStorage.getItem(gridKey)||"{}") || {}; }catch(e){ marks = {}; }
+  let auto = localStorage.getItem("dh-case-auto") !== "0";
+  let verdict = null;
+  try{ verdict = JSON.parse(localStorage.getItem(doneKey)||"null"); }catch(e){}
+
+  const CATS = [
+    {k:"s", label:"Suspect", items:P0.suspects},
+    {k:"r", label:"Room",    items:P0.rooms},
+    {k:"o", label:"Object",  items:P0.objs},
+    {k:"t", label:"Time",    items:P0.times}
+  ];
+  const colCats = ["r","o","t"], rowCats = ["s","t","o"];
+  const cat = k => CATS.find(c => c.k === k);
+  const cellKey = (rk,ri2,ck,ci) => rk+ri2+ck+ci;
+  const save = () => localStorage.setItem(gridKey, JSON.stringify(marks));
+
+  const setMark = (rk,ri2,ck,ci,val) => {
+    const k = cellKey(rk,ri2,ck,ci);
+    if(val) marks[k] = val; else delete marks[k];
+    if(val === "yes" && auto){
+      for(let j=0;j<4;j++){
+        if(j !== ci){ const kk = cellKey(rk,ri2,ck,j); if(marks[kk] !== "yes") marks[kk] = "no"; }
+        if(j !== ri2){ const kk = cellKey(rk,j,ck,ci); if(marks[kk] !== "yes") marks[kk] = "no"; }
+      }
+    }
+    save();
   };
-  const round = () => {
-    const sym = pool[Math.floor(Math.random()*pool.length)];
-    const opts = shuffle([sym, ...shuffle(pool.filter(s=>s!==sym)).slice(0,3)]);
-    const closes = P.histData[sym].c;
-    const v = closes.filter(x=>x!=null).slice(-60);
-    const change = v.length>1 ? (v[v.length-1]-v[0])/v[0]*100 : 0;
-    panel.innerHTML = `<div class="cm-wrap">
-      <button class="pbtn game-back" id="cmBack3">← Back to Games</button>
-      <div class="bb-score">Score ${score} · Streak ${streak} · Best ${best}</div>
-      <div class="qprompt" style="font-size:16px;margin:6px 0 14px">Which of your holdings is this?</div>
-      <div class="cm-chart">${chartSvg(closes)}<div class="cm-cap">Last ${v.length} trading days · ticker hidden</div></div>
-      <div class="cm-opts">${opts.map(s=>`<button class="cm-opt" data-s="${esc(s)}">${esc(symMeta[s].ticker)}</button>`).join("")}</div>
-      <div id="cmNext"></div>
+
+  const gridHTML = () => {
+    let h = `<table class="cf-grid"><thead><tr><th></th><th></th>`;
+    colCats.forEach(ck => h += `<th class="cf-cat" colspan="4">${esc(cat(ck).label)}</th>`);
+    h += `</tr><tr><th></th><th></th>`;
+    colCats.forEach((ck,ci2) => cat(ck).items.forEach((it,i) =>
+      h += `<th class="cf-vh${i===0&&ci2>0?" cf-blk":""}"><span>${esc(it)}</span></th>`));
+    h += `</tr></thead><tbody>`;
+    rowCats.forEach((rk,rbi) => {
+      cat(rk).items.forEach((it,ri2) => {
+        h += `<tr>`;
+        if(ri2 === 0) h += `<th class="cf-catr" rowspan="4">${esc(cat(rk).label)}</th>`;
+        h += `<th class="cf-rh${ri2===0&&rbi>0?" cf-blkt":""}" title="${esc(it)}">${esc(it)}</th>`;
+        colCats.forEach((ck,cbi) => {
+          const skip = (rk === ck) || (rk==="t" && ck==="t") || (rbi + cbi >= 3);
+          cat(ck).items.forEach((x,ci) => {
+            if(skip){ h += `<td></td>`; return; }
+            const st = marks[cellKey(rk,ri2,ck,ci)] || "";
+            const bl = (ci===0 && cbi>0 ? " cf-blk" : "") + (ri2===0 && rbi>0 ? " cf-blkt" : "");
+            h += `<td class="cf-cell ${st?(st==="yes"?"yes":"no"):""}${bl}" data-c="${rk}|${ri2}|${ck}|${ci}">${st==="yes"?"✓":st==="no"?"✗":""}</td>`;
+          });
+        });
+        h += `</tr>`;
+      });
+    });
+    return h + `</tbody></table>`;
+  };
+
+  const paint = () => {
+    const solvedNow = verdict && verdict.win;
+    let clueHTML = "";
+    CF.clues.forEach((c,i) => {
+      const used = localStorage.getItem("dh-case-clue-"+CF.id+"-"+i) === "1";
+      clueHTML += `<div class="cf-clue${used?" used":""}" data-cl="${i}"><span class="cn">${i+1}</span><span>${esc(c.text)}</span></div>`;
+    });
+    const sel = (id, items) => `<select id="${id}">${["<option value=\"\">— choose —</option>"]
+      .concat(items.map((x,i) => `<option value="${i}">${esc(x)}</option>`)).join("")}</select>`;
+
+    panel.innerHTML = `<div class="cf-wrap">
+      <button class="pbtn game-back" id="cfBack">← Back to Games</button>
+      <div class="cf-file">
+        <div class="cf-tab"><span class="cf-no">Case №&nbsp;${String(hashStr(CF.id)%9000+1000)}</span>
+          <span style="font-size:9.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#9BA0A6">${esc(P0.place)}</span>
+          <span class="cf-stamp">${solvedNow?"Closed":"Unsolved"}</span></div>
+        <div class="cf-title">${esc(P0.title)}</div>
+        <div class="cf-brief">Overnight, ${esc(P0.crime)}. Four people were inside, and each of them was in <b>exactly one room</b>, left <b>exactly one thing</b> behind, and was seen <b>exactly once</b>. No two share a room, an object, or a time. The clues below are all true. Work out the whole board, then file your accusation.</div>
+      </div>
+
+      <div class="cf-cols">
+        <div class="cf-panel">
+          <div class="cf-ph">The Evidence<span style="font-size:9.5px;color:#A08339">${CF.clues.length} clues</span></div>
+          ${clueHTML}
+          <div class="cf-legend">Click a clue to grey it out once you've used it.</div>
+        </div>
+        <div class="cf-panel">
+          <div class="cf-ph">Deduction Grid</div>
+          <div class="cf-gridwrap">${gridHTML()}</div>
+          <div class="cf-legend">Click a square to cycle <b>blank → ✗ → ✓</b>. A ✓ means "these two go together"; ✗ rules it out.</div>
+          <div class="cf-tools">
+            <button class="cf-tool${auto?" on":""}" id="cfAuto">Auto-eliminate ${auto?"on":"off"}</button>
+            <button class="cf-tool" id="cfCheck">Check my marks</button>
+            <button class="cf-tool" id="cfClear">Clear grid</button>
+          </div>
+          <div id="cfCheckMsg" style="font-size:12px;font-weight:900;margin-top:9px"></div>
+        </div>
+      </div>
+
+      <div class="cf-acc">
+        <div class="cf-ah">The Accusation</div>
+        <div class="cf-aq">Forensics fixed the moment at <span style="color:var(--gold)">${esc(P0.times[CF.answerTime])}</span>. Who was it — and what do we have on them?</div>
+        <div class="cf-arow">
+          <div><label>The culprit</label>${sel("cfS", P0.suspects)}</div>
+          <div><label>Was in</label>${sel("cfR", P0.rooms)}</div>
+          <div><label>Left behind</label>${sel("cfO", P0.objs)}</div>
+        </div>
+        <button class="cf-submit" id="cfGo">File the accusation</button>
+        <div id="cfVerdict"></div>
+      </div>
+      <div class="cf-stats">
+        <span>${esc(caseStatLabel())}</span>
+        <span>Streak ${esc(localStorage.getItem("dh-case-streak")||"0")}</span>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button class="cf-tool" id="cfNew">Deal me a different case</button>
+      </div>
     </div>`;
-    $("#cmBack3").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
-    panel.querySelectorAll(".cm-opt").forEach(b => b.addEventListener("click", () => {
-      const right = b.dataset.s===sym;
-      panel.querySelectorAll(".cm-opt").forEach(x => { x.disabled=true; if(x.dataset.s===sym) x.classList.add("correct"); else if(x===b) x.classList.add("wrong"); });
-      if(right){ score++; streak++; if(streak>best){ best=streak; localStorage.setItem("dh-chart-best",String(best)); } } else streak=0;
-      $("#cmNext").innerHTML = `<div style="font-size:14px;font-weight:900;margin:14px 0 6px;color:${right?"var(--up)":"var(--down)"}">${right?"Correct!":"Nope —"} ${esc(symMeta[sym].ticker)} · ${esc(symMeta[sym].name)} (${pctS(change)} over the window)</div>
-        <button class="qbig qnext" id="cmAgain" style="max-width:280px;margin:0 auto">Next Chart</button>`;
-      $("#cmAgain").addEventListener("click", round);
+
+    $("#cfBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    $("#cfNew").addEventListener("click", () => { CF = null; renderCaseFile(true); });
+
+    panel.querySelectorAll(".cf-cell").forEach(td => td.addEventListener("click", () => {
+      const [rk,ri2,ck,ci] = td.dataset.c.split("|");
+      const cur = marks[cellKey(rk,+ri2,ck,+ci)] || "";
+      const nxt = cur === "" ? "no" : cur === "no" ? "yes" : "";
+      setMark(rk, +ri2, ck, +ci, nxt);
+      paint();
     }));
+    panel.querySelectorAll(".cf-clue").forEach(el => el.addEventListener("click", () => {
+      const i = el.dataset.cl, k = "dh-case-clue-"+CF.id+"-"+i;
+      const on = localStorage.getItem(k) === "1";
+      localStorage.setItem(k, on ? "0" : "1");
+      el.classList.toggle("used", !on);
+    }));
+    $("#cfAuto").addEventListener("click", () => { auto = !auto; localStorage.setItem("dh-case-auto", auto?"1":"0"); paint(); });
+    $("#cfClear").addEventListener("click", () => { marks = {}; save(); paint(); });
+    $("#cfCheck").addEventListener("click", () => {
+      const truth = (rk,ri2,ck,ci) => {
+        const val = k2 => k2 === "s" ? null : CF.sol[k2];
+        const idxOf = (k2, sIdx) => k2 === "s" ? sIdx : CF.sol[k2][sIdx];
+        let sFromRow = rk === "s" ? ri2 : CF.sol[rk].indexOf(ri2);
+        return idxOf(ck, sFromRow) === ci;
+      };
+      let wrong = 0, marked = 0;
+      Object.keys(marks).forEach(k => {
+        const rk = k[0], ri2 = +k[1], ck = k[2], ci = +k[3];
+        marked++;
+        const t = truth(rk, ri2, ck, ci);
+        if((marks[k] === "yes") !== t) wrong++;
+      });
+      const m = $("#cfCheckMsg");
+      m.style.color = wrong ? "var(--down)" : "var(--up)";
+      m.textContent = !marked ? "Nothing marked yet." : wrong ? `${wrong} of your ${marked} marks ${wrong===1?"is":"are"} wrong.` : `All ${marked} marks check out.`;
+    });
+
+    const showVerdict = v => {
+      const box = $("#cfVerdict"); if(!box) return;
+      const c = CF.culprit;
+      box.innerHTML = v.win
+        ? `<div class="cf-verdict"><b class="cf-solved">Case closed.</b> ${esc(P0.suspects[c])} was in ${esc(P0.rooms[CF.sol.r[c]])} and left ${esc(P0.objs[CF.sol.o[c]])} behind at ${esc(P0.times[CF.answerTime])}. The deduction holds.</div>`
+        : `<div class="cf-verdict"><b style="color:var(--down)">The accusation doesn't hold.</b> ${v.parts} of 3 correct. Go back to the grid — every clue is true, and only one arrangement satisfies all of them.</div>`;
+    };
+    if(verdict) showVerdict(verdict);
+
+    $("#cfGo").addEventListener("click", () => {
+      const s = $("#cfS").value, r = $("#cfR").value, o = $("#cfO").value;
+      if(s === "" || r === "" || o === ""){ $("#cfVerdict").innerHTML = `<div class="cf-verdict">Fill in all three before you accuse anyone.</div>`; return; }
+      const c = CF.culprit;
+      let parts = 0;
+      if(+s === c) parts++;
+      if(+r === CF.sol.r[c]) parts++;
+      if(+o === CF.sol.o[c]) parts++;
+      const win = parts === 3;
+      verdict = {win, parts};
+      localStorage.setItem(doneKey, JSON.stringify(verdict));
+      if(win && localStorage.getItem("dh-case-credit-"+CF.id) !== "1"){
+        localStorage.setItem("dh-case-credit-"+CF.id, "1");
+        localStorage.setItem("dh-case-solved", String(Number(localStorage.getItem("dh-case-solved")||"0")+1));
+        localStorage.setItem("dh-case-streak", String(Number(localStorage.getItem("dh-case-streak")||"0")+1));
+      }
+      if(!win) localStorage.setItem("dh-case-streak","0");
+      showVerdict(verdict);
+    });
   };
-  round();
+  paint();
 }
+
+/* ================= built-in: Black Box =================
+   Four atoms hide in an 8x8 grid. Fire a beam in from any edge square and read what
+   comes back: absorbed (Hit), bounced straight back (Reflect), or emerging somewhere
+   else on the rim (matched numbers). Beams are deflected 90 degrees by an atom sitting
+   diagonally ahead of them, and reversed when flanked by two. */
+function bxStatLabel(){
+  const b = localStorage.getItem("dh-box-best");
+  return b ? "Best score " + b : "Not played yet";
+}
+function renderBlackBox(){
+  const panel = $("#panel-quiz");
+  $("#staleNote").style.display = "none";
+  const N = 8, ATOMS = 4;
+
+  let atoms = new Set(), guess = new Set(), marks = {}, log = [], shots = 0, label = 0, revealed = false;
+  const newGame = () => {
+    atoms = new Set(); guess = new Set(); marks = {}; log = []; shots = 0; label = 0; revealed = false;
+    while(atoms.size < ATOMS) atoms.add(Math.floor(Math.random()*N*N));
+  };
+  newGame();
+
+  const has = (r,c) => r>=0 && r<N && c>=0 && c<N && atoms.has(r*N+c);
+  const outside = (r,c) => r<0 || r>=N || c<0 || c>=N;
+
+  /* returns {type:"hit"} | {type:"reflect"} | {type:"exit", key} */
+  const fire = (er, ec, dr, dc) => {
+    if(has(er,ec)) return {type:"hit"};
+    if(has(er+dc, ec-dr) || has(er-dc, ec+dr)) return {type:"reflect"};
+    let r = er, c = ec;
+    for(let guard=0; guard<400; guard++){
+      const nr = r+dr, nc = c+dc;
+      if(outside(nr,nc)) return {type:"exit", key: edgeKeyOf(nr,nc)};
+      if(has(nr,nc)) return {type:"hit"};
+      const fl = has(nr+dc, nc-dr), fr = has(nr-dc, nc+dr);
+      if(fl && fr){ dr = -dr; dc = -dc; }
+      else if(fl){ const t = dr; dr = -dc; dc = t; }
+      else if(fr){ const t = dr; dr = dc; dc = -t; }
+      else { r = nr; c = nc; }
+    }
+    return {type:"reflect"};
+  };
+  const edgeKeyOf = (r,c) => r<0 ? "T"+c : r>=N ? "B"+c : c<0 ? "L"+r : "R"+r;
+  const edgeStart = key => {
+    const s = key[0], i = +key.slice(1);
+    if(s === "T") return [0, i, 1, 0];
+    if(s === "B") return [N-1, i, -1, 0];
+    if(s === "L") return [i, 0, 0, 1];
+    return [i, N-1, 0, -1];
+  };
+
+  const paint = () => {
+    let cells = "";
+    const edgeCell = key => {
+      const m = marks[key];
+      const kl = m ? (m.type==="hit" ? "hit" : m.type==="reflect" ? "refl" : "") : "";
+      const txt = m ? (m.type==="hit" ? "H" : m.type==="reflect" ? "R" : m.n) : "";
+      const st = m && m.type === "exit" ? `background:${m.col};color:#fff;border-color:${m.col}` : "";
+      return `<div class="bx-c bx-edge ${kl}${m?" done":""}" data-e="${key}" style="${st}">${txt}</div>`;
+    };
+    cells += `<div class="bx-c bx-corner"></div>`;
+    for(let c=0;c<N;c++) cells += edgeCell("T"+c);
+    cells += `<div class="bx-c bx-corner"></div>`;
+    for(let r=0;r<N;r++){
+      cells += edgeCell("L"+r);
+      for(let c=0;c<N;c++){
+        const idx = r*N+c;
+        let kl = "bx-in", txt = "";
+        if(revealed){
+          if(atoms.has(idx) && guess.has(idx)){ kl += " reveal-hit"; txt = "●"; }
+          else if(atoms.has(idx)){ kl += " reveal-miss"; txt = "●"; }
+          else if(guess.has(idx)){ kl += " reveal-miss"; txt = "✕"; }
+        } else if(guess.has(idx)){ kl += " atom"; txt = "●"; }
+        cells += `<div class="bx-c ${kl}" data-i="${idx}">${txt}</div>`;
+      }
+      cells += edgeCell("R"+r);
+    }
+    cells += `<div class="bx-c bx-corner"></div>`;
+    for(let c=0;c<N;c++) cells += edgeCell("B"+c);
+    cells += `<div class="bx-c bx-corner"></div>`;
+
+    const logHTML = log.length ? log.slice().reverse().map(l =>
+      `<div><b>${esc(l.from)}</b> → ${l.type==="hit"?`<span style="color:var(--down);font-weight:900">absorbed</span>`
+        : l.type==="reflect"?`<span style="color:#8A5A3F;font-weight:900">reflected</span>`
+        : `exits <b style="color:${l.col}">${esc(l.to)}</b>`}</div>`).join("") : `<div style="color:var(--muted);border:none">No beams fired yet.</div>`;
+
+    panel.innerHTML = `<div class="bx-wrap">
+      <button class="pbtn game-back" id="bxBack">← Back to Games</button>
+      <div class="bx-top">
+        <div>
+          <div class="bx-boardwrap"><div class="bx-board">${cells}</div></div>
+          <div class="bx-score"><span>Score ${shots}</span><span>Atoms placed ${guess.size}/${ATOMS}</span><span>${esc(bxStatLabel())}</span></div>
+          <div class="bx-btns">
+            <button class="cf-tool" id="bxReveal"${guess.size===ATOMS && !revealed ? "" : " disabled style='opacity:.45;cursor:default'"}>Reveal &amp; score</button>
+            <button class="cf-tool" id="bxNew">New box</button>
+          </div>
+        </div>
+        <div class="bx-side">
+          <div class="cf-ph">How it reads</div>
+          <div class="bx-key">
+            Click any <i>rim square</i> to fire a beam into the box.<br><br>
+            <i>H</i> — the beam hit an atom head-on and never came out.<br>
+            <i>R</i> — it bounced straight back out where it went in.<br>
+            <i>1&nbsp;2&nbsp;3…</i> — matching numbers mark where a beam went in and came out.<br><br>
+            An atom sitting diagonally in front of a beam knocks it 90°; two of them send it back. Click inside the grid to place your four atoms.
+          </div>
+          <div class="cf-ph" style="margin-top:16px">Beam log</div>
+          <div class="bx-log">${logHTML}</div>
+        </div>
+      </div>
+      <div id="bxMsg" style="text-align:center;margin-top:14px"></div>
+    </div>`;
+
+    $("#bxBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    $("#bxNew").addEventListener("click", () => { newGame(); paint(); });
+    panel.querySelectorAll(".bx-edge").forEach(el => el.addEventListener("click", () => {
+      if(revealed) return;
+      const key = el.dataset.e;
+      if(marks[key]) return;
+      const [r,c,dr,dc] = edgeStart(key);
+      const res = fire(r,c,dr,dc);
+      if(res.type === "exit" && res.key === key){ res.type = "reflect"; delete res.key; }
+      if(res.type === "exit"){
+        label++;
+        const col = BX_COLS[(label-1) % BX_COLS.length];
+        marks[key] = {type:"exit", n:label, col};
+        marks[res.key] = {type:"exit", n:label, col};
+        shots += 2;
+        log.push({from:key, to:res.key, type:"exit", col});
+      } else {
+        marks[key] = {type:res.type};
+        shots += 1;
+        log.push({from:key, type:res.type});
+      }
+      paint();
+    }));
+    panel.querySelectorAll(".bx-in").forEach(el => el.addEventListener("click", () => {
+      if(revealed) return;
+      const i = +el.dataset.i;
+      if(guess.has(i)) guess.delete(i);
+      else if(guess.size < ATOMS) guess.add(i);
+      paint();
+    }));
+    const rv = $("#bxReveal");
+    if(rv && guess.size === ATOMS && !revealed) rv.addEventListener("click", () => {
+      revealed = true;
+      const right = [...guess].filter(i => atoms.has(i)).length;
+      const penalty = (ATOMS - right) * 5;
+      const total = shots + penalty;
+      const prev = Number(localStorage.getItem("dh-box-best")||"9999");
+      const isBest = right === ATOMS && total < prev;
+      if(right === ATOMS && total < prev) localStorage.setItem("dh-box-best", String(total));
+      paint();
+      const m = $("#bxMsg");
+      if(m) m.innerHTML = `<div class="qreveal" style="max-width:460px;margin:0 auto">
+        <b style="font-size:15px;color:${right===ATOMS?"var(--up)":"var(--down)"}">${right} of ${ATOMS} atoms found</b>
+        <div style="margin-top:8px;font-size:13.5px;color:#3A3E45">${shots} from beams${penalty?` + ${penalty} penalty`:""} = <b>${total}</b>${isBest?" · new best":""}. Lower is better.</div>
+        </div><button class="qbig qnext" id="bxAgain" style="max-width:280px;margin:14px auto 0">New box</button>`;
+      const ag = $("#bxAgain"); if(ag) ag.addEventListener("click", () => { newGame(); paint(); });
+    });
+  };
+  paint();
+}
+const BX_COLS = ["#C8A24B","#1D9E75","#D4537E","#378ADD","#BA7517","#7F77DD","#2F6B8A","#8A5A3F"];
 
 async function renderQuizTab(){
   const panel = $("#panel-quiz");

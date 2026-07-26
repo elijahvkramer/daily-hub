@@ -188,7 +188,7 @@
   .np-fig img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .35s ease;opacity:0}
   .np-fig img.in{opacity:1}
   .np-fig svg{display:block;width:100%;height:100%}
-  .np-lead-fig{aspect-ratio:16/8.4;margin:0 0 14px}
+  .np-lead-fig{aspect-ratio:16/7;max-height:340px;margin:0 0 14px}
   .np-lead-fig:hover img{transform:scale(1.03)}
   .np-cap{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:6px;font-weight:700;letter-spacing:.01em}
   .np-cap em{font-style:normal;color:#A08339}
@@ -1124,12 +1124,18 @@ function newsEntity(item){
 
 const IMG_TTL = 1000*60*60*24*21;
 function imgCacheGet(k){
-  try{ const v = JSON.parse(localStorage.getItem("dh-nimg:"+k)||"null");
+  try{ const v = JSON.parse(localStorage.getItem("dh-nimg2:"+k)||"null");
     if(v && Date.now()-v.t < IMG_TTL) return v.u; }catch(e){}
   return undefined;
 }
-function imgCacheSet(k,u){ try{ localStorage.setItem("dh-nimg:"+k, JSON.stringify({t:Date.now(), u:u})); }catch(e){} }
+function imgCacheSet(k,u){ try{ localStorage.setItem("dh-nimg2:"+k, JSON.stringify({t:Date.now(), u:u})); }catch(e){} }
 
+/* Wikimedia thumbnails skew heavily toward flags, seals, logos and locator maps, which
+   look wrong running as news art. Ask for several results and take the first that's an
+   actual photograph; if the only options are graphics, return null and keep the plate. */
+/* Only the top couple of search results are considered — going deeper starts returning
+   images from tangentially related articles, which is worse than no photo at all. */
+const IMG_GRAPHIC = /flag[_-]|[_-]flag|seal[_-]of|coat[_-]of[_-]arms|emblem|logo|wordmark|insignia|topographic|locator|location[_-]map|blank[_-]map|[_-]map[-_.]|\.svg\/|\.pdf\.|page\d+-/i;
 async function wikiImage(q){
   const key = String(hashStr(q));
   const hit = imgCacheGet(key);
@@ -1137,13 +1143,15 @@ async function wikiImage(q){
   let out = null;
   try{
     const url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" +
-      encodeURIComponent(q) + "&gsrlimit=1&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*";
+      encodeURIComponent(q) + "&gsrlimit=2&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*";
     const r = await fetch(url);
     const j = await r.json();
-    const pages = j && j.query && j.query.pages;
-    if(pages){
-      const p = Object.values(pages)[0];
-      if(p && p.thumbnail && p.thumbnail.source) out = p.thumbnail.source;
+    const pages = (j && j.query && j.query.pages)
+      ? Object.values(j.query.pages).sort((a,b) => (a.index||99) - (b.index||99)) : [];
+    for(const p of pages){
+      const src = p.thumbnail && p.thumbnail.source;
+      if(!src || IMG_GRAPHIC.test(src)) continue;    // flags, seals, locator maps, PDF scans
+      out = src; break;
     }
   }catch(e){ out = null; }
   imgCacheSet(key, out);
@@ -1174,9 +1182,8 @@ function runFigQueue(){
     }
     if(!url) return;                                   // keep the generated plate
     const node = document.getElementById(job.id); if(!node) return;
-    const img = new Image();
+    const img = new Image();          // note: no loading="lazy" — a detached lazy image never loads
     img.alt = "";
-    img.loading = "lazy";
     img.referrerPolicy = "no-referrer";
     img.onload = () => {
       const live = document.getElementById(job.id); if(!live) return;

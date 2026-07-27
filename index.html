@@ -189,6 +189,9 @@
   @media(max-width:640px){.np-fig{float:none;width:100%;margin:0 0 12px;aspect-ratio:16/9}}
   /* a floated photo and CSS columns don't mix — go single-column while one is showing */
   .has-fig .np-cols.two, .has-fig .ls-b.two{column-count:1}
+  /* contain the float so it can't spill past its story into the section flow below */
+  .np-lead-col, .np-lead-story{overflow:hidden}
+  .np-secflow{clear:both}
 
   /* ---------- news front page: markets at the close ---------- */
   .np-mkt{margin-top:20px;border-top:3px double var(--ink);padding-top:14px;cursor:pointer}

@@ -176,47 +176,38 @@
   .mkt-banner .mb-l .mb-s{color:#A6ABB1;font-size:12.5px;margin-top:5px;max-width:520px;line-height:1.5}
   .mkt-banner .mb-date{color:#8A8F95;font-size:11.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
 
-  /* ---------- news: wide edition + photography ---------- */
-  body.news-wide .topbar-in{max-width:1320px}
-  body.news-wide main{max-width:1320px;padding-top:14px}
-  body.news-wide .np-body{padding:28px 34px}
-  body.news-wide .np-front{grid-template-columns:2.1fr 1fr}
-  @media(max-width:1000px){body.news-wide .np-body{padding:22px 24px}}
-
-  /* photo plates */
-  .np-fig{margin:0;position:relative;overflow:hidden;border-radius:10px;background:var(--paper)}
-  .np-fig img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .35s ease;opacity:0}
+  /* ---------- news: one small photo per view, only when it's actually the subject ----------
+     Figures start hidden and are only revealed once a confidently-matched photo loads, so a
+     story with no good image costs zero space. They float beside the text, never above it. */
+  .np-fig{float:right;width:230px;aspect-ratio:4/3;margin:3px 0 10px 20px;
+          border-radius:8px;overflow:hidden;position:relative;display:none}
+  .np-fig.on{display:block}
+  .np-fig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s ease}
   .np-fig img.in{opacity:1}
-  .np-fig svg{display:block;width:100%;height:100%}
-  .np-lead-fig{aspect-ratio:16/7;max-height:340px;margin:0 0 14px}
-  .np-lead-fig:hover img{transform:scale(1.03)}
-  .np-cap{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:6px;font-weight:700;letter-spacing:.01em}
-  .np-cap em{font-style:normal;color:#A08339}
-  .np-rail-item{display:flex;gap:11px;align-items:flex-start}
-  .np-rail-item .rtx{min-width:0;flex:1}
-  .np-rail-fig{width:74px;height:56px;flex-shrink:0;border-radius:7px;overflow:hidden}
-  .np-secflow .np-col-story{break-inside:avoid}
-  .np-col-fig{aspect-ratio:16/9;margin:0 0 8px}
-  .np-sec-fig{aspect-ratio:16/7.6;margin:0 0 14px}
-  .np-fig-ph{position:absolute;inset:0;display:grid;place-items:center}
+  .np-cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(22,24,29,.82));
+          color:#EDEBE5;font-size:9.5px;font-weight:700;line-height:1.4;padding:16px 9px 7px}
+  @media(max-width:640px){.np-fig{float:none;width:100%;margin:0 0 12px;aspect-ratio:16/9}}
+  /* a floated photo and CSS columns don't mix — go single-column while one is showing */
+  .has-fig .np-cols.two, .has-fig .ls-b.two{column-count:1}
 
-  /* ---------- Today: markets snapshot card ---------- */
-  .msnap{cursor:pointer;position:relative;margin-top:14px}
-  .msnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
-  .msnap .ms-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .msnap .ms-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#A08339;display:inline-flex;align-items:center;gap:4px}
-  .msnap .ms-head-line{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.3;color:var(--ink);margin-top:10px}
-  .ms-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  /* ---------- news front page: markets at the close ---------- */
+  .np-mkt{margin-top:20px;border-top:3px double var(--ink);padding-top:14px;cursor:pointer}
+  .np-mkt:hover .ms-open{color:var(--ink)}
+  .np-mkt .ms-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .np-mkt .ms-kick{font-family:Georgia,serif;font-size:17px;font-weight:900;color:var(--ink)}
+  .np-mkt .ms-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#A08339}
+  .np-mkt .ms-head-line{font-size:13px;color:#4A4E55;line-height:1.5;margin-top:5px;max-width:760px}
+  .ms-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:12px}
   @media(max-width:760px){.ms-grid{grid-template-columns:repeat(2,1fr)}}
-  .ms-tile{background:var(--paper);border:1px solid var(--hairline);border-radius:10px;padding:11px 12px;position:relative;overflow:hidden}
-  .ms-tile .mt-n{font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .ms-tile .mt-v{font-size:18px;font-weight:900;color:var(--ink);margin-top:5px;letter-spacing:-.01em;line-height:1}
-  .ms-tile .mt-c{font-size:12px;font-weight:900;margin-top:4px}
+  .ms-tile{background:var(--paper);border:1px solid var(--hairline);border-radius:9px;padding:9px 11px;position:relative;overflow:hidden}
+  .ms-tile .mt-n{font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .ms-tile .mt-v{font-size:16px;font-weight:900;color:var(--ink);margin-top:4px;letter-spacing:-.01em;line-height:1}
+  .ms-tile .mt-c{font-size:11.5px;font-weight:900;margin-top:3px}
   .ms-tile .mt-c.up{color:var(--up)}.ms-tile .mt-c.down{color:var(--down)}.ms-tile .mt-c.neutral{color:var(--muted)}
   .ms-tile .mt-bar{position:absolute;left:0;bottom:0;height:3px;border-radius:0 3px 3px 0;transition:width .7s cubic-bezier(.2,.7,.2,1);width:0}
-  .ms-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:11px}
-  .ms-movers{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
-  .ms-mv{font-size:11px;font-weight:900;border-radius:20px;padding:5px 10px;border:1px solid var(--hairline);background:var(--card)}
+  .ms-foot{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:9px}
+  .ms-movers{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .ms-mv{font-size:10.5px;font-weight:900;border-radius:20px;padding:4px 9px;border:1px solid var(--hairline);background:var(--card)}
   .ms-mv.up{color:var(--up);border-color:rgba(24,153,107,.3)}
   .ms-mv.down{color:var(--down);border-color:rgba(220,75,67,.3)}
   .ms-mv span{color:var(--muted);font-weight:700;margin-left:5px}
@@ -858,19 +849,6 @@ function goPortfolio(){
   });
 }
 
-/* Markets lives inside the News edition — this routes straight to that view from the
-   Today tab's markets card. */
-function goMarkets(){
-  animatedTabSwitch(async () => {
-    S.tab = "news"; localStorage.setItem("dh-tab", "news");
-    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === "news"));
-    document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-news"));
-    fillDates(); await show();
-    showNewsView("markets"); setNavActive("markets");
-    window.scrollTo({top:0, behavior:"smooth"});
-  });
-}
-
 function fillDates(){
   const sel = $("#dateSelect"); sel.innerHTML = "";
   if(S.tab === "portfolio" || S.tab === "quiz"){ sel.style.visibility = "hidden"; return; }
@@ -909,7 +887,6 @@ async function show(){
   // News and Games carry their own mastheads — hide the global compact header there so content fills the space
   const heroEl = document.querySelector(".hero");
   if(heroEl) heroEl.style.display = (kind==="news" || kind==="quiz") ? "none" : "block";
-  document.body.classList.toggle("news-wide", kind==="news");   // the edition gets a wider measure
   $("#heroEyebrow").textContent = NICE[kind];
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
   if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderGamesTab(); return; }
@@ -1070,106 +1047,68 @@ function secShort(title){
 }
 
 /* ================= news photography =================
-   Three tiers, in order:
-     1. `item.img` supplied by the daily-news-briefing task (a real news photo URL)
-     2. a live Wikimedia lookup on the story's main proper noun (cached in localStorage)
-     3. a deterministic generated "plate" in the section's palette — always on-brand
-   The plate renders instantly; a photo, once resolved, cross-fades over the top. */
+   Deliberately conservative. A photo only appears when we can be confident it IS the
+   subject of the story — i.e. the daily task named the subject itself (`img` / `imgQuery`),
+   or the story's lead sentence names a proper noun whose Wikipedia article title matches
+   it exactly. Anything looser (flags, seals, maps, logos, tangential articles) is dropped
+   and no figure renders at all. At most one photo per view, floated small beside the text. */
 function hashStr(s){ let h = 2166136261>>>0; for(let i=0;i<String(s).length;i++){ h ^= String(s).charCodeAt(i); h = Math.imul(h,16777619)>>>0; } return h>>>0; }
+/* xorshift PRNG from a string seed — also used by the daily Case File generator */
 function seedRand(seed){ let x = (seed>>>0) || 1; return () => { x ^= x<<13; x>>>=0; x ^= x>>17; x ^= x<<5; x>>>=0; return x/4294967296; }; }
 
-/* generated editorial plate — a duotone composition in the section's palette, with a
-   halftone screen so a photo-less story still reads as designed art rather than a gap */
-function plateSvg(seedStr, secTitle){
-  const [bg, fg] = secPill(secTitle||"");
-  const r = seedRand(hashStr(seedStr||"plate"));
-  const W = 400, H = 225;
-  const uid = "p" + hashStr(seedStr||"plate").toString(36);
-  let sh = "";
-
-  /* one dominant arc form */
-  const bigX = W*(0.15+r()*0.7), bigY = H*(0.15+r()*0.8), bigR = H*(0.42+r()*0.5);
-  sh += `<circle cx="${bigX.toFixed(1)}" cy="${bigY.toFixed(1)}" r="${bigR.toFixed(1)}" fill="${fg}" opacity=".30"/>`;
-  sh += `<circle cx="${bigX.toFixed(1)}" cy="${bigY.toFixed(1)}" r="${(bigR*0.58).toFixed(1)}" fill="${bg}" opacity=".55"/>`;
-
-  /* two supporting soft masses */
-  for(let i=0;i<2;i++){
-    const cx = r()*W, cy = H*(0.1+r()*1.0), rad = H*(0.3+r()*0.55);
-    sh += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rad.toFixed(1)}" fill="${fg}" opacity="${(0.10+r()*0.10).toFixed(3)}"/>`;
-  }
-
-  /* a raked band of rules across the plate */
-  const ang = -30 + r()*60, gap = 9 + r()*8;
-  let rules = "";
-  for(let x=-H; x<W+H; x+=gap) rules += `<rect x="${x.toFixed(1)}" y="${-H}" width="${(1.4+r()*2.2).toFixed(1)}" height="${H*3}" fill="${fg}"/>`;
-  sh += `<g opacity=".16" transform="rotate(${ang.toFixed(1)} ${W/2} ${H/2})">${rules}</g>`;
-
-  /* halftone screen in one corner */
-  const hx = r() < .5 ? 0 : W*0.52, hy = r() < .5 ? 0 : H*0.5;
-  sh += `<rect x="${hx}" y="${hy}" width="${(W*0.48).toFixed(0)}" height="${(H*0.5).toFixed(0)}" fill="url(#${uid})" opacity=".5"/>`;
-
-  const kicker = String(secShort(secTitle||"")).toUpperCase();
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs><pattern id="${uid}" width="8" height="8" patternUnits="userSpaceOnUse">
-      <circle cx="2.2" cy="2.2" r="1.5" fill="${fg}"/></pattern></defs>
-    <rect width="${W}" height="${H}" fill="${bg}"/>${sh}
-    <text x="${W-14}" y="${H-13}" text-anchor="end" font-family="Lato,sans-serif" font-size="11"
-      font-weight="900" letter-spacing="3" fill="${fg}" opacity=".62">${esc(kicker)}</text>
-    <rect width="${W}" height="${H}" fill="none" stroke="rgba(0,0,0,.07)" stroke-width="2"/></svg>`;
-}
-
-/* pull the story's most likely subject: the longest / most repeated proper-noun run */
-const CAP_STOP = new Set(["The","A","An","In","On","At","But","And","Or","For","After","Before","While","With","From","By","As","It","He","She","They","We","This","That","These","Those","His","Her","Their","Its","Also","Meanwhile","However","Both","One","Two","Three","Four","Five","Now","Over","Under","New","More","Most","Some","Many","Several","Following","During","Amid","Despite","Since","Until","Both","When","Where","What","Who","Why","How","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","January","February","March","April","May","June","July","August","September","October","November","December"]);
-function entityScan(txt, weight, score){
-  const runs = String(txt||"").replace(/\s+/g," ").match(/[A-Z][A-Za-z.'\u2019-]+(?:\s+(?:of\s+|the\s+)?[A-Z][A-Za-z.'\u2019-]+){0,3}/g) || [];
+const CAP_STOP = new Set(["The","A","An","In","On","At","But","And","Or","For","After","Before","While","With","From","By","As","It","He","She","They","We","This","That","These","Those","His","Her","Their","Its","Also","Meanwhile","However","Both","One","Two","Three","Four","Five","Now","Over","Under","New","More","Most","Some","Many","Several","Following","During","Amid","Despite","Since","Until","When","Where","What","Who","Why","How","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","January","February","March","April","May","June","July","August","September","October","November","December"]);
+const ENT_SKIP = new Set(["US","U.S.","USA","American","Americans","Reuters","AP","CNN","NPR","Axios","Bloomberg"]);
+function newsEntity(item){
+  /* the lead sentence only — the body wanders off into secondary subjects */
+  const txt = String((item && item.lead) || "").replace(/\s+/g," ");
+  const runs = txt.match(/[A-Z][A-Za-z.'’-]+(?:\s+(?:of\s+|the\s+)?[A-Z][A-Za-z.'’-]+){0,3}/g) || [];
+  const score = {};
   runs.forEach(raw => {
     const words = raw.split(/\s+/)
-      .map(w => w.replace(/['\u2019]s$/,"").replace(/[.,;:]+$/,""))
+      .map(w => w.replace(/['’]s$/,"").replace(/[.,;:]+$/,""))
       .filter(w => w && !CAP_STOP.has(w));
     if(!words.length) return;
     const key = words.join(" ").trim();
-    if(key.length < 3 || ENT_SKIP.has(key)) return;
-    score[key] = (score[key]||0) + weight * (1 + Math.min(words.length,3)*0.55 + Math.min(key.length,22)/44);
+    if(key.length < 4 || ENT_SKIP.has(key)) return;
+    score[key] = (score[key]||0) + 1 + Math.min(words.length,3)*0.55;
   });
+  const best = Object.entries(score).sort((a,b) => b[1]-a[1])[0];
+  return best ? best[0] : null;
 }
-const ENT_SKIP = new Set(["US","U.S.","USA","American","Americans","Reuters","AP","CNN","NPR","Axios","Bloomberg"]);
-function newsEntities(item){
-  const score = {};
-  entityScan(item && item.lead, 3, score);      // the lead sentence names the real subject
-  entityScan(item && item.body, 1, score);
-  return Object.entries(score).sort((a,b) => b[1]-a[1]).slice(0,3).map(x => x[0]);
-}
-function newsEntity(item){ return newsEntities(item)[0] || null; }
 
 const IMG_TTL = 1000*60*60*24*21;
 function imgCacheGet(k){
-  try{ const v = JSON.parse(localStorage.getItem("dh-nimg2:"+k)||"null");
+  try{ const v = JSON.parse(localStorage.getItem("dh-nimg3:"+k)||"null");
     if(v && Date.now()-v.t < IMG_TTL) return v.u; }catch(e){}
   return undefined;
 }
-function imgCacheSet(k,u){ try{ localStorage.setItem("dh-nimg2:"+k, JSON.stringify({t:Date.now(), u:u})); }catch(e){} }
+function imgCacheSet(k,u){ try{ localStorage.setItem("dh-nimg3:"+k, JSON.stringify({t:Date.now(), u:u})); }catch(e){} }
 
-/* Wikimedia thumbnails skew heavily toward flags, seals, logos and locator maps, which
-   look wrong running as news art. Ask for several results and take the first that's an
-   actual photograph; if the only options are graphics, return null and keep the plate. */
-/* Only the top couple of search results are considered — going deeper starts returning
-   images from tangentially related articles, which is worse than no photo at all. */
-const IMG_GRAPHIC = /flag[_-]|[_-]flag|seal[_-]of|coat[_-]of[_-]arms|emblem|logo|wordmark|insignia|topographic|locator|location[_-]map|blank[_-]map|[_-]map[-_.]|\.svg\/|\.pdf\.|page\d+-/i;
+const IMG_GRAPHIC = /flag[_-]|[_-]flag|seal[_-]of|coat[_-]of[_-]arms|emblem|logo|wordmark|insignia|topographic|locator|location[_-]map|blank[_-]map|[_-]map[-_.]|\.svg\/|\.pdf\.|page\d+-|chart|graph|diagram/i;
+const normTitle = s => String(s).toLowerCase().replace(/\([^)]*\)/g,"").replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+
+/* Resolve a subject to a photograph, or to nothing. The article title must BE the subject —
+   "Iran" returning the article "Chemical weapon" or "Shush Castle" is exactly the failure
+   mode we're avoiding. The image must also be a real photo, not a flag/seal/map/diagram. */
 async function wikiImage(q){
+  if(!q) return null;
   const key = String(hashStr(q));
   const hit = imgCacheGet(key);
   if(hit !== undefined) return hit;
   let out = null;
   try{
     const url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" +
-      encodeURIComponent(q) + "&gsrlimit=2&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*";
+      encodeURIComponent(q) + "&gsrlimit=3&prop=pageimages&piprop=thumbnail&pithumbsize=700&format=json&origin=*";
     const r = await fetch(url);
     const j = await r.json();
     const pages = (j && j.query && j.query.pages)
       ? Object.values(j.query.pages).sort((a,b) => (a.index||99) - (b.index||99)) : [];
     for(const p of pages){
       const src = p.thumbnail && p.thumbnail.source;
-      if(!src || IMG_GRAPHIC.test(src)) continue;    // flags, seals, locator maps, PDF scans
+      if(!src) continue;
+      if(normTitle(p.title) !== normTitle(q)) continue;      // must be the article about this exact thing
+      if(!/\.jpe?g$/i.test(src.split("?")[0])) continue;     // must be a photograph
+      if(IMG_GRAPHIC.test(src)) continue;
       out = src; break;
     }
   }catch(e){ out = null; }
@@ -1177,42 +1116,34 @@ async function wikiImage(q){
   return out;
 }
 
-/* figures are emitted with a plate already drawn, then upgraded in place */
-let figSeq = 0, figQueue = [];
-function newsFig(item, secTitle, klass){
+/* One figure per view. It renders hidden and only appears if a photo actually resolves. */
+let figSeq = 0, figJob = null;
+function newsFig(item, hostSel){
+  if(!item) return "";
   const id = "npfig" + (++figSeq);
-  const seed = (item && (item.lead||"")) + "|" + (secTitle||"");
-  figQueue.push({ id, item: item||{}, secTitle: secTitle||"" });
-  return `<figure class="np-fig ${klass}" id="${id}">${plateSvg(seed, secTitle)}</figure>`;
+  figJob = { id, item, hostSel };
+  return `<figure class="np-fig" id="${id}"></figure>`;
 }
-function newsCap(item){
-  if(item && item.caption) return `<div class="np-cap">${esc(item.caption)}${item.credit?` <em>${esc(item.credit)}</em>`:""}</div>`;
-  return "";
-}
-function runFigQueue(){
-  const jobs = figQueue.slice(); figQueue = [];
-  jobs.forEach(async job => {
-    const el = document.getElementById(job.id); if(!el) return;
-    let url = job.item.img || null;                       // 1. an explicit URL from the task
-    if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);   // 2. the task's chosen subject
-    if(!url){                                             // 3. best guesses from the text itself
-      for(const ent of newsEntities(job.item)){
-        url = await wikiImage(ent);
-        if(url) break;
-      }
-    }
-    if(!url) return;                                   // keep the generated plate
-    const node = document.getElementById(job.id); if(!node) return;
-    const img = new Image();          // note: no loading="lazy" — a detached lazy image never loads
-    img.alt = "";
-    img.referrerPolicy = "no-referrer";
-    img.onload = () => {
-      const live = document.getElementById(job.id); if(!live) return;
-      live.appendChild(img);
-      requestAnimationFrame(() => img.classList.add("in"));
-    };
-    img.src = url;
-  });
+async function runFig(){
+  const job = figJob; figJob = null;
+  if(!job) return;
+  let url = job.item.img || null;                                   // task-supplied URL wins
+  if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);
+  if(!url) url = await wikiImage(newsEntity(job.item));             // strict fallback
+  if(!url) return;                                                  // no photo, no gap
+  const fig = document.getElementById(job.id); if(!fig) return;
+  const img = new Image();
+  img.alt = ""; img.referrerPolicy = "no-referrer";
+  img.onload = () => {
+    const live = document.getElementById(job.id); if(!live) return;
+    live.appendChild(img);
+    if(job.item.caption) live.insertAdjacentHTML("beforeend", `<figcaption class="np-cap">${esc(job.item.caption)}</figcaption>`);
+    live.classList.add("on");
+    const host = job.hostSel && live.closest(job.hostSel);
+    if(host) host.classList.add("has-fig");
+    requestAnimationFrame(() => img.classList.add("in"));
+  };
+  img.src = url;
 }
 
 let newsState = { d:null, view:"front" };
@@ -1257,7 +1188,7 @@ function setNavActive(v){
 }
 
 function showNewsView(view){
-  newsState.view = view; figQueue = [];
+  newsState.view = view; figJob = null;
   const d = newsState.d, body = $("#npBody"); if(!body) return;
   const sections = (d.sections||[]).filter(s => (s.items||[]).length);
 
@@ -1267,21 +1198,19 @@ function showNewsView(view){
     const leadItem = (lead.items||[])[0] || {lead:"", body:""};
     const para = ((leadItem.lead ? leadItem.lead + " " : "") + (leadItem.body||"")).trim();
     const twoCol = para.length > 260 ? " two" : "";
-    /* rail: one headline from every section (skip the lead item already shown), + a markets teaser */
+    /* rail: one headline from every section (skip the lead item already shown) */
     let rail = "";
     sections.forEach((s,si) => {
       const it = si===0 ? (s.items||[])[1] : (s.items||[])[0];
       if(!it) return;
-      rail += `<div class="np-rail-item" data-goto="${si}">${newsFig(it, s.title, "np-rail-fig")}
-        <div class="rtx"><div class="rt">${esc(headline(it.lead))}</div><div class="rs">${esc(secShort(s.title))}</div></div></div>`;
+      rail += `<div class="np-rail-item" data-goto="${si}"><div class="rt">${esc(headline(it.lead))}</div><div class="rs">${esc(secShort(s.title))}</div></div>`;
     });
-    rail += `<div class="np-rail-item" data-goto="markets"><div class="rtx"><div class="rt">Markets: the day's close</div><div class="rs">Business</div></div></div>`;
     body.innerHTML = `<div class="np-front">
       <div class="np-lead-col">
         <div class="np-kick">${esc(secShort(lead.title))} · Lead Story</div>
         <div class="np-lead-title">${esc((d.headline||"").replace(/\n/g," "))}</div>
         ${d.subtitle ? `<div class="np-standfirst">${esc(d.subtitle)}</div>` : ""}
-        ${newsFig(leadItem, lead.title, "np-lead-fig")}${newsCap(leadItem)}
+        ${newsFig(leadItem, ".np-lead-col")}
         <div class="np-cols${twoCol}">${esc(para)}</div>
         <span class="np-cont" data-goto="0">Full story in ${esc(secShort(lead.title))} →</span>
       </div>
@@ -1289,11 +1218,17 @@ function showNewsView(view){
         <div class="np-rail-h">Also in this edition</div>
         ${rail}
       </div>
+    </div>
+    <div class="np-mkt" id="npMkt">
+      <div class="ms-head"><span class="ms-kick">Markets · At the Close</span>
+        <span class="ms-open">Full market brief →</span></div>
+      <div id="msBody"><div class="ms-foot">Loading the latest close…</div></div>
     </div>${d.sources ? `<p class="sources" style="margin-top:20px">Sources: ${esc(d.sources)}</p>` : ""}`;
     body.querySelectorAll("[data-goto]").forEach(el => el.addEventListener("click", () => {
-      const g = el.dataset.goto; showNewsView(g==="markets"?"markets":Number(g)); setNavActive(g==="markets"?"markets":Number(g));
+      const g = el.dataset.goto; showNewsView(Number(g)); setNavActive(Number(g));
     }));
-    runFigQueue();
+    wireMarketsStrip();
+    runFig();
     return;
   }
 
@@ -1334,18 +1269,18 @@ function showNewsView(view){
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
   if(items.length){
     h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
-      ${newsFig(leadIt, sec.title, "np-sec-fig")}${newsCap(leadIt)}
+      ${newsFig(leadIt, ".np-lead-story")}
       <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div></div>`;
   }
   if(items.length > 1){
     h += `<div class="np-secflow">`;
     items.slice(1).forEach(it => {
-      h += `<div class="np-col-story">${newsFig(it, sec.title, "np-col-fig")}<div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
+      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
     });
     h += `</div>`;
   }
   body.innerHTML = h;
-  runFigQueue();
+  runFig();
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
 }
 /* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
@@ -1720,18 +1655,11 @@ function wirePortfolioSnapshot(){
   const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.intraReady){ paint(); clearInterval(hi); } }, 600);
 }
 
-/* markets snapshot for the Today tab — index scoreboard + the day's biggest movers,
+/* markets strip for the News front page — index scoreboard + the day's biggest movers,
    pulled from the latest published market brief. Clicking opens the full Markets view. */
-function buildMarketsSnapshot(){
-  return `<div class="bento-card msnap" id="msnap" title="Open the full market brief">
-    <div class="ms-head"><div class="bc-label">Markets · Day Close</div>
-      <span class="ms-open">Open full market brief <span style="font-size:13px">→</span></span></div>
-    <div id="msBody"><div class="ms-foot">Loading the latest close…</div></div>
-  </div>`;
-}
-function wireMarketsSnapshot(){
-  const card = $("#msnap"); if(!card) return;
-  card.addEventListener("click", goMarkets);
+function wireMarketsStrip(){
+  const card = $("#npMkt"); if(!card) return;
+  card.addEventListener("click", () => { showNewsView("markets"); setNavActive("markets"); window.scrollTo({top:0,behavior:"smooth"}); });
 
   const fill = md => {
     const mount = $("#msBody"); if(!mount) return;
@@ -1789,8 +1717,6 @@ function renderCalendarBody(p, d){
   /* ---- portfolio snapshot (full-width; at the top now, swapped above to-dos) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
-  /* ---- markets snapshot — the day's close, straight from the Today page ---- */
-  h += buildMarketsSnapshot();
 
   /* ---- to-do card (list + side ring) ---- */
   h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
@@ -1873,7 +1799,6 @@ function renderCalendarBody(p, d){
   const calCard = p.querySelector(".cal-card");
   if(calCard) wireMiniCal(calCard);
   wirePortfolioSnapshot();
-  wireMarketsSnapshot();
   loadTodayWeather(d);
   startCountdowns();
 }

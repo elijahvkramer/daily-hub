@@ -3617,14 +3617,30 @@ async function pkEnable(pass){
     }
   }catch(e){ /* fall through to gate mode */ }
 
-  if(rec.mode === "gate") localStorage.setItem("dh-pass", pass);   // same exposure as "Remember me"
+  if(rec.mode === "prf") localStorage.removeItem("dh-pass");       // no plaintext copy needed
+  else localStorage.setItem("dh-pass", pass);                      // same exposure as "Remember me"
   localStorage.setItem(PK_STORE, JSON.stringify(rec));
   return rec.mode;
 }
 
+/* Safari sometimes refuses the PRF assertion that immediately follows credential
+   creation (it wants its own user gesture), so enabling can land in "gate" mode.
+   Every later unlock asks for PRF anyway and silently upgrades the record the first
+   time the authenticator provides it — after that the passphrase is only ever on
+   disk encrypted under a key that lives inside the Secure Enclave. */
+async function pkUpgrade(rec, prf, pass){
+  try{
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const k = await aesFromPrf(prf);
+    const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, new TextEncoder().encode(pass));
+    localStorage.setItem(PK_STORE, JSON.stringify({ id:rec.id, salt:rec.salt, mode:"prf", iv:b64e(iv), ct:b64e(ct) }));
+    localStorage.removeItem("dh-pass");
+  }catch(e){}
+}
+
 async function pkUnlock(){
   const rec = pkRead(); if(!rec) return null;
-  const got = await pkAssert(b64d(rec.id), rec.mode === "prf" ? b64d(rec.salt) : null);
+  const got = await pkAssert(b64d(rec.id), b64d(rec.salt));   // always ask for PRF
   if(!got) return null;
   if(rec.mode === "prf"){
     if(!got.prf) throw new Error("prf unavailable");
@@ -3632,7 +3648,9 @@ async function pkUnlock(){
     const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64d(rec.iv)}, k, b64d(rec.ct));
     return new TextDecoder().decode(pt);
   }
-  return localStorage.getItem("dh-pass");    // gate mode: biometrics guarded the read
+  const pass = localStorage.getItem("dh-pass");               // gate mode: biometrics guarded the read
+  if(pass && got.prf) await pkUpgrade(rec, got.prf, pass);
+  return pass;
 }
 
 /* offer it once, after the first successful manual unlock on a capable device */

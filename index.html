@@ -805,12 +805,16 @@
   /* Case File on a phone: keep cells finger-sized and let the grid scroll sideways */
   @media(max-width:820px){
     .cf-cols{grid-template-columns:1fr}
-    .cf-gridwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
-      margin:0 -18px;padding:0 18px 6px;scroll-snap-type:x proximity}
-    table.cf-grid{margin:0}
-    .cf-cell{width:32px;height:32px;font-size:15px;line-height:30px}
-    table.cf-grid th.cf-vh{height:100px;width:32px}
-    table.cf-grid th.cf-rh{max-width:none;font-size:11px;padding-right:9px}
+    .cf-gridwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:6px}
+    /* let the table keep its natural size and scroll, instead of squeezing cells
+       down to something you can't reliably hit with a thumb */
+    table.cf-grid{margin:0;width:max-content}
+    .cf-cell{width:32px;min-width:32px;height:32px;font-size:16px;line-height:30px}
+    table.cf-grid th.cf-vh{height:104px;width:32px;min-width:32px}
+    /* the row labels stay pinned while the grid scrolls under them */
+    table.cf-grid th.cf-catr{position:sticky;left:0;z-index:3;width:15px;min-width:15px;background:var(--card)}
+    table.cf-grid th.cf-rh{position:sticky;left:15px;z-index:3;background:var(--card);
+      max-width:104px;font-size:11px;padding-right:9px;box-shadow:1px 0 0 var(--hairline)}
     .cf-scrollnote{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
     .cf-tool{padding:11px 13px}
     .cf-arow select{font-size:16px}

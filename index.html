@@ -2,13 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Daily Hub · Eli Kramer</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="shortcut icon" href="favicon.ico">
+
+<!-- installable app (Add to Home Screen on iOS) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#16181D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Hub">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<!-- iOS launch screens, newest devices first -->
+<link rel="apple-touch-startup-image" href="splash-1320x2868.png" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1206x2622.png" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1179x2556.png" media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1284x2778.png" media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1170x2532.png" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-828x1792.png"  media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2)">
+<link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="splash-750x1334.png"  media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
@@ -166,10 +187,6 @@
   .np-col-story .cs-t{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.24;color:var(--ink)}
   .np-col-story .cs-b{font-size:13.5px;line-height:1.62;color:#33363C;margin-top:5px}
   @media(max-width:640px){.np-secflow{column-count:1}}
-  .np-detail{font-size:13.5px;line-height:1.68;color:#33363C;margin-top:10px;padding-top:10px;border-top:1px dashed var(--hairline)}
-  .np-more{display:inline-block;margin-top:9px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#A08339;cursor:pointer;user-select:none}
-  .np-more:hover{text-decoration:underline}
-  .np-lead-story .np-detail{font-size:14.5px}
   .np-back{appearance:none;background:none;border:none;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:var(--muted);cursor:pointer;margin-bottom:14px}
   .np-back:hover{color:#A08339}
 
@@ -295,12 +312,6 @@
   .today-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
   .today-bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:start}
   @media(max-width:720px){.today-bottom{grid-template-columns:1fr}}
-  .today-triple{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:14px;margin-top:14px;align-items:start}
-  @media(max-width:980px){.today-triple{grid-template-columns:1fr 1fr}.today-triple .cal-card{grid-column:span 2}}
-  @media(max-width:640px){.today-triple{grid-template-columns:1fr}.today-triple .cal-card{grid-column:auto}}
-  .ag-head{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 0 6px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
-  .chill-card{margin-top:12px}
-  .chill-card .tc-head .h{color:#7A6A45}
   .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
   .bc-num{font-size:27px;font-weight:900;color:var(--ink);margin-top:6px;line-height:1}
@@ -694,6 +705,133 @@
     .hero-in{padding:38px 18px 34px}
     main{padding:26px 16px 60px}
   }
+
+  /* ==================================================================
+     PHONE / INSTALLED APP
+     The site is installable on iOS (Add to Home Screen). In standalone
+     mode there's no browser chrome, so we own the status bar and home
+     indicator areas and navigate from a fixed bottom bar instead.
+     ================================================================== */
+
+  /* --- bottom tab bar (hidden on desktop) --- */
+  .tabbar{display:none}
+  @media(max-width:820px){
+    .topbar .tabs{display:none}                 /* nav moves to the bottom */
+    .topbar-in{gap:12px;padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right))}
+    .topbar{padding-top:env(safe-area-inset-top)}
+    .tabbar{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+      background:rgba(22,24,29,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border-top:1px solid rgba(200,162,75,.22);
+      padding:6px max(4px, env(safe-area-inset-left)) calc(env(safe-area-inset-bottom) + 4px) max(4px, env(safe-area-inset-right));
+    }
+    .tabbar button{
+      appearance:none;background:none;border:none;font:inherit;flex:1;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 5px;
+      color:#8A8F95;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+      -webkit-tap-highlight-color:transparent;transition:color .16s;border-radius:12px;
+    }
+    .tabbar button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;
+      stroke-linecap:round;stroke-linejoin:round;transition:transform .18s cubic-bezier(.3,1.3,.5,1)}
+    .tabbar button.active{color:var(--gold)}
+    .tabbar button.active svg{transform:translateY(-1px) scale(1.06)}
+    .tabbar button:active svg{transform:scale(.9)}
+    .tabbar button .tb-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px}
+    .tabbar button.active .tb-dot{background:var(--gold)}
+    main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+    footer{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  }
+
+  /* --- installed-app chrome --- */
+  body.standalone .topbar{padding-top:calc(env(safe-area-inset-top))}
+  body.standalone #gate{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  body.standalone{overscroll-behavior-y:none}          /* no rubber-band on the whole page */
+
+  /* --- offline / freshness pill --- */
+  .netpill{display:none;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:.08em;
+    text-transform:uppercase;color:#E0B968;border:1px solid rgba(200,162,75,.4);border-radius:20px;padding:5px 10px;white-space:nowrap}
+  .netpill.on{display:inline-flex}
+  .netpill i{width:6px;height:6px;border-radius:50%;background:#E0B968;display:block}
+
+  /* --- Face ID unlock on the gate --- */
+  .gate-bio{display:none;width:100%;margin-top:12px;appearance:none;font:inherit;font-size:14px;font-weight:900;
+    letter-spacing:.1em;text-transform:uppercase;background:transparent;color:var(--gold);
+    border:1px solid rgba(200,162,75,.5);border-radius:9px;padding:13px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;gap:9px;transition:background .15s}
+  .gate-bio.on{display:flex}
+  .gate-bio:active{background:rgba(200,162,75,.12)}
+  .gate-bio svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .gate-or{display:none;color:#6B7177;font-size:10.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin:14px 0 2px}
+  .gate-or.on{display:block}
+  /* offer to turn it on, shown once after a manual unlock */
+  .biobar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:120;
+    background:var(--ink);color:var(--cream);border:1px solid rgba(200,162,75,.35);border-radius:14px;
+    padding:14px 16px;box-shadow:0 18px 40px -12px rgba(0,0,0,.6);display:none;align-items:center;gap:12px}
+  .biobar.on{display:flex;animation:biorise .32s cubic-bezier(.2,.9,.3,1)}
+  @keyframes biorise{from{transform:translateY(120%);opacity:0}to{transform:none;opacity:1}}
+  .biobar .bb-t{flex:1;min-width:0;font-size:13px;line-height:1.45}
+  .biobar .bb-t b{display:block;font-size:13.5px;margin-bottom:2px}
+  .biobar button{appearance:none;font:inherit;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
+    border-radius:8px;padding:9px 12px;cursor:pointer;border:none;white-space:nowrap}
+  .biobar .bb-yes{background:var(--gold);color:var(--ink)}
+  .biobar .bb-no{background:transparent;color:#8A8F95;border:1px solid rgba(255,255,255,.15)}
+  @media(min-width:821px){.biobar{left:auto;right:20px;bottom:20px;max-width:420px}}
+
+  /* ==================================================================
+     PHONE LAYOUT FIXES
+     ================================================================== */
+  @media(max-width:820px){
+    /* iOS zooms the page when you focus an input under 16px */
+    input, select, textarea{font-size:16px}
+    .gate-box input{font-size:16px}
+    /* comfortable touch targets */
+    .np-nav button{padding:13px 14px}
+    .agenda-tab{padding:14px 0 12px}
+    .todo-inline{padding:14px 2px}
+    .lock-btn, .date-select{padding-top:9px;padding-bottom:9px}
+    main{padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right))}
+    .hero-in{padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right))}
+  }
+  @media(max-width:640px){
+    .np-body{padding:18px 16px}
+    .np-masthead{padding:16px 14px 12px}
+    .np-mkt .ms-head{gap:4px}
+    .ms-grid{grid-template-columns:repeat(2,1fr)}
+    .games-wrap, .cf-wrap, .bx-wrap, .cb-wrap, .qwrap{max-width:100%}
+    /* wide data tables get their own horizontal scroller rather than breaking the page */
+    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  }
+
+  /* Case File on a phone: keep cells finger-sized and let the grid scroll sideways */
+  @media(max-width:820px){
+    .cf-cols{grid-template-columns:1fr}
+    .cf-gridwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+      margin:0 -18px;padding:0 18px 6px;scroll-snap-type:x proximity}
+    table.cf-grid{margin:0}
+    .cf-cell{width:32px;height:32px;font-size:15px;line-height:30px}
+    table.cf-grid th.cf-vh{height:100px;width:32px}
+    table.cf-grid th.cf-rh{max-width:none;font-size:11px;padding-right:9px}
+    .cf-scrollnote{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .cf-tool{padding:11px 13px}
+    .cf-arow select{font-size:16px}
+  }
+  @media(min-width:821px){.cf-scrollnote{display:none}}
+
+  /* Black Box on a phone */
+  @media(max-width:640px){
+    .bx-top{grid-template-columns:1fr}
+    .bx-board{max-width:min(94vw, 400px)}
+    .bx-boardwrap{padding:9px}
+    .bx-c{border-radius:4px}
+  }
+
+  /* the two-week calendar and portfolio tables */
+  @media(max-width:560px){
+    .cal-cell{min-height:44px;font-size:12.5px}
+    .pz-links{grid-template-columns:1fr}
+    .pz-boxes{grid-template-columns:repeat(2,1fr)}
+    .grid.cols-5, .grid.cols-4{grid-template-columns:repeat(2,1fr)}
+  }
 </style>
 </head>
 <body>
@@ -704,11 +842,22 @@
     <div class="gw">Daily Hub</div>
     <div class="gate-rule"></div>
     <p>This site is private. Everything on it is stored as AES-256 ciphertext and decrypted in your browser — your passphrase is never sent anywhere.</p>
+    <button class="gate-bio" id="gateBio">
+      <svg viewBox="0 0 24 24"><path d="M12 11v2.5a3 3 0 0 1-3 3"/><path d="M8.5 8.6a5 5 0 0 1 7 4.4v1.5"/><path d="M5.5 10a7 7 0 0 1 12.2-4.2"/><path d="M15.5 17.5a7 7 0 0 1-9.5-6.5"/><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+      Unlock with Face ID
+    </button>
+    <div class="gate-or" id="gateOr">or use your passphrase</div>
     <input type="password" id="gatePass" placeholder="Passphrase" autocomplete="current-password">
     <button class="go" id="gateGo">Unlock</button>
     <label class="gate-remember"><input type="checkbox" id="gateRemember"> Remember me on this device</label>
     <div class="gate-err" id="gateErr">That passphrase didn't work.</div>
   </div>
+</div>
+
+<div class="biobar" id="bioBar">
+  <div class="bb-t"><b>Skip the passphrase?</b>Unlock the Hub with Face ID on this device.</div>
+  <button class="bb-no" id="bioNo">Not now</button>
+  <button class="bb-yes" id="bioYes">Enable</button>
 </div>
 
 <nav class="topbar">
@@ -720,10 +869,27 @@
       <button class="tab" data-tab="quiz" role="tab">Games</button>
     </div>
     <div class="top-right">
+      <span class="netpill" id="netPill"><i></i>Offline</span>
       <select class="date-select" id="dateSelect" aria-label="Choose date"></select>
       <button class="lock-btn" id="siteLock" title="Lock the site">Lock</button>
     </div>
   </div>
+</nav>
+
+<!-- phone navigation: fixed bottom bar, mirrors the desktop tabs -->
+<nav class="tabbar" id="tabBar" role="tablist">
+  <button data-tab="calendar" role="tab" aria-label="Today">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+    Today<span class="tb-dot"></span>
+  </button>
+  <button data-tab="news" role="tab" aria-label="News">
+    <svg viewBox="0 0 24 24"><path d="M4 5h13a1 1 0 0 1 1 1v12a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><path d="M18 8h2a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 12.5h7M7 16h4"/></svg>
+    News<span class="tb-dot"></span>
+  </button>
+  <button data-tab="quiz" role="tab" aria-label="Games">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h8M17 3v8M3 17h8M7 13v8"/></svg>
+    Games<span class="tb-dot"></span>
+  </button>
 </nav>
 
 <header class="hero">
@@ -786,7 +952,7 @@ async function boot(){
     let savedTab = localStorage.getItem("dh-tab");
     if(savedTab === "market" || savedTab === "portfolio") savedTab = null;   // no longer top-level tabs
     if(savedTab && ["news","calendar","quiz"].includes(savedTab)) S.tab = savedTab;
-    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab===S.tab));
+    markTab(S.tab);
     document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
     fillDates(); await show();
   }catch(e){
@@ -841,13 +1007,24 @@ async function animatedTabSwitch(mutate){
   });
 }
 
-document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => animatedTabSwitch(async () => {
-  S.tab = b.dataset.tab; localStorage.setItem("dh-tab", S.tab);
-  if(S.tab === "quiz") gamesView = "launcher";
-  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===b));
-  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
-  fillDates(); await show();
-})));
+/* one source of truth for the active tab — the desktop tabs and the phone's bottom
+   bar are two views of the same state, and the portfolio view belongs to neither */
+function markTab(name){
+  document.querySelectorAll(".tab, .tabbar button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+}
+function switchTab(name, opts){
+  const top = (opts && opts.top) !== false;
+  animatedTabSwitch(async () => {
+    S.tab = name; localStorage.setItem("dh-tab", name);
+    if(name === "quiz") gamesView = "launcher";
+    markTab(name);
+    document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + name));
+    fillDates(); await show();
+    if(top) window.scrollTo({top:0, behavior:"smooth"});
+  });
+}
+document.querySelectorAll(".tab, .tabbar button").forEach(b =>
+  b.addEventListener("click", () => switchTab(b.dataset.tab)));
 $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.target.value; await show(); });
 
 /* Portfolio is no longer a top-level tab — it's reached from the Today snapshot card.
@@ -855,7 +1032,7 @@ $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.targe
 function goPortfolio(){
   animatedTabSwitch(async () => {
     S.tab = "portfolio";
-    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    markTab(null);   // portfolio isn't one of the three tabs
     document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-portfolio"));
     fillDates(); await show();
     window.scrollTo({top:0, behavior:"smooth"});
@@ -1140,13 +1317,10 @@ function newsFig(item, hostSel){
 async function runFig(){
   const job = figJob; figJob = null;
   if(!job) return;
-  /* Only ever show a photo when the briefing task explicitly named the subject
-     (img or imgQuery). The old auto-guessed fallback -- matching whatever proper
-     noun the lead sentence happened to contain -- produced irrelevant photos often
-     enough that it has been removed entirely. No explicit subject, no photo. */
   let url = job.item.img || null;                                   // task-supplied URL wins
   if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);
-  if(!url) return;                                                  // no explicit subject, no photo, no gap
+  if(!url) url = await wikiImage(newsEntity(job.item));             // strict fallback
+  if(!url) return;                                                  // no photo, no gap
   const fig = document.getElementById(job.id); if(!fig) return;
   const img = new Image();
   img.alt = ""; img.referrerPolicy = "no-referrer";
@@ -1284,32 +1458,19 @@ function showNewsView(view){
   let h = `<button class="np-back" id="npBack">← Back to Front Page</button>
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
   if(items.length){
-    const leadHasDetail = !!leadIt.detail;
     h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
       ${newsFig(leadIt, ".np-lead-story")}
-      <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div>
-      ${leadHasDetail ? `<div class="np-detail" style="display:none">${esc(leadIt.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;
+      <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div></div>`;
   }
   if(items.length > 1){
     h += `<div class="np-secflow">`;
     items.slice(1).forEach(it => {
-      const hasDetail = !!it.detail;
-      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div>
-        ${hasDetail ? `<div class="np-detail" style="display:none">${esc(it.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;
+      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
     });
     h += `</div>`;
   }
   body.innerHTML = h;
   runFig();
-  /* click a headline's "Read more" to expand the longer in-house summary in place — no external links,
-     since these stories are AI-synthesized from research rather than a specific outlet's own article */
-  body.querySelectorAll(".np-more").forEach(el => el.addEventListener("click", () => {
-    const det = el.previousElementSibling;
-    if(!det || !det.classList.contains("np-detail")) return;
-    const isOpen = det.style.display !== "none";
-    det.style.display = isOpen ? "none" : "block";
-    el.textContent = isOpen ? "Read more +" : "Show less −";
-  }));
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
 }
 /* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
@@ -1726,25 +1887,11 @@ function wireMarketsStrip(){
     .catch(() => { const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">The latest market brief couldn't be loaded.</div>`; });
 }
 
-/* a date is "within N days" of a base date (both YYYY-MM-DD) — used to split the
-   14-day radar list into a 7-day "Next 7 Days" column vs the full two-week mini-cal */
-function withinDays(dateStr, fromDateStr, days){
-  if(!dateStr || !fromDateStr) return true; // no parseable date — keep it rather than hide it
-  const diff = Math.round((new Date(dateStr+"T00:00:00") - new Date(fromDateStr+"T00:00:00")) / 86400000);
-  return diff >= 0 && diff <= days;
-}
-
 function renderCalendarBody(p, d){
   let h = "";
   const todayList = d.today || [];
-  const radarList = d.radar || [];              // up to 14 days out
-  const radarWeek = radarList.filter(item => {
-    const lead = typeof item === "string" ? item : item.lead;
-    const ev = parseEventLead(lead, "", null);
-    return withinDays(ev.dateStr, d.date, 7);
-  });
+  const radarList = d.radar || [];
   const urgentList = d.urgent || [];
-  const chillList = d.chill || [];
   const doneCount = urgentList.filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
 
   const events = (arr, fallbackDate, opts) => {
@@ -1757,10 +1904,11 @@ function renderCalendarBody(p, d){
     return x + `</div>`;
   };
 
-  /* ---- portfolio snapshot (full-width, at the very top) ---- */
+  /* ---- portfolio snapshot (full-width; at the top now, swapped above to-dos) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
-  /* ---- Urgent To-Dos (list + side ring) ---- */
+
+  /* ---- to-do card (list + side ring) ---- */
   h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
       <div class="tc-list">
         <div class="tc-head"><span class="h">Urgent To-Dos</span></div>
@@ -1768,7 +1916,7 @@ function renderCalendarBody(p, d){
   if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing urgent flagged today.</p>`;
   else urgentList.forEach((t,i) => {
     const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
-    h += `<div class="todo-inline${done?" done":""}" data-kind="todo" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
+    h += `<div class="todo-inline${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
   });
   h += `</div></div>
       <div class="tc-ring">
@@ -1777,34 +1925,8 @@ function renderCalendarBody(p, d){
       </div>
   </div>`;
 
-  /* ---- Chill To-Dos (lower-priority list, no ring) ---- */
-  h += `<div class="bento-card todo-card chill-card">
-      <div class="tc-list" style="flex:1">
-        <div class="tc-head"><span class="h">Chill To-Dos</span></div>
-        <div id="chillInlineWrap">`;
-  if(!chillList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing on the chill list right now.</p>`;
-  else chillList.forEach((t,i) => {
-    const done = localStorage.getItem(`dh-chill-${d.date}-${i}`) === "1";
-    h += `<div class="todo-inline${done?" done":""}" data-kind="chill" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
-  });
-  h += `</div></div>
-  </div>`;
-
-  /* ---- Today / Next 7 Days / Two-Week View, side by side ---- */
-  h += `<div class="today-triple">
-    <div class="agenda-card">
-      <div class="ag-head">Today</div>
-      <div class="agenda-panel">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
-    </div>
-    <div class="agenda-card">
-      <div class="ag-head">Next 7 Days</div>
-      <div class="agenda-panel">${radarWeek.length ? events(radarWeek, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
-    </div>
-    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
-  </div>`;
-
-  /* ---- weather hero (live; filled in async), now at the bottom. Two stacked sky layers crossfade instead of snapping ---- */
-  h += `<div class="wx-hero" id="wxHero" style="margin-top:14px">
+  /* ---- weather hero (live; filled in async). Two stacked sky layers crossfade instead of snapping ---- */
+  h += `<div class="wx-hero" id="wxHero">
     <div class="wx-sky" id="wxSky"></div>
     <div class="wx-sky wx-sky-ov" id="wxSkyOv"></div>
     <div class="wx-content">
@@ -1817,6 +1939,19 @@ function renderCalendarBody(p, d){
       <div class="wx-chart-lbl">Hourly · hover to scrub the day</div>
       <div id="wxSparkWrap" class="wx-chart"><div style="font-size:12.5px;padding:14px 0;opacity:.7">Fetching hourly forecast…</div></div>
     </div>
+  </div>`;
+
+  /* ---- bottom: Today / Next 7 days agenda (left) side-by-side with the two-week calendar (right) ---- */
+  h += `<div class="today-bottom">
+    <div class="agenda-card">
+      <div class="agenda-tabs">
+        <button class="agenda-tab active" data-atab="today">Today</button>
+        <button class="agenda-tab" data-atab="radar">Next 7 days</button>
+      </div>
+      <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+      <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
+    </div>
+    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
   </div>`;
 
   /* The Close now lives on the Games tab — see renderGamesLauncher(). */
@@ -1834,20 +1969,21 @@ function renderCalendarBody(p, d){
     }));
   }
 
-  /* to-do checkboxes: urgent items update the side ring live (mutate the existing arc so it animates,
-     no innerHTML swap); chill items just persist their own checked state, no ring involved */
+  /* to-do checkboxes update the side ring live — mutate the existing arc so it animates (no innerHTML swap) */
   p.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", () => {
     el.classList.toggle("done");
-    const kind = el.dataset.kind === "chill" ? "chill" : "todo";
-    localStorage.setItem(`dh-${kind}-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
-    if(kind === "todo"){
-      const total = urgentList.length;
-      const nowDone = p.querySelectorAll('.todo-inline[data-kind="todo"].done').length;
-      const arc = p.querySelector("#todoRingWrap .ring-arc");
-      if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
-      const txt = p.querySelector("#todoRingTxt");
-      if(txt) txt.textContent = `${nowDone} / ${total} done`;
-    }
+    localStorage.setItem(`dh-todo-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
+    const total = urgentList.length;
+    const nowDone = p.querySelectorAll(".todo-inline.done").length;
+    const arc = p.querySelector("#todoRingWrap .ring-arc");
+    if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
+    const txt = p.querySelector("#todoRingTxt");
+    if(txt) txt.textContent = `${nowDone} / ${total} done`;
+  }));
+
+  p.querySelectorAll(".agenda-tab").forEach(btn => btn.addEventListener("click", () => {
+    p.querySelectorAll(".agenda-tab").forEach(b => b.classList.toggle("active", b === btn));
+    p.querySelectorAll(".agenda-panel").forEach(pan => { pan.style.display = pan.dataset.apanel === btn.dataset.atab ? "block" : "none"; });
   }));
 
   const calCard = p.querySelector(".cal-card");
@@ -2129,7 +2265,7 @@ function renderPortfolio(){
   const backBtn = $("#pBackToday");
   if(backBtn) backBtn.addEventListener("click", () => animatedTabSwitch(async () => {
     S.tab = "calendar"; localStorage.setItem("dh-tab","calendar");
-    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab==="calendar"));
+    markTab("calendar");
     document.querySelectorAll(".panel").forEach(pn => pn.classList.toggle("active", pn.id==="panel-calendar"));
     fillDates(); await show(); window.scrollTo({top:0,behavior:"smooth"});
   }));
@@ -2602,18 +2738,15 @@ function renderGamesLauncher(){
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
     { name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
-    { name:"Strands", tag:"Word search with a twist", url:"https://www.nytimes.com/games/strands", domain:"nytimes.com" },
+    { name:"Mini Crossword", tag:"A quick crossword", url:"https://www.nytimes.com/crosswords/game/mini", domain:"nytimes.com" },
     { name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
-    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" },
-    { name:"Queens", tag:"One queen per row, column & region", url:"https://www.linkedin.com/games/queens", domain:"linkedin.com" }
+    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" }
   ];
   const geo = [
     { name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
     { name:"Tradle", tag:"Country by exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
     { name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
-    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" },
-    { name:"Flagle", tag:"Country by flag", url:"https://www.flagle.io/", domain:"flagle.io" },
-    { name:"TimeGuessr", tag:"Guess the photo's time & place", url:"https://timeguessr.com/", domain:"timeguessr.com" }
+    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
   ];
   const linkBtn = g => `<a class="pz-link${played.has(g.name)?" played":""}" href="${g.url}" target="_blank" rel="noopener noreferrer" data-game="${esc(g.name)}">
       <img src="${favicon(g.domain)}" alt="" loading="lazy">
@@ -2967,6 +3100,7 @@ function renderCaseFile(fresh){
         </div>
         <div class="cf-panel">
           <div class="cf-ph">Deduction Grid</div>
+          <div class="cf-scrollnote">Swipe the grid sideways →</div>
           <div class="cf-gridwrap">${gridHTML()}</div>
           <div class="cf-legend">Click a square to cycle <b>blank → ✗ → ✓</b>. A ✓ means "these two go together"; ✗ rules it out.</div>
           <div class="cf-tools">
@@ -3164,24 +3298,13 @@ function renderBlackBox(){
           </div>
         </div>
         <div class="bx-side">
-          <div class="cf-ph">The objective</div>
+          <div class="cf-ph">How it reads</div>
           <div class="bx-key">
-            4 atoms are hidden somewhere in the 8×8 grid — you can't see them. Your job is to figure out which squares they're on by firing beams in from the edge and reading how each one behaves, using as few beams as possible.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">How to fire a beam</div>
-          <div class="bx-key">
-            Click any square on the rim (the border around the grid) to fire a beam straight in from that edge. Every beam does exactly one of three things:<br><br>
-            <b>H (Hit)</b> — the beam ran straight into an atom and stopped for good. That atom is directly in the beam's path.<br><br>
-            <b>R (Reflect)</b> — the beam bounced straight back out of the same square it entered, without ever crossing the grid.<br><br>
-            <b>Matching numbers</b> (e.g. two squares both marked "3") — the beam bent its way through the grid and exited somewhere else on the rim. The entry and exit squares share the same number so you can pair them up.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">Why beams bend</div>
-          <div class="bx-key">
-            Atoms don't just block beams head-on — they deflect anything that passes diagonally next to them. If one atom sits diagonally ahead of a beam, the beam turns 90°. If two atoms flank the beam on both diagonals at once, it reverses straight back out (a Reflect). This is what makes a beam "bend" on its way through instead of going in a straight line — use the pattern of hits, reflects, and exit pairs across several beams to triangulate where the 4 atoms must be.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">Placing your guess & scoring</div>
-          <div class="bx-key">
-            Once you think you know where the atoms are, click 4 squares inside the grid to mark your guesses (click again to remove one). When all 4 are placed, "Reveal &amp; score" lights up. Your score is beams fired (1 point for a Hit or Reflect, 2 points for an exit pair) plus a 5-point penalty for every atom you guessed wrong. <b>Lower is better</b> — your best perfect-clear score is saved above.
+            Click any <i>rim square</i> to fire a beam into the box.<br><br>
+            <i>H</i> — the beam hit an atom head-on and never came out.<br>
+            <i>R</i> — it bounced straight back out where it went in.<br>
+            <i>1&nbsp;2&nbsp;3…</i> — matching numbers mark where a beam went in and came out.<br><br>
+            An atom sitting diagonally in front of a beam knocks it 90°; two of them send it back. Click inside the grid to place your four atoms.
           </div>
           <div class="cf-ph" style="margin-top:16px">Beam log</div>
           <div class="bx-log">${logHTML}</div>
@@ -3386,6 +3509,148 @@ function finishRound(words){
   $("#qHome").addEventListener("click", () => quizHome(words));
 }
 
+/* ================= installed-app layer =================
+   Service worker (offline), standalone chrome, network state, and Face ID unlock.
+   None of this changes the security model: every byte under data/ stays AES-GCM
+   ciphertext at rest, on the network, and in the offline cache. */
+
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+/* --- standalone / installed detection --- */
+const isStandalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+if(isStandalone()) document.body.classList.add("standalone");
+
+/* --- service worker --- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      // pull fresh editions down for offline whenever we come back to the app
+      document.addEventListener("visibilitychange", () => {
+        if(document.visibilityState === "visible"){
+          reg.update().catch(()=>{});
+          if(navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("precache");
+        }
+      });
+    }).catch(()=>{});
+  });
+}
+
+/* --- offline pill --- */
+function paintNet(){
+  const p = $("#netPill"); if(!p) return;
+  p.classList.toggle("on", !navigator.onLine);
+}
+window.addEventListener("online", paintNet);
+window.addEventListener("offline", paintNet);
+paintNet();
+
+/* ================= Face ID / passkey unlock =================
+   Preferred path: a platform passkey with the WebAuthn PRF extension. The authenticator
+   returns a secret that never leaves the device and only after Face ID succeeds; we use
+   it as an AES-256 key and store the passphrase encrypted under it. The passphrase is
+   never on disk in the clear.
+   Fallback (older iOS without PRF): the passphrase is stored the same way "Remember me"
+   stores it, and the passkey acts as a biometric gate in front of it. */
+const PK_STORE = "dh-passkey";
+const pkRead = () => { try{ return JSON.parse(localStorage.getItem(PK_STORE)||"null"); }catch(e){ return null; } };
+
+async function pkSupported(){
+  try{
+    return !!(window.PublicKeyCredential &&
+      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  }catch(e){ return false; }
+}
+const PRF_SALT_INFO = new TextEncoder().encode("daily-hub-passphrase-v1");
+
+async function pkAssert(rawId, salt){
+  const pub = {
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    rpId: location.hostname,
+    userVerification: "required",
+    timeout: 60000
+  };
+  if(rawId) pub.allowCredentials = [{ type:"public-key", id: rawId }];
+  if(salt) pub.extensions = { prf: { eval: { first: salt } } };
+  const a = await navigator.credentials.get({ publicKey: pub });
+  if(!a) return null;
+  const ext = a.getClientExtensionResults ? a.getClientExtensionResults() : {};
+  const prf = ext && ext.prf && ext.prf.results && ext.prf.results.first;
+  return { cred: a, prf: prf ? new Uint8Array(prf) : null };
+}
+async function aesFromPrf(bytes){
+  return crypto.subtle.importKey("raw", bytes, {name:"AES-GCM"}, false, ["encrypt","decrypt"]);
+}
+
+async function pkEnable(pass){
+  const uid = crypto.getRandomValues(new Uint8Array(16));
+  const cred = await navigator.credentials.create({ publicKey: {
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    rp: { name: "Daily Hub", id: location.hostname },
+    user: { id: uid, name: "eli@dailyhub", displayName: "Daily Hub" },
+    pubKeyCredParams: [{type:"public-key", alg:-7}, {type:"public-key", alg:-257}],
+    authenticatorSelection: { authenticatorAttachment:"platform", residentKey:"preferred", userVerification:"required" },
+    extensions: { prf: {} },
+    attestation: "none", timeout: 60000
+  }});
+  if(!cred) throw new Error("no credential");
+  const rawId = new Uint8Array(cred.rawId);
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+
+  /* PRF output is only handed back on an assertion, so do one straight away */
+  let rec = { id: b64e(rawId), salt: b64e(salt), mode: "gate" };
+  try{
+    const got = await pkAssert(rawId, salt);
+    if(got && got.prf){
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const k = await aesFromPrf(got.prf);
+      const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, new TextEncoder().encode(pass));
+      rec = { id: b64e(rawId), salt: b64e(salt), mode: "prf", iv: b64e(iv), ct: b64e(ct) };
+    }
+  }catch(e){ /* fall through to gate mode */ }
+
+  if(rec.mode === "gate") localStorage.setItem("dh-pass", pass);   // same exposure as "Remember me"
+  localStorage.setItem(PK_STORE, JSON.stringify(rec));
+  return rec.mode;
+}
+
+async function pkUnlock(){
+  const rec = pkRead(); if(!rec) return null;
+  const got = await pkAssert(b64d(rec.id), rec.mode === "prf" ? b64d(rec.salt) : null);
+  if(!got) return null;
+  if(rec.mode === "prf"){
+    if(!got.prf) throw new Error("prf unavailable");
+    const k = await aesFromPrf(got.prf);
+    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64d(rec.iv)}, k, b64d(rec.ct));
+    return new TextDecoder().decode(pt);
+  }
+  return localStorage.getItem("dh-pass");    // gate mode: biometrics guarded the read
+}
+
+/* offer it once, after the first successful manual unlock on a capable device */
+async function maybeOfferBio(pass){
+  if(pkRead() || localStorage.getItem("dh-bio-declined") === "1") return;
+  if(!(await pkSupported())) return;
+  const bar = $("#bioBar"); if(!bar) return;
+  setTimeout(() => bar.classList.add("on"), 1200);
+  $("#bioNo").onclick = () => { localStorage.setItem("dh-bio-declined","1"); bar.classList.remove("on"); };
+  $("#bioYes").onclick = async () => {
+    $("#bioYes").textContent = "…";
+    try{
+      await pkEnable(pass);
+      bar.querySelector(".bb-t").innerHTML = "<b>Face ID is on.</b>Next time, just look at your phone.";
+      $("#bioYes").textContent = "Done";
+      $("#bioYes").onclick = () => bar.classList.remove("on");
+      setTimeout(() => bar.classList.remove("on"), 3000);
+    }catch(e){
+      bar.querySelector(".bb-t").innerHTML = "<b>Couldn't set that up.</b>You can try again next time you unlock.";
+      $("#bioYes").textContent = "OK";
+      $("#bioYes").onclick = () => bar.classList.remove("on");
+    }
+  };
+}
+
 /* ================= site gate ================= */
 async function tryUnlock(pass){
   if(!S.holdEnc){
@@ -3397,12 +3662,40 @@ async function tryUnlock(pass){
   HOLDINGS = h; PASS = pass;
 }
 
+function gateOpen(){ $("#gate").style.display = "none"; boot(); }
+
 async function gateInit(){
-  const saved = sessionStorage.getItem("dh-pass") || localStorage.getItem("dh-pass");
+  const rec = pkRead();
+
+  /* a live session, or "Remember me" with no passkey guarding it */
+  const saved = sessionStorage.getItem("dh-pass") || (rec ? null : localStorage.getItem("dh-pass"));
   if(saved){
-    try{ await tryUnlock(saved); $("#gate").style.display = "none"; boot(); return; }
+    try{ await tryUnlock(saved); gateOpen(); return; }
     catch(e){ sessionStorage.removeItem("dh-pass"); localStorage.removeItem("dh-pass"); }
   }
+
+  /* Face ID path */
+  if(rec){
+    $("#gateBio").classList.add("on");
+    $("#gateOr").classList.add("on");
+    const bio = async () => {
+      $("#gateErr").style.display = "none";
+      try{
+        const pass = await pkUnlock();
+        if(!pass) return;
+        await tryUnlock(pass);
+        sessionStorage.setItem("dh-pass", pass);
+        gateOpen();
+      }catch(e){
+        if(e && (e.name === "NotAllowedError" || e.name === "AbortError")) return;  // user cancelled
+        $("#gateErr").textContent = "Face ID unlock failed — use your passphrase.";
+        $("#gateErr").style.display = "block";
+      }
+    };
+    $("#gateBio").addEventListener("click", bio);
+    if(isStandalone()) setTimeout(bio, 350);            // in the installed app, just ask straight away
+  }
+
   const go = async () => {
     const v = $("#gatePass").value; if(!v) return;
     $("#gateErr").style.display = "none";
@@ -3410,16 +3703,17 @@ async function gateInit(){
       await tryUnlock(v);
       sessionStorage.setItem("dh-pass", v);
       if($("#gateRemember").checked) localStorage.setItem("dh-pass", v);
-      $("#gate").style.display = "none";
-      boot();
-    }catch(e){ $("#gateErr").style.display = "block"; }
+      gateOpen();
+      maybeOfferBio(v);
+    }catch(e){ $("#gateErr").textContent = "That passphrase didn't work."; $("#gateErr").style.display = "block"; }
   };
   $("#gateGo").addEventListener("click", go);
   $("#gatePass").addEventListener("keydown", e => { if(e.key === "Enter") go(); });
-  $("#gatePass").focus();
+  if(!rec && !isStandalone()) $("#gatePass").focus();   // don't pop the keyboard over Face ID
 }
 $("#siteLock").addEventListener("click", () => {
   sessionStorage.removeItem("dh-pass"); localStorage.removeItem("dh-pass");
+  localStorage.removeItem("dh-passkey"); localStorage.removeItem("dh-bio-declined");
   location.reload();
 });
 

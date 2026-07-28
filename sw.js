@@ -2,7 +2,7 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-07-28c";
+const VERSION = "dh-2026-07-28d";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v1";        // survives shell upgrades — editions don't change
 const IMG_CACHE   = "img-v1";
@@ -34,15 +34,18 @@ async function precacheLatest(){
   try{
     const r = await fetch("data/manifest.json?sw=" + Date.now());
     if(!r.ok) return;
-    const m = await r.json();
     const c = await caches.open(DATA_CACHE);
-    await c.put(key("data/manifest.json"), r.clone());
+    await c.put(key("data/manifest.json"), r.clone());   // clone BEFORE reading the body
+    const m = await r.json();
     const urls = ["data/holdings.json.enc", "data/words.json.enc"];
-    ["news","market","calendar"].forEach(k => (m[k]||[]).slice(0,4).forEach(d => urls.push(`data/${k}/${d}.json.enc`)));
+    ["news","market","calendar"].forEach(k =>
+      (m[k]||[]).slice(0,5).forEach(d => urls.push(`data/${k}/${d}.json.enc`)));
     await Promise.allSettled(urls.map(async u => {
-      if(await c.match(key(u))) return;
-      const res = await fetch(u);
-      if(res.ok) await c.put(key(u), res.clone());
+      try{
+        if(await c.match(key(u))) return;
+        const res = await fetch(u);
+        if(res.ok) await c.put(key(u), res.clone());
+      }catch(e){}
     }));
   }catch(e){}
 }

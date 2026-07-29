@@ -3848,7 +3848,7 @@ gateInit();
   // GitHub token shipped in page JS) would be a real security hole, so this is the
   // deliberate design — see MEMORY.md "Known Issues" if revisiting this.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
   import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
   const FIREBASE_CONFIG = {
@@ -3877,17 +3877,24 @@ gateInit();
     const db = getFirestore(app);
     const todoDocRef = doc(db, "todos", "main");
 
+    // Attach the Firestore listener only once we actually have an authenticated
+    // user — subscribing before sign-in resolves races against our own security
+    // rules (request.auth != null) and onSnapshot does not auto-retry after a
+    // permission-denied error, so getting this order right matters.
+    let unsubscribeTodos = null;
+    onAuthStateChanged(auth, user => {
+      if(!user || unsubscribeTodos) return;
+      unsubscribeTodos = onSnapshot(todoDocRef, snap => {
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        todosState = {
+          urgent: Array.isArray(data.urgent) ? data.urgent : [],
+          chill: Array.isArray(data.chill) ? data.chill : []
+        };
+        todosReady = true;
+        notify();
+      }, err => { console.error("Daily Hub: to-do sync listener failed", err); });
+    });
     signInAnonymously(auth).catch(err => console.error("Daily Hub: anonymous sign-in failed", err));
-
-    onSnapshot(todoDocRef, snap => {
-      const data = snap.exists() ? (snap.data() || {}) : {};
-      todosState = {
-        urgent: Array.isArray(data.urgent) ? data.urgent : [],
-        chill: Array.isArray(data.chill) ? data.chill : []
-      };
-      todosReady = true;
-      notify();
-    }, err => { console.error("Daily Hub: to-do sync listener failed", err); });
 
     window.__todosApi = {
       isReady: () => todosReady,

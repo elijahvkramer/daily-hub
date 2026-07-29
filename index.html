@@ -342,6 +342,15 @@
   .todo-inline .box{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:900;color:transparent;transition:all .15s}
   .todo-inline.done .box{background:var(--gold);color:var(--ink)}
   .todo-inline.done span.txt{text-decoration:line-through;color:var(--muted)}
+  .todo-inline .txt{flex:1}
+  .todo-del{flex-shrink:0;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--muted);font-size:12px;opacity:0;transition:opacity .15s,background .15s,color .15s}
+  .todo-inline:hover .todo-del{opacity:1}
+  .todo-del:hover{background:var(--paper);color:#B23B3B}
+  .todo-add{display:flex;gap:8px;padding:10px 2px 2px}
+  .todo-add input{flex:1;min-width:0;border:1px solid var(--hairline);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink)}
+  .todo-add input:focus{outline:none;border-color:var(--gold)}
+  .todo-add button{flex-shrink:0;width:34px;border:none;border-radius:8px;background:var(--gold);color:var(--ink);font-size:18px;font-weight:900;cursor:pointer;transition:filter .15s}
+  .todo-add button:hover{filter:brightness(1.08)}
 
   /* portfolio snapshot — now the full-width top hero of the Today tab */
   .psnap{cursor:pointer;position:relative}
@@ -1928,6 +1937,76 @@ function withinDays(dateStr, fromDateStr, days){
   return diff >= 0 && diff <= days;
 }
 
+function renderTodoCard(kind, items){
+  const title = kind === "chill" ? "Chill To-Dos" : "Urgent To-Dos";
+  const list = items || [];
+  const doneCount = list.filter(t => t.done).length;
+  const total = list.length;
+  const ready = !!(window.__todosApi && window.__todosApi.isReady());
+  let rows = "";
+  if(!ready) rows = `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Loading…</p>`;
+  else if(!total) rows = `<p style="color:var(--muted);font-size:14px;padding:6px 2px">${kind==="chill" ? "Nothing on the chill list right now." : "Nothing urgent flagged today."}</p>`;
+  else list.forEach(t => {
+    rows += `<div class="todo-inline${t.done?" done":""}" data-kind="${kind}" data-id="${esc(t.id)}"><span class="box">✓</span><span class="txt">${esc(t.text)}</span><span class="todo-del" data-kind="${kind}" data-id="${esc(t.id)}" title="Remove">✕</span></div>`;
+  });
+  rows += `<form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
+  return `<div class="bento-card todo-card${kind==="chill"?" chill-card":""}" id="${kind}Card"${kind==="chill"?"":' style="margin-top:14px"'}>
+      <div class="tc-list">
+        <div class="tc-head"><span class="h">${title}</span></div>
+        <div id="${kind}InlineWrap">${rows}</div>
+      </div>
+      <div class="tc-ring">
+        <div id="${kind}RingWrap">${ringSvg(doneCount, total, 74)}</div>
+        <div class="bc-ring-txt" id="${kind}RingTxt">${doneCount} / ${total} done</div>
+      </div>
+  </div>`;
+}
+
+function wireTodoCard(root, kind){
+  const card = root.querySelector(`#${kind}Card`);
+  if(!card) return;
+  card.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", (e) => {
+    if(e.target.closest(".todo-del")) return;
+    if(window.__todosApi) window.__todosApi.toggle(kind, el.dataset.id);
+  }));
+  card.querySelectorAll(".todo-del").forEach(el => el.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if(window.__todosApi) window.__todosApi.remove(kind, el.dataset.id);
+  }));
+  const form = card.querySelector(".todo-add");
+  if(form) form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = form.querySelector("input");
+    const val = (input.value || "").trim();
+    if(!val) return;
+    if(window.__todosApi) window.__todosApi.add(kind, val);
+    input.value = "";
+    input.focus();
+  });
+}
+
+function animateTodoRing(root, kind){
+  const arc = root.querySelector(`#${kind}RingWrap .ring-arc`);
+  if(!arc) return;
+  const c = parseFloat(arc.dataset.c);
+  const finalOffset = arc.getAttribute("stroke-dashoffset");
+  arc.setAttribute("stroke-dashoffset", c);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    arc.setAttribute("stroke-dashoffset", finalOffset);
+  }));
+}
+
+function refreshTodoCards(root, state){
+  state = state || (window.__todosApi ? window.__todosApi.getState() : { urgent: [], chill: [] });
+  ["urgent","chill"].forEach(kind => {
+    const slot = root.querySelector(`#${kind}CardSlot`);
+    if(!slot) return;
+    slot.innerHTML = renderTodoCard(kind, state[kind]);
+    wireTodoCard(root, kind);
+    animateTodoRing(root, kind);
+  });
+}
+
 function renderCalendarBody(p, d){
   let h = "";
   const todayList = d.today || [];
@@ -1937,9 +2016,6 @@ function renderCalendarBody(p, d){
     const ev = parseEventLead(lead, "", null);
     return withinDays(ev.dateStr, d.date, 7);
   });
-  const urgentList = d.urgent || [];
-  const chillList = d.chill || [];
-  const doneCount = urgentList.filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
 
   const events = (arr, fallbackDate, opts) => {
     if(!(arr||[]).length) return "";
@@ -1954,35 +2030,12 @@ function renderCalendarBody(p, d){
   /* ---- portfolio snapshot (full-width, at the very top) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
-  /* ---- Urgent To-Dos (list + side ring) ---- */
-  h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
-      <div class="tc-list">
-        <div class="tc-head"><span class="h">Urgent To-Dos</span></div>
-        <div id="todoInlineWrap">`;
-  if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing urgent flagged today.</p>`;
-  else urgentList.forEach((t,i) => {
-    const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
-    h += `<div class="todo-inline${done?" done":""}" data-kind="todo" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
-  });
-  h += `</div></div>
-      <div class="tc-ring">
-        <div id="todoRingWrap">${ringSvg(doneCount, urgentList.length, 74)}</div>
-        <div class="bc-ring-txt" id="todoRingTxt">${doneCount} / ${urgentList.length} done</div>
-      </div>
-  </div>`;
-
-  /* ---- Chill To-Dos (lower-priority list, no ring) ---- */
-  h += `<div class="bento-card todo-card chill-card">
-      <div class="tc-list" style="flex:1">
-        <div class="tc-head"><span class="h">Chill To-Dos</span></div>
-        <div id="chillInlineWrap">`;
-  if(!chillList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing on the chill list right now.</p>`;
-  else chillList.forEach((t,i) => {
-    const done = localStorage.getItem(`dh-chill-${d.date}-${i}`) === "1";
-    h += `<div class="todo-inline${done?" done":""}" data-kind="chill" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
-  });
-  h += `</div></div>
-  </div>`;
+  /* ---- Urgent To-Dos and Chill To-Dos now live entirely in Firestore (synced
+     across devices) instead of the daily-reset localStorage/JSON fields — see
+     the to-do sync module script near the end of <body>. Slots get filled in
+     by refreshTodoCards() below, and again on every live snapshot update. ---- */
+  h += `<div id="urgentCardSlot"></div>`;
+  h += `<div id="chillCardSlot"></div>`;
 
   /* ---- Today / Next 7 Days / Two-Week View, side by side ---- */
   h += `<div class="today-triple">
@@ -2017,32 +2070,10 @@ function renderCalendarBody(p, d){
 
   p.innerHTML = h;
 
-  /* animate the ring filling in on first paint (sweep from empty to the current fraction) */
-  const arc0 = p.querySelector("#todoRingWrap .ring-arc");
-  if(arc0){
-    const c = parseFloat(arc0.dataset.c);
-    arc0.setAttribute("stroke-dashoffset", c);   // start empty
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const frac = urgentList.length > 0 ? doneCount/urgentList.length : 0;
-      arc0.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2));
-    }));
-  }
-
-  /* to-do checkboxes: urgent items update the side ring live (mutate the existing arc so it animates,
-     no innerHTML swap); chill items just persist their own checked state, no ring involved */
-  p.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", () => {
-    el.classList.toggle("done");
-    const kind = el.dataset.kind === "chill" ? "chill" : "todo";
-    localStorage.setItem(`dh-${kind}-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
-    if(kind === "todo"){
-      const total = urgentList.length;
-      const nowDone = p.querySelectorAll('.todo-inline[data-kind="todo"].done').length;
-      const arc = p.querySelector("#todoRingWrap .ring-arc");
-      if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
-      const txt = p.querySelector("#todoRingTxt");
-      if(txt) txt.textContent = `${nowDone} / ${total} done`;
-    }
-  }));
+  /* first paint of the to-do cards, then keep them live: every Firestore snapshot
+     (from this device or any other) re-renders both cards in place */
+  refreshTodoCards(p);
+  window.__onTodosSnapshot = (state) => refreshTodoCards(p, state);
 
   const calCard = p.querySelector(".cal-card");
   if(calCard) wireMiniCal(calCard);
@@ -3808,6 +3839,80 @@ $("#siteLock").addEventListener("click", () => {
 });
 
 gateInit();
+</script>
+<script type="module">
+  // ---- Firebase-backed to-do sync (Urgent + Chill), live across devices ----
+  // Firestore doc todos/main = { urgent:[{id,text,done}], chill:[{id,text,done}] }.
+  // Security rules require an authenticated (anonymous) request; nothing here is
+  // sensitive enough to need more than that, and the alternative (a write-capable
+  // GitHub token shipped in page JS) would be a real security hole, so this is the
+  // deliberate design — see MEMORY.md "Known Issues" if revisiting this.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBbS7KO_-ji_I82nZZ0UuorW47Unf3BNOE",
+    authDomain: "daily-hub-todos.firebaseapp.com",
+    projectId: "daily-hub-todos",
+    storageBucket: "daily-hub-todos.firebasestorage.app",
+    messagingSenderId: "816153848388",
+    appId: "1:816153848388:web:23127952bba70d7205ea11"
+  };
+
+  let todosState = { urgent: [], chill: [] };
+  let todosReady = false;
+
+  function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function notify(){
+    if(typeof window.__onTodosSnapshot === "function"){
+      try{ window.__onTodosSnapshot(todosState); }catch(e){ console.error("Daily Hub: to-do render callback failed", e); }
+    }
+  }
+
+  try{
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const todoDocRef = doc(db, "todos", "main");
+
+    signInAnonymously(auth).catch(err => console.error("Daily Hub: anonymous sign-in failed", err));
+
+    onSnapshot(todoDocRef, snap => {
+      const data = snap.exists() ? (snap.data() || {}) : {};
+      todosState = {
+        urgent: Array.isArray(data.urgent) ? data.urgent : [],
+        chill: Array.isArray(data.chill) ? data.chill : []
+      };
+      todosReady = true;
+      notify();
+    }, err => { console.error("Daily Hub: to-do sync listener failed", err); });
+
+    window.__todosApi = {
+      isReady: () => todosReady,
+      getState: () => todosState,
+      add(kind, text){
+        text = (text || "").trim();
+        if(!text) return;
+        const key = kind === "chill" ? "chill" : "urgent";
+        const next = { ...todosState, [key]: [...todosState[key], { id: genId(), text, done: false }] };
+        setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to save to-do", err));
+      },
+      remove(kind, id){
+        const key = kind === "chill" ? "chill" : "urgent";
+        const next = { ...todosState, [key]: todosState[key].filter(t => t.id !== id) };
+        setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to remove to-do", err));
+      },
+      toggle(kind, id){
+        const key = kind === "chill" ? "chill" : "urgent";
+        const next = { ...todosState, [key]: todosState[key].map(t => t.id === id ? { ...t, done: !t.done } : t) };
+        setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to update to-do", err));
+      }
+    };
+  }catch(e){
+    console.error("Daily Hub: to-do sync failed to initialize", e);
+  }
 </script>
 </body>
 </html>

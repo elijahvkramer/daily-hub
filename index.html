@@ -187,6 +187,10 @@
   .np-col-story .cs-t{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.24;color:var(--ink)}
   .np-col-story .cs-b{font-size:13.5px;line-height:1.62;color:#33363C;margin-top:5px}
   @media(max-width:640px){.np-secflow{column-count:1}}
+  .np-detail{font-size:13.5px;line-height:1.68;color:#33363C;margin-top:10px;padding-top:10px;border-top:1px dashed var(--hairline)}
+  .np-more{display:inline-block;margin-top:9px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#A08339;cursor:pointer;user-select:none}
+  .np-more:hover{text-decoration:underline}
+  .np-lead-story .np-detail{font-size:14.5px}
   .np-back{appearance:none;background:none;border:none;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:var(--muted);cursor:pointer;margin-bottom:14px}
   .np-back:hover{color:#A08339}
 
@@ -312,6 +316,12 @@
   .today-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
   .today-bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:start}
   @media(max-width:720px){.today-bottom{grid-template-columns:1fr}}
+  .today-triple{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:14px;margin-top:14px;align-items:start}
+  @media(max-width:980px){.today-triple{grid-template-columns:1fr 1fr}.today-triple .cal-card{grid-column:span 2}}
+  @media(max-width:640px){.today-triple{grid-template-columns:1fr}.today-triple .cal-card{grid-column:auto}}
+  .ag-head{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 0 6px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
+  .chill-card{margin-top:12px}
+  .chill-card .tc-head .h{color:#7A6A45}
   .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
   .bc-num{font-size:27px;font-weight:900;color:var(--ink);margin-top:6px;line-height:1}
@@ -1324,10 +1334,13 @@ function newsFig(item, hostSel){
 async function runFig(){
   const job = figJob; figJob = null;
   if(!job) return;
+  /* Only ever show a photo when the briefing task explicitly named the subject
+     (img or imgQuery). The old auto-guessed fallback -- matching whatever proper
+     noun the lead sentence happened to contain -- produced irrelevant photos often
+     enough that it has been removed entirely. No explicit subject, no photo. */
   let url = job.item.img || null;                                   // task-supplied URL wins
   if(!url && job.item.imgQuery) url = await wikiImage(job.item.imgQuery);
-  if(!url) url = await wikiImage(newsEntity(job.item));             // strict fallback
-  if(!url) return;                                                  // no photo, no gap
+  if(!url) return;                                                  // no explicit subject, no photo, no gap
   const fig = document.getElementById(job.id); if(!fig) return;
   const img = new Image();
   img.alt = ""; img.referrerPolicy = "no-referrer";
@@ -1465,19 +1478,32 @@ function showNewsView(view){
   let h = `<button class="np-back" id="npBack">← Back to Front Page</button>
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
   if(items.length){
+    const leadHasDetail = !!leadIt.detail;
     h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
       ${newsFig(leadIt, ".np-lead-story")}
-      <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div></div>`;
+      <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div>
+      ${leadHasDetail ? `<div class="np-detail" style="display:none">${esc(leadIt.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;
   }
   if(items.length > 1){
     h += `<div class="np-secflow">`;
     items.slice(1).forEach(it => {
-      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div></div>`;
+      const hasDetail = !!it.detail;
+      h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div>
+        ${hasDetail ? `<div class="np-detail" style="display:none">${esc(it.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;
     });
     h += `</div>`;
   }
   body.innerHTML = h;
   runFig();
+  /* click a headline's "Read more" to expand the longer in-house summary in place — no external links,
+     since these stories are AI-synthesized from research rather than a specific outlet's own article */
+  body.querySelectorAll(".np-more").forEach(el => el.addEventListener("click", () => {
+    const det = el.previousElementSibling;
+    if(!det || !det.classList.contains("np-detail")) return;
+    const isOpen = det.style.display !== "none";
+    det.style.display = isOpen ? "none" : "block";
+    el.textContent = isOpen ? "Read more +" : "Show less −";
+  }));
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
 }
 /* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
@@ -1894,11 +1920,25 @@ function wireMarketsStrip(){
     .catch(() => { const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">The latest market brief couldn't be loaded.</div>`; });
 }
 
+/* a date is "within N days" of a base date (both YYYY-MM-DD) — used to split the
+   14-day radar list into a 7-day "Next 7 Days" column vs the full two-week mini-cal */
+function withinDays(dateStr, fromDateStr, days){
+  if(!dateStr || !fromDateStr) return true; // no parseable date — keep it rather than hide it
+  const diff = Math.round((new Date(dateStr+"T00:00:00") - new Date(fromDateStr+"T00:00:00")) / 86400000);
+  return diff >= 0 && diff <= days;
+}
+
 function renderCalendarBody(p, d){
   let h = "";
   const todayList = d.today || [];
-  const radarList = d.radar || [];
+  const radarList = d.radar || [];              // up to 14 days out
+  const radarWeek = radarList.filter(item => {
+    const lead = typeof item === "string" ? item : item.lead;
+    const ev = parseEventLead(lead, "", null);
+    return withinDays(ev.dateStr, d.date, 7);
+  });
   const urgentList = d.urgent || [];
+  const chillList = d.chill || [];
   const doneCount = urgentList.filter((t,i) => localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1").length;
 
   const events = (arr, fallbackDate, opts) => {
@@ -1911,11 +1951,10 @@ function renderCalendarBody(p, d){
     return x + `</div>`;
   };
 
-  /* ---- portfolio snapshot (full-width; at the top now, swapped above to-dos) ---- */
+  /* ---- portfolio snapshot (full-width, at the very top) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
-
-  /* ---- to-do card (list + side ring) ---- */
+  /* ---- Urgent To-Dos (list + side ring) ---- */
   h += `<div class="bento-card todo-card" id="todoCard" style="margin-top:14px">
       <div class="tc-list">
         <div class="tc-head"><span class="h">Urgent To-Dos</span></div>
@@ -1923,7 +1962,7 @@ function renderCalendarBody(p, d){
   if(!urgentList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing urgent flagged today.</p>`;
   else urgentList.forEach((t,i) => {
     const done = localStorage.getItem(`dh-todo-${d.date}-${i}`) === "1";
-    h += `<div class="todo-inline${done?" done":""}" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
+    h += `<div class="todo-inline${done?" done":""}" data-kind="todo" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
   });
   h += `</div></div>
       <div class="tc-ring">
@@ -1932,8 +1971,34 @@ function renderCalendarBody(p, d){
       </div>
   </div>`;
 
-  /* ---- weather hero (live; filled in async). Two stacked sky layers crossfade instead of snapping ---- */
-  h += `<div class="wx-hero" id="wxHero">
+  /* ---- Chill To-Dos (lower-priority list, no ring) ---- */
+  h += `<div class="bento-card todo-card chill-card">
+      <div class="tc-list" style="flex:1">
+        <div class="tc-head"><span class="h">Chill To-Dos</span></div>
+        <div id="chillInlineWrap">`;
+  if(!chillList.length) h += `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Nothing on the chill list right now.</p>`;
+  else chillList.forEach((t,i) => {
+    const done = localStorage.getItem(`dh-chill-${d.date}-${i}`) === "1";
+    h += `<div class="todo-inline${done?" done":""}" data-kind="chill" data-ti="${i}"><span class="box">✓</span><span class="txt">${typeof t==="string"?esc(t):esc((t.lead||"")+" "+(t.body||""))}</span></div>`;
+  });
+  h += `</div></div>
+  </div>`;
+
+  /* ---- Today / Next 7 Days / Two-Week View, side by side ---- */
+  h += `<div class="today-triple">
+    <div class="agenda-card">
+      <div class="ag-head">Today</div>
+      <div class="agenda-panel">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+    </div>
+    <div class="agenda-card">
+      <div class="ag-head">Next 7 Days</div>
+      <div class="agenda-panel">${radarWeek.length ? events(radarWeek, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
+    </div>
+    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
+  </div>`;
+
+  /* ---- weather hero (live; filled in async), now at the bottom. Two stacked sky layers crossfade instead of snapping ---- */
+  h += `<div class="wx-hero" id="wxHero" style="margin-top:14px">
     <div class="wx-sky" id="wxSky"></div>
     <div class="wx-sky wx-sky-ov" id="wxSkyOv"></div>
     <div class="wx-content">
@@ -1946,19 +2011,6 @@ function renderCalendarBody(p, d){
       <div class="wx-chart-lbl">Hourly · hover to scrub the day</div>
       <div id="wxSparkWrap" class="wx-chart"><div style="font-size:12.5px;padding:14px 0;opacity:.7">Fetching hourly forecast…</div></div>
     </div>
-  </div>`;
-
-  /* ---- bottom: Today / Next 7 days agenda (left) side-by-side with the two-week calendar (right) ---- */
-  h += `<div class="today-bottom">
-    <div class="agenda-card">
-      <div class="agenda-tabs">
-        <button class="agenda-tab active" data-atab="today">Today</button>
-        <button class="agenda-tab" data-atab="radar">Next 7 days</button>
-      </div>
-      <div class="agenda-panel" data-apanel="today">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
-      <div class="agenda-panel" data-apanel="radar" style="display:none">${radarList.length ? events(radarList, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
-    </div>
-    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
   </div>`;
 
   /* The Close now lives on the Games tab — see renderGamesLauncher(). */
@@ -1976,21 +2028,20 @@ function renderCalendarBody(p, d){
     }));
   }
 
-  /* to-do checkboxes update the side ring live — mutate the existing arc so it animates (no innerHTML swap) */
+  /* to-do checkboxes: urgent items update the side ring live (mutate the existing arc so it animates,
+     no innerHTML swap); chill items just persist their own checked state, no ring involved */
   p.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", () => {
     el.classList.toggle("done");
-    localStorage.setItem(`dh-todo-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
-    const total = urgentList.length;
-    const nowDone = p.querySelectorAll(".todo-inline.done").length;
-    const arc = p.querySelector("#todoRingWrap .ring-arc");
-    if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
-    const txt = p.querySelector("#todoRingTxt");
-    if(txt) txt.textContent = `${nowDone} / ${total} done`;
-  }));
-
-  p.querySelectorAll(".agenda-tab").forEach(btn => btn.addEventListener("click", () => {
-    p.querySelectorAll(".agenda-tab").forEach(b => b.classList.toggle("active", b === btn));
-    p.querySelectorAll(".agenda-panel").forEach(pan => { pan.style.display = pan.dataset.apanel === btn.dataset.atab ? "block" : "none"; });
+    const kind = el.dataset.kind === "chill" ? "chill" : "todo";
+    localStorage.setItem(`dh-${kind}-${d.date}-${el.dataset.ti}`, el.classList.contains("done") ? "1" : "0");
+    if(kind === "todo"){
+      const total = urgentList.length;
+      const nowDone = p.querySelectorAll('.todo-inline[data-kind="todo"].done').length;
+      const arc = p.querySelector("#todoRingWrap .ring-arc");
+      if(arc){ const c = parseFloat(arc.dataset.c); const frac = total > 0 ? nowDone/total : 0; arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2)); }
+      const txt = p.querySelector("#todoRingTxt");
+      if(txt) txt.textContent = `${nowDone} / ${total} done`;
+    }
   }));
 
   const calCard = p.querySelector(".cal-card");
@@ -2745,15 +2796,18 @@ function renderGamesLauncher(){
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
     { name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
-    { name:"Mini Crossword", tag:"A quick crossword", url:"https://www.nytimes.com/crosswords/game/mini", domain:"nytimes.com" },
+    { name:"Strands", tag:"Word search with a twist", url:"https://www.nytimes.com/games/strands", domain:"nytimes.com" },
     { name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
-    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" }
+    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" },
+    { name:"Queens", tag:"One queen per row, column & region", url:"https://www.linkedin.com/games/queens", domain:"linkedin.com" }
   ];
   const geo = [
     { name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
     { name:"Tradle", tag:"Country by exports", url:"https://oec.world/en/games/tradle-game", domain:"oec.world" },
     { name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
-    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" }
+    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" },
+    { name:"Flagle", tag:"Country by flag", url:"https://www.flagle.io/", domain:"flagle.io" },
+    { name:"TimeGuessr", tag:"Guess the photo's time & place", url:"https://timeguessr.com/", domain:"timeguessr.com" }
   ];
   const linkBtn = g => `<a class="pz-link${played.has(g.name)?" played":""}" href="${g.url}" target="_blank" rel="noopener noreferrer" data-game="${esc(g.name)}">
       <img src="${favicon(g.domain)}" alt="" loading="lazy">
@@ -3305,13 +3359,24 @@ function renderBlackBox(){
           </div>
         </div>
         <div class="bx-side">
-          <div class="cf-ph">How it reads</div>
+          <div class="cf-ph">The objective</div>
           <div class="bx-key">
-            Click any <i>rim square</i> to fire a beam into the box.<br><br>
-            <i>H</i> — the beam hit an atom head-on and never came out.<br>
-            <i>R</i> — it bounced straight back out where it went in.<br>
-            <i>1&nbsp;2&nbsp;3…</i> — matching numbers mark where a beam went in and came out.<br><br>
-            An atom sitting diagonally in front of a beam knocks it 90°; two of them send it back. Click inside the grid to place your four atoms.
+            4 atoms are hidden somewhere in the 8×8 grid — you can't see them. Your job is to figure out which squares they're on by firing beams in from the edge and reading how each one behaves, using as few beams as possible.
+          </div>
+          <div class="cf-ph" style="margin-top:16px">How to fire a beam</div>
+          <div class="bx-key">
+            Click any square on the rim (the border around the grid) to fire a beam straight in from that edge. Every beam does exactly one of three things:<br><br>
+            <b>H (Hit)</b> — the beam ran straight into an atom and stopped for good. That atom is directly in the beam's path.<br><br>
+            <b>R (Reflect)</b> — the beam bounced straight back out of the same square it entered, without ever crossing the grid.<br><br>
+            <b>Matching numbers</b> (e.g. two squares both marked "3") — the beam bent its way through the grid and exited somewhere else on the rim. The entry and exit squares share the same number so you can pair them up.
+          </div>
+          <div class="cf-ph" style="margin-top:16px">Why beams bend</div>
+          <div class="bx-key">
+            Atoms don't just block beams head-on — they deflect anything that passes diagonally next to them. If one atom sits diagonally ahead of a beam, the beam turns 90°. If two atoms flank the beam on both diagonals at once, it reverses straight back out (a Reflect). This is what makes a beam "bend" on its way through instead of going in a straight line — use the pattern of hits, reflects, and exit pairs across several beams to triangulate where the 4 atoms must be.
+          </div>
+          <div class="cf-ph" style="margin-top:16px">Placing your guess & scoring</div>
+          <div class="bx-key">
+            Once you think you know where the atoms are, click 4 squares inside the grid to mark your guesses (click again to remove one). When all 4 are placed, "Reveal &amp; score" lights up. Your score is beams fired (1 point for a Hit or Reflect, 2 points for an exit pair) plus a 5-point penalty for every atom you guessed wrong. <b>Lower is better</b> — your best perfect-clear score is saved above.
           </div>
           <div class="cf-ph" style="margin-top:16px">Beam log</div>
           <div class="bx-log">${logHTML}</div>

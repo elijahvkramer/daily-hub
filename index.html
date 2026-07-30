@@ -575,34 +575,6 @@
   .cf-solved{color:var(--up)}
   .cf-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);justify-content:center;margin-top:14px}
 
-  /* ---------- built-in: Black Box ---------- */
-  .bx-wrap{max-width:760px;margin:0 auto}
-  .bx-top{display:grid;grid-template-columns:1fr 250px;gap:18px;align-items:start}
-  @media(max-width:820px){.bx-top{grid-template-columns:1fr}}
-  .bx-boardwrap{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:flex;justify-content:center}
-  .bx-board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;width:100%;max-width:430px;aspect-ratio:1}
-  .bx-c{border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:900;user-select:none}
-  .bx-edge{background:#EFECE3;border:1px solid #DDD8C9;cursor:pointer;color:#8A8579;transition:background .12s,transform .1s;font-size:11px}
-  .bx-edge:hover{background:var(--gold);color:var(--ink);transform:scale(1.08)}
-  .bx-edge.done{cursor:default}
-  .bx-edge.hit{background:#C0463E;color:#fff;border-color:#A93A33}
-  .bx-edge.refl{background:#8A5A3F;color:#fff;border-color:#754C35}
-  .bx-corner{background:transparent}
-  .bx-in{background:#20232A;border:1px solid #2C3038;cursor:pointer;transition:background .12s;color:#4A505C}
-  .bx-in:hover{background:#333944}
-  .bx-in.atom{background:var(--gold);color:var(--ink);font-size:16px}
-  .bx-in.reveal-hit{background:var(--up);color:#fff;font-size:16px}
-  .bx-in.reveal-miss{background:#C0463E;color:#fff;font-size:16px}
-  .bx-in.reveal-missed{background:#20232A;color:var(--gold);font-size:16px;box-shadow:inset 0 0 0 2px var(--gold)}
-  .bx-side{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px}
-  .bx-key{font-size:12.5px;line-height:1.65;color:#3A3E45}
-  .bx-key i{font-style:normal;font-weight:900;color:var(--ink)}
-  .bx-score{display:flex;gap:16px;justify-content:center;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0}
-  .bx-log{max-height:190px;overflow-y:auto;margin-top:10px;font-size:11.5px}
-  .bx-log div{padding:5px 0;border-bottom:1px solid var(--hairline);display:flex;gap:8px;align-items:center;color:#3A3E45}
-  .bx-log b{font-weight:900;color:var(--ink)}
-  .bx-btns{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;justify-content:center}
-
   /* built-in: Daily Grid */
   .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
   .dg-target{font-size:15px;color:var(--muted);font-weight:700;margin:6px 0 4px}
@@ -819,7 +791,7 @@
     .np-masthead{padding:16px 14px 12px}
     .np-mkt .ms-head{gap:4px}
     .ms-grid{grid-template-columns:repeat(2,1fr)}
-    .games-wrap, .cf-wrap, .bx-wrap, .cb-wrap, .qwrap{max-width:100%}
+    .games-wrap, .cf-wrap, .cb-wrap, .qwrap{max-width:100%}
     /* wide data tables get their own horizontal scroller rather than breaking the page */
     .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   }
@@ -842,14 +814,6 @@
     .cf-arow select{font-size:16px}
   }
   @media(min-width:821px){.cf-scrollnote{display:none}}
-
-  /* Black Box on a phone */
-  @media(max-width:640px){
-    .bx-top{grid-template-columns:1fr}
-    .bx-board{max-width:min(94vw, 400px)}
-    .bx-boardwrap{padding:9px}
-    .bx-c{border-radius:4px}
-  }
 
   /* the two-week calendar and portfolio tables */
   @media(max-width:560px){
@@ -1937,23 +1901,24 @@ function withinDays(dateStr, fromDateStr, days){
   return diff >= 0 && diff <= days;
 }
 
+function todoRowsHTML(kind, items){
+  const list = items || [];
+  const ready = !!(window.__todosApi && window.__todosApi.isReady());
+  if(!ready) return `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Loading…</p>`;
+  if(!list.length) return `<p style="color:var(--muted);font-size:14px;padding:6px 2px">${kind==="chill" ? "Nothing on the chill list right now." : "Nothing urgent flagged today."}</p>`;
+  return list.map(t => `<div class="todo-inline${t.done?" done":""}" data-kind="${kind}" data-id="${esc(t.id)}"><span class="box">✓</span><span class="txt">${esc(t.text)}</span><span class="todo-del" data-kind="${kind}" data-id="${esc(t.id)}" title="Remove">✕</span></div>`).join("");
+}
+
 function renderTodoCard(kind, items){
   const title = kind === "chill" ? "Chill To-Dos" : "Urgent To-Dos";
   const list = items || [];
   const doneCount = list.filter(t => t.done).length;
   const total = list.length;
-  const ready = !!(window.__todosApi && window.__todosApi.isReady());
-  let rows = "";
-  if(!ready) rows = `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Loading…</p>`;
-  else if(!total) rows = `<p style="color:var(--muted);font-size:14px;padding:6px 2px">${kind==="chill" ? "Nothing on the chill list right now." : "Nothing urgent flagged today."}</p>`;
-  else list.forEach(t => {
-    rows += `<div class="todo-inline${t.done?" done":""}" data-kind="${kind}" data-id="${esc(t.id)}"><span class="box">✓</span><span class="txt">${esc(t.text)}</span><span class="todo-del" data-kind="${kind}" data-id="${esc(t.id)}" title="Remove">✕</span></div>`;
-  });
-  rows += `<form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
   return `<div class="bento-card todo-card${kind==="chill"?" chill-card":""}" id="${kind}Card"${kind==="chill"?"":' style="margin-top:14px"'}>
       <div class="tc-list">
         <div class="tc-head"><span class="h">${title}</span></div>
-        <div id="${kind}InlineWrap">${rows}</div>
+        <div id="${kind}InlineWrap">${todoRowsHTML(kind, list)}</div>
+        <form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
       </div>
       <div class="tc-ring">
         <div id="${kind}RingWrap">${ringSvg(doneCount, total, 74)}</div>
@@ -1962,19 +1927,28 @@ function renderTodoCard(kind, items){
   </div>`;
 }
 
-function wireTodoCard(root, kind){
-  const card = root.querySelector(`#${kind}Card`);
-  if(!card) return;
-  card.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", (e) => {
+/* wires the checkbox/remove clicks for whatever rows are CURRENTLY in the DOM —
+   call again any time todoRowsHTML() replaces the wrap's contents */
+function wireTodoRows(root, kind){
+  const wrap = root.querySelector(`#${kind}InlineWrap`);
+  if(!wrap) return;
+  wrap.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", (e) => {
     if(e.target.closest(".todo-del")) return;
     if(window.__todosApi) window.__todosApi.toggle(kind, el.dataset.id);
   }));
-  card.querySelectorAll(".todo-del").forEach(el => el.addEventListener("click", (e) => {
+  wrap.querySelectorAll(".todo-del").forEach(el => el.addEventListener("click", (e) => {
     e.stopPropagation();
     if(window.__todosApi) window.__todosApi.remove(kind, el.dataset.id);
   }));
-  const form = card.querySelector(".todo-add");
-  if(form) form.addEventListener("submit", (e) => {
+}
+
+/* wired ONCE when the card is first created — the form node itself is never
+   replaced afterward, so this never needs to run again for that card */
+function wireTodoAddForm(root, kind){
+  const card = root.querySelector(`#${kind}Card`);
+  const form = card ? card.querySelector(".todo-add") : null;
+  if(!form) return;
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
     const input = form.querySelector("input");
     const val = (input.value || "").trim();
@@ -1985,7 +1959,8 @@ function wireTodoCard(root, kind){
   });
 }
 
-function animateTodoRing(root, kind){
+/* first-paint entrance only: sweep the ring from empty to its starting fraction */
+function animateTodoRingIn(root, kind){
   const arc = root.querySelector(`#${kind}RingWrap .ring-arc`);
   if(!arc) return;
   const c = parseFloat(arc.dataset.c);
@@ -1996,14 +1971,46 @@ function animateTodoRing(root, kind){
   }));
 }
 
-function refreshTodoCards(root, state){
+/* subsequent updates: move the EXISTING arc from wherever it currently sits to
+   the new fraction, so the CSS transition (.ring-arc) sweeps smoothly between
+   the two states (e.g. 1/3 -> 2/3) instead of resetting to empty each time */
+function updateTodoRing(root, kind, items){
+  const list = items || [];
+  const doneCount = list.filter(t => t.done).length;
+  const total = list.length;
+  const txt = root.querySelector(`#${kind}RingTxt`);
+  if(txt) txt.textContent = `${doneCount} / ${total} done`;
+  const arc = root.querySelector(`#${kind}RingWrap .ring-arc`);
+  if(!arc) return;
+  const c = parseFloat(arc.dataset.c);
+  const frac = total > 0 ? doneCount/total : 0;
+  arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2));
+}
+
+/* Only touches a kind's card if that kind's own data actually changed since the
+   last snapshot — this is what stops checking off a Chill item from also
+   re-rendering (and visually "reloading") the unrelated Urgent card, and vice
+   versa. prevState is a small object the caller keeps alive across snapshots. */
+function refreshTodoCards(root, state, prevState){
   state = state || (window.__todosApi ? window.__todosApi.getState() : { urgent: [], chill: [] });
   ["urgent","chill"].forEach(kind => {
-    const slot = root.querySelector(`#${kind}CardSlot`);
-    if(!slot) return;
-    slot.innerHTML = renderTodoCard(kind, state[kind]);
-    wireTodoCard(root, kind);
-    animateTodoRing(root, kind);
+    const items = state[kind] || [];
+    const exists = !!root.querySelector(`#${kind}Card`);
+    const changed = JSON.stringify(prevState[kind]) !== JSON.stringify(items);
+    if(!exists){
+      const slot = root.querySelector(`#${kind}CardSlot`);
+      if(!slot) return;
+      slot.innerHTML = renderTodoCard(kind, items);
+      wireTodoRows(root, kind);
+      wireTodoAddForm(root, kind);
+      animateTodoRingIn(root, kind);
+    } else if(changed){
+      const wrap = root.querySelector(`#${kind}InlineWrap`);
+      if(wrap) wrap.innerHTML = todoRowsHTML(kind, items);
+      wireTodoRows(root, kind);
+      updateTodoRing(root, kind, items);
+    }
+    prevState[kind] = items;
   });
 }
 
@@ -2071,9 +2078,12 @@ function renderCalendarBody(p, d){
   p.innerHTML = h;
 
   /* first paint of the to-do cards, then keep them live: every Firestore snapshot
-     (from this device or any other) re-renders both cards in place */
-  refreshTodoCards(p);
-  window.__onTodosSnapshot = (state) => refreshTodoCards(p, state);
+     (from this device or any other) updates only the card(s) whose data actually
+     changed, in place. todoPrevState is scoped to this render so a fresh tab visit
+     starts clean. */
+  const todoPrevState = { urgent: null, chill: null };
+  refreshTodoCards(p, undefined, todoPrevState);
+  window.__onTodosSnapshot = (state) => refreshTodoCards(p, state, todoPrevState);
 
   const calCard = p.querySelector(".cal-card");
   if(calCard) wireMiniCal(calCard);
@@ -2758,7 +2768,6 @@ function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
   if(gamesView === "code"){ renderCodebreaker(); return; }
   if(gamesView === "case"){ renderCaseFile(); return; }
-  if(gamesView === "box"){ renderBlackBox(); return; }
   renderGamesLauncher();
 }
 
@@ -2821,8 +2830,7 @@ function renderGamesLauncher(){
   const built = [
     { id:"quiz",  name:"Word Quiz",   tag:"Vocabulary trainer from your briefings", icon:"◆", col:"#C8A24B", stat:qBestLabel() },
     { id:"code",  name:"Codebreaker", tag:"Crack the hidden color code by deduction", icon:"🔐", col:"#1D9E75", stat: localStorage.getItem("dh-code-best") ? "Best "+localStorage.getItem("dh-code-best")+" tries" : "Not cracked yet" },
-    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() },
-    { id:"box",  name:"Black Box",     tag:"Find 4 hidden atoms by firing beams into the dark", icon:"◎", col:"#2F6B8A", stat: bxStatLabel() }
+    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() }
   ];
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
@@ -3293,180 +3301,6 @@ function renderCaseFile(fresh){
   paint();
 }
 
-/* ================= built-in: Black Box =================
-   Four atoms hide in an 8x8 grid. Fire a beam in from any edge square and read what
-   comes back: absorbed (Hit), bounced straight back (Reflect), or emerging somewhere
-   else on the rim (matched numbers). Beams are deflected 90 degrees by an atom sitting
-   diagonally ahead of them, and reversed when flanked by two. */
-function bxStatLabel(){
-  const b = localStorage.getItem("dh-box-best");
-  return b ? "Best score " + b : "Not played yet";
-}
-function renderBlackBox(){
-  const panel = $("#panel-quiz");
-  $("#staleNote").style.display = "none";
-  const N = 8, ATOMS = 4;
-
-  let atoms = new Set(), guess = new Set(), marks = {}, log = [], shots = 0, label = 0, revealed = false;
-  const newGame = () => {
-    atoms = new Set(); guess = new Set(); marks = {}; log = []; shots = 0; label = 0; revealed = false;
-    while(atoms.size < ATOMS) atoms.add(Math.floor(Math.random()*N*N));
-  };
-  newGame();
-
-  const has = (r,c) => r>=0 && r<N && c>=0 && c<N && atoms.has(r*N+c);
-  const outside = (r,c) => r<0 || r>=N || c<0 || c>=N;
-
-  /* returns {type:"hit"} | {type:"reflect"} | {type:"exit", key} */
-  const fire = (er, ec, dr, dc) => {
-    if(has(er,ec)) return {type:"hit"};
-    if(has(er+dc, ec-dr) || has(er-dc, ec+dr)) return {type:"reflect"};
-    let r = er, c = ec;
-    for(let guard=0; guard<400; guard++){
-      const nr = r+dr, nc = c+dc;
-      if(outside(nr,nc)) return {type:"exit", key: edgeKeyOf(nr,nc)};
-      if(has(nr,nc)) return {type:"hit"};
-      const fl = has(nr+dc, nc-dr), fr = has(nr-dc, nc+dr);
-      if(fl && fr){ dr = -dr; dc = -dc; }
-      else if(fl){ const t = dr; dr = -dc; dc = t; }
-      else if(fr){ const t = dr; dr = dc; dc = -t; }
-      else { r = nr; c = nc; }
-    }
-    return {type:"reflect"};
-  };
-  const edgeKeyOf = (r,c) => r<0 ? "T"+c : r>=N ? "B"+c : c<0 ? "L"+r : "R"+r;
-  const edgeStart = key => {
-    const s = key[0], i = +key.slice(1);
-    if(s === "T") return [0, i, 1, 0];
-    if(s === "B") return [N-1, i, -1, 0];
-    if(s === "L") return [i, 0, 0, 1];
-    return [i, N-1, 0, -1];
-  };
-
-  const paint = () => {
-    let cells = "";
-    const edgeCell = key => {
-      const m = marks[key];
-      const kl = m ? (m.type==="hit" ? "hit" : m.type==="reflect" ? "refl" : "") : "";
-      const txt = m ? (m.type==="hit" ? "H" : m.type==="reflect" ? "R" : m.n) : "";
-      const st = m && m.type === "exit" ? `background:${m.col};color:#fff;border-color:${m.col}` : "";
-      return `<div class="bx-c bx-edge ${kl}${m?" done":""}" data-e="${key}" style="${st}">${txt}</div>`;
-    };
-    cells += `<div class="bx-c bx-corner"></div>`;
-    for(let c=0;c<N;c++) cells += edgeCell("T"+c);
-    cells += `<div class="bx-c bx-corner"></div>`;
-    for(let r=0;r<N;r++){
-      cells += edgeCell("L"+r);
-      for(let c=0;c<N;c++){
-        const idx = r*N+c;
-        let kl = "bx-in", txt = "";
-        if(revealed){
-          if(atoms.has(idx) && guess.has(idx)){ kl += " reveal-hit"; txt = "●"; }
-          else if(atoms.has(idx)){ kl += " reveal-missed"; txt = "●"; }   // an atom you never found
-          else if(guess.has(idx)){ kl += " reveal-miss"; txt = "✕"; }
-        } else if(guess.has(idx)){ kl += " atom"; txt = "●"; }
-        cells += `<div class="bx-c ${kl}" data-i="${idx}">${txt}</div>`;
-      }
-      cells += edgeCell("R"+r);
-    }
-    cells += `<div class="bx-c bx-corner"></div>`;
-    for(let c=0;c<N;c++) cells += edgeCell("B"+c);
-    cells += `<div class="bx-c bx-corner"></div>`;
-
-    const logHTML = log.length ? log.slice().reverse().map(l =>
-      `<div><b>${esc(l.from)}</b> → ${l.type==="hit"?`<span style="color:var(--down);font-weight:900">absorbed</span>`
-        : l.type==="reflect"?`<span style="color:#8A5A3F;font-weight:900">reflected</span>`
-        : `exits <b style="color:${l.col}">${esc(l.to)}</b>`}</div>`).join("") : `<div style="color:var(--muted);border:none">No beams fired yet.</div>`;
-
-    panel.innerHTML = `<div class="bx-wrap">
-      <button class="pbtn game-back" id="bxBack">← Back to Games</button>
-      <div class="bx-top">
-        <div>
-          <div class="bx-boardwrap"><div class="bx-board">${cells}</div></div>
-          <div class="bx-score"><span>Score ${shots}</span><span>Atoms placed ${guess.size}/${ATOMS}</span><span>${esc(bxStatLabel())}</span></div>
-          <div class="bx-btns">
-            <button class="cf-tool" id="bxReveal"${guess.size===ATOMS && !revealed ? "" : " disabled style='opacity:.45;cursor:default'"}>Reveal &amp; score</button>
-            <button class="cf-tool" id="bxNew">New box</button>
-          </div>
-        </div>
-        <div class="bx-side">
-          <div class="cf-ph">The objective</div>
-          <div class="bx-key">
-            4 atoms are hidden somewhere in the 8×8 grid — you can't see them. Your job is to figure out which squares they're on by firing beams in from the edge and reading how each one behaves, using as few beams as possible.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">How to fire a beam</div>
-          <div class="bx-key">
-            Click any square on the rim (the border around the grid) to fire a beam straight in from that edge. Every beam does exactly one of three things:<br><br>
-            <b>H (Hit)</b> — the beam ran straight into an atom and stopped for good. That atom is directly in the beam's path.<br><br>
-            <b>R (Reflect)</b> — the beam bounced straight back out of the same square it entered, without ever crossing the grid.<br><br>
-            <b>Matching numbers</b> (e.g. two squares both marked "3") — the beam bent its way through the grid and exited somewhere else on the rim. The entry and exit squares share the same number so you can pair them up.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">Why beams bend</div>
-          <div class="bx-key">
-            Atoms don't just block beams head-on — they deflect anything that passes diagonally next to them. If one atom sits diagonally ahead of a beam, the beam turns 90°. If two atoms flank the beam on both diagonals at once, it reverses straight back out (a Reflect). This is what makes a beam "bend" on its way through instead of going in a straight line — use the pattern of hits, reflects, and exit pairs across several beams to triangulate where the 4 atoms must be.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">Placing your guess & scoring</div>
-          <div class="bx-key">
-            Once you think you know where the atoms are, click 4 squares inside the grid to mark your guesses (click again to remove one). When all 4 are placed, "Reveal &amp; score" lights up. Your score is beams fired (1 point for a Hit or Reflect, 2 points for an exit pair) plus a 5-point penalty for every atom you guessed wrong. <b>Lower is better</b> — your best perfect-clear score is saved above.
-          </div>
-          <div class="cf-ph" style="margin-top:16px">Beam log</div>
-          <div class="bx-log">${logHTML}</div>
-        </div>
-      </div>
-      <div id="bxMsg" style="text-align:center;margin-top:14px"></div>
-    </div>`;
-
-    $("#bxBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
-    $("#bxNew").addEventListener("click", () => { newGame(); paint(); });
-    panel.querySelectorAll(".bx-edge").forEach(el => el.addEventListener("click", () => {
-      if(revealed) return;
-      const key = el.dataset.e;
-      if(marks[key]) return;
-      const [r,c,dr,dc] = edgeStart(key);
-      const res = fire(r,c,dr,dc);
-      if(res.type === "exit" && res.key === key){ res.type = "reflect"; delete res.key; }
-      if(res.type === "exit"){
-        label++;
-        const col = BX_COLS[(label-1) % BX_COLS.length];
-        marks[key] = {type:"exit", n:label, col};
-        marks[res.key] = {type:"exit", n:label, col};
-        shots += 2;
-        log.push({from:key, to:res.key, type:"exit", col});
-      } else {
-        marks[key] = {type:res.type};
-        shots += 1;
-        log.push({from:key, type:res.type});
-      }
-      paint();
-    }));
-    panel.querySelectorAll(".bx-in").forEach(el => el.addEventListener("click", () => {
-      if(revealed) return;
-      const i = +el.dataset.i;
-      if(guess.has(i)) guess.delete(i);
-      else if(guess.size < ATOMS) guess.add(i);
-      paint();
-    }));
-    const rv = $("#bxReveal");
-    if(rv && guess.size === ATOMS && !revealed) rv.addEventListener("click", () => {
-      revealed = true;
-      const right = [...guess].filter(i => atoms.has(i)).length;
-      const penalty = (ATOMS - right) * 5;
-      const total = shots + penalty;
-      const prev = Number(localStorage.getItem("dh-box-best")||"9999");
-      const isBest = right === ATOMS && total < prev;
-      if(right === ATOMS && total < prev) localStorage.setItem("dh-box-best", String(total));
-      paint();
-      const m = $("#bxMsg");
-      if(m) m.innerHTML = `<div class="qreveal" style="max-width:460px;margin:0 auto">
-        <b style="font-size:15px;color:${right===ATOMS?"var(--up)":"var(--down)"}">${right} of ${ATOMS} atoms found</b>
-        <div style="margin-top:8px;font-size:13.5px;color:#3A3E45">${shots} from beams${penalty?` + ${penalty} penalty`:""} = <b>${total}</b>${isBest?" · new best":""}. Lower is better.</div>
-        </div><button class="qbig qnext" id="bxAgain" style="max-width:280px;margin:14px auto 0">New box</button>`;
-      const ag = $("#bxAgain"); if(ag) ag.addEventListener("click", () => { newGame(); paint(); });
-    });
-  };
-  paint();
-}
-const BX_COLS = ["#C8A24B","#1D9E75","#D4537E","#378ADD","#BA7517","#7F77DD","#2F6B8A","#8A5A3F"];
 
 async function renderQuizTab(){
   const panel = $("#panel-quiz");

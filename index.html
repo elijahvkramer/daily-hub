@@ -320,6 +320,12 @@
   @media(max-width:980px){.today-triple{grid-template-columns:1fr 1fr}.today-triple .cal-card{grid-column:span 2}}
   @media(max-width:640px){.today-triple{grid-template-columns:1fr}.today-triple .cal-card{grid-column:auto}}
   .ag-head{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 0 6px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
+  .cal-live-row{display:flex;align-items:center;gap:8px;margin:2px 0 10px;font-size:12px;color:var(--muted)}
+  .cal-live-dot{width:7px;height:7px;border-radius:50%;background:#9BA0A6;flex:none}
+  .cal-live-dot.live{background:var(--up)}
+  .cal-live-text{font-weight:600}
+  .cal-reconnect-btn{margin-left:auto;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--hairline);background:transparent;color:inherit;cursor:pointer}
+  .cal-reconnect-btn:hover{background:var(--paper)}
   .chill-card{margin-top:12px}
   .chill-card .tc-head .h{color:#7A6A45}
   .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
@@ -908,6 +914,7 @@
   </div>
 </footer>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 "use strict";
 /* ================= state ================= */
@@ -1901,6 +1908,240 @@ function withinDays(dateStr, fromDateStr, days){
   return diff >= 0 && diff <= days;
 }
 
+function renderEventsList(arr, fallbackDate, opts){
+  if(!(arr||[]).length) return "";
+  let x = `<div class="events">`;
+  arr.forEach(i => {
+    const lead = typeof i === "string" ? i : i.lead, body = typeof i === "string" ? "" : i.body;
+    x += eventTile(lead, body, fallbackDate, opts);
+  });
+  return x + `</div>`;
+}
+
+function buildTodayTripleHTML(todayList, radarList, radarWeek, todayDate){
+  return `<div class="today-triple">
+    <div class="agenda-card">
+      <div class="ag-head">Today</div>
+      <div class="agenda-panel">${todayList.length ? renderEventsList(todayList, todayDate, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+    </div>
+    <div class="agenda-card">
+      <div class="ag-head">Next 7 Days</div>
+      <div class="agenda-panel">${radarWeek.length ? renderEventsList(radarWeek, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
+    </div>
+    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, todayDate)}</div>
+  </div>`;
+}
+
+/* ================= live Google Calendar sync (Today tab) =================
+   Client-side, read-only (calendar.events.readonly), primary calendar only —
+   Family/Holidays/other calendars aren't in this live feed (only the once-daily
+   published `radar`/`today` fields, sourced from the multi-calendar scheduled
+   briefing, cover those; this live layer only refreshes the primary calendar's
+   own events, which is the vast majority of Eli's day-to-day). Never shows a
+   Google sign-in prompt on its own — only the "Reconnect calendar" button does
+   that; silent/background refreshes fail quietly back to the last-known data. */
+const GCAL_CLIENT_ID = "816153848388-514spf7sika93m85pqom8g105a42hee0.apps.googleusercontent.com";
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
+const GCAL = { tokenClient: null, refreshTimer: null };
+
+function gcalTokenLoad(){
+  try{
+    const raw = localStorage.getItem("gcalToken");
+    if(!raw) return null;
+    const t = JSON.parse(raw);
+    if(t && t.access_token && t.expiry > Date.now() + 60000) return t;
+  }catch(e){}
+  return null;
+}
+function gcalTokenSave(accessToken, expiresInSec){
+  try{ localStorage.setItem("gcalToken", JSON.stringify({ access_token: accessToken, expiry: Date.now() + (expiresInSec||3599)*1000 })); }catch(e){}
+}
+function gcalTokenClear(){ try{ localStorage.removeItem("gcalToken"); }catch(e){} }
+
+function gcalWaitForGis(maxMs){
+  return new Promise(resolve => {
+    const start = Date.now();
+    const check = () => {
+      if(window.google && google.accounts && google.accounts.oauth2) return resolve(true);
+      if(Date.now() - start > maxMs) return resolve(false);
+      setTimeout(check, 150);
+    };
+    check();
+  });
+}
+
+function gcalGetTokenClient(){
+  if(GCAL.tokenClient) return GCAL.tokenClient;
+  if(!(window.google && google.accounts && google.accounts.oauth2)) return null;
+  GCAL.tokenClient = google.accounts.oauth2.initTokenClient({ client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE, callback: () => {} });
+  return GCAL.tokenClient;
+}
+
+/* resolves an access token: reuses a cached one, else tries a silent grant
+   (prompt:""), else — ONLY when interactive===true, i.e. the Reconnect button —
+   shows Google's consent screen. A plain page load/auto-refresh never sets
+   interactive, so it can never surprise Eli with a popup. */
+async function gcalRequestToken(interactive){
+  const cached = gcalTokenLoad();
+  if(cached) return cached.access_token;
+  if(!interactive) await gcalWaitForGis(3000);
+  const client = gcalGetTokenClient();
+  if(!client) return null;
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = (token) => { if(settled) return; settled = true; resolve(token); };
+    client.callback = (resp) => {
+      if(resp && resp.access_token){ gcalTokenSave(resp.access_token, resp.expires_in); finish(resp.access_token); }
+      else finish(null);
+    };
+    try{ client.requestAccessToken({ prompt: interactive ? "consent" : "" }); }
+    catch(e){ finish(null); }
+    if(!interactive) setTimeout(() => finish(null), 4000);
+  });
+}
+
+function gcalFmtCT(dt){
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(dt);
+  const h = parts.find(p => p.type === "hour").value;
+  const m = parts.find(p => p.type === "minute").value;
+  const ap = parts.find(p => p.type === "dayPeriod").value.toLowerCase();
+  return (m === "00" ? h : h + ":" + m) + ap;
+}
+function gcalDatePartsCT(dt){
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric" }).formatToParts(dt);
+  const y = parts.find(p => p.type === "year").value;
+  const mo = +parts.find(p => p.type === "month").value;
+  const da = +parts.find(p => p.type === "day").value;
+  return { y, mo, da, dateStr: `${y}-${String(mo).padStart(2,"0")}-${String(da).padStart(2,"0")}` };
+}
+
+/* converts one Google Calendar API event into the site's {lead, body} shape —
+   matches the exact convention the scheduled task already publishes (see
+   daily-calendar-report SKILL.md): "today" entries carry only a time
+   ("3:30pm–4:30pm CT —"), "radar" entries carry weekday+M/D too
+   ("Fri 7/18, 10am–12pm CT —"), all-day entries drop the time ("Thu 7/16 —"),
+   am/pm always written out on BOTH ends of a time range so the site's regex
+   parses it correctly (parseEventLead requires this). */
+function gcalFormatEvent(ev, isToday){
+  const s = ev.start || {}, e = ev.end || {};
+  const isAllDay = !!(s.date && !s.dateTime);
+  const summary = ev.summary || "(No title)";
+  const body = summary + (ev.location ? " · " + ev.location : "");
+  let weekday, md, timeLine = "";
+  if(isAllDay){
+    const dt = new Date(s.date + "T12:00:00");
+    weekday = dt.toLocaleDateString("en-US", { weekday: "short" });
+    md = (dt.getMonth()+1) + "/" + dt.getDate();
+  }else{
+    const startDt = new Date(s.dateTime);
+    const dp = gcalDatePartsCT(startDt);
+    weekday = startDt.toLocaleDateString("en-US", { weekday: "short", timeZone: "America/Chicago" });
+    md = dp.mo + "/" + dp.da;
+    timeLine = gcalFmtCT(startDt);
+    if(e.dateTime) timeLine += "–" + gcalFmtCT(new Date(e.dateTime));
+    timeLine += " CT";
+  }
+  const lead = isToday ? (timeLine ? `${timeLine} —` : "") : `${weekday} ${md}${timeLine ? ", " + timeLine : ""} —`;
+  return { lead, body };
+}
+
+async function gcalFetchRawEvents(){
+  const token = await gcalRequestToken(false);
+  if(!token) return { ok: false, reason: "auth" };
+  const now = new Date();
+  const timeMin = new Date(now); timeMin.setHours(0,0,0,0);
+  const timeMax = new Date(now); timeMax.setDate(timeMax.getDate() + 15); timeMax.setHours(0,0,0,0);
+  const params = new URLSearchParams({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "150" });
+  const url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?" + params.toString();
+  const doFetch = tok => fetch(url, { headers: { Authorization: "Bearer " + tok } });
+  try{
+    let r = await doFetch(token);
+    if(r.status === 401){
+      gcalTokenClear();
+      const fresh = await gcalRequestToken(false);
+      if(!fresh) return { ok: false, reason: "auth" };
+      r = await doFetch(fresh);
+    }
+    if(!r.ok) return { ok: false, reason: "fetch" };
+    const j = await r.json();
+    return { ok: true, items: j.items || [] };
+  }catch(e){
+    console.error("Daily Hub: live calendar fetch failed", e);
+    return { ok: false, reason: "fetch" };
+  }
+}
+
+/* buckets raw Google events into the site's today[]/radar[] shape — same split
+   the scheduled task already publishes (today = today's date; radar = every
+   later date in the fetched window) — then hands off to the exact same
+   lead/body-driven rendering (eventTile / buildMiniCal / withinDays) the rest
+   of the calendar UI already uses, so no other function needed to change. */
+function gcalBucketEvents(items, todayDateStr){
+  const today = [], radar = [];
+  (items||[]).forEach(ev => {
+    if(ev.status === "cancelled") return;
+    const s = ev.start || {};
+    const isAllDay = !!(s.date && !s.dateTime);
+    const dateStr = isAllDay ? s.date : (s.dateTime ? gcalDatePartsCT(new Date(s.dateTime)).dateStr : null);
+    if(!dateStr) return;
+    if(dateStr === todayDateStr) today.push(gcalFormatEvent(ev, true));
+    else if(dateStr > todayDateStr) radar.push(gcalFormatEvent(ev, false));
+  });
+  return { today, radar };
+}
+
+function gcalSetStatus(text, showReconnect, live){
+  const row = $("#calLiveRow"); if(!row) return;
+  row.style.display = "flex";
+  const dot = $("#calLiveDot"), txt = $("#calLiveText"), btn = $("#calReconnectBtn");
+  if(dot) dot.className = "cal-live-dot" + (live ? " live" : "");
+  if(txt) txt.textContent = text;
+  if(btn) btn.style.display = showReconnect ? "inline-block" : "none";
+}
+
+/* pulls fresh events from Google Calendar and re-renders ONLY the today-triple
+   block in place (portfolio snapshot, to-do cards, and weather are untouched) —
+   falls back silently to whatever's already on screen (the once-daily
+   published data, or the previous live fetch) if this attempt can't complete. */
+async function gcalRefreshForPanel(p, d){
+  const wrap = p.querySelector("#todayTriple");
+  if(!wrap) return;
+  gcalSetStatus("Syncing live calendar…", false, false);
+  const res = await gcalFetchRawEvents();
+  if(!p.isConnected || !p.querySelector("#todayTriple")) return; // navigated away mid-fetch
+  if(!res.ok){
+    gcalSetStatus(res.reason === "auth" ? "Calendar not connected — showing this morning's briefing." : "Live calendar unavailable — showing this morning's briefing.", res.reason === "auth", false);
+    return;
+  }
+  const { today, radar } = gcalBucketEvents(res.items, d.date);
+  const radarWeek = radar.filter(item => {
+    const ev = parseEventLead(item.lead, "", null);
+    return withinDays(ev.dateStr, d.date, 7);
+  });
+  wrap.innerHTML = buildTodayTripleHTML(today, radar, radarWeek, d.date);
+  const calCard = wrap.querySelector(".cal-card");
+  if(calCard) wireMiniCal(calCard);
+  startCountdowns();
+  gcalSetStatus("Live · synced just now", false, true);
+}
+
+function gcalStartAutoRefresh(p, d){
+  if(GCAL.refreshTimer) clearInterval(GCAL.refreshTimer);
+  gcalRefreshForPanel(p, d);
+  GCAL.refreshTimer = setInterval(() => gcalRefreshForPanel(p, d), 5 * 60 * 1000);
+}
+
+function gcalWireReconnect(p, d){
+  const btn = $("#calReconnectBtn");
+  if(!btn) return;
+  btn.addEventListener("click", async () => {
+    gcalSetStatus("Connecting…", false, false);
+    const token = await gcalRequestToken(true);
+    if(!token){ gcalSetStatus("Couldn't connect — try again.", true, false); return; }
+    gcalRefreshForPanel(p, d);
+  });
+}
+
 function todoRowsHTML(kind, items){
   const list = items || [];
   const ready = !!(window.__todosApi && window.__todosApi.isReady());
@@ -2024,16 +2265,6 @@ function renderCalendarBody(p, d){
     return withinDays(ev.dateStr, d.date, 7);
   });
 
-  const events = (arr, fallbackDate, opts) => {
-    if(!(arr||[]).length) return "";
-    let x = `<div class="events">`;
-    arr.forEach(i => {
-      const lead = typeof i === "string" ? i : i.lead, body = typeof i === "string" ? "" : i.body;
-      x += eventTile(lead, body, fallbackDate, opts);
-    });
-    return x + `</div>`;
-  };
-
   /* ---- portfolio snapshot (full-width, at the very top) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
@@ -2044,17 +2275,17 @@ function renderCalendarBody(p, d){
   h += `<div id="urgentCardSlot"></div>`;
   h += `<div id="chillCardSlot"></div>`;
 
-  /* ---- Today / Next 7 Days / Two-Week View, side by side ---- */
-  h += `<div class="today-triple">
-    <div class="agenda-card">
-      <div class="ag-head">Today</div>
-      <div class="agenda-panel">${todayList.length ? events(todayList, d.date, {countdown:true}) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing on the calendar today.</p>`}</div>
+  /* ---- Today / Next 7 Days / Two-Week View, side by side. The published
+     today/radar fields paint instantly here as a fallback; gcalStartAutoRefresh()
+     below then swaps in a live client-side Google Calendar fetch (primary
+     calendar), re-rendering ONLY this block — see the gcal* functions above. ---- */
+  h += `<div id="calLiveWrap">
+    <div class="cal-live-row" id="calLiveRow" style="display:none">
+      <span class="cal-live-dot" id="calLiveDot"></span>
+      <span class="cal-live-text" id="calLiveText"></span>
+      <button class="cal-reconnect-btn" id="calReconnectBtn" style="display:none" type="button">Reconnect calendar</button>
     </div>
-    <div class="agenda-card">
-      <div class="ag-head">Next 7 Days</div>
-      <div class="agenda-panel">${radarWeek.length ? events(radarWeek, null) : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Nothing needs attention this week.</p>`}</div>
-    </div>
-    <div class="bento-card cal-card">${buildMiniCal(todayList, radarList, d.date)}</div>
+    <div id="todayTriple">${buildTodayTripleHTML(todayList, radarList, radarWeek, d.date)}</div>
   </div>`;
 
   /* ---- weather hero (live; filled in async), now at the bottom. Two stacked sky layers crossfade instead of snapping ---- */
@@ -2090,6 +2321,8 @@ function renderCalendarBody(p, d){
   wirePortfolioSnapshot();
   loadTodayWeather(d);
   startCountdowns();
+  gcalWireReconnect(p, d);
+  gcalStartAutoRefresh(p, d);
 }
 
 /* fill the weather hero: live Open-Meteo first, task hourly[] as fallback.

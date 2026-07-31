@@ -1989,10 +1989,13 @@ function gcalGetTokenClient(){
   return GCAL.tokenClient;
 }
 
-/* resolves an access token: reuses a cached one, else tries a silent grant
-   (prompt:""), else — ONLY when interactive===true, i.e. the Reconnect button —
-   shows Google's consent screen. A plain page load/auto-refresh never sets
-   interactive, so it can never surprise Eli with a popup. */
+/* resolves an access token: reuses a cached one, else tries a TRULY silent grant
+   (prompt:"none" — the only value Google guarantees will never show any UI; an
+   empty string is NOT equivalent and can still pop a window), else — ONLY when
+   interactive===true, i.e. the Reconnect button — shows Google's consent screen.
+   A plain page load/auto-refresh never sets interactive, so it can never pop a
+   sign-in window on its own; if the silent grant can't complete quietly it just
+   fails quietly and the UI falls back to "Calendar not connected" + Reconnect. */
 async function gcalRequestToken(interactive){
   const cached = gcalTokenLoad();
   if(cached) return cached.access_token;
@@ -2006,7 +2009,7 @@ async function gcalRequestToken(interactive){
       if(resp && resp.access_token){ gcalTokenSave(resp.access_token, resp.expires_in); finish(resp.access_token); }
       else finish(null);
     };
-    try{ client.requestAccessToken({ prompt: interactive ? "consent" : "" }); }
+    try{ client.requestAccessToken({ prompt: interactive ? "consent" : "none" }); }
     catch(e){ finish(null); }
     if(!interactive) setTimeout(() => finish(null), 4000);
   });

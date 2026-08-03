@@ -429,8 +429,13 @@
   .cal-cell.has:hover{background:var(--gold-soft)}
   .cal-cell.today{outline:2px solid var(--gold);outline-offset:-2px}
   .cal-cell.today .cn{color:#A08339;font-weight:900}
+  .evt-through{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.02em;color:#8A6D2F;background:var(--gold-soft);padding:1px 7px;border-radius:999px;vertical-align:middle;white-space:nowrap}
   .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
   .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
+  /* multi-day event bar: a real grid item placed via explicit grid-column/row so
+     its span covers the gaps between day cells too, reading as one solid bar */
+  .cal-span-bar{align-self:end;justify-self:stretch;margin:0 2px 5px;height:6px;border-radius:3px;background:var(--gold);opacity:.6;pointer-events:auto;cursor:default}
+  .cal-span-bar:hover{opacity:.85}
   .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:10px 13px;border-radius:9px;max-width:250px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
   .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:5px}
   .cal-tip .ct-row{margin-top:5px}
@@ -1706,13 +1711,23 @@ function parseEventLead(lead, body, fallbackDate){
   return {tw, td, small, timeLine, title, dateStr, startMin, endMin};
 }
 
-/* renders a calendar-tile row; opts.countdown ticks a live "in Xh Ym" badge */
+/* short "8/12"-style label for a YYYY-MM-DD date, used by the multi-day "through" badge */
+function fmtShortMD(dateStr){
+  const d = new Date(dateStr+"T12:00:00");
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+/* renders a calendar-tile row; opts.countdown ticks a live "in Xh Ym" badge.
+   opts.endDate (from refresh_calendar.py, only present on genuinely multi-day
+   events) adds a "through M/D" badge so a several-day event like a FOCUS block
+   reads clearly instead of only showing its start day. */
 function eventTile(lead, body, fallbackDate, opts){
   opts = opts || {};
   const ev = parseEventLead(lead, body, fallbackDate);
   const cdId = opts.countdown ? "cd-"+Math.random().toString(36).slice(2) : "";
+  const through = opts.endDate ? `<span class="evt-through">through ${esc(fmtShortMD(opts.endDate))}</span>` : "";
   return `<div class="event evt-wrap"><div class="tile"><div class="tw">${esc(ev.tw||"·")}</div><div class="td${ev.small?" small":""}">${esc(ev.td)}</div></div>
-    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div></div>`;
+    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}${through}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div></div>`;
 }
 
 function startCountdowns(){
@@ -1821,23 +1836,34 @@ function eventTimeText(lead){
 function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
   const byDate = {};
+  const spans = []; // {start, end, label} for genuinely multi-day events (endDate present)
   const add = (dstr, label, time) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time}); };
+  const addSpan = (item, fallbackDate) => {
+    if(!item || typeof item === "string" || !item.endDate) return;
+    const ev = parseEventLead(item.lead, item.body, fallbackDate);
+    if(!ev.dateStr) return;
+    spans.push({ start: ev.dateStr, end: item.endDate, label: item.body || ev.title || "" });
+  };
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, todayDate);
     add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
+    addSpan(item, todayDate);
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, null);
     add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
+    addSpan(item, null);
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
   const dows = ["S","M","T","W","T","F","S"];
   let cells = dows.map(dw => `<div class="cal-dow">${dw}</div>`).join("");
+  const dayKeys = [];
   for(let i=0;i<14;i++){
     const dt = new Date(start); dt.setDate(start.getDate()+i);
     const key = dt.toLocaleDateString("en-CA");
+    dayKeys.push(key);
     const evs = byDate[key] || [];
     const has = evs.length>0, isToday = key===todayDate, isPast = key<todayDate && !isToday;
     const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
@@ -1845,10 +1871,30 @@ function buildMiniCal(todayList, radarList, todayDate){
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
     cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }
+  // spanning bars: multi-day events render as a continuous bar (not just dots)
+  // across the days they cover. Each bar is its own grid item explicitly placed
+  // via grid-column/grid-row inside the SAME .cal-grid — CSS grid lets an item's
+  // span cover the gaps between tracks too, so it reads as one solid bar rather
+  // than several disconnected per-cell chips. A span crossing the week-1/week-2
+  // row boundary is split into one bar segment per row.
+  let bars = "";
+  spans.forEach(sp => {
+    for(let row=0; row<2; row++){
+      const rowStartIdx = row*7, rowEndIdx = rowStartIdx+6;
+      const rowStartKey = dayKeys[rowStartIdx], rowEndKey = dayKeys[rowEndIdx];
+      if(sp.end < rowStartKey || sp.start > rowEndKey) continue; // no overlap with this row
+      const segStart = sp.start > rowStartKey ? sp.start : rowStartKey;
+      const segEnd = sp.end < rowEndKey ? sp.end : rowEndKey;
+      const colStart = dayKeys.indexOf(segStart) - rowStartIdx;
+      const colEnd = dayKeys.indexOf(segEnd) - rowStartIdx;
+      if(colStart < 0 || colEnd < 0) continue;
+      bars += `<div class="cal-span-bar" style="grid-column:${colStart+1} / ${colEnd+2};grid-row:${row+2}" title="${esc(sp.label)}: through ${esc(fmtShortMD(sp.end))}"></div>`;
+    }
+  });
   const end = new Date(start); end.setDate(start.getDate()+13);
   const label = `${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`;
   return `<div class="cal-head"><span class="cm">Two-Week View</span><span class="cl">${esc(label)}</span></div>
-    <div class="cal-grid">${cells}</div><div class="cal-tip"></div>`;
+    <div class="cal-grid">${cells}${bars}</div><div class="cal-tip"></div>`;
 }
 function wireMiniCal(card){
   const tip = card.querySelector(".cal-tip"); if(!tip) return;
@@ -1968,7 +2014,8 @@ function renderEventsList(arr, fallbackDate, opts){
   let x = `<div class="events">`;
   arr.forEach(i => {
     const lead = typeof i === "string" ? i : i.lead, body = typeof i === "string" ? "" : i.body;
-    x += eventTile(lead, body, fallbackDate, opts);
+    const endDate = typeof i === "string" ? null : i.endDate;
+    x += eventTile(lead, body, fallbackDate, {...(opts||{}), endDate});
   });
   return x + `</div>`;
 }

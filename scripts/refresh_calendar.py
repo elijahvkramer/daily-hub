@@ -108,10 +108,17 @@ def format_event(ev, is_today):
     body = summary + (f" · {location}" if location else "")
 
     time_line = ""
+    end_date_str = None  # only set for events that genuinely span 2+ calendar days (CT)
     if is_all_day:
         dt = datetime.datetime.strptime(s["date"], "%Y-%m-%d")
         weekday = dt.strftime("%a")
         md = f"{dt.month}/{dt.day}"
+        if e.get("date"):
+            # Google's all-day "end.date" is EXCLUSIVE (the day after the event
+            # actually ends), so the last inclusive day is end.date minus one.
+            end_dt = datetime.datetime.strptime(e["date"], "%Y-%m-%d") - datetime.timedelta(days=1)
+            if end_dt.date() > dt.date():
+                end_date_str = end_dt.strftime("%Y-%m-%d")
     else:
         start_dt = datetime.datetime.fromisoformat(s["dateTime"])
         start_ct = start_dt.astimezone(CT)
@@ -119,14 +126,21 @@ def format_event(ev, is_today):
         md = f"{start_ct.month}/{start_ct.day}"
         time_line = fmt_ct_time(start_dt)
         if e.get("dateTime"):
-            time_line += "–" + fmt_ct_time(datetime.datetime.fromisoformat(e["dateTime"]))
+            end_dt = datetime.datetime.fromisoformat(e["dateTime"])
+            end_ct = end_dt.astimezone(CT)
+            time_line += "–" + fmt_ct_time(end_dt)
+            if end_ct.date() > start_ct.date():
+                end_date_str = end_ct.strftime("%Y-%m-%d")
         time_line += " CT"
 
     if is_today:
         lead = f"{time_line} —" if time_line else ""
     else:
         lead = f"{weekday} {md}" + (f", {time_line}" if time_line else "") + " —"
-    return {"lead": lead, "body": body}
+    result = {"lead": lead, "body": body}
+    if end_date_str:
+        result["endDate"] = end_date_str  # additive field; existing {lead,body} shape unchanged otherwise
+    return result
 
 
 def bucket_events(items, today_date_str):
@@ -152,7 +166,7 @@ def bucket_events(items, today_date_str):
         seen = set()
         out = []
         for item in lst:
-            key = (item["lead"], item["body"])
+            key = (item["lead"], item["body"], item.get("endDate"))
             if key in seen:
                 continue
             seen.add(key)

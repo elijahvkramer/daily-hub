@@ -306,6 +306,8 @@
   .wx-chart{position:relative}
   .wx-hours{position:relative;height:22px;margin-bottom:1px}
   .wx-hours span{position:absolute;transform:translateX(-50%);font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  .wx-sunset-glyph{font-size:15px!important;cursor:default;z-index:2}
+  .wx-sunset-ln{stroke:#F0B94E;stroke-width:1;stroke-dasharray:3 3;opacity:.7}
   .bh-spark{width:100%;height:80px;display:block}
   .bh-axis{position:relative;height:14px;margin-top:2px;font-size:10px;opacity:.72;font-weight:700}
   .bh-axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
@@ -1601,7 +1603,7 @@ function wxGlyph(cond){
   if(c.includes("fog")||c.includes("haze")) return "≋";
   if(c.includes("partly")||c.includes("mostly sunny")) return "⛅";
   if(c.includes("cloud")||c.includes("overcast")) return "☁";
-  if(c.includes("sunny")||c.includes("clear")) return "☀";
+  if(c.includes("sunny")||c.includes("clear")) return "☀\ufe0f";
   return "◦";
 }
 function fmtHour(hh){ const h = Number(hh); if(isNaN(h)) return esc(String(hh)); const ap = h>=12?"pm":"am"; const v = h%12===0?12:h%12; return v+ap; }
@@ -1649,12 +1651,22 @@ function feelsLike(T, R, W){
   }
   return Math.round(T);
 }
+/* Open-Meteo returns sunrise/sunset as local ISO strings like "2026-08-03T19:42"
+   (no seconds, already in the &timezone= we requested) — pull out hour/minute and
+   a decimal-hour value used to place the sunset marker on the hourly chart. */
+function parseSunTime(iso){
+  if(!iso) return null;
+  const h = parseInt(iso.slice(11,13),10), m = parseInt(iso.slice(14,16),10);
+  if(isNaN(h) || isNaN(m)) return null;
+  const ap = h>=12?"pm":"am", v = h%12===0?12:h%12;
+  return { h, m, dec: h + m/60, label: v+":"+String(m).padStart(2,"0")+ap };
+}
 async function fetchWeather(){
   if(S.wx) return S.wx;
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LOC.lat}&longitude=${WX_LOC.lon}`
     + `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,is_day,wind_speed_10m`
     + `&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m`
-    + `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
+    + `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset`
     + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=1`;
   const r = await fetch(url, {cache:"no-store"});
   if(!r.ok) throw new Error("weather http "+r.status);
@@ -1691,6 +1703,7 @@ async function fetchWeather(){
     hi: Math.round((d0.temperature_2m_max||[])[0]),
     lo: Math.round((d0.temperature_2m_min||[])[0]),
     rainMax: (d0.precipitation_probability_max||[])[0] ?? null,
+    sunset: parseSunTime((d0.sunset||[])[0]),
     hourly
   };
   return S.wx;
@@ -1792,7 +1805,7 @@ function ringSvg(done, total, size){
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/><circle class="ring-arc" cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${sw}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" data-c="${c.toFixed(2)}"/></svg>`;
 }
 
-function buildSparkline(hourly, lineColor){
+function buildSparkline(hourly, lineColor, sunset){
   lineColor = lineColor || "#C8A24B";
   const W = 300, H = 80, PT = 10, PB = 8, PL = 8, PR = 8;   // padding so the first/last point + dot never clip
   const vals = hourly.map(x => Number(x.temp ?? x.tF ?? 0));
@@ -1810,10 +1823,35 @@ function buildSparkline(hourly, lineColor){
   // multi-tick time axis
   const nTicks = Math.min(6, hourly.length); let axis = "";
   for(let k=0;k<nTicks;k++){ const i = Math.round(k*(hourly.length-1)/(nTicks-1||1)); axis += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${esc(fmtHour(hourly[i].t ?? hourly[i].h))}</span>`; }
-  return `<div class="wx-hours">${glyphs}</div>
+  // sunset marker — only shown when sunset falls within today's remaining hourly
+  // window (it naturally disappears once the sun has already set for the day,
+  // since the hourly array starts at the current hour). Position is interpolated
+  // between whichever two hourly ticks bracket the sunset's fractional hour.
+  let sunsetGlyph = "", sunsetLine = "";
+  if(sunset && sunset.dec != null && hourly.length){
+    const ts = hourly.map(h => Number(h.t ?? h.h));
+    let sunX = null;
+    if(sunset.dec >= ts[0] && sunset.dec <= ts[ts.length-1]){
+      for(let i=0;i<ts.length-1;i++){
+        if(sunset.dec >= ts[i] && sunset.dec <= ts[i+1]){
+          const frac = ts[i+1]===ts[i] ? 0 : (sunset.dec-ts[i])/(ts[i+1]-ts[i]);
+          sunX = X(i) + frac*(X(i+1)-X(i));
+          break;
+        }
+      }
+      if(sunX == null) sunX = X(ts.length-1);
+    }
+    if(sunX != null){
+      const pct = (sunX/W*100).toFixed(2);
+      sunsetGlyph = `<span class="wx-sunset-glyph" style="left:${pct}%" title="Sunset ${esc(sunset.label)}">🌇</span>`;
+      sunsetLine = `<line x1="${sunX.toFixed(1)}" x2="${sunX.toFixed(1)}" y1="${PT}" y2="${H-PB}" class="wx-sunset-ln"/>`;
+    }
+  }
+  return `<div class="wx-hours">${glyphs}${sunsetGlyph}</div>
   <svg viewBox="0 0 ${W} ${H}" class="bh-spark" id="wxSpark" preserveAspectRatio="none">
     <defs><linearGradient id="wxGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lineColor}" stop-opacity=".30"/><stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/></linearGradient></defs>
     <path d="${area}" fill="url(#wxGrad)"/>
+    ${sunsetLine}
     <path d="${line}" fill="none" stroke="${lineColor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
     <line id="wxHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="#fff" stroke-width="1" opacity=".55" style="display:none"/>
     <circle id="wxDot" r="4" fill="#fff" stroke="${lineColor}" stroke-width="2" style="display:none"/>
@@ -2639,7 +2677,7 @@ async function loadTodayWeather(d){
     setWxMeta(wx.feels, wx.rainMax, wx.humidity, wx.wind);
     const sw = $("#wxSparkWrap");
     if(wx.hourly && wx.hourly.length){
-      sw.innerHTML = buildSparkline(wx.hourly, "#C8A24B");
+      sw.innerHTML = buildSparkline(wx.hourly, "#C8A24B", wx.sunset);
       wireSparkline(wx.hourly,
         hr => {   // onHover: re-skin (gradual) + swap the top-left temp/glyph/condition + readouts to this hour
           applyTheme(hr.cond, hr.day, true);

@@ -430,6 +430,13 @@
   .cal-cell.today{outline:2px solid var(--gold);outline-offset:-2px}
   .cal-cell.today .cn{color:#A08339;font-weight:900}
   .evt-through{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.02em;color:#8A6D2F;background:var(--gold-soft);padding:1px 7px;border-radius:999px;vertical-align:middle;white-space:nowrap}
+  /* to-do due-date entries surfaced notionally on the calendar views — never
+     written to Google Calendar, purely derived client-side from the live
+     to-do state so they update the instant a due date is set/cleared */
+  .evt-wrap.evt-todo{opacity:.92}
+  .evt-todo-tag{display:inline-block;margin-right:6px;font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--up);padding:1px 7px;border-radius:999px;vertical-align:middle;white-space:nowrap}
+  .cal-dots i.todo{background:var(--up)}
+  .ct-todo-tag{display:inline-block;margin-right:4px;font-size:8.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--up);padding:0 5px;border-radius:999px;vertical-align:middle}
   .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
   .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
   /* multi-day event bar: a real grid item placed via explicit grid-column/row so
@@ -1726,8 +1733,9 @@ function eventTile(lead, body, fallbackDate, opts){
   const ev = parseEventLead(lead, body, fallbackDate);
   const cdId = opts.countdown ? "cd-"+Math.random().toString(36).slice(2) : "";
   const through = opts.endDate ? `<span class="evt-through">through ${esc(fmtShortMD(opts.endDate))}</span>` : "";
-  return `<div class="event evt-wrap"><div class="tile"><div class="tw">${esc(ev.tw||"·")}</div><div class="td${ev.small?" small":""}">${esc(ev.td)}</div></div>
-    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}${through}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div></div>`;
+  const todoTag = opts.isTodo ? `<span class="evt-todo-tag">${opts.todoKind === "chill" ? "chill to-do" : "urgent to-do"}</span>` : "";
+  return `<div class="event evt-wrap${opts.isTodo?" evt-todo":""}"><div class="tile"><div class="tw">${esc(ev.tw||"·")}</div><div class="td${ev.small?" small":""}">${esc(ev.td)}</div></div>
+    <div>${ev.timeLine?`<div class="etime">${esc(ev.timeLine)}</div>`:""}<div class="ebody">${todoTag}${ev.title?`<b>${esc(ev.title)}</b> `:""}${esc(body||"")}${through}</div>${cdId?`<div class="countdown" id="${cdId}" data-date="${esc(ev.dateStr||"")}" data-start="${ev.startMin==null?"":ev.startMin}"></div>`:""}</div></div>`;
 }
 
 function startCountdowns(){
@@ -1837,7 +1845,7 @@ function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
   const byDate = {};
   const spans = []; // {start, end, label} for genuinely multi-day events (endDate present)
-  const add = (dstr, label, time) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time}); };
+  const add = (dstr, label, time, isTodo) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo}); };
   const addSpan = (item, fallbackDate) => {
     if(!item || typeof item === "string" || !item.endDate) return;
     const ev = parseEventLead(item.lead, item.body, fallbackDate);
@@ -1847,13 +1855,15 @@ function buildMiniCal(todayList, radarList, todayDate){
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, todayDate);
-    add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
+    const isTodo = typeof item !== "string" && !!item.isTodo;
+    add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, todayDate);
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, null);
-    add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead));
+    const isTodo = typeof item !== "string" && !!item.isTodo;
+    add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, null);
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
@@ -1867,7 +1877,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     const evs = byDate[key] || [];
     const has = evs.length>0, isToday = key===todayDate, isPast = key<todayDate && !isToday;
     const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
-    const dots = evs.slice(0,6).map(()=>`<i></i>`).join("");
+    const dots = evs.slice(0,6).map(e=>`<i class="${e.isTodo?"todo":""}"></i>`).join("");
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
     cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }
@@ -1902,7 +1912,7 @@ function wireMiniCal(card){
     c.addEventListener("mouseenter", () => {
       let data; try{ data = JSON.parse(c.dataset.cal); }catch(e){ return; }
       const rows = (data.list||[]).length
-        ? data.list.map(e => `<div class="ct-row"><span class="ct-time">${esc(e.time||"All day")}</span> ${esc(e.label)}</div>`).join("")
+        ? data.list.map(e => `<div class="ct-row"><span class="ct-time">${esc(e.time||"All day")}</span> ${e.isTodo?'<span class="ct-todo-tag">to-do</span> ':''}${esc(e.label)}</div>`).join("")
         : `<span style="color:#8A8F95">Nothing scheduled</span>`;
       tip.innerHTML = `<div class="ct-day">${esc(data.day)}${data.today?" · Today":""}</div>${rows}`;
       tip.style.display = "block";
@@ -2015,7 +2025,9 @@ function renderEventsList(arr, fallbackDate, opts){
   arr.forEach(i => {
     const lead = typeof i === "string" ? i : i.lead, body = typeof i === "string" ? "" : i.body;
     const endDate = typeof i === "string" ? null : i.endDate;
-    x += eventTile(lead, body, fallbackDate, {...(opts||{}), endDate});
+    const isTodo = typeof i === "string" ? false : !!i.isTodo;
+    const todoKind = typeof i === "string" ? null : i.kind;
+    x += eventTile(lead, body, fallbackDate, {...(opts||{}), endDate, isTodo, todoKind});
   });
   return x + `</div>`;
 }
@@ -2351,6 +2363,57 @@ function refreshTodoCards(root, state, prevState){
   });
 }
 
+/* to-do due dates, surfaced notionally on the calendar views (Today / Next 7
+   Days / Two-Week View) — visually tagged as to-dos via the green "to-do"
+   badge/dot, and never written to the actual Google Calendar. Purely derived
+   client-side from the live Firestore to-do state, so it updates the instant
+   a due date is set or cleared on either list, on any device. */
+function todoDueEntries(todosState, todayDate){
+  const out = [];
+  todosState = todosState || { urgent: [], chill: [] };
+  ["urgent","chill"].forEach(kind => {
+    (todosState[kind]||[]).forEach(t => {
+      if(!t.due) return;
+      out.push({ due: t.due, kind, id: t.id, text: t.text });
+    });
+  });
+  return out;
+}
+function todoDueAsCalItems(dueEntries, todayDate){
+  const today = [], radar = [];
+  (dueEntries||[]).forEach(d => {
+    const dt = new Date(d.due+"T12:00:00");
+    const weekday = dt.toLocaleDateString("en-US", { weekday: "short" });
+    const md = `${dt.getMonth()+1}/${dt.getDate()}`;
+    const item = { body: d.text, isTodo: true, kind: d.kind };
+    if(d.due === todayDate) today.push({ ...item, lead: "" });
+    else radar.push({ ...item, lead: `${weekday} ${md} —` });
+  });
+  return { today, radar };
+}
+/* rebuilds #todayTriple (Today/Next 7 Days/Two-Week View) merging the
+   published calendar data (d.today/d.radar, unchanged) with fresh to-do due
+   entries — called on every to-do snapshot so due-date changes show up live
+   without needing a full tab reload. */
+function refreshCalendarDueOverlay(root, d, todosState){
+  todosState = todosState || (window.__todosApi ? window.__todosApi.getState() : { urgent: [], chill: [] });
+  const triple = root.querySelector("#todayTriple");
+  if(!triple) return;
+  const dueEntries = todoDueEntries(todosState, d.date);
+  const { today: dueToday, radar: dueRadar } = todoDueAsCalItems(dueEntries, d.date);
+  const mergedToday = [...(d.today||[]), ...dueToday];
+  const mergedRadar = [...(d.radar||[]), ...dueRadar];
+  const mergedRadarWeek = mergedRadar.filter(item => {
+    const lead = typeof item === "string" ? item : item.lead;
+    const ev = parseEventLead(lead, "", null);
+    return withinDays(ev.dateStr, d.date, 7);
+  });
+  triple.innerHTML = buildTodayTripleHTML(mergedToday, mergedRadar, mergedRadarWeek, d.date);
+  const calCard = triple.querySelector(".cal-card");
+  if(calCard) wireMiniCal(calCard);
+  startCountdowns();
+}
+
 function renderCalendarBody(p, d){
   let h = "";
   const todayList = d.today || [];
@@ -2402,10 +2465,23 @@ function renderCalendarBody(p, d){
      starts clean. */
   const todoPrevState = { urgent: null, chill: null };
   refreshTodoCards(p, undefined, todoPrevState);
-  window.__onTodosSnapshot = (state) => refreshTodoCards(p, state, todoPrevState);
-
-  const calCard = p.querySelector(".cal-card");
-  if(calCard) wireMiniCal(calCard);
+  window.__onTodosSnapshot = (state) => {
+    refreshTodoCards(p, state, todoPrevState);
+    refreshCalendarDueOverlay(p, d, state);
+  };
+  // if to-do data is already loaded (e.g. returning to this tab), reflect due
+  // dates immediately rather than waiting for the next snapshot event — this
+  // also wires the mini-cal itself, so only fall back to wiring the plain
+  // (due-less) version below when that didn't happen
+  let dueOverlayApplied = false;
+  if(window.__todosApi && window.__todosApi.isReady()){
+    refreshCalendarDueOverlay(p, d);
+    dueOverlayApplied = true;
+  }
+  if(!dueOverlayApplied){
+    const calCard = p.querySelector(".cal-card");
+    if(calCard) wireMiniCal(calCard);
+  }
   wirePortfolioSnapshot();
   loadTodayWeather(d);
   startCountdowns();

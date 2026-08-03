@@ -403,6 +403,21 @@
   .todo-add button:hover{filter:brightness(1.08)}
 
   /* portfolio snapshot — now the full-width top hero of the Today tab */
+  /* marquee stock ticker wall — dark scrolling strip, distinct from the light
+     card system on purpose (this is meant to read like an actual ticker tape) */
+  .ticker-wall{background:var(--ink);border-radius:14px;padding:13px 0 11px;overflow:hidden;position:relative;cursor:pointer}
+  .ticker-wall:hover{box-shadow:0 0 0 1px var(--gold)}
+  .ticker-wall .tw-label{position:absolute;top:8px;left:16px;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);background:var(--ink);padding:0 6px 0 0;z-index:1}
+  .tw-track-wrap{overflow:hidden;padding-top:15px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+  .tw-track{display:flex;align-items:center;gap:0;white-space:nowrap;width:max-content;animation:twScroll 32s linear infinite}
+  .ticker-wall:hover .tw-track{animation-play-state:paused}
+  .tw-item{display:inline-flex;align-items:baseline;gap:8px;padding:0 22px;font-size:13.5px;font-weight:900;color:var(--cream);border-right:1px solid rgba(255,255,255,.12)}
+  .tw-item .tw-price{color:#9BA0A6;font-weight:600}
+  .tw-item .tw-chg{font-weight:900;font-size:12.5px}
+  .tw-item .tw-chg.pos{color:var(--up)}
+  .tw-item .tw-chg.neg{color:var(--down)}
+  @keyframes twScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){.tw-track{animation:none}}
   .psnap{cursor:pointer;position:relative}
   .psnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
   .psnap .ps-head{display:flex;align-items:center;justify-content:space-between}
@@ -1969,6 +1984,44 @@ function wirePortfolioSnapshot(){
   const hi = setInterval(() => { if(!$("#psnap")){ clearInterval(hi); return; } if(P.intraReady){ paint(); clearInterval(hi); } }, 600);
 }
 
+/* ---- marquee stock ticker wall (Today tab) ----
+   A scrolling ticker strip showing every distinct ticker Eli holds (merged
+   across accounts via pViewMerged, same as the Portfolio tab's "All Accounts"
+   view) with its live price and today's % change. Reuses the exact same
+   data pipeline as the portfolio snapshot card (pCompute/pFetchLive) rather
+   than fetching anything of its own. */
+function buildTickerWallHTML(){
+  if(!HOLDINGS) return "";
+  return `<div class="ticker-wall" id="tickerWall" title="Open full portfolio">
+    <div class="tw-label">Your Holdings</div>
+    <div class="tw-track-wrap"><div class="tw-track" id="twTrack"><span style="padding:0 20px;color:#6B7177;font-size:12.5px">Loading live prices…</span></div></div>
+  </div>`;
+}
+function tickerWallRow(){
+  const list = pViewMerged().filter(p => p.type !== "cash");
+  if(!list.length) return `<span style="padding:0 20px;color:#6B7177;font-size:12.5px">No holdings to show.</span>`;
+  return list.map(p => {
+    const c = pcls(p.dayPct);
+    const arrow = p.dayPct >= 0 ? "▲" : "▼";
+    return `<span class="tw-item"><b>${esc(p.ticker)}</b><span class="tw-price">${usd(p.price)}</span><span class="tw-chg ${c}">${arrow} ${pctS(p.dayPct)}</span></span>`;
+  }).join("");
+}
+function wireTickerWall(){
+  const wall = $("#tickerWall"), track = $("#twTrack");
+  if(!wall || !track || !HOLDINGS) return;
+  wall.addEventListener("click", goPortfolio);
+  const paint = () => {
+    pCompute();
+    const row = tickerWallRow();
+    track.innerHTML = row + row; // duplicated back-to-back for the seamless scroll loop
+  };
+  paint();
+  if(!P.fetched && !P.fetching) pFetchLive().then(() => { if($("#twTrack")) paint(); });
+  // if some other part of the page (e.g. the portfolio snapshot) finishes the
+  // live fetch first, pick up that same result rather than re-fetching
+  const hi = setInterval(() => { if(!$("#twTrack")){ clearInterval(hi); return; } if(P.fetched){ paint(); clearInterval(hi); } }, 600);
+}
+
 /* markets strip for the News front page — index scoreboard + the day's biggest movers,
    pulled from the latest published market brief. Clicking opens the full Markets view. */
 function wireMarketsStrip(){
@@ -2424,7 +2477,10 @@ function renderCalendarBody(p, d){
     return withinDays(ev.dateStr, d.date, 7);
   });
 
-  /* ---- portfolio snapshot (full-width, at the very top) ---- */
+  /* ---- ticker wall (full-width strip, at the very top) ---- */
+  h += `<div style="margin-top:14px">${buildTickerWallHTML()}</div>`;
+
+  /* ---- portfolio snapshot (full-width) ---- */
   h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
 
   /* ---- Urgent To-Dos and Chill To-Dos now live entirely in Firestore (synced
@@ -2482,6 +2538,7 @@ function renderCalendarBody(p, d){
     const calCard = p.querySelector(".cal-card");
     if(calCard) wireMiniCal(calCard);
   }
+  wireTickerWall();
   wirePortfolioSnapshot();
   loadTodayWeather(d);
   startCountdowns();

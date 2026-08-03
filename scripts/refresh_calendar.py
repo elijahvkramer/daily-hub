@@ -7,7 +7,8 @@ no dependence on Eli's computer or the Cowork app being open (that's the
 whole point vs. the retired client-side browser-OAuth approach and vs. a
 Cowork scheduled task).
 
-Fetches events from Eli's primary + Family + Brooklyn+Eli calendars, buckets
+Fetches events from Eli's primary + Family + Brooklyn+Eli calendars, plus the
+public Holidays in United States calendar (readable without a share), buckets
 them into today/radar using the exact same lead/body convention the
 daily-calendar-report SKILL.md and the site's parseEventLead() expect
 (ported from index.html's gcalFormatEvent/gcalBucketEvents), then merges
@@ -41,6 +42,7 @@ CALENDAR_IDS = [
     "elijahvkramer@gmail.com",
     "family13940029292116141615@group.calendar.google.com",
     "6668454f24e15ba8a30ea5f496b32f9713c27bb5bde025f21eaaea6f831a09e9@group.calendar.google.com",
+    "en.usa#holiday@group.v.calendar.google.com",  # public calendar; readable without an explicit share
 ]
 
 WINDOW_DAYS = 15  # matches the retired live-sync window (today + 15 days)

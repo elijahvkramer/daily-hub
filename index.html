@@ -460,7 +460,7 @@
   .ct-todo-tag{display:inline-block;margin-right:4px;font-size:8.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--up);padding:0 5px;border-radius:999px;vertical-align:middle}
   .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
   .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
-  .cal-dots i.todo{background:var(--up)}
+  .cal-dots i.cal-todo-dot{background:var(--up)}
   /* multi-day calendar event bar: a real grid item placed via explicit
      grid-column/row so its span covers the gaps between day cells too,
      reading as one solid bar rather than several disconnected chips */
@@ -1903,7 +1903,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
     // a to-do due that day gets a second, green dot right alongside the gold
     // event dots — same visual language, just a different color per kind
-    const dots = evs.slice(0,6).map(e=>`<i class="${e.isTodo?"todo":""}"></i>`).join("");
+    const dots = evs.slice(0,6).map(e=>`<i class="${e.isTodo?"cal-todo-dot":""}"></i>`).join("");
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
     cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }

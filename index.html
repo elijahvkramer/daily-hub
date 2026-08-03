@@ -343,9 +343,11 @@
   .tc-hist-btn:hover{background:var(--paper);color:var(--ink)}
   .tc-hist-btn.open{color:#A08339;background:var(--paper)}
   .tc-hist-wrap{margin:0 0 8px;padding:2px 2px 8px;border-bottom:1px dashed var(--hairline)}
-  .tc-hist-item{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 2px;font-size:13px}
+  .tc-hist-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px}
   .tc-hist-item .txt{flex:1;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:var(--hairline);color:#8A8F97}
   .tc-hist-item .when{flex-shrink:0;font-size:11px;font-weight:700;white-space:nowrap;color:var(--muted)}
+  .tc-hist-restore{flex-shrink:0;border:1px solid var(--hairline);background:var(--paper);color:var(--muted);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+  .tc-hist-restore:hover{background:var(--gold);border-color:var(--gold);color:#fff}
   .tc-hist-empty{color:var(--muted);font-size:13px;padding:6px 2px;font-style:italic}
   .tc-empty{color:var(--muted);font-size:14px;padding:8px 2px;display:flex;align-items:center;gap:9px}
   .tc-empty .tc-empty-check{width:20px;height:20px;border-radius:50%;background:var(--up);color:#fff;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -2014,7 +2016,7 @@ function relTimeAgo(iso){
 function historyListHTML(history){
   const list = history || [];
   if(!list.length) return `<p class="tc-hist-empty">Nothing completed recently.</p>`;
-  return list.map(h => `<div class="tc-hist-item"><span class="txt">${esc(h.text)}</span><span class="when">${relTimeAgo(h.doneAt)}</span></div>`).join("");
+  return list.map(h => `<div class="tc-hist-item"><span class="txt">${esc(h.text)}</span><span class="when">${relTimeAgo(h.doneAt)}</span><button type="button" class="tc-hist-restore" data-action="hist-restore" data-hist-id="${esc(h.id)}" title="Add back to the list">&#8617; Add back</button></div>`).join("");
 }
 
 function dueChipLabel(due){
@@ -2230,20 +2232,30 @@ function wireTodoAddForm(root, kind){
 function wireTodoHistory(root, kind){
   const card = root.querySelector(`#${kind}Card`);
   const btn = card ? card.querySelector(".tc-hist-btn") : null;
-  if(!btn || btn.dataset.wired) return;
-  btn.dataset.wired = "1";
-  btn.addEventListener("click", () => {
-    if(expandedHistory.has(kind)) expandedHistory.delete(kind); else expandedHistory.add(kind);
-    const open = expandedHistory.has(kind);
-    btn.classList.toggle("open", open);
-    const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
-    const state = window.__todosApi ? window.__todosApi.getState() : {};
-    const wrap = root.querySelector(`#${kind}HistWrap`);
-    if(wrap){
-      wrap.style.display = open ? "block" : "none";
-      if(open) wrap.innerHTML = historyListHTML(state[histKey]);
-    }
-  });
+  if(btn && !btn.dataset.wired){
+    btn.dataset.wired = "1";
+    btn.addEventListener("click", () => {
+      if(expandedHistory.has(kind)) expandedHistory.delete(kind); else expandedHistory.add(kind);
+      const open = expandedHistory.has(kind);
+      btn.classList.toggle("open", open);
+      const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
+      const state = window.__todosApi ? window.__todosApi.getState() : {};
+      const wrap = root.querySelector(`#${kind}HistWrap`);
+      if(wrap){
+        wrap.style.display = open ? "block" : "none";
+        if(open) wrap.innerHTML = historyListHTML(state[histKey]);
+      }
+    });
+  }
+  const wrap = root.querySelector(`#${kind}HistWrap`);
+  if(wrap && !wrap.dataset.wired){
+    wrap.dataset.wired = "1";
+    wrap.addEventListener("click", (e) => {
+      const restoreBtn = e.target.closest('[data-action="hist-restore"]');
+      if(!restoreBtn) return;
+      if(window.__todosApi) window.__todosApi.restore(kind, restoreBtn.dataset.histId);
+    });
+  }
 }
 
 /* updates the count badge in place (CSS transition handles the animation
@@ -4062,6 +4074,18 @@ gateInit();
       removeSub(kind, id, subId){
         const key = kind === "chill" ? "chill" : "urgent";
         updateItem(key, id, t => { t.subitems = (t.subitems||[]).filter(s => s.id !== subId); return t; });
+      },
+      restore(kind, historyId){
+        const key = kind === "chill" ? "chill" : "urgent";
+        const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
+        const entry = (todosState[histKey] || []).find(h => h.id === historyId);
+        if(!entry) return;
+        const next = {
+          ...todosState,
+          [key]: [...todosState[key], { id: genId(), text: entry.text, done: false }],
+          [histKey]: todosState[histKey].filter(h => h.id !== historyId)
+        };
+        setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to restore to-do", err));
       }
     };
   }catch(e){

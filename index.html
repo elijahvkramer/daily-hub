@@ -460,12 +460,12 @@
   .ct-todo-tag{display:inline-block;margin-right:4px;font-size:8.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--up);padding:0 5px;border-radius:999px;vertical-align:middle}
   .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
   .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
-  /* event/to-do bar: a real grid item placed via explicit grid-column/row so its
-     span covers the gaps between day cells too, reading as one solid bar. Gold =
-     a real (possibly multi-day) calendar event; green = a to-do due that day. */
+  .cal-dots i.todo{background:var(--up)}
+  /* multi-day calendar event bar: a real grid item placed via explicit
+     grid-column/row so its span covers the gaps between day cells too,
+     reading as one solid bar rather than several disconnected chips */
   .cal-span-bar{align-self:end;justify-self:stretch;margin:0 2px 5px;height:6px;border-radius:3px;background:var(--gold);opacity:.6;pointer-events:auto;cursor:default}
   .cal-span-bar:hover{opacity:.85}
-  .cal-span-bar.todo{background:var(--up)}
   .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:10px 13px;border-radius:9px;max-width:250px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
   .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:5px}
   .cal-tip .ct-row{margin-top:5px}
@@ -1867,9 +1867,8 @@ function eventTimeText(lead){
 function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
   const byDate = {};
-  const spans = []; // {start, end, label, isTodo} — multi-day events (endDate present) AND
-                     // single-day to-do due dates both render as bars, not dots (see below)
-  const todoByDate = {}; // date -> [to-do text, ...], merged into one bar per day
+  const spans = []; // {start, end, label} — multi-day CALENDAR events only (endDate
+                     // present); to-do due dates render as a second dot color instead (below)
   const add = (dstr, label, time, isTodo) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo}); };
   const addSpan = (item, fallbackDate) => {
     if(!item || typeof item === "string" || !item.endDate) return;
@@ -1877,19 +1876,12 @@ function buildMiniCal(todayList, radarList, todayDate){
     if(!ev.dateStr) return;
     spans.push({ start: ev.dateStr, end: item.endDate, label: item.body || ev.title || "" });
   };
-  const addTodoDue = (item, fallbackDate) => {
-    if(!item || typeof item === "string" || !item.isTodo) return;
-    const ev = parseEventLead(item.lead, item.body, fallbackDate);
-    if(!ev.dateStr) return;
-    (todoByDate[ev.dateStr] = todoByDate[ev.dateStr] || []).push(item.body || "");
-  };
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, todayDate);
     const isTodo = typeof item !== "string" && !!item.isTodo;
     add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, todayDate);
-    addTodoDue(item, todayDate);
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
@@ -1897,10 +1889,6 @@ function buildMiniCal(todayList, radarList, todayDate){
     const isTodo = typeof item !== "string" && !!item.isTodo;
     add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, null);
-    addTodoDue(item, null);
-  });
-  Object.keys(todoByDate).forEach(dstr => {
-    spans.push({ start: dstr, end: dstr, label: todoByDate[dstr].join(", "), isTodo: true });
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
   const dows = ["S","M","T","W","T","F","S"];
@@ -1913,20 +1901,18 @@ function buildMiniCal(todayList, radarList, todayDate){
     const evs = byDate[key] || [];
     const has = evs.length>0, isToday = key===todayDate, isPast = key<todayDate && !isToday;
     const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
-    // to-do due dates get their own bar below (see `bars`), not a dot — keeps the
-    // dot row reserved for real calendar events so the two read as distinct things
-    const dots = evs.filter(e=>!e.isTodo).slice(0,6).map(()=>`<i></i>`).join("");
+    // a to-do due that day gets a second, green dot right alongside the gold
+    // event dots — same visual language, just a different color per kind
+    const dots = evs.slice(0,6).map(e=>`<i class="${e.isTodo?"todo":""}"></i>`).join("");
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
     cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }
-  // spanning bars: multi-day events AND to-do due dates both render as a bar
-  // (gold for real events, green for to-dos) rather than a barely-visible dot.
-  // Each bar is its own grid item explicitly placed via grid-column/grid-row
-  // inside the SAME .cal-grid — CSS grid lets an item's span cover the gaps
-  // between tracks too, so it reads as one solid bar rather than several
-  // disconnected per-cell chips. A span crossing the week-1/week-2 row
-  // boundary is split into one bar segment per row (to-do bars are always
-  // exactly one day, so they never need splitting).
+  // spanning bars: multi-day calendar events render as a continuous gold bar
+  // (not just a dot) across the days they cover. Each bar is its own grid item
+  // explicitly placed via grid-column/grid-row inside the SAME .cal-grid — CSS
+  // grid lets an item's span cover the gaps between tracks too, so it reads as
+  // one solid bar rather than several disconnected per-cell chips. A span
+  // crossing the week-1/week-2 row boundary is split into one bar segment per row.
   let bars = "";
   spans.forEach(sp => {
     for(let row=0; row<2; row++){
@@ -1938,8 +1924,7 @@ function buildMiniCal(todayList, radarList, todayDate){
       const colStart = dayKeys.indexOf(segStart) - rowStartIdx;
       const colEnd = dayKeys.indexOf(segEnd) - rowStartIdx;
       if(colStart < 0 || colEnd < 0) continue;
-      const title = sp.isTodo ? `To-do due: ${sp.label}` : `${sp.label}: through ${fmtShortMD(sp.end)}`;
-      bars += `<div class="cal-span-bar${sp.isTodo?" todo":""}" style="grid-column:${colStart+1} / ${colEnd+2};grid-row:${row+2}" title="${esc(title)}"></div>`;
+      bars += `<div class="cal-span-bar" style="grid-column:${colStart+1} / ${colEnd+2};grid-row:${row+2}" title="${esc(sp.label)}: through ${esc(fmtShortMD(sp.end))}"></div>`;
     }
   });
   const end = new Date(start); end.setDate(start.getDate()+13);

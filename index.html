@@ -320,7 +320,6 @@
   @media(max-width:980px){.today-triple{grid-template-columns:1fr 1fr}.today-triple .cal-card{grid-column:span 2}}
   @media(max-width:640px){.today-triple{grid-template-columns:1fr}.today-triple .cal-card{grid-column:auto}}
   .ag-head{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 0 6px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
-  .chill-card{margin-top:12px}
   .chill-card .tc-head .h{color:#7A6A45}
   .bento-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .bc-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
@@ -328,24 +327,56 @@
   .bc-unit{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
   .bc-ring-txt{font-size:12.5px;font-weight:900;color:var(--ink);margin-top:8px}
 
-  /* to-do card with side ring */
-  .todo-card{display:flex;gap:20px;align-items:stretch}
-  .todo-card .tc-list{flex:1;min-width:0}
-  .todo-card .tc-ring{flex-shrink:0;width:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-left:1px solid var(--hairline);padding-left:18px}
-  .todo-card .tc-ring svg{overflow:visible;display:block}
-  .ring-arc{transition:stroke-dashoffset .6s cubic-bezier(.34,1.2,.4,1)}
+  /* to-do pair: Urgent + Chill side by side (stacks on mobile) */
+  .todo-pair{display:flex;gap:20px;margin-top:14px}
+  .todo-pair > div{flex:1;min-width:0}
+  @media(max-width:760px){.todo-pair{flex-direction:column;gap:14px}}
   .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .tc-head .h{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .todo-inline{display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px solid var(--hairline);cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
-  .todo-inline:last-child{border-bottom:none}
-  .todo-inline:hover{background:var(--paper)}
-  .todo-inline .box{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:900;color:transparent;transition:all .15s}
-  .todo-inline.done .box{background:var(--gold);color:var(--ink)}
-  .todo-inline.done span.txt{text-decoration:line-through;color:var(--muted)}
-  .todo-inline .txt{flex:1}
-  .todo-del{flex-shrink:0;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--muted);font-size:12px;opacity:0;transition:opacity .15s,background .15s,color .15s}
-  .todo-inline:hover .todo-del{opacity:1}
-  .todo-del:hover{background:var(--paper);color:#B23B3B}
+  /* stylish count badge, replacing the old completion ring — flips to a green
+     checkmark when the list is empty ("all clear"), animated via the same
+     transition whenever the count or clear-state changes */
+  .tc-badge{min-width:24px;height:24px;padding:0 8px;border-radius:999px;border:2px solid var(--gold);color:var(--gold);font-weight:900;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.34,1.2,.4,1)}
+  .tc-badge.clear{border-color:var(--up);background:var(--up);color:#fff;transform:scale(1.05)}
+  .tc-empty{color:var(--muted);font-size:14px;padding:8px 2px;display:flex;align-items:center;gap:9px}
+  .tc-empty .tc-empty-check{width:20px;height:20px;border-radius:50%;background:var(--up);color:#fff;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  /* click-to-complete: clicking the row plays a quick fade/shrink, then the
+     item is removed (the X stays an instant, no-animation delete) */
+  .todo-item{border-bottom:1px solid var(--hairline);transition:opacity .35s ease,transform .35s ease}
+  .todo-item:last-child{border-bottom:none}
+  .todo-item.ti-completing{opacity:0;transform:scale(.97) translateX(8px)}
+  .ti-main{display:flex;align-items:center;gap:9px;padding:11px 2px;cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
+  .ti-main:hover{background:var(--paper)}
+  .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent}
+  .ti-main .ti-text{flex:1;min-width:0;overflow-wrap:anywhere}
+  .ti-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--hairline);color:var(--muted);flex-shrink:0;white-space:nowrap}
+  .ti-chip.overdue{color:#B23B3B;border-color:#e3b3b3;background:#fbeeee}
+  .ti-chip .ti-chip-x{margin-left:1px;opacity:.55;font-weight:900}
+  .ti-chip .ti-chip-x:hover{opacity:1}
+  .ti-icon-btn{flex-shrink:0;border:none;background:none;color:var(--muted);font-size:12.5px;cursor:pointer;padding:3px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;transition:background .15s,color .15s;font-family:inherit}
+  .ti-icon-btn:hover{background:var(--paper);color:var(--ink)}
+  .ti-icon-btn.active{color:#A08339}
+  .ti-due-input{flex-shrink:0;border:1px solid var(--gold);border-radius:999px;padding:2px 7px;font-size:11px;font-family:inherit;background:var(--paper);color:var(--ink)}
+  .ti-del{flex-shrink:0;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--muted);font-size:12px;opacity:0;transition:opacity .15s,background .15s,color .15s}
+  .ti-main:hover .ti-del{opacity:1}
+  .ti-del:hover{background:var(--paper);color:#B23B3B}
+  .ti-note-wrap,.ti-sub-wrap{padding:0 2px 12px 29px}
+  .ti-note textarea{width:100%;min-height:52px;border:1px solid var(--hairline);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:inherit;background:var(--paper);color:var(--ink);resize:vertical}
+  .ti-note textarea:focus{outline:none;border-color:var(--gold)}
+  /* nested sub-checklist (e.g. a shopping list under one to-do) — items are
+     independently checkable/removable and do NOT auto-clear when checked, so
+     a list like this stays visible with checks until cleared as a whole */
+  .ti-sub-item{display:flex;align-items:center;gap:10px;padding:5px 2px;font-size:13.5px;color:#3A3E45;cursor:pointer}
+  .ti-sub-item .box{width:15px;height:15px;border:2px solid var(--gold);border-radius:4px;flex-shrink:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:transparent}
+  .ti-sub-item.done .box{background:var(--gold);color:var(--ink)}
+  .ti-sub-item.done .txt{text-decoration:line-through;color:var(--muted)}
+  .ti-sub-item .txt{flex:1;min-width:0;overflow-wrap:anywhere}
+  .ti-sub-item .ti-sub-del{flex-shrink:0;opacity:0;color:var(--muted);font-size:11px;border-radius:5px;width:18px;height:18px;display:grid;place-items:center;transition:opacity .15s}
+  .ti-sub-item:hover .ti-sub-del{opacity:1}
+  .ti-sub-add{display:flex;gap:6px;padding:6px 2px 2px}
+  .ti-sub-add input{flex:1;min-width:0;border:1px solid var(--hairline);border-radius:7px;padding:5px 8px;font-size:13px;font-family:inherit;background:var(--paper);color:var(--ink)}
+  .ti-sub-add input:focus{outline:none;border-color:var(--gold)}
+  .ti-sub-add button{flex-shrink:0;width:26px;border:none;border-radius:7px;background:var(--gold);color:var(--ink);font-size:15px;font-weight:900;cursor:pointer}
   .todo-add{display:flex;gap:8px;padding:10px 2px 2px}
   .todo-add input{flex:1;min-width:0;border:1px solid var(--hairline);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink)}
   .todo-add input:focus{outline:none;border-color:var(--gold)}
@@ -392,7 +423,7 @@
   .agenda-tab{appearance:none;background:none;border:none;font:inherit;font-size:12.5px;font-weight:900;color:var(--muted);padding:12px 0 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
   .agenda-tab.active{color:var(--ink);border-bottom-color:var(--gold)}
   .agenda-panel{padding:14px 0 6px}
-  @media(max-width:760px){.today-grid{grid-template-columns:1fr}.todo-card{flex-direction:column}.todo-card .tc-ring{border-left:none;border-top:1px solid var(--hairline);padding-left:0;padding-top:16px;width:100%;flex-direction:row;gap:16px}}
+  @media(max-width:760px){.today-grid{grid-template-columns:1fr}}
 
   /* ---------- site gate ---------- */
   #gate{position:fixed;inset:0;z-index:200;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -1937,45 +1968,176 @@ function buildTodayTripleHTML(todayList, radarList, radarWeek, todayDate){
   </div>`;
 }
 
+/* ---- to-do item extras: expand/collapse state is a pure client-side UI
+   concern (not synced across devices — a fresh tab visit starts collapsed),
+   keyed by item id. Ids come from genId() (base36 timestamp + random), so
+   plain string interpolation into selectors/attributes is always safe. ---- */
+const expandedNotes = new Set();
+const expandedSubs = new Set();
+const dueEditing = new Set();
+
+function dueChipLabel(due){
+  if(!due) return "";
+  const dt = new Date(due+"T12:00:00");
+  return dt.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+}
+
+function subChecklistHTML(subitems){
+  const list = subitems || [];
+  const rows = list.map(s => `<div class="ti-sub-item${s.done?" done":""}" data-action="sub-check" data-sub="${esc(s.id)}"><span class="box">✓</span><span class="txt">${esc(s.text)}</span><span class="ti-sub-del" data-action="sub-remove" data-sub="${esc(s.id)}" title="Remove">✕</span></div>`).join("");
+  return `<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
+}
+
+/* renders one to-do card's rows, including each item's due-date chip,
+   notes toggle, and nested sub-checklist toggle. Clicking the row body
+   (not a control) is handled by wireTodoRows — it plays a brief complete
+   animation, then removes the item; the X stays an instant, no-animation
+   delete, same as before. */
 function todoRowsHTML(kind, items){
   const list = items || [];
   const ready = !!(window.__todosApi && window.__todosApi.isReady());
   if(!ready) return `<p style="color:var(--muted);font-size:14px;padding:6px 2px">Loading…</p>`;
-  if(!list.length) return `<p style="color:var(--muted);font-size:14px;padding:6px 2px">${kind==="chill" ? "Nothing on the chill list right now." : "Nothing urgent flagged today."}</p>`;
-  return list.map(t => `<div class="todo-inline${t.done?" done":""}" data-kind="${kind}" data-id="${esc(t.id)}"><span class="box">✓</span><span class="txt">${esc(t.text)}</span><span class="todo-del" data-kind="${kind}" data-id="${esc(t.id)}" title="Remove">✕</span></div>`).join("");
+  if(!list.length){
+    return `<div class="tc-empty"><span class="tc-empty-check">✓</span>${kind==="chill" ? "Nothing on the chill list — all clear." : "Nothing urgent flagged today — all clear."}</div>`;
+  }
+  const todayStr = (S.date && S.date.calendar) || new Date().toISOString().slice(0,10);
+  return list.map(t => {
+    const subitems = t.subitems || [];
+    const subDone = subitems.filter(s => s.done).length;
+    const noteOn = expandedNotes.has(t.id), subOn = expandedSubs.has(t.id), dueOn = dueEditing.has(t.id);
+    const hasNote = !!(t.note && t.note.trim());
+    const overdue = !!(t.due && t.due < todayStr);
+    const dueField = dueOn
+      ? `<input type="date" class="ti-due-input" data-action="due-input" value="${esc(t.due||"")}">`
+      : (t.due
+          ? `<span class="ti-chip${overdue?" overdue":""}" data-action="due-edit">${esc(dueChipLabel(t.due))}<span class="ti-chip-x" data-action="due-clear" title="Clear due date">×</span></span>`
+          : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
+    return `<div class="todo-item" data-kind="${kind}" data-id="${esc(t.id)}">
+      <div class="ti-main">
+        <span class="ti-check">✓</span>
+        <span class="ti-text">${esc(t.text)}</span>
+        ${dueField}
+        <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">✎</button>
+        <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">☰${subitems.length?` ${subDone}/${subitems.length}`:""}</button>
+        <span class="ti-del" data-action="remove" title="Remove">✕</span>
+      </div>
+      <div class="ti-note-wrap" style="display:${noteOn?"block":"none"}"><div class="ti-note"><textarea placeholder="Add a note…">${esc(t.note||"")}</textarea></div></div>
+      <div class="ti-sub-wrap" style="display:${subOn?"block":"none"}">${subChecklistHTML(subitems)}</div>
+    </div>`;
+  }).join("");
 }
 
 function renderTodoCard(kind, items){
   const title = kind === "chill" ? "Chill To-Dos" : "Urgent To-Dos";
   const list = items || [];
-  const doneCount = list.filter(t => t.done).length;
   const total = list.length;
-  return `<div class="bento-card todo-card${kind==="chill"?" chill-card":""}" id="${kind}Card"${kind==="chill"?"":' style="margin-top:14px"'}>
-      <div class="tc-list">
-        <div class="tc-head"><span class="h">${title}</span></div>
-        <div id="${kind}InlineWrap">${todoRowsHTML(kind, list)}</div>
-        <form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
-      </div>
-      <div class="tc-ring">
-        <div id="${kind}RingWrap">${ringSvg(doneCount, total, 74)}</div>
-        <div class="bc-ring-txt" id="${kind}RingTxt">${doneCount} / ${total} done</div>
-      </div>
+  return `<div class="bento-card todo-card${kind==="chill"?" chill-card":""}" id="${kind}Card">
+      <div class="tc-head"><span class="h">${title}</span><span class="tc-badge${total===0?" clear":""}" id="${kind}Badge">${total===0?"✓":total}</span></div>
+      <div id="${kind}InlineWrap">${todoRowsHTML(kind, list)}</div>
+      <form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
   </div>`;
 }
 
-/* wires the checkbox/remove clicks for whatever rows are CURRENTLY in the DOM —
-   call again any time todoRowsHTML() replaces the wrap's contents */
-function wireTodoRows(root, kind){
+/* re-renders a kind's rows from whatever the client already knows locally —
+   used for pure UI toggles (expand notes/checklist, start editing a due
+   date) that don't need a Firestore round-trip to reflect on screen. */
+function rerenderTodoWrap(root, kind){
   const wrap = root.querySelector(`#${kind}InlineWrap`);
   if(!wrap) return;
-  wrap.querySelectorAll(".todo-inline").forEach(el => el.addEventListener("click", (e) => {
-    if(e.target.closest(".todo-del")) return;
-    if(window.__todosApi) window.__todosApi.toggle(kind, el.dataset.id);
-  }));
-  wrap.querySelectorAll(".todo-del").forEach(el => el.addEventListener("click", (e) => {
+  const items = (window.__todosApi ? window.__todosApi.getState()[kind] : []) || [];
+  wrap.innerHTML = todoRowsHTML(kind, items);
+}
+
+/* wired ONCE per card via event delegation on the (stable) wrap element —
+   its innerHTML gets replaced on every data change or UI toggle, but the
+   wrap node itself is never recreated, so the listeners keep working. A
+   dataset guard stops double-attachment if this is ever called again. */
+function wireTodoRows(root, kind){
+  const wrap = root.querySelector(`#${kind}InlineWrap`);
+  if(!wrap || wrap.dataset.wired) return;
+  wrap.dataset.wired = "1";
+
+  wrap.addEventListener("click", (e) => {
+    const item = e.target.closest(".todo-item");
+    if(!item) return;
+    const id = item.dataset.id;
+    const actionEl = e.target.closest("[data-action]");
+    const action = actionEl ? actionEl.dataset.action : null;
+
+    if(!action){
+      if(e.target.closest(".ti-note-wrap") || e.target.closest(".ti-sub-wrap")) return;
+      // click-to-complete: brief animation, then remove (X below stays instant)
+      item.classList.add("ti-completing");
+      setTimeout(() => { if(window.__todosApi) window.__todosApi.remove(kind, id); }, 360);
+      return;
+    }
+
     e.stopPropagation();
-    if(window.__todosApi) window.__todosApi.remove(kind, el.dataset.id);
-  }));
+    if(action === "remove"){
+      if(window.__todosApi) window.__todosApi.remove(kind, id);
+    } else if(action === "note-toggle"){
+      if(expandedNotes.has(id)) expandedNotes.delete(id); else expandedNotes.add(id);
+      rerenderTodoWrap(root, kind);
+      if(expandedNotes.has(id)){
+        const ta = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-note textarea`);
+        if(ta) ta.focus();
+      }
+    } else if(action === "sub-toggle"){
+      if(expandedSubs.has(id)) expandedSubs.delete(id); else expandedSubs.add(id);
+      rerenderTodoWrap(root, kind);
+    } else if(action === "due-add" || action === "due-edit"){
+      dueEditing.add(id);
+      rerenderTodoWrap(root, kind);
+      const inp = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-due-input`);
+      if(inp){ inp.focus(); if(inp.showPicker){ try{ inp.showPicker(); }catch(err){} } }
+    } else if(action === "due-clear"){
+      if(window.__todosApi) window.__todosApi.setDue(kind, id, null);
+    } else if(action === "sub-check"){
+      const subId = actionEl.dataset.sub;
+      if(window.__todosApi) window.__todosApi.toggleSub(kind, id, subId);
+    } else if(action === "sub-remove"){
+      const subId = actionEl.dataset.sub;
+      if(window.__todosApi) window.__todosApi.removeSub(kind, id, subId);
+    }
+  });
+
+  wrap.addEventListener("submit", (e) => {
+    const form = e.target.closest(".ti-sub-add");
+    if(!form) return;
+    e.preventDefault();
+    const item = form.closest(".todo-item");
+    const id = item.dataset.id;
+    const input = form.querySelector("input");
+    const val = (input.value || "").trim();
+    if(!val) return;
+    if(window.__todosApi) window.__todosApi.addSub(kind, id, val);
+    input.value = "";
+  });
+
+  wrap.addEventListener("change", (e) => {
+    const inp = e.target.closest(".ti-due-input");
+    if(!inp) return;
+    const item = inp.closest(".todo-item");
+    const id = item.dataset.id;
+    dueEditing.delete(id);
+    if(window.__todosApi) window.__todosApi.setDue(kind, id, inp.value || null);
+  });
+
+  wrap.addEventListener("focusout", (e) => {
+    const inp = e.target.closest(".ti-due-input");
+    if(inp){
+      const item = inp.closest(".todo-item");
+      const id = item.dataset.id;
+      if(dueEditing.has(id)){ dueEditing.delete(id); rerenderTodoWrap(root, kind); }
+      return;
+    }
+    const ta = e.target.closest(".ti-note textarea");
+    if(ta){
+      const item = ta.closest(".todo-item");
+      const id = item.dataset.id;
+      if(window.__todosApi) window.__todosApi.setNote(kind, id, ta.value);
+    }
+  });
 }
 
 /* wired ONCE when the card is first created — the form node itself is never
@@ -1995,32 +2157,15 @@ function wireTodoAddForm(root, kind){
   });
 }
 
-/* first-paint entrance only: sweep the ring from empty to its starting fraction */
-function animateTodoRingIn(root, kind){
-  const arc = root.querySelector(`#${kind}RingWrap .ring-arc`);
-  if(!arc) return;
-  const c = parseFloat(arc.dataset.c);
-  const finalOffset = arc.getAttribute("stroke-dashoffset");
-  arc.setAttribute("stroke-dashoffset", c);
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    arc.setAttribute("stroke-dashoffset", finalOffset);
-  }));
-}
-
-/* subsequent updates: move the EXISTING arc from wherever it currently sits to
-   the new fraction, so the CSS transition (.ring-arc) sweeps smoothly between
-   the two states (e.g. 1/3 -> 2/3) instead of resetting to empty each time */
-function updateTodoRing(root, kind, items){
+/* updates the count badge in place (CSS transition handles the animation
+   between states, including flipping to the green "all clear" checkmark) */
+function updateTodoBadge(root, kind, items){
   const list = items || [];
-  const doneCount = list.filter(t => t.done).length;
   const total = list.length;
-  const txt = root.querySelector(`#${kind}RingTxt`);
-  if(txt) txt.textContent = `${doneCount} / ${total} done`;
-  const arc = root.querySelector(`#${kind}RingWrap .ring-arc`);
-  if(!arc) return;
-  const c = parseFloat(arc.dataset.c);
-  const frac = total > 0 ? doneCount/total : 0;
-  arc.setAttribute("stroke-dashoffset", (c*(1-frac)).toFixed(2));
+  const badge = root.querySelector(`#${kind}Badge`);
+  if(!badge) return;
+  badge.textContent = total === 0 ? "✓" : String(total);
+  badge.classList.toggle("clear", total === 0);
 }
 
 /* Only touches a kind's card if that kind's own data actually changed since the
@@ -2039,12 +2184,11 @@ function refreshTodoCards(root, state, prevState){
       slot.innerHTML = renderTodoCard(kind, items);
       wireTodoRows(root, kind);
       wireTodoAddForm(root, kind);
-      animateTodoRingIn(root, kind);
     } else if(changed){
       const wrap = root.querySelector(`#${kind}InlineWrap`);
       if(wrap) wrap.innerHTML = todoRowsHTML(kind, items);
       wireTodoRows(root, kind);
-      updateTodoRing(root, kind, items);
+      updateTodoBadge(root, kind, items);
     }
     prevState[kind] = items;
   });
@@ -2067,8 +2211,7 @@ function renderCalendarBody(p, d){
      across devices) instead of the daily-reset localStorage/JSON fields — see
      the to-do sync module script near the end of <body>. Slots get filled in
      by refreshTodoCards() below, and again on every live snapshot update. ---- */
-  h += `<div id="urgentCardSlot"></div>`;
-  h += `<div id="chillCardSlot"></div>`;
+  h += `<div class="todo-pair"><div id="urgentCardSlot"></div><div id="chillCardSlot"></div></div>`;
 
   /* ---- Today / Next 7 Days / Two-Week View, side by side. Data comes from the
      today/radar fields published by the daily-calendar-report scheduled task
@@ -3728,6 +3871,16 @@ gateInit();
 
   function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
+  // shared helper for the new per-item fields (due/note/subitems): finds the
+  // item by id, runs mutator on a shallow copy of it, and writes the whole
+  // doc back (same last-write-wins full-document model as add/remove/toggle
+  // below — see MEMORY.md "Known Issues" if this ever needs a proper
+  // per-item-document rework).
+  function updateItem(key, id, mutator){
+    const next = { ...todosState, [key]: todosState[key].map(t => t.id === id ? mutator({ ...t }) : t) };
+    setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to update to-do", err));
+  }
+
   function notify(){
     if(typeof window.__onTodosSnapshot === "function"){
       try{ window.__onTodosSnapshot(todosState); }catch(e){ console.error("Daily Hub: to-do render callback failed", e); }
@@ -3778,6 +3931,28 @@ gateInit();
         const key = kind === "chill" ? "chill" : "urgent";
         const next = { ...todosState, [key]: todosState[key].map(t => t.id === id ? { ...t, done: !t.done } : t) };
         setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to update to-do", err));
+      },
+      setDue(kind, id, due){
+        const key = kind === "chill" ? "chill" : "urgent";
+        updateItem(key, id, t => { if(due){ t.due = due; } else { delete t.due; } return t; });
+      },
+      setNote(kind, id, note){
+        const key = kind === "chill" ? "chill" : "urgent";
+        updateItem(key, id, t => { const v = (note||"").trim(); if(v){ t.note = v; } else { delete t.note; } return t; });
+      },
+      addSub(kind, id, text){
+        const key = kind === "chill" ? "chill" : "urgent";
+        text = (text||"").trim();
+        if(!text) return;
+        updateItem(key, id, t => { t.subitems = [...(t.subitems||[]), { id: genId(), text, done: false }]; return t; });
+      },
+      toggleSub(kind, id, subId){
+        const key = kind === "chill" ? "chill" : "urgent";
+        updateItem(key, id, t => { t.subitems = (t.subitems||[]).map(s => s.id === subId ? { ...s, done: !s.done } : s); return t; });
+      },
+      removeSub(kind, id, subId){
+        const key = kind === "chill" ? "chill" : "urgent";
+        updateItem(key, id, t => { t.subitems = (t.subitems||[]).filter(s => s.id !== subId); return t; });
       }
     };
   }catch(e){

@@ -1,0 +1,78 @@
+name: Calendar Refresh
+
+# Computer-independent replacement for the retired client-side browser-OAuth
+# live sync: runs on GitHub's own servers on a cron, authenticating as the
+# calendar-refresh-bot service account (no popups, no token expiry, no
+# dependence on Eli's computer/Cowork being open). See MEMORY.md.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: calendar-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet requests cryptography google-auth
+
+      - name: Write credentials to disk
+        env:
+          GCAL_SERVICE_ACCOUNT_JSON: ${{ secrets.GCAL_SERVICE_ACCOUNT_JSON }}
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
+        run: |
+          printf '%s' "$GCAL_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/sa.json"
+          printf '%s' "$CAL_PASSPHRASE" > "$RUNNER_TEMP/passphrase.txt"
+
+      - name: Refresh calendar data
+        run: python3 scripts/refresh_calendar.py "$RUNNER_TEMP/sa.json" "$RUNNER_TEMP/passphrase.txt" .
+
+      - name: Commit and push
+        run: |
+          git config user.email "elijahvkramer@gmail.com"
+          git config user.name "Daily Hub Bot"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to publish"
+            exit 0
+          fi
+          git commit -qm "calendar refresh: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          for attempt in 1 2 3 4; do
+            if git push -q origin HEAD:main; then
+              echo "pushed"
+              exit 0
+            fi
+            sleep $((attempt * 5))
+            git fetch -q origin main
+            if git rebase -q origin/main; then
+              continue
+            fi
+            git rebase --abort
+            git reset --hard origin/main
+            python3 scripts/refresh_calendar.py "$RUNNER_TEMP/sa.json" "$RUNNER_TEMP/passphrase.txt" .
+            git add -A
+            if git diff --cached --quiet; then
+              echo "nothing to publish after reset"
+              exit 0
+            fi
+            git commit -qm "calendar refresh: $(date -u +%Y-%m-%dT%H:%M:%SZ) (retry)"
+          done
+          echo "push failed after retries" >&2
+          exit 1
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json" "$RUNNER_TEMP/passphrase.txt"

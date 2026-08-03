@@ -366,6 +366,13 @@
   @keyframes tiUndoShrink{from{width:100%}to{width:0%}}
   .ti-main{display:flex;align-items:center;gap:9px;padding:11px 2px;cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
   .ti-main:hover{background:var(--paper)}
+  /* drag handle for reordering — grabbing and moving it drags the whole row;
+     a plain click on it does nothing (doesn't trigger click-to-complete) */
+  .ti-drag{cursor:grab;color:var(--muted);opacity:.3;flex-shrink:0;font-size:14px;padding:2px 3px;line-height:1;touch-action:none;user-select:none;transition:opacity .15s}
+  .ti-main:hover .ti-drag{opacity:.7}
+  .ti-drag:active{cursor:grabbing}
+  .todo-item.dragging{opacity:.55}
+  .todo-item.dragging .ti-main{background:var(--gold-soft)}
   .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent}
   .ti-main .ti-text{flex:1;min-width:0;overflow-wrap:anywhere}
   .ti-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--hairline);color:var(--muted);flex-shrink:0;white-space:nowrap}
@@ -450,14 +457,15 @@
      to-do state so they update the instant a due date is set/cleared */
   .evt-wrap.evt-todo{opacity:.92}
   .evt-todo-tag{display:inline-block;margin-right:6px;font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--up);padding:1px 7px;border-radius:999px;vertical-align:middle;white-space:nowrap}
-  .cal-dots i.todo{background:var(--up)}
   .ct-todo-tag{display:inline-block;margin-right:4px;font-size:8.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--up);padding:0 5px;border-radius:999px;vertical-align:middle}
   .cal-dots{display:flex;gap:2.5px;height:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:90%}
   .cal-dots i{width:4.5px;height:4.5px;border-radius:50%;background:var(--gold);display:block}
-  /* multi-day event bar: a real grid item placed via explicit grid-column/row so
-     its span covers the gaps between day cells too, reading as one solid bar */
+  /* event/to-do bar: a real grid item placed via explicit grid-column/row so its
+     span covers the gaps between day cells too, reading as one solid bar. Gold =
+     a real (possibly multi-day) calendar event; green = a to-do due that day. */
   .cal-span-bar{align-self:end;justify-self:stretch;margin:0 2px 5px;height:6px;border-radius:3px;background:var(--gold);opacity:.6;pointer-events:auto;cursor:default}
   .cal-span-bar:hover{opacity:.85}
+  .cal-span-bar.todo{background:var(--up)}
   .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:10px 13px;border-radius:9px;max-width:250px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
   .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:5px}
   .cal-tip .ct-row{margin-top:5px}
@@ -1859,7 +1867,9 @@ function eventTimeText(lead){
 function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
   const byDate = {};
-  const spans = []; // {start, end, label} for genuinely multi-day events (endDate present)
+  const spans = []; // {start, end, label, isTodo} — multi-day events (endDate present) AND
+                     // single-day to-do due dates both render as bars, not dots (see below)
+  const todoByDate = {}; // date -> [to-do text, ...], merged into one bar per day
   const add = (dstr, label, time, isTodo) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo}); };
   const addSpan = (item, fallbackDate) => {
     if(!item || typeof item === "string" || !item.endDate) return;
@@ -1867,12 +1877,19 @@ function buildMiniCal(todayList, radarList, todayDate){
     if(!ev.dateStr) return;
     spans.push({ start: ev.dateStr, end: item.endDate, label: item.body || ev.title || "" });
   };
+  const addTodoDue = (item, fallbackDate) => {
+    if(!item || typeof item === "string" || !item.isTodo) return;
+    const ev = parseEventLead(item.lead, item.body, fallbackDate);
+    if(!ev.dateStr) return;
+    (todoByDate[ev.dateStr] = todoByDate[ev.dateStr] || []).push(item.body || "");
+  };
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, todayDate);
     const isTodo = typeof item !== "string" && !!item.isTodo;
     add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, todayDate);
+    addTodoDue(item, todayDate);
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
@@ -1880,6 +1897,10 @@ function buildMiniCal(todayList, radarList, todayDate){
     const isTodo = typeof item !== "string" && !!item.isTodo;
     add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo);
     addSpan(item, null);
+    addTodoDue(item, null);
+  });
+  Object.keys(todoByDate).forEach(dstr => {
+    spans.push({ start: dstr, end: dstr, label: todoByDate[dstr].join(", "), isTodo: true });
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
   const dows = ["S","M","T","W","T","F","S"];
@@ -1892,16 +1913,20 @@ function buildMiniCal(todayList, radarList, todayDate){
     const evs = byDate[key] || [];
     const has = evs.length>0, isToday = key===todayDate, isPast = key<todayDate && !isToday;
     const cls = "cal-cell" + (has?" has":"") + (isToday?" today":"") + (isPast?" dim":"");
-    const dots = evs.slice(0,6).map(e=>`<i class="${e.isTodo?"todo":""}"></i>`).join("");
+    // to-do due dates get their own bar below (see `bars`), not a dot — keeps the
+    // dot row reserved for real calendar events so the two read as distinct things
+    const dots = evs.filter(e=>!e.isTodo).slice(0,6).map(()=>`<i></i>`).join("");
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
     cells += `<div class="${cls}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
   }
-  // spanning bars: multi-day events render as a continuous bar (not just dots)
-  // across the days they cover. Each bar is its own grid item explicitly placed
-  // via grid-column/grid-row inside the SAME .cal-grid — CSS grid lets an item's
-  // span cover the gaps between tracks too, so it reads as one solid bar rather
-  // than several disconnected per-cell chips. A span crossing the week-1/week-2
-  // row boundary is split into one bar segment per row.
+  // spanning bars: multi-day events AND to-do due dates both render as a bar
+  // (gold for real events, green for to-dos) rather than a barely-visible dot.
+  // Each bar is its own grid item explicitly placed via grid-column/grid-row
+  // inside the SAME .cal-grid — CSS grid lets an item's span cover the gaps
+  // between tracks too, so it reads as one solid bar rather than several
+  // disconnected per-cell chips. A span crossing the week-1/week-2 row
+  // boundary is split into one bar segment per row (to-do bars are always
+  // exactly one day, so they never need splitting).
   let bars = "";
   spans.forEach(sp => {
     for(let row=0; row<2; row++){
@@ -1913,7 +1938,8 @@ function buildMiniCal(todayList, radarList, todayDate){
       const colStart = dayKeys.indexOf(segStart) - rowStartIdx;
       const colEnd = dayKeys.indexOf(segEnd) - rowStartIdx;
       if(colStart < 0 || colEnd < 0) continue;
-      bars += `<div class="cal-span-bar" style="grid-column:${colStart+1} / ${colEnd+2};grid-row:${row+2}" title="${esc(sp.label)}: through ${esc(fmtShortMD(sp.end))}"></div>`;
+      const title = sp.isTodo ? `To-do due: ${sp.label}` : `${sp.label}: through ${fmtShortMD(sp.end)}`;
+      bars += `<div class="cal-span-bar${sp.isTodo?" todo":""}" style="grid-column:${colStart+1} / ${colEnd+2};grid-row:${row+2}" title="${esc(title)}"></div>`;
     }
   });
   const end = new Date(start); end.setDate(start.getDate()+13);
@@ -2170,6 +2196,7 @@ function todoRowsHTML(kind, items){
     const checkedPending = pendingComplete.has(t.id);
     return `<div class="todo-item${checkedPending?" ti-checked":""}" data-kind="${kind}" data-id="${esc(t.id)}">
       <div class="ti-main">
+        <span class="ti-drag" title="Drag to reorder">⠿</span>
         <span class="ti-check">✓</span>
         <span class="ti-text">${esc(t.text)}</span>
         ${dueField}
@@ -2224,7 +2251,7 @@ function wireTodoRows(root, kind){
     const action = actionEl ? actionEl.dataset.action : null;
 
     if(!action){
-      if(e.target.closest(".ti-note-wrap") || e.target.closest(".ti-sub-wrap")) return;
+      if(e.target.closest(".ti-note-wrap") || e.target.closest(".ti-sub-wrap") || e.target.closest(".ti-drag")) return;
       if(pendingComplete.has(id)){
         // second click during the 3s undo window: cancel, revert to normal
         clearTimeout(pendingComplete.get(id));
@@ -2319,6 +2346,45 @@ function wireTodoRows(root, kind){
   });
 }
 
+/* drag-to-reorder — wired ONCE per card's wrap (same delegation pattern as
+   wireTodoRows: the wrap node itself is never recreated, only its innerHTML
+   is replaced, so one listener survives every re-render). Dragging the ⠿
+   handle moves the actual row element live as the pointer crosses each
+   sibling's midpoint, then persists the final order on release. */
+function wireTodoDrag(root, kind){
+  const wrap = root.querySelector(`#${kind}InlineWrap`);
+  if(!wrap || wrap.dataset.dragWired) return;
+  wrap.dataset.dragWired = "1";
+
+  wrap.addEventListener("pointerdown", (e) => {
+    const handle = e.target.closest(".ti-drag");
+    if(!handle) return;
+    const dragEl = handle.closest(".todo-item");
+    if(!dragEl) return;
+    e.preventDefault();
+    dragEl.classList.add("dragging");
+
+    const onMove = (ev) => {
+      const y = ev.clientY;
+      const siblings = [...wrap.querySelectorAll(".todo-item")].filter(el => el !== dragEl);
+      for(const sib of siblings){
+        const r = sib.getBoundingClientRect();
+        if(y < r.top + r.height/2){ wrap.insertBefore(dragEl, sib); return; }
+      }
+      wrap.appendChild(dragEl); // past every sibling's midpoint — goes to the end
+    };
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      dragEl.classList.remove("dragging");
+      const orderedIds = [...wrap.querySelectorAll(".todo-item")].map(el => el.dataset.id);
+      if(window.__todosApi) window.__todosApi.reorder(kind, orderedIds);
+    };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  });
+}
+
 /* wired ONCE when the card is first created — the form node itself is never
    replaced afterward, so this never needs to run again for that card */
 function wireTodoAddForm(root, kind){
@@ -2399,12 +2465,14 @@ function refreshTodoCards(root, state, prevState){
       if(!slot) return;
       slot.innerHTML = renderTodoCard(kind, items, history);
       wireTodoRows(root, kind);
+      wireTodoDrag(root, kind);
       wireTodoAddForm(root, kind);
       wireTodoHistory(root, kind);
     } else if(changed){
       const wrap = root.querySelector(`#${kind}InlineWrap`);
       if(wrap) wrap.innerHTML = todoRowsHTML(kind, items);
       wireTodoRows(root, kind);
+      wireTodoDrag(root, kind);
       updateTodoBadge(root, kind, items);
     }
     if((changed || histChanged) && expandedHistory.has(kind)){
@@ -4266,6 +4334,18 @@ gateInit();
           [histKey]: todosState[histKey].filter(h => h.id !== historyId)
         };
         setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to restore to-do", err));
+      },
+      reorder(kind, orderedIds){
+        const key = kind === "chill" ? "chill" : "urgent";
+        const byId = {};
+        todosState[key].forEach(t => { byId[t.id] = t; });
+        const reordered = orderedIds.map(id => byId[id]).filter(Boolean);
+        // safety: if the drag's computed order doesn't account for every current
+        // item (e.g. another device added/removed one mid-drag), skip the write
+        // rather than silently dropping items
+        if(reordered.length !== todosState[key].length) return;
+        const next = { ...todosState, [key]: reordered };
+        setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to reorder to-dos", err));
       }
     };
   }catch(e){

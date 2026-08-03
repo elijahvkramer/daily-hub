@@ -338,6 +338,15 @@
      transition whenever the count or clear-state changes */
   .tc-badge{min-width:24px;height:24px;padding:0 8px;border-radius:999px;border:2px solid var(--gold);color:var(--gold);font-weight:900;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.34,1.2,.4,1)}
   .tc-badge.clear{border-color:var(--up);background:var(--up);color:#fff;transform:scale(1.05)}
+  .tc-head-ctrl{display:flex;align-items:center;gap:6px}
+  .tc-hist-btn{flex-shrink:0;border:none;background:none;color:var(--muted);font-size:13px;cursor:pointer;padding:3px 6px;border-radius:6px;display:inline-flex;align-items:center;transition:background .15s,color .15s;font-family:inherit}
+  .tc-hist-btn:hover{background:var(--paper);color:var(--ink)}
+  .tc-hist-btn.open{color:#A08339;background:var(--paper)}
+  .tc-hist-wrap{margin:0 0 8px;padding:2px 2px 8px;border-bottom:1px dashed var(--hairline)}
+  .tc-hist-item{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 2px;font-size:13px}
+  .tc-hist-item .txt{flex:1;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:var(--hairline);color:#8A8F97}
+  .tc-hist-item .when{flex-shrink:0;font-size:11px;font-weight:700;white-space:nowrap;color:var(--muted)}
+  .tc-hist-empty{color:var(--muted);font-size:13px;padding:6px 2px;font-style:italic}
   .tc-empty{color:var(--muted);font-size:14px;padding:8px 2px;display:flex;align-items:center;gap:9px}
   .tc-empty .tc-empty-check{width:20px;height:20px;border-radius:50%;background:var(--up);color:#fff;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
   /* click-to-complete: clicking the row plays a quick fade/shrink, then the
@@ -345,6 +354,14 @@
   .todo-item{border-bottom:1px solid var(--hairline);transition:opacity .35s ease,transform .35s ease}
   .todo-item:last-child{border-bottom:none}
   .todo-item.ti-completing{opacity:0;transform:scale(.97) translateX(8px)}
+  /* checked-but-undoable: a 3s grace window after clicking a row, before it
+     actually completes — clicking again during this window undoes it */
+  .todo-item.ti-checked .ti-main{background:rgba(24,153,107,.06)}
+  .todo-item.ti-checked .ti-check{background:var(--up);border-color:var(--up);color:#fff}
+  .todo-item.ti-checked .ti-text{text-decoration:line-through;color:var(--muted)}
+  .ti-undo-bar{height:2px;background:var(--hairline);position:relative;overflow:hidden;margin:0 2px}
+  .todo-item.ti-checked .ti-undo-bar span{display:block;height:100%;background:var(--up);animation:tiUndoShrink 3s linear forwards}
+  @keyframes tiUndoShrink{from{width:100%}to{width:0%}}
   .ti-main{display:flex;align-items:center;gap:9px;padding:11px 2px;cursor:pointer;transition:background .15s;font-size:14.5px;color:#3A3E45}
   .ti-main:hover{background:var(--paper)}
   .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent}
@@ -1975,6 +1992,30 @@ function buildTodayTripleHTML(todayList, radarList, radarWeek, todayDate){
 const expandedNotes = new Set();
 const expandedSubs = new Set();
 const dueEditing = new Set();
+const expandedHistory = new Set();     // which kinds ("urgent"/"chill") have their Recently Completed panel open
+const pendingComplete = new Map();     // id -> setTimeout handle, for the 3s undo window after clicking a row done
+
+/* relative-time label for the Recently Completed list ("just now", "12m ago",
+   "yesterday", "3d ago", then falls back to a short date) */
+function relTimeAgo(iso){
+  const then = new Date(iso).getTime();
+  if(!isFinite(then)) return "";
+  const diffMin = Math.round((Date.now() - then) / 60000);
+  if(diffMin < 1) return "just now";
+  if(diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if(diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if(diffDay === 1) return "yesterday";
+  if(diffDay < 7) return `${diffDay}d ago`;
+  return new Date(then).toLocaleDateString("en-US", { month:"short", day:"numeric" });
+}
+
+function historyListHTML(history){
+  const list = history || [];
+  if(!list.length) return `<p class="tc-hist-empty">Nothing completed recently.</p>`;
+  return list.map(h => `<div class="tc-hist-item"><span class="txt">${esc(h.text)}</span><span class="when">${relTimeAgo(h.doneAt)}</span></div>`).join("");
+}
 
 function dueChipLabel(due){
   if(!due) return "";
@@ -2012,7 +2053,8 @@ function todoRowsHTML(kind, items){
       : (t.due
           ? `<span class="ti-chip${overdue?" overdue":""}" data-action="due-edit">${esc(dueChipLabel(t.due))}<span class="ti-chip-x" data-action="due-clear" title="Clear due date">×</span></span>`
           : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
-    return `<div class="todo-item" data-kind="${kind}" data-id="${esc(t.id)}">
+    const checkedPending = pendingComplete.has(t.id);
+    return `<div class="todo-item${checkedPending?" ti-checked":""}" data-kind="${kind}" data-id="${esc(t.id)}">
       <div class="ti-main">
         <span class="ti-check">✓</span>
         <span class="ti-text">${esc(t.text)}</span>
@@ -2021,18 +2063,21 @@ function todoRowsHTML(kind, items){
         <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">☰${subitems.length?` ${subDone}/${subitems.length}`:""}</button>
         <span class="ti-del" data-action="remove" title="Remove">✕</span>
       </div>
+      ${checkedPending ? `<div class="ti-undo-bar"><span></span></div>` : ""}
       <div class="ti-note-wrap" style="display:${noteOn?"block":"none"}"><div class="ti-note"><textarea placeholder="Add a note…">${esc(t.note||"")}</textarea></div></div>
       <div class="ti-sub-wrap" style="display:${subOn?"block":"none"}">${subChecklistHTML(subitems)}</div>
     </div>`;
   }).join("");
 }
 
-function renderTodoCard(kind, items){
+function renderTodoCard(kind, items, history){
   const title = kind === "chill" ? "Chill To-Dos" : "Urgent To-Dos";
   const list = items || [];
   const total = list.length;
+  const histOpen = expandedHistory.has(kind);
   return `<div class="bento-card todo-card${kind==="chill"?" chill-card":""}" id="${kind}Card">
-      <div class="tc-head"><span class="h">${title}</span><span class="tc-badge${total===0?" clear":""}" id="${kind}Badge">${total===0?"✓":total}</span></div>
+      <div class="tc-head"><span class="h">${title}</span><span class="tc-head-ctrl"><button type="button" class="tc-hist-btn${histOpen?" open":""}" data-action="hist-toggle" title="Recently completed">&#8635;</button><span class="tc-badge${total===0?" clear":""}" id="${kind}Badge">${total===0?"✓":total}</span></span></div>
+      <div class="tc-hist-wrap" id="${kind}HistWrap" style="display:${histOpen?"block":"none"}">${histOpen ? historyListHTML(history) : ""}</div>
       <div id="${kind}InlineWrap">${todoRowsHTML(kind, list)}</div>
       <form class="todo-add" data-kind="${kind}"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
   </div>`;
@@ -2066,14 +2111,34 @@ function wireTodoRows(root, kind){
 
     if(!action){
       if(e.target.closest(".ti-note-wrap") || e.target.closest(".ti-sub-wrap")) return;
-      // click-to-complete: brief animation, then remove (X below stays instant)
-      item.classList.add("ti-completing");
-      setTimeout(() => { if(window.__todosApi) window.__todosApi.remove(kind, id); }, 360);
+      if(pendingComplete.has(id)){
+        // second click during the 3s undo window: cancel, revert to normal
+        clearTimeout(pendingComplete.get(id));
+        pendingComplete.delete(id);
+        item.classList.remove("ti-checked");
+        const bar = item.querySelector(".ti-undo-bar");
+        if(bar) bar.remove();
+        return;
+      }
+      // first click: mark checked and give a 3s window to undo before it's
+      // actually removed (X below stays an instant, no-undo delete)
+      item.classList.add("ti-checked");
+      const main = item.querySelector(".ti-main");
+      if(main && !item.querySelector(".ti-undo-bar")){
+        main.insertAdjacentHTML("afterend", `<div class="ti-undo-bar"><span></span></div>`);
+      }
+      const timer = setTimeout(() => {
+        pendingComplete.delete(id);
+        item.classList.add("ti-completing");
+        setTimeout(() => { if(window.__todosApi) window.__todosApi.remove(kind, id); }, 360);
+      }, 3000);
+      pendingComplete.set(id, timer);
       return;
     }
 
     e.stopPropagation();
     if(action === "remove"){
+      if(pendingComplete.has(id)){ clearTimeout(pendingComplete.get(id)); pendingComplete.delete(id); }
       if(window.__todosApi) window.__todosApi.remove(kind, id);
     } else if(action === "note-toggle"){
       if(expandedNotes.has(id)) expandedNotes.delete(id); else expandedNotes.add(id);
@@ -2157,6 +2222,30 @@ function wireTodoAddForm(root, kind){
   });
 }
 
+/* wired ONCE per card — toggles the "Recently completed" panel showing the
+   last several items removed from this kind (via click-to-complete or the X
+   button), each with a short relative timestamp. Purely a client-side
+   expand/collapse; the underlying history list itself lives in Firestore
+   (historyUrgent/historyChill) so it's the same on every device. */
+function wireTodoHistory(root, kind){
+  const card = root.querySelector(`#${kind}Card`);
+  const btn = card ? card.querySelector(".tc-hist-btn") : null;
+  if(!btn || btn.dataset.wired) return;
+  btn.dataset.wired = "1";
+  btn.addEventListener("click", () => {
+    if(expandedHistory.has(kind)) expandedHistory.delete(kind); else expandedHistory.add(kind);
+    const open = expandedHistory.has(kind);
+    btn.classList.toggle("open", open);
+    const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
+    const state = window.__todosApi ? window.__todosApi.getState() : {};
+    const wrap = root.querySelector(`#${kind}HistWrap`);
+    if(wrap){
+      wrap.style.display = open ? "block" : "none";
+      if(open) wrap.innerHTML = historyListHTML(state[histKey]);
+    }
+  });
+}
+
 /* updates the count badge in place (CSS transition handles the animation
    between states, including flipping to the green "all clear" checkmark) */
 function updateTodoBadge(root, kind, items){
@@ -2176,21 +2265,30 @@ function refreshTodoCards(root, state, prevState){
   state = state || (window.__todosApi ? window.__todosApi.getState() : { urgent: [], chill: [] });
   ["urgent","chill"].forEach(kind => {
     const items = state[kind] || [];
+    const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
+    const history = state[histKey] || [];
     const exists = !!root.querySelector(`#${kind}Card`);
     const changed = JSON.stringify(prevState[kind]) !== JSON.stringify(items);
+    const histChanged = JSON.stringify(prevState[histKey]) !== JSON.stringify(history);
     if(!exists){
       const slot = root.querySelector(`#${kind}CardSlot`);
       if(!slot) return;
-      slot.innerHTML = renderTodoCard(kind, items);
+      slot.innerHTML = renderTodoCard(kind, items, history);
       wireTodoRows(root, kind);
       wireTodoAddForm(root, kind);
+      wireTodoHistory(root, kind);
     } else if(changed){
       const wrap = root.querySelector(`#${kind}InlineWrap`);
       if(wrap) wrap.innerHTML = todoRowsHTML(kind, items);
       wireTodoRows(root, kind);
       updateTodoBadge(root, kind, items);
     }
+    if((changed || histChanged) && expandedHistory.has(kind)){
+      const hwrap = root.querySelector(`#${kind}HistWrap`);
+      if(hwrap) hwrap.innerHTML = historyListHTML(history);
+    }
     prevState[kind] = items;
+    prevState[histKey] = history;
   });
 }
 
@@ -3866,8 +3964,11 @@ gateInit();
     appId: "1:816153848388:web:23127952bba70d7205ea11"
   };
 
-  let todosState = { urgent: [], chill: [] };
+  let todosState = { urgent: [], chill: [], historyUrgent: [], historyChill: [] };
   let todosReady = false;
+  let todoDocRef = null; // assigned once Firestore initializes below; declared out here
+  // (not with const inside the try block) so updateItem() can see it via closure.
+  const HISTORY_CAP = 12; // how many recently-completed items we keep per list
 
   function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -3891,7 +3992,7 @@ gateInit();
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const todoDocRef = doc(db, "todos", "main");
+    todoDocRef = doc(db, "todos", "main");
 
     // Attach the Firestore listener only once we actually have an authenticated
     // user — subscribing before sign-in resolves races against our own security
@@ -3904,7 +4005,9 @@ gateInit();
         const data = snap.exists() ? (snap.data() || {}) : {};
         todosState = {
           urgent: Array.isArray(data.urgent) ? data.urgent : [],
-          chill: Array.isArray(data.chill) ? data.chill : []
+          chill: Array.isArray(data.chill) ? data.chill : [],
+          historyUrgent: Array.isArray(data.historyUrgent) ? data.historyUrgent : [],
+          historyChill: Array.isArray(data.historyChill) ? data.historyChill : []
         };
         todosReady = true;
         notify();
@@ -3924,7 +4027,13 @@ gateInit();
       },
       remove(kind, id){
         const key = kind === "chill" ? "chill" : "urgent";
+        const histKey = kind === "chill" ? "historyChill" : "historyUrgent";
+        const removed = todosState[key].find(t => t.id === id);
         const next = { ...todosState, [key]: todosState[key].filter(t => t.id !== id) };
+        if(removed){
+          const entry = { id: removed.id, text: removed.text, doneAt: new Date().toISOString() };
+          next[histKey] = [entry, ...(todosState[histKey] || [])].slice(0, HISTORY_CAP);
+        }
         setDoc(todoDocRef, next).catch(err => console.error("Daily Hub: failed to remove to-do", err));
       },
       toggle(kind, id){

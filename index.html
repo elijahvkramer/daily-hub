@@ -1954,7 +1954,7 @@ function buildTodayTripleHTML(todayList, radarList, radarWeek, todayDate){
    that; silent/background refreshes fail quietly back to the last-known data. */
 const GCAL_CLIENT_ID = "816153848388-514spf7sika93m85pqom8g105a42hee0.apps.googleusercontent.com";
 const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
-const GCAL = { tokenClient: null, refreshTimer: null };
+const GCAL = { tokenClient: null, refreshTimer: null, requestInFlight: false };
 
 function gcalTokenLoad(){
   try{
@@ -1989,29 +1989,34 @@ function gcalGetTokenClient(){
   return GCAL.tokenClient;
 }
 
-/* resolves an access token: reuses a cached one, else tries a TRULY silent grant
-   (prompt:"none" — the only value Google guarantees will never show any UI; an
-   empty string is NOT equivalent and can still pop a window), else — ONLY when
-   interactive===true, i.e. the Reconnect button — shows Google's consent screen.
-   A plain page load/auto-refresh never sets interactive, so it can never pop a
-   sign-in window on its own; if the silent grant can't complete quietly it just
-   fails quietly and the UI falls back to "Calendar not connected" + Reconnect. */
+/* resolves an access token: reuses a cached one; otherwise, the BACKGROUND path
+   (interactive=false — page load, the 5-min auto-refresh, or a 401 retry) NEVER
+   attempts a new Google grant at all anymore — it just returns null and the UI
+   falls back to "Calendar not connected" + Reconnect. Only interactive===true
+   (the Reconnect button) ever calls Google, and a requestInFlight guard stops a
+   second overlapping call (a double-click, or a background tick landing mid-flow)
+   from cutting off a popup that's already open — that overlap was the actual bug:
+   two requestAccessToken() calls sharing one token client can cancel each other,
+   which is why the popup was closing faster and faster the more it got triggered. */
 async function gcalRequestToken(interactive){
   const cached = gcalTokenLoad();
   if(cached) return cached.access_token;
-  if(!interactive) await gcalWaitForGis(3000);
+  if(!interactive) return null;
+  if(GCAL.requestInFlight) return null;
+  GCAL.requestInFlight = true;
+  await gcalWaitForGis(3000);
   const client = gcalGetTokenClient();
-  if(!client) return null;
+  if(!client){ GCAL.requestInFlight = false; return null; }
   return new Promise(resolve => {
     let settled = false;
-    const finish = (token) => { if(settled) return; settled = true; resolve(token); };
+    const finish = (token) => { if(settled) return; settled = true; GCAL.requestInFlight = false; resolve(token); };
     client.callback = (resp) => {
       if(resp && resp.access_token){ gcalTokenSave(resp.access_token, resp.expires_in); finish(resp.access_token); }
       else finish(null);
     };
-    try{ client.requestAccessToken({ prompt: interactive ? "consent" : "none" }); }
+    try{ client.requestAccessToken({ prompt: "consent" }); }
     catch(e){ finish(null); }
-    if(!interactive) setTimeout(() => finish(null), 4000);
+    setTimeout(() => finish(null), 60000);   // don't hang on "Connecting..." forever if the popup never resolves
   });
 }
 

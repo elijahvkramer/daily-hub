@@ -483,7 +483,7 @@
   .cal-refresh-toast.show{opacity:1}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px 4px}
   .cal-dow{font-size:9px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
-  .cal-cell{min-height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow:visible}
+  .cal-cell{height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow-y:auto;overflow-x:hidden}
   .cal-cell.dim{color:var(--muted);opacity:.6}
   .cal-cell.has{cursor:pointer}
   .cal-cell.has:hover{background:var(--gold-soft)}
@@ -500,9 +500,9 @@
   /* one line per event inside a day cell — colored dot + time + title,
      truncated with an ellipsis rather than wrapping (matches Google
      Calendar's month-view density) */
-  .cal-ev{display:flex;align-items:flex-start;gap:3px;font-size:10.5px;font-weight:600;color:#3A3E45;line-height:1.32;cursor:default;margin-bottom:2px}
-  .cal-ev i{width:5px;height:5px;min-width:5px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:1px;margin-top:4px}
-  .cal-ev-t{color:var(--muted);font-weight:800;flex-shrink:0}
+  .cal-ev{font-size:10.5px;font-weight:600;color:#3A3E45;line-height:1.4;cursor:default;margin-bottom:2px}
+  .cal-ev i{width:5px;height:5px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:4px;vertical-align:middle}
+  .cal-ev-t{color:var(--muted);font-weight:800;margin-right:4px}
   /* titles wrap fully rather than truncating with an ellipsis -- the cell
      (and its whole row, via grid auto-sizing) grows to fit; the "+N more"
      indicator still caps how many EVENTS show, this only affects how a
@@ -972,7 +972,7 @@
 
   /* the two-week calendar and portfolio tables */
   @media(max-width:560px){
-    .cal-cell{min-height:104px}
+    .cal-cell{height:104px}
     .cal-ev, .cal-rem{font-size:9.5px}
     .pz-links{grid-template-columns:1fr}
     .pz-boxes{grid-template-columns:repeat(2,1fr)}

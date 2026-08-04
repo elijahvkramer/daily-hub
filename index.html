@@ -476,7 +476,7 @@
   .cal-head .cl{font-size:10.5px;color:var(--muted);font-weight:700}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px 4px}
   .cal-dow{font-size:9px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
-  .cal-cell{min-height:40px;border-radius:8px;display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px}
+  .cal-cell{height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow:hidden}
   .cal-cell.dim{color:var(--muted);opacity:.6}
   .cal-cell.has{cursor:pointer}
   .cal-cell.has:hover{background:var(--gold-soft)}
@@ -493,14 +493,17 @@
   /* one line per event inside a day cell — colored dot + time + title,
      truncated with an ellipsis rather than wrapping (matches Google
      Calendar's month-view density) */
-  .cal-ev{display:flex;align-items:baseline;gap:3px;font-size:10.5px;font-weight:600;color:#3A3E45;line-height:1.45;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default}
-  .cal-ev i{width:5px;height:5px;min-width:5px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:1px}
+  .cal-ev{display:flex;align-items:flex-start;gap:3px;font-size:10.5px;font-weight:600;color:#3A3E45;line-height:1.32;cursor:default;margin-bottom:2px}
+  .cal-ev i{width:5px;height:5px;min-width:5px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:1px;margin-top:4px}
   .cal-ev-t{color:var(--muted);font-weight:800;flex-shrink:0}
-  .cal-ev-b{overflow:hidden;text-overflow:ellipsis}
+  /* titles wrap onto a second line instead of truncating with an ellipsis —
+     clamped at 2 lines so one very long title can't crowd out every other
+     event in the cell (any remainder is covered by the "+N more" indicator) */
+  .cal-ev-b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   /* to-do due dates render as a filled "Reminder:" pill, same visual language
      Google Calendar uses for reminders vs. plain timed events */
-  .cal-rem{display:block;font-size:10px;font-weight:800;color:#fff;background:var(--up);border-radius:5px;padding:1.5px 6px;margin:1px 0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default}
-  .cal-more{font-size:10px;font-weight:800;color:var(--muted);padding-top:1px}
+  .cal-rem{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:10px;font-weight:800;color:#fff;background:var(--up);border-radius:5px;padding:1.5px 6px;margin:0 0 2px;overflow:hidden;cursor:default}
+  .cal-more{font-size:10px;font-weight:800;color:var(--muted);padding-top:1px;margin-top:auto}
   /* multi-day calendar event bar: a real grid item placed via explicit
      grid-column/row (its own lane row, above that week's day cells) so its
      span covers the gaps between day cells too, reading as one solid
@@ -955,7 +958,7 @@
 
   /* the two-week calendar and portfolio tables */
   @media(max-width:560px){
-    .cal-cell{min-height:34px}
+    .cal-cell{height:104px}
     .cal-ev, .cal-rem{font-size:9.5px}
     .pz-links{grid-template-columns:1fr}
     .pz-boxes{grid-template-columns:repeat(2,1fr)}
@@ -2029,11 +2032,11 @@ function buildMiniCal(todayList, radarList, todayDate){
   }
   const week1 = packWeek(0), week2 = packWeek(1);
 
-  // ---- row-line bookkeeping: dow header, then each week's bar lane(s)
-  // (0 or more), then that week's day-cells row — bars sit in their own
-  // dedicated row track above the day cells they cover, so an individual
-  // day's own events are never hidden behind (or shifted by) a bar in a
-  // neighboring column ----
+  // ---- row-line bookkeeping: dow header, then EACH week's day-cells row
+  // FOLLOWED BY that week's own bar lane(s) — bars sit directly beneath the
+  // days they cover (not above), so a bar for the second week reads clearly
+  // as belonging to that week instead of trailing off the bottom of the
+  // first week's row ----
   let rowCursor = 1;
   let dowHTML = "";
   dows.forEach((dw,i) => { dowHTML += `<div class="cal-dow" style="grid-column:${i+1};grid-row:${rowCursor}">${dw}</div>`; });
@@ -2045,12 +2048,12 @@ function buildMiniCal(todayList, radarList, todayDate){
       barsHTML += `<div class="cal-span-bar" style="grid-column:${sp.colStart+1} / ${sp.colEnd+2};grid-row:${rowCursor+sp.lane}" title="${esc(sp.label)}: through ${esc(fmtShortMD(sp.end))}">${esc(sp.label)}</div>`;
     });
   };
+  const week1Row = rowCursor; rowCursor++;
   renderBars(week1);
   rowCursor += week1.laneCount;
-  const week1Row = rowCursor; rowCursor++;
+  const week2Row = rowCursor; rowCursor++;
   renderBars(week2);
   rowCursor += week2.laneCount;
-  const week2Row = rowCursor; rowCursor++;
 
   // ---- day cells: each shows its own events inline (dot+time+title, or a
   // "Reminder:" pill for to-do due dates), capped at MAX_VISIBLE with a

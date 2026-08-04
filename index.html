@@ -1979,14 +1979,19 @@ function buildMiniCal(todayList, radarList, todayDate){
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, todayDate);
     const isTodo = typeof item !== "string" && !!item.isTodo;
-    add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
+    const isSpan = typeof item !== "string" && !!item.endDate;
+    // a genuinely multi-day event is represented ONLY by its spanning bar
+    // (below) — skip the regular per-day chip so it doesn't also show up
+    // redundantly as a one-line entry on its start day
+    if(!isSpan) add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
     addSpan(item, todayDate);
   });
   (radarList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
     const ev = parseEventLead(lead, body, null);
     const isTodo = typeof item !== "string" && !!item.isTodo;
-    add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
+    const isSpan = typeof item !== "string" && !!item.endDate;
+    if(!isSpan) add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
     addSpan(item, null);
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week

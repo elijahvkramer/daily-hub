@@ -6,7 +6,7 @@ name: Calendar Refresh
 # dependence on Eli's computer/Cowork being open). See MEMORY.md.
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch: {}
 
 concurrency:

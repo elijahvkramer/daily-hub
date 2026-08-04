@@ -474,6 +474,13 @@
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .cal-head .cm{font-size:12px;font-weight:900;color:var(--ink);letter-spacing:.06em;text-transform:uppercase}
   .cal-head .cl{font-size:10.5px;color:var(--muted);font-weight:700}
+  .cal-head .cal-head-right{display:flex;align-items:center;gap:8px}
+  .cal-refresh-btn{width:24px;height:24px;border-radius:50%;border:1px solid var(--hairline);background:#fff;color:var(--muted);font-size:13px;line-height:1;text-decoration:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .14s,color .14s}
+  .cal-refresh-btn:hover{background:var(--gold-soft);color:var(--ink)}
+  .cal-refresh-btn.polling .spin{display:inline-block;animation:cal-refresh-spin .8s linear infinite}
+  @keyframes cal-refresh-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .cal-refresh-toast{position:absolute;top:8px;right:8px;background:var(--ink);color:#fff;font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+  .cal-refresh-toast.show{opacity:1}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px 4px}
   .cal-dow{font-size:9px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
   .cal-cell{height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow:hidden}
@@ -2082,11 +2089,51 @@ function buildMiniCal(todayList, radarList, todayDate){
 
   const end = new Date(start); end.setDate(start.getDate()+13);
   const label = `${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`;
-  return `<div class="cal-head"><span class="cm">Two-Week View</span><span class="cl">${esc(label)}</span></div>
-    <div class="cal-grid">${dowHTML}${cellsHTML}${barsHTML}</div><div class="cal-tip"></div>`;
+  return `<div class="cal-head"><span class="cm">Two-Week View</span><div class="cal-head-right"><span class="cl">${esc(label)}</span><a class="cal-refresh-btn" href="https://github.com/elijahvkramer/daily-hub/actions/workflows/calendar-refresh.yml" target="_blank" rel="noopener" title="Opens GitHub Actions in a new tab -- click &quot;Run workflow&quot; there for an instant pull, then come back here; this page will pick it up automatically"><span class="spin">⟳</span></a></div></div>
+    <div class="cal-grid">${dowHTML}${cellsHTML}${barsHTML}</div><div class="cal-tip"></div><div class="cal-refresh-toast">Watching for new data…</div>`;
 }
+// No credentials involved: clicking the refresh link just opens GitHub's own
+// Actions page (Eli is already signed in there) so HE clicks "Run workflow" --
+// we never touch GitHub's API ourselves. All this does is watch the site's
+// already-public manifest.json for its "updated" stamp to move, then quietly
+// re-fetches and re-renders the Two-Week View so there's no page reload
+// needed after the run finishes. See MEMORY.md.
+let calRefreshPollToken = 0;
+async function watchForCalendarRefresh(btn, toast){
+  const myToken = ++calRefreshPollToken;
+  btn.classList.add("polling");
+  toast.classList.add("show");
+  const startUpdated = S.manifest.updated;
+  for(let i=0; i<36; i++){                     // ~6 minutes of polling
+    await new Promise(r => setTimeout(r, 10000));
+    if(myToken !== calRefreshPollToken) return;  // a newer click superseded this one
+    try{
+      const mr = await fetch("data/manifest.json?t=" + Date.now());
+      const mj = await mr.json();
+      if(mj.updated && mj.updated !== startUpdated){
+        S.manifest = mj;
+        ["market","news","calendar"].forEach(k => { S.manifest[k] = (S.manifest[k]||[]).slice().sort().reverse(); });
+        const key = "calendar/" + S.date.calendar;
+        delete S.cache[key];
+        if(S.tab === "calendar") await show();
+        toast.textContent = "Updated just now";
+        setTimeout(() => { toast.classList.remove("show"); }, 3000);
+        btn.classList.remove("polling");
+        return;
+      }
+    }catch(e){ /* keep polling */ }
+  }
+  if(myToken !== calRefreshPollToken) return;
+  toast.textContent = "No update seen yet — try again in a bit";
+  setTimeout(() => { toast.classList.remove("show"); }, 4000);
+  btn.classList.remove("polling");
+}
+
 function wireMiniCal(card){
   const tip = card.querySelector(".cal-tip"); if(!tip) return;
+  const refreshBtn = card.querySelector(".cal-refresh-btn");
+  const refreshToast = card.querySelector(".cal-refresh-toast");
+  if(refreshBtn && refreshToast) refreshBtn.addEventListener("click", () => { watchForCalendarRefresh(refreshBtn, refreshToast); });
   card.querySelectorAll(".cal-cell[data-cal]").forEach(c => {
     c.addEventListener("mouseenter", () => {
       let data; try{ data = JSON.parse(c.dataset.cal); }catch(e){ return; }

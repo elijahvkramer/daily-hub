@@ -1064,6 +1064,15 @@
 const S = { manifest:null, tab:"calendar", date:{market:null,news:null,calendar:null}, cache:{}, holdEnc:null, wx:null };
 let gamesView = "launcher"; // "launcher" | "quiz" — sub-view within the Games tab
 let PASS = null;
+// data/*.json.enc and manifest.json are fetched straight from GitHub's raw
+// storage (a different CDN/cache stack than github.io Pages) because the
+// Pages edge cache has been observed serving stuck/stale snapshots of these
+// frequently-rewritten files for hours at a time, ignoring its own
+// cache-control max-age -- confirmed 2026-08-04 by comparing identical
+// requests: Pages served 8-hour-stale data.json.enc bytes on every retry
+// while raw.githubusercontent.com served the current commit correctly.
+// See MEMORY.md.
+const RAW_BASE = "https://raw.githubusercontent.com/elijahvkramer/daily-hub/main/";
 const $ = s => document.querySelector(s);
 const esc = t => String(t??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
@@ -1082,7 +1091,7 @@ function shortDate(d){
 /* ================= boot ================= */
 async function boot(){
   try{
-    const r = await fetch("data/manifest.json?t="+Date.now());
+    const r = await fetch(RAW_BASE + "data/manifest.json?t="+Date.now());
     S.manifest = await r.json();
     ["market","news","calendar"].forEach(k => {
       S.manifest[k] = (S.manifest[k]||[]).slice().sort().reverse();
@@ -1205,7 +1214,7 @@ function fillDates(){
 async function fetchDay(kind, date){
   const key = kind+"/"+date;
   if(S.cache[key]) return S.cache[key];
-  const r = await fetch(`data/${kind}/${date}.json.enc?t=`+Date.now());
+  const r = await fetch(RAW_BASE + `data/${kind}/${date}.json.enc?t=`+Date.now());
   if(!r.ok) throw new Error("missing");
   const j = await decryptEntry(await r.json(), PASS);   // every data file is ciphertext
   S.cache[key] = j; return j;
@@ -2108,7 +2117,7 @@ async function watchForCalendarRefresh(btn, toast){
     await new Promise(r => setTimeout(r, 10000));
     if(myToken !== calRefreshPollToken) return;  // a newer click superseded this one
     try{
-      const mr = await fetch("data/manifest.json?t=" + Date.now());
+      const mr = await fetch(RAW_BASE + "data/manifest.json?t=" + Date.now());
       const mj = await mr.json();
       if(mj.updated && mj.updated !== startUpdated){
         S.manifest = mj;
@@ -3674,7 +3683,7 @@ function masteryHtml(term){
 
 async function fetchWords(){
   if(Q.words) return Q.words;
-  const r = await fetch("data/words.json.enc?t="+Date.now());
+  const r = await fetch(RAW_BASE + "data/words.json.enc?t="+Date.now());
   if(!r.ok) throw new Error("missing");
   Q.words = await decryptEntry(await r.json(), PASS);
   return Q.words;
@@ -4535,7 +4544,7 @@ async function maybeOfferBio(pass){
 /* ================= site gate ================= */
 async function tryUnlock(pass){
   if(!S.holdEnc){
-    const r = await fetch("data/holdings.json.enc?t="+Date.now());
+    const r = await fetch(RAW_BASE + "data/holdings.json.enc?t="+Date.now());
     if(!r.ok) throw new Error("no verifier");
     S.holdEnc = await r.json();
   }

@@ -483,7 +483,7 @@
   .cal-refresh-toast.show{opacity:1}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px 4px}
   .cal-dow{font-size:9px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px}
-  .cal-cell{height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow:hidden}
+  .cal-cell{min-height:132px;border-radius:6px;border:1px solid var(--hairline);display:flex;flex-direction:column;align-items:stretch;font-size:11px;font-weight:700;color:#3A3E45;position:relative;transition:background .14s;padding:4px 4px 6px;overflow:visible}
   .cal-cell.dim{color:var(--muted);opacity:.6}
   .cal-cell.has{cursor:pointer}
   .cal-cell.has:hover{background:var(--gold-soft)}
@@ -503,20 +503,27 @@
   .cal-ev{display:flex;align-items:flex-start;gap:3px;font-size:10.5px;font-weight:600;color:#3A3E45;line-height:1.32;cursor:default;margin-bottom:2px}
   .cal-ev i{width:5px;height:5px;min-width:5px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:1px;margin-top:4px}
   .cal-ev-t{color:var(--muted);font-weight:800;flex-shrink:0}
-  /* titles wrap onto a second line instead of truncating with an ellipsis —
-     clamped at 2 lines so one very long title can't crowd out every other
-     event in the cell (any remainder is covered by the "+N more" indicator) */
-  .cal-ev-b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* titles wrap fully rather than truncating with an ellipsis -- the cell
+     (and its whole row, via grid auto-sizing) grows to fit; the "+N more"
+     indicator still caps how many EVENTS show, this only affects how a
+     single long title is displayed */
+  .cal-ev-b{overflow-wrap:break-word}
   /* to-do due dates render as a filled "Reminder:" pill, same visual language
      Google Calendar uses for reminders vs. plain timed events */
-  .cal-rem{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:10px;font-weight:800;color:#fff;background:var(--up);border-radius:5px;padding:1.5px 6px;margin:0 0 2px;overflow:hidden;cursor:default}
+  .cal-rem{font-size:10px;font-weight:800;color:#fff;background:var(--up);border-radius:5px;padding:1.5px 6px;margin:0 0 2px;overflow-wrap:break-word;cursor:default}
   .cal-more{font-size:10px;font-weight:800;color:var(--muted);padding-top:1px;margin-top:auto}
-  /* multi-day calendar event bar: a real grid item placed via explicit
-     grid-column/row (its own lane row, above that week's day cells) so its
-     span covers the gaps between day cells too, reading as one solid
-     labeled bar rather than several disconnected chips */
-  .cal-span-bar{align-self:stretch;justify-self:stretch;margin:0 2px;border-radius:4px;background:var(--gold);opacity:.85;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;min-height:15px}
-  .cal-span-bar:hover{opacity:1}
+  /* multi-day (all-day only, e.g. FOCUS) event bar: rendered INSIDE every
+     day cell it touches, right under the date number, so it's clear exactly
+     which days it covers -- each cell contributes one continuous-looking
+     segment (bleeding to the cell's edges via negative margin, so only the
+     grid's own small gap breaks up neighboring cells) rather than one bar
+     living in a separate strip below the whole week */
+  .cal-cell-lanes{margin:0 -4px 4px;display:flex;flex-direction:column;gap:2px}
+  .cal-cell-bar{height:14px;line-height:14px;font-size:9px;font-weight:800;color:#fff;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;background:var(--gold);opacity:.85}
+  .cal-cell-bar:hover{opacity:1}
+  .cal-cell-bar.start{border-top-left-radius:4px;border-bottom-left-radius:4px}
+  .cal-cell-bar.end{border-top-right-radius:4px;border-bottom-right-radius:4px}
+  .cal-cell-lane-empty{height:14px}
   .cal-tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;line-height:1.5;padding:10px 13px;border-radius:9px;max-width:250px;display:none;z-index:6;box-shadow:0 8px 22px -8px rgba(0,0,0,.4)}
   .cal-tip .ct-day{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:900;margin-bottom:5px}
   .cal-tip .ct-row{margin-top:5px}
@@ -965,7 +972,7 @@
 
   /* the two-week calendar and portfolio tables */
   @media(max-width:560px){
-    .cal-cell{height:104px}
+    .cal-cell{min-height:104px}
     .cal-ev, .cal-rem{font-size:9.5px}
     .pz-links{grid-template-columns:1fr}
     .pz-boxes{grid-template-columns:repeat(2,1fr)}
@@ -1074,7 +1081,7 @@ let PASS = null;
 // See MEMORY.md.
 const RAW_BASE = "https://raw.githubusercontent.com/elijahvkramer/daily-hub/main/";
 const $ = s => document.querySelector(s);
-const esc = t => String(t??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const esc = t => String(t??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
 const cls = v => v>0?"up":v<0?"down":"neutral";
 const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Today · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers", friends:"Friends · Check-In" };
@@ -2048,33 +2055,39 @@ function buildMiniCal(todayList, radarList, todayDate){
   }
   const week1 = packWeek(0), week2 = packWeek(1);
 
-  // ---- row-line bookkeeping: dow header, then EACH week's day-cells row
-  // FOLLOWED BY that week's own bar lane(s) — bars sit directly beneath the
-  // days they cover (not above), so a bar for the second week reads clearly
-  // as belonging to that week instead of trailing off the bottom of the
-  // first week's row ----
-  let rowCursor = 1;
+  // ---- row-line bookkeeping: dow header, then EACH week's day-cells row.
+  // Multi-day bars no longer get their own separate row -- they render AS
+  // CHILDREN of the day cells they touch (see laneGridForWeek below), so
+  // there's just three fixed rows total. ----
+  const dowRow = 1, week1Row = 2, week2Row = 3;
   let dowHTML = "";
-  dows.forEach((dw,i) => { dowHTML += `<div class="cal-dow" style="grid-column:${i+1};grid-row:${rowCursor}">${dw}</div>`; });
-  rowCursor++;
+  dows.forEach((dw,i) => { dowHTML += `<div class="cal-dow" style="grid-column:${i+1};grid-row:${dowRow}">${dw}</div>`; });
 
-  let barsHTML = "";
-  const renderBars = week => {
+  // ---- for a given week, map [column][lane] -> the bar segment (if any)
+  // touching that day in that lane, so every cell in the week can render
+  // its own piece of each bar it's part of (or a blank spacer to keep
+  // every cell's event list starting at the same vertical position) ----
+  function laneGridForWeek(week){
+    const grid = Array.from({length:7}, () => new Array(week.laneCount).fill(null));
     week.items.forEach(sp => {
-      barsHTML += `<div class="cal-span-bar" style="grid-column:${sp.colStart+1} / ${sp.colEnd+2};grid-row:${rowCursor+sp.lane}" title="${esc(sp.label)}: through ${esc(fmtShortMD(sp.end))}">${esc(sp.label)}</div>`;
+      for(let col=sp.colStart; col<=sp.colEnd; col++){
+        grid[col][sp.lane] = {
+          label: sp.label,
+          isStart: col === sp.colStart,
+          isEnd: col === sp.colEnd,
+          title: `${sp.label}: through ${fmtShortMD(sp.end)}`
+        };
+      }
     });
-  };
-  const week1Row = rowCursor; rowCursor++;
-  renderBars(week1);
-  rowCursor += week1.laneCount;
-  const week2Row = rowCursor; rowCursor++;
-  renderBars(week2);
-  rowCursor += week2.laneCount;
+    return grid;
+  }
+  const week1Lanes = laneGridForWeek(week1), week2Lanes = laneGridForWeek(week2);
 
-  // ---- day cells: each shows its own events inline (dot+time+title, or a
-  // "Reminder:" pill for to-do due dates), capped at MAX_VISIBLE with a
-  // "+N more" for busy days — the full list is still always available on
-  // hover via the existing cal-tip mechanism (wireMiniCal), unchanged ----
+  // ---- day cells: each shows its own multi-day bar segment(s) (if any),
+  // then its own events inline (dot+time+title, or a "Reminder:" pill for
+  // to-do due dates), capped at MAX_VISIBLE with a "+N more" for busy days —
+  // the full list is still always available on hover via the existing
+  // cal-tip mechanism (wireMiniCal), unchanged ----
   const MAX_VISIBLE = 4;
   let cellsHTML = "";
   for(let i=0;i<14;i++){
@@ -2090,16 +2103,25 @@ function buildMiniCal(todayList, radarList, todayDate){
       : `<div class="cal-ev"><i></i>${e.startTime?`<span class="cal-ev-t">${esc(e.startTime)}</span>`:""}<span class="cal-ev-b">${esc(e.label)}</span></div>`
     ).join("");
     const moreHTML = extra > 0 ? `<div class="cal-more">+${extra} more</div>` : "";
+    const week = i<7 ? week1 : week2, weekLanes = i<7 ? week1Lanes : week2Lanes;
     const rowNum = i<7 ? week1Row : week2Row;
     const col = (i%7)+1;
+    let lanesHTML = "";
+    if(week.laneCount > 0){
+      const segs = weekLanes[i%7];
+      lanesHTML = `<div class="cal-cell-lanes">` + segs.map(seg => seg
+        ? `<div class="cal-cell-bar${seg.isStart?" start":""}${seg.isEnd?" end":""}" title="${esc(seg.title)}">${seg.isStart?esc(seg.label):""}</div>`
+        : `<div class="cal-cell-lane-empty"></div>`
+      ).join("") + `</div>`;
+    }
     const data = (has||isToday) ? esc(JSON.stringify({day: dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}), list:evs, today:isToday})) : "";
-    cellsHTML += `<div class="${cls}" style="grid-column:${col};grid-row:${rowNum}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span>${rowsHTML}${moreHTML}</div>`;
+    cellsHTML += `<div class="${cls}" style="grid-column:${col};grid-row:${rowNum}" ${data?`data-cal='${data}'`:""}><span class="cn">${dt.getDate()}</span>${lanesHTML}${rowsHTML}${moreHTML}</div>`;
   }
 
   const end = new Date(start); end.setDate(start.getDate()+13);
   const label = `${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`;
   return `<div class="cal-head"><span class="cm">Two-Week View</span><div class="cal-head-right"><span class="cl">${esc(label)}</span><a class="cal-refresh-btn" href="https://github.com/elijahvkramer/daily-hub/actions/workflows/calendar-refresh.yml" target="_blank" rel="noopener" title="Opens GitHub Actions in a new tab -- click &quot;Run workflow&quot; there for an instant pull, then come back here; this page will pick it up automatically"><span class="spin">⟳</span></a></div></div>
-    <div class="cal-grid">${dowHTML}${cellsHTML}${barsHTML}</div><div class="cal-tip"></div><div class="cal-refresh-toast">Watching for new data…</div>`;
+    <div class="cal-grid">${dowHTML}${cellsHTML}</div><div class="cal-tip"></div><div class="cal-refresh-toast">Watching for new data…</div>`;
 }
 // No credentials involved: clicking the refresh link just opens GitHub's own
 // Actions page (Eli is already signed in there) so HE clicks "Run workflow" --

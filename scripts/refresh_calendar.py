@@ -120,6 +120,12 @@ def format_event(ev, is_today):
             if end_dt.date() > dt.date():
                 end_date_str = end_dt.strftime("%Y-%m-%d")
     else:
+        # timed events NEVER get an endDate/span treatment, even when they
+        # run past midnight (e.g. a 9:30pm-12:30am reception) -- they still
+        # belong to their start day, just with their full time range shown
+        # (matching how Google Calendar's own month view handles them). Only
+        # genuine multi-day ALL-DAY events (the is_all_day branch above,
+        # e.g. a multi-day "FOCUS" block) render as a spanning bar.
         start_dt = datetime.datetime.fromisoformat(s["dateTime"])
         start_ct = start_dt.astimezone(CT)
         weekday = start_ct.strftime("%a")
@@ -127,10 +133,7 @@ def format_event(ev, is_today):
         time_line = fmt_ct_time(start_dt)
         if e.get("dateTime"):
             end_dt = datetime.datetime.fromisoformat(e["dateTime"])
-            end_ct = end_dt.astimezone(CT)
             time_line += "–" + fmt_ct_time(end_dt)
-            if end_ct.date() > start_ct.date():
-                end_date_str = end_ct.strftime("%Y-%m-%d")
         time_line += " CT"
 
     if is_today:

@@ -422,7 +422,10 @@
   .todo-item.dragging{opacity:.55}
   .todo-item.dragging .ti-main{background:var(--gold-soft)}
   .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent}
-  .ti-main .ti-text{flex:1;min-width:0;overflow-wrap:anywhere}
+  .ti-main .ti-text{flex:1;min-width:0;overflow-wrap:anywhere;cursor:text;border-radius:4px;transition:background .12s}
+  .ti-main .ti-text:hover{background:rgba(0,0,0,.035)}
+  .ti-main .ti-text-input{flex:1;min-width:0;font:inherit;color:inherit;background:#fff;border:1px solid var(--gold);border-radius:4px;padding:2px 6px;margin:-3px 0}
+  .ti-main .ti-text-input:focus{outline:none;box-shadow:0 0 0 2px var(--gold-soft)}
   .ti-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--hairline);color:var(--muted);flex-shrink:0;white-space:nowrap}
   .ti-chip.overdue{color:#B23B3B;border-color:#e3b3b3;background:#fbeeee}
   .ti-chip .ti-chip-x{margin-left:1px;opacity:.55;font-weight:900}
@@ -2252,7 +2255,7 @@ function wirePortfolioSnapshot(){
     const sw = $("#psSparkWrap");
     if(P.intraReady){
       const ser = intradaySeries();
-      sw.innerHTML = ser ? buildIntradayChart(ser)
+      sw.innerHTML = ser ? buildIntradayChart(ser, t.day)
         : `<div style="font-size:11.5px;color:var(--muted);padding:20px 0;text-align:center">Intraday chart unavailable right now.</div>`;
     } else { loadIntraday(); }
   };
@@ -2373,6 +2376,7 @@ function buildTodayScheduleHTML(todayList, todayDate){
 const expandedNotes = new Set();
 const expandedSubs = new Set();
 const dueEditing = new Set();
+const textEditing = new Set();     // to-do ids whose title is currently an editable input
 const expandedHistory = new Set();     // which kinds ("urgent"/"chill") have their Recently Completed panel open
 const pendingComplete = new Map();     // id -> setTimeout handle, for the 3s undo window after clicking a row done
 
@@ -2435,7 +2439,9 @@ function todoRowsHTML(items){
       <div class="ti-main">
         <span class="ti-drag" title="Drag to reorder">⠿</span>
         <span class="ti-check">✓</span>
-        <span class="ti-text">${esc(t.text)}</span>
+        ${textEditing.has(t.id)
+          ? `<input type="text" class="ti-text-input" maxlength="140" value="${esc(t.text)}">`
+          : `<span class="ti-text" data-action="text-edit" title="Click to rename">${esc(t.text)}</span>`}
         <button type="button" class="ti-kind ti-kind-${kind}" data-action="kind-toggle" title="Switch between urgent and chill"><i></i><span>${kind==="chill"?"Chill":"Urgent"}</span></button>
         ${dueField}
         <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">✎</button>
@@ -2524,6 +2530,11 @@ function wireTodoRows(root){
     } else if(action === "sub-toggle"){
       if(expandedSubs.has(id)) expandedSubs.delete(id); else expandedSubs.add(id);
       rerenderTodoWrap(root);
+    } else if(action === "text-edit"){
+      textEditing.add(id);
+      rerenderTodoWrap(root);
+      const inp = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-text-input`);
+      if(inp){ inp.focus(); inp.select(); }
     } else if(action === "due-add" || action === "due-edit"){
       dueEditing.add(id);
       rerenderTodoWrap(root);
@@ -2536,6 +2547,13 @@ function wireTodoRows(root){
     } else if(action === "sub-remove"){
       if(window.__todosApi) window.__todosApi.removeSub(id, actionEl.dataset.sub);
     }
+  });
+
+  wrap.addEventListener("keydown", (e) => {
+    const inp = e.target.closest(".ti-text-input");
+    if(!inp) return;
+    if(e.key === "Enter"){ e.preventDefault(); inp.blur(); }
+    else if(e.key === "Escape"){ inp.dataset.cancelled = "1"; inp.blur(); }
   });
 
   wrap.addEventListener("submit", (e) => {
@@ -2559,6 +2577,16 @@ function wireTodoRows(root){
   });
 
   wrap.addEventListener("focusout", (e) => {
+    const textInp = e.target.closest(".ti-text-input");
+    if(textInp){
+      const id = textInp.closest(".todo-item").dataset.id;
+      textEditing.delete(id);
+      const cancelled = textInp.dataset.cancelled === "1";
+      const val = textInp.value.trim();
+      if(!cancelled && val && window.__todosApi) window.__todosApi.setText(id, val);
+      rerenderTodoWrap(root);
+      return;
+    }
     const inp = e.target.closest(".ti-due-input");
     if(inp){
       const id = inp.closest(".todo-item").dataset.id;
@@ -3443,14 +3471,19 @@ function intradaySeries(){
 }
 /* draws the intraday value line on a fixed open→close axis; the line only reaches "now",
    leaving the rest of the session's width empty to fill as the day goes on. */
-function buildIntradayChart(ser){
+function buildIntradayChart(ser, dayChange){
   const {pts, start, end} = ser;
   const W=380, H=62, PT=6, PB=6, PR=5;
   const span = (end - start) || 1;
   const fx = ts => Math.max(0, Math.min(1, (ts - start)/span)) * (W - PR);
   const vals = pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); if(mn===mx){ mn-=1; mx+=1; }
   const fy = v => PT + (H-PT-PB) - ((v-mn)/(mx-mn))*(H-PT-PB);
-  const first = pts[0].v, last = pts[pts.length-1].v, col = last>=first ? "#18996B" : "#DC4B43";
+  const last = pts[pts.length-1].v;
+  // Color follows today's actual total $ change (the same number shown above the
+  // chart), not the sparkline's own open-to-now slope -- those can disagree (e.g.
+  // portfolio dipped off a higher open but is still up vs. yesterday's close), and
+  // the headline number is what should decide red vs. green here.
+  const col = (dayChange != null ? dayChange >= 0 : last >= pts[0].v) ? "#18996B" : "#DC4B43";
   let line = "", area = `M ${fx(pts[0].ts).toFixed(1)} ${(H-PB).toFixed(1)}`;
   pts.forEach((p,i) => { const X=fx(p.ts).toFixed(1), Y=fy(p.v).toFixed(1); line += `${i?"L":"M"} ${X} ${Y} `; area += ` L ${X} ${Y}`; });
   area += ` L ${fx(pts[pts.length-1].ts).toFixed(1)} ${(H-PB).toFixed(1)} Z`;
@@ -4877,6 +4910,11 @@ gateInit();
       },
       setNote(id, note){
         updateItem(id, t => { const v = (note||"").trim(); if(v){ t.note = v; } else { delete t.note; } return t; });
+      },
+      setText(id, text){
+        text = (text || "").trim();
+        if(!text) return;   // renaming to blank is a no-op, not a delete
+        updateItem(id, t => { t.text = text; return t; });
       },
       addSub(id, text){
         text = (text||"").trim();

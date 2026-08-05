@@ -3136,7 +3136,7 @@ function renderFriendsBody(){
    and are decrypted at the site gate. */
 let HOLDINGS = null;
 
-const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false };
+const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false, _fetchPromise:null };
 const PPAL = ["#C8A24B","#3E4C59","#5C7A6B","#8A9BA8","#A08339","#7B6D8D","#C97B63","#B5A78C","#4A5568","#6B7177","#D9C7A0","#2F4858"];
 function pcolor(t){ let x = 0; for(const c of t) x = (x*31 + c.charCodeAt(0)) >>> 0; return PPAL[x % PPAL.length]; }
 const usd = (n,dec=2) => "$" + Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
@@ -3145,8 +3145,11 @@ const pctS = n => (n>=0?"+":"−") + Math.abs(n).toFixed(2) + "%";
 const pcls = n => n>=0 ? "pos" : "neg";
 
 async function pQuote(sym){
+  // query1.finance.yahoo.com now hard-blocks direct browser requests (503, always) --
+  // going through a CORS proxy first (instead of eating that guaranteed failure on
+  // every call) is what actually cuts the Today snapshot's load time down.
   const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`;
-  const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{
       const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
@@ -3156,6 +3159,42 @@ async function pQuote(sym){
     }catch(e){}
   }
   return null;
+}
+
+/* One batched request for every holding's live price AND today's 5-minute
+   intraday series (the Today snapshot's sparkline), via Yahoo's v7 "spark"
+   endpoint -- replaces what used to be up to 24 separate per-symbol requests
+   (a price chart call + an intraday chart call for each holding). pQuote
+   (above) stays as a per-symbol fallback for any ticker this doesn't return. */
+async function pSparkAll(syms){
+  const out = {};
+  if(!syms.length) return out;
+  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=1d&interval=5m`;
+  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  for(const u of urls){
+    try{
+      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
+      const j = await r.json(); const results = j?.spark?.result;
+      if(Array.isArray(results) && results.length){
+        for(const x of results){
+          const resp = x.response?.[0]; const m = resp?.meta;
+          if(x.symbol && m && typeof m.regularMarketPrice === "number"){
+            const reg = m.currentTradingPeriod?.regular;
+            out[x.symbol] = {
+              price: m.regularMarketPrice,
+              prev: (m.chartPreviousClose ?? m.previousClose ?? m.regularMarketPrice),
+              time: m.regularMarketTime,
+              series: (resp.timestamp && resp.indicators?.quote?.[0]?.close)
+                ? {t:resp.timestamp, c:resp.indicators.quote[0].close, start:reg?.start, end:reg?.end}
+                : null
+            };
+          }
+        }
+        if(Object.keys(out).length) return out;
+      }
+    }catch(e){}
+  }
+  return out;
 }
 
 /* A quote whose last trade/NAV timestamp isn't from today (ET) hasn't moved yet today, so it has
@@ -3344,7 +3383,7 @@ function renderPortfolio(){
 /* ---------- portfolio value history ---------- */
 async function fetchHistSym(sym){
   const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5y`;
-  const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{
       const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
@@ -3365,27 +3404,13 @@ async function loadHistory(){
 }
 
 /* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
-async function fetchIntradaySym(sym){
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=5m&range=1d`;
-  const urls = [target, "https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
-  for(const u of urls){
-    try{
-      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
-      const j = await r.json(); const res = j?.chart?.result?.[0];
-      if(res?.timestamp && res?.indicators?.quote?.[0]?.close){
-        const reg = res.meta?.currentTradingPeriod?.regular;
-        return {t:res.timestamp, c:res.indicators.quote[0].close, start:reg?.start, end:reg?.end};
-      }
-    }catch(e){}
-  }
-  return null;
-}
+/* fetching handled by pSparkAll/pFetchLive above -- one batched request covers
+   every holding's intraday series instead of a per-symbol call. */
 async function loadIntraday(){
   if(P.intraReady || P.intraLoading) return;
-  P.intraLoading = true; P.intraday = {}; P.intraMeta = null;
-  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
-  await Promise.all(syms.map(async s => { const h = await fetchIntradaySym(s); if(h){ P.intraday[s] = h; if(!P.intraMeta && h.start && h.end) P.intraMeta = {start:h.start, end:h.end}; } }));
-  P.intraLoading = false; P.intraReady = true;
+  P.intraLoading = true;
+  await pFetchLive();   // now fetches price + intraday together (see pSparkAll)
+  P.intraLoading = false;
 }
 /* Combine each holding's intraday prices (forward-filled onto a common timestamp spine) into
    the portfolio's total market value at each 5-min mark through the session. */
@@ -3669,13 +3694,27 @@ function pTable(){
 }
 
 async function pFetchLive(){
-  if(P.fetching) return;
-  P.fetching = true;
-  if(S.tab === "portfolio") renderPortfolio();   // only repaint the portfolio page if we're on it — otherwise this stomps the Today hero
-  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
-  await Promise.all(syms.map(async s => { const q = await pQuote(s); if(q) P.live[s] = q; }));
-  P.fetching = false; P.fetched = true;
-  if(S.tab === "portfolio") renderPortfolio();
+  if(P._fetchPromise) return P._fetchPromise;   // dedupe concurrent callers (Today snapshot fires two at once)
+  P._fetchPromise = (async () => {
+    P.fetching = true;
+    if(S.tab === "portfolio") renderPortfolio();   // only repaint the portfolio page if we're on it — otherwise this stomps the Today hero
+    const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
+    const spark = await pSparkAll(syms);
+    P.intraday = {}; P.intraMeta = null;
+    for(const sym of syms){
+      const hit = spark[sym];
+      if(hit){
+        P.live[sym] = {price:hit.price, prev:hit.prev, time:hit.time};
+        if(hit.series){ P.intraday[sym] = hit.series; if(!P.intraMeta && hit.series.start && hit.series.end) P.intraMeta = {start:hit.series.start, end:hit.series.end}; }
+      }
+    }
+    const missing = syms.filter(s => !P.live[s]);
+    if(missing.length) await Promise.all(missing.map(async s => { const q = await pQuote(s); if(q) P.live[s] = q; }));
+    P.intraReady = true;
+    P.fetching = false; P.fetched = true;
+    if(S.tab === "portfolio") renderPortfolio();
+  })();
+  try{ await P._fetchPromise; } finally { P._fetchPromise = null; }
 }
 
 /* ================= quiz ================= */

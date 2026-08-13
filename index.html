@@ -416,6 +416,7 @@
   .ti-main:hover{background:var(--paper)}
   /* drag handle for reordering — grabbing and moving it drags the whole row;
      a plain click on it does nothing (doesn't trigger click-to-complete) */
+  .ti-divider{height:2px;background:var(--hairline);margin:8px 2px;border-radius:1px}
   .ti-drag{cursor:grab;color:var(--muted);opacity:.3;flex-shrink:0;font-size:14px;padding:2px 3px;line-height:1;touch-action:none;user-select:none;transition:opacity .15s}
   .ti-main:hover .ti-drag{opacity:.7}
   .ti-drag:active{cursor:grabbing}
@@ -2421,8 +2422,13 @@ function todoRowsHTML(items){
   if(!list.length){
     return `<div class="tc-empty"><span class="tc-empty-check">✓</span>Nothing on the list — all clear.</div>`;
   }
+  // Urgent always renders above Chill -- a stable sort (Array.sort has been
+  // stable since ES2019) keeps each group's own relative/dragged order intact,
+  // it just groups them. A thin divider marks the boundary when both exist.
+  const sorted = [...list].sort((a,b) => (a.kind==="chill"?1:0) - (b.kind==="chill"?1:0));
+  const firstChillIdx = sorted.findIndex(t => t.kind === "chill");
   const todayStr = (S.date && S.date.calendar) || new Date().toISOString().slice(0,10);
-  return list.map(t => {
+  return sorted.map((t,i) => {
     const kind = t.kind === "chill" ? "chill" : "urgent";
     const subitems = t.subitems || [];
     const subDone = subitems.filter(s => s.done).length;
@@ -2435,7 +2441,8 @@ function todoRowsHTML(items){
           ? `<span class="ti-chip${overdue?" overdue":""}" data-action="due-edit">${esc(dueChipLabel(t.due))}<span class="ti-chip-x" data-action="due-clear" title="Clear due date">×</span></span>`
           : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
     const checkedPending = pendingComplete.has(t.id);
-    return `<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}" data-id="${esc(t.id)}" data-kind="${kind}">
+    const divider = (i === firstChillIdx && firstChillIdx > 0) ? `<div class="ti-divider"></div>` : "";
+    return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}" data-id="${esc(t.id)}" data-kind="${kind}">
       <div class="ti-main">
         <span class="ti-drag" title="Drag to reorder">⠿</span>
         <span class="ti-check">✓</span>

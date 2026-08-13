@@ -4746,6 +4746,7 @@ gateInit();
   let todoDocRef = null; // assigned once Firestore initializes below; declared out here
   // (not with const inside the try block) so updateItem() can see it via closure.
   const HISTORY_CAP = 16; // how many recently-completed items we keep
+  const HISTORY_MAX_AGE_MS = 48 * 60 * 60 * 1000; // auto-purge recently-deleted items older than this
   // The pre-merge {urgent, chill, ...} snapshot is kept in the doc as a one-time
   // backup so the old split lists are recoverable; every write carries it through.
   let preMergeBackup = null;
@@ -4847,6 +4848,19 @@ gateInit();
             ...(Array.isArray(data.historyUrgent) ? data.historyUrgent : []).map(h => ({ ...h, kind: "urgent" })),
             ...(Array.isArray(data.historyChill) ? data.historyChill : []).map(h => ({ ...h, kind: "chill" }))
           ].sort((a,b) => String(b.doneAt||"").localeCompare(String(a.doneAt||""))).slice(0, HISTORY_CAP);
+          needsWrite = true;
+        }
+
+        // Recently-deleted entries older than 48h are purged automatically
+        // (Eli's request, Aug 2026) -- unparsable/missing timestamps are kept
+        // rather than risk silently dropping a legit entry.
+        const historyCutoff = Date.now() - HISTORY_MAX_AGE_MS;
+        const freshHistory = history.filter(h => {
+          const t = Date.parse(h.doneAt);
+          return !Number.isFinite(t) || t >= historyCutoff;
+        });
+        if(freshHistory.length !== history.length){
+          history = freshHistory;
           needsWrite = true;
         }
 

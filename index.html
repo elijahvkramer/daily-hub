@@ -390,6 +390,11 @@
   .tc-hist-btn{flex-shrink:0;border:none;background:none;color:var(--muted);font-size:13px;cursor:pointer;padding:3px 6px;border-radius:6px;display:inline-flex;align-items:center;transition:background .15s,color .15s;font-family:inherit}
   .tc-hist-btn:hover{background:var(--paper);color:var(--ink)}
   .tc-hist-btn.open{color:#A08339;background:var(--paper)}
+  .tc-list-toggle{display:flex;flex-shrink:0;background:var(--paper);border:1px solid var(--hairline);border-radius:999px;padding:2px;gap:2px;margin-right:2px}
+  .tc-list-btn{appearance:none;border:none;background:none;font:inherit;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 9px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;font-family:inherit}
+  .tc-list-btn:hover:not(.active){color:var(--ink)}
+  .tc-list-btn.active{background:var(--gold);color:#fff}
+  @media(max-width:400px){.tc-list-btn{padding:3px 6px}}
   .tc-hist-wrap{margin:0 0 8px;padding:2px 2px 8px;border-bottom:1px dashed var(--hairline)}
   .tc-hist-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px}
   .tc-hist-item .txt{flex:1;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:var(--hairline);color:#8A8F97}
@@ -2381,6 +2386,26 @@ const textEditing = new Set();     // to-do ids whose title is currently an edit
 const expandedHistory = new Set();     // which kinds ("urgent"/"chill") have their Recently Completed panel open
 const pendingComplete = new Map();     // id -> setTimeout handle, for the 3s undo window after clicking a row done
 
+/* ---- Work / Personal to-do list toggle (Eli's request, Aug 2026) ----
+   Items and history entries carry a "list":"work"|"personal" field (missing
+   = "personal", same default-at-read-time pattern as the urgent/chill "kind"
+   field -- no migration write needed for existing items). Which list is
+   currently VIEWED is a pure client-side/per-browser preference, stored in
+   localStorage so it survives reloads without needing a Firestore round trip
+   or affecting any other device. */
+const TODO_LIST_KEY = "dh_todo_active_list";
+function getActiveTodoList(){
+  try{ return localStorage.getItem(TODO_LIST_KEY) === "work" ? "work" : "personal"; }
+  catch(e){ return "personal"; }
+}
+function setActiveTodoList(val){
+  const v = val === "work" ? "work" : "personal";
+  try{ localStorage.setItem(TODO_LIST_KEY, v); }catch(e){}
+}
+function itemsForList(list, which){
+  return (list || []).filter(t => (t.list === "work" ? "work" : "personal") === which);
+}
+
 /* relative-time label for the Recently Completed list ("just now", "12m ago",
    "yesterday", "3d ago", then falls back to a short date) */
 function relTimeAgo(iso){
@@ -2450,6 +2475,7 @@ function todoRowsHTML(items){
           ? `<input type="text" class="ti-text-input" maxlength="140" value="${esc(t.text)}">`
           : `<span class="ti-text" data-action="text-edit" title="Click to rename">${esc(t.text)}</span>`}
         <button type="button" class="ti-kind ti-kind-${kind}" data-action="kind-toggle" title="Switch between urgent and chill"><i></i><span>${kind==="chill"?"Chill":"Urgent"}</span></button>
+        <button type="button" class="ti-icon-btn" data-action="list-move" data-to="${(t.list==="work"?"work":"personal")==="work"?"personal":"work"}" title="Move to ${(t.list==="work"?"work":"personal")==="work"?"Personal":"Work"}">&#8646;</button>
         ${dueField}
         <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">✎</button>
         <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">☰${subitems.length?` ${subDone}/${subitems.length}`:""}</button>
@@ -2469,8 +2495,13 @@ function renderTodosCard(items, history){
   const total = list.length;
   const urgent = list.filter(t => (t.kind||"urgent") !== "chill").length;
   const histOpen = expandedHistory.has("todos");
+  const activeList = getActiveTodoList();
+  const listToggle = `<div class="tc-list-toggle" role="tablist">
+      <button type="button" class="tc-list-btn${activeList==="personal"?" active":""}" data-list="personal">Personal</button>
+      <button type="button" class="tc-list-btn${activeList==="work"?" active":""}" data-list="work">Work</button>
+    </div>`;
   return `<div class="bento-card todo-card" id="todosCard">
-      <div class="tc-head"><span class="h">To-Dos</span><span class="tc-head-ctrl"><span class="tc-sub" id="todosSub">${total ? `${urgent} urgent · ${total-urgent} chill` : ""}</span><button type="button" class="tc-hist-btn${histOpen?" open":""}" data-action="hist-toggle" title="Recently completed">&#8635;</button><span class="tc-badge${total===0?" clear":""}" id="todosBadge">${total===0?"✓":total}</span></span></div>
+      <div class="tc-head"><span class="h">To-Dos</span><span class="tc-head-ctrl">${listToggle}<span class="tc-sub" id="todosSub">${total ? `${urgent} urgent · ${total-urgent} chill` : ""}</span><button type="button" class="tc-hist-btn${histOpen?" open":""}" data-action="hist-toggle" title="Recently completed">&#8635;</button><span class="tc-badge${total===0?" clear":""}" id="todosBadge">${total===0?"✓":total}</span></span></div>
       <div class="tc-hist-wrap" id="todosHistWrap" style="display:${histOpen?"block":"none"}">${histOpen ? historyListHTML(history) : ""}</div>
       <div id="todosInlineWrap">${todoRowsHTML(list)}</div>
       <form class="todo-add"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
@@ -2481,7 +2512,7 @@ function rerenderTodoWrap(root){
   const wrap = root.querySelector("#todosInlineWrap");
   if(!wrap) return;
   const items = (window.__todosApi ? window.__todosApi.getState().items : []) || [];
-  wrap.innerHTML = todoRowsHTML(items);
+  wrap.innerHTML = todoRowsHTML(itemsForList(items, getActiveTodoList()));
 }
 
 function wireTodoRows(root){
@@ -2553,6 +2584,8 @@ function wireTodoRows(root){
       if(window.__todosApi) window.__todosApi.toggleSub(id, actionEl.dataset.sub);
     } else if(action === "sub-remove"){
       if(window.__todosApi) window.__todosApi.removeSub(id, actionEl.dataset.sub);
+    } else if(action === "list-move"){
+      if(window.__todosApi) window.__todosApi.setList(id, actionEl.dataset.to);
     }
   });
 
@@ -2642,7 +2675,9 @@ function wireTodoDrag(root){
   });
 }
 
-/* New items land as urgent; flip them on the row if they're not. */
+/* New items land as urgent, in whichever list (Work/Personal) is currently
+   being viewed; flip urgent/chill on the row if needed, or move lists with
+   the row's move button. */
 function wireTodoAddForm(root){
   const card = root.querySelector("#todosCard");
   const form = card ? card.querySelector(".todo-add") : null;
@@ -2653,7 +2688,7 @@ function wireTodoAddForm(root){
     const input = form.querySelector("input");
     const val = (input.value || "").trim();
     if(!val) return;
-    if(window.__todosApi) window.__todosApi.add(val, "urgent");
+    if(window.__todosApi) window.__todosApi.add(val, "urgent", getActiveTodoList());
     input.value = "";
     input.focus();
   });
@@ -2672,7 +2707,7 @@ function wireTodoHistory(root){
       const wrap = root.querySelector("#todosHistWrap");
       if(wrap){
         wrap.style.display = open ? "block" : "none";
-        if(open) wrap.innerHTML = historyListHTML(state.history);
+        if(open) wrap.innerHTML = historyListHTML(itemsForList(state.history, getActiveTodoList()));
       }
     });
   }
@@ -2684,6 +2719,38 @@ function wireTodoHistory(root){
       if(!restoreBtn) return;
       if(window.__todosApi) window.__todosApi.restore(restoreBtn.dataset.histId);
     });
+  }
+}
+
+/* Personal/Work header toggle -- swaps which list is rendered without
+   waiting for a Firestore round trip, since it's a pure local view state. */
+function wireTodoListToggle(root){
+  const card = root.querySelector("#todosCard");
+  const toggle = card ? card.querySelector(".tc-list-toggle") : null;
+  if(!toggle || toggle.dataset.wired) return;
+  toggle.dataset.wired = "1";
+  toggle.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tc-list-btn");
+    if(!btn) return;
+    const val = btn.dataset.list === "work" ? "work" : "personal";
+    if(val === getActiveTodoList()) return;
+    setActiveTodoList(val);
+    applyActiveTodoList(root);
+  });
+}
+
+function applyActiveTodoList(root){
+  const state = window.__todosApi ? window.__todosApi.getState() : { items: [], history: [] };
+  const active = getActiveTodoList();
+  const items = itemsForList(state.items, active);
+  const wrap = root.querySelector("#todosInlineWrap");
+  if(wrap) wrap.innerHTML = todoRowsHTML(items);
+  updateTodoBadge(root, items);
+  const card = root.querySelector("#todosCard");
+  if(card) card.querySelectorAll(".tc-list-btn").forEach(b => b.classList.toggle("active", (b.dataset.list==="work"?"work":"personal") === active));
+  if(expandedHistory.has("todos")){
+    const hwrap = root.querySelector("#todosHistWrap");
+    if(hwrap) hwrap.innerHTML = historyListHTML(itemsForList(state.history, active));
   }
 }
 
@@ -2700,33 +2767,40 @@ function updateTodoBadge(root, items){
   if(sub) sub.textContent = total ? `${urgent} urgent · ${total-urgent} chill` : "";
 }
 
+/* to-do card badge/count always reflect only the currently-viewed list
+   (Personal or Work) -- switching lists is a filter, not a merge. */
+
 /* Only re-renders when the list actually changed, so a snapshot caused by
    another device (or an unrelated field) doesn't visibly reload the card. */
 function refreshTodoCards(root, state, prevState){
   state = state || (window.__todosApi ? window.__todosApi.getState() : { items: [], history: [] });
   const items = state.items || [];
   const history = state.history || [];
+  const active = getActiveTodoList();
+  const viewItems = itemsForList(items, active);
+  const viewHistory = itemsForList(history, active);
   const exists = !!root.querySelector("#todosCard");
   const changed = JSON.stringify(prevState.items) !== JSON.stringify(items);
   const histChanged = JSON.stringify(prevState.history) !== JSON.stringify(history);
   if(!exists){
     const slot = root.querySelector("#todosCardSlot");
     if(!slot) return;
-    slot.innerHTML = renderTodosCard(items, history);
+    slot.innerHTML = renderTodosCard(viewItems, viewHistory);
     wireTodoRows(root);
     wireTodoDrag(root);
     wireTodoAddForm(root);
     wireTodoHistory(root);
+    wireTodoListToggle(root);
   } else if(changed){
     const wrap = root.querySelector("#todosInlineWrap");
-    if(wrap) wrap.innerHTML = todoRowsHTML(items);
+    if(wrap) wrap.innerHTML = todoRowsHTML(viewItems);
     wireTodoRows(root);
     wireTodoDrag(root);
-    updateTodoBadge(root, items);
+    updateTodoBadge(root, viewItems);
   }
   if((changed || histChanged) && expandedHistory.has("todos")){
     const hwrap = root.querySelector("#todosHistWrap");
-    if(hwrap) hwrap.innerHTML = historyListHTML(history);
+    if(hwrap) hwrap.innerHTML = historyListHTML(viewHistory);
   }
   prevState.items = items;
   prevState.history = history;
@@ -4902,17 +4976,17 @@ gateInit();
     window.__todosApi = {
       isReady: () => todosReady,
       getState: () => todosState,
-      add(text, kind){
+      add(text, kind, list){
         text = (text || "").trim();
         if(!text) return;
-        const next = { ...todosState, items: [...todosState.items, { id: genId(), text, kind: kind === "chill" ? "chill" : "urgent", done: false }] };
+        const next = { ...todosState, items: [...todosState.items, { id: genId(), text, kind: kind === "chill" ? "chill" : "urgent", list: list === "work" ? "work" : "personal", done: false }] };
         writeTodos(next).catch(err => console.error("Daily Hub: failed to save to-do", err));
       },
       remove(id){
         const removed = todosState.items.find(t => t.id === id);
         const next = { ...todosState, items: todosState.items.filter(t => t.id !== id) };
         if(removed){
-          const entry = { id: removed.id, text: removed.text, kind: removed.kind || "urgent", doneAt: new Date().toISOString() };
+          const entry = { id: removed.id, text: removed.text, kind: removed.kind || "urgent", list: removed.list === "work" ? "work" : "personal", doneAt: new Date().toISOString() };
           next.history = [entry, ...(todosState.history || [])].slice(0, HISTORY_CAP);
         }
         writeTodos(next).catch(err => console.error("Daily Hub: failed to remove to-do", err));
@@ -4921,6 +4995,11 @@ gateInit();
          the list along with its due date, note and checklist */
       setKind(id, kind){
         updateItem(id, t => { t.kind = kind === "chill" ? "chill" : "urgent"; return t; });
+      },
+      /* Work/Personal switch (Eli's request, Aug 2026) -- same field-flip
+         pattern as setKind, keeps due date/note/checklist intact. */
+      setList(id, list){
+        updateItem(id, t => { t.list = list === "work" ? "work" : "personal"; return t; });
       },
       toggle(id){
         const next = { ...todosState, items: todosState.items.map(t => t.id === id ? { ...t, done: !t.done } : t) };
@@ -4953,7 +5032,7 @@ gateInit();
         if(!entry) return;
         const next = {
           ...todosState,
-          items: [...todosState.items, { id: genId(), text: entry.text, kind: entry.kind === "chill" ? "chill" : "urgent", done: false }],
+          items: [...todosState.items, { id: genId(), text: entry.text, kind: entry.kind === "chill" ? "chill" : "urgent", list: entry.list === "work" ? "work" : "personal", done: false }],
           history: todosState.history.filter(h => h.id !== historyId)
         };
         writeTodos(next).catch(err => console.error("Daily Hub: failed to restore to-do", err));

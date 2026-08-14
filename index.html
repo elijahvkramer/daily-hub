@@ -379,21 +379,22 @@
   .friend-log-btn:hover{border-color:var(--gold);background:#FBF6EA}
   .friend-remove{appearance:none;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px 7px;border-radius:6px;transition:all .15s}
   .friend-remove:hover{color:var(--down);background:rgba(220,75,67,.08)}
-  .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .tc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .tc-head .h{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   /* stylish count badge, replacing the old completion ring — flips to a green
      checkmark when the list is empty ("all clear"), animated via the same
      transition whenever the count or clear-state changes */
   .tc-badge{min-width:24px;height:24px;padding:0 8px;border-radius:999px;border:2px solid var(--gold);color:var(--gold);font-weight:900;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.34,1.2,.4,1)}
   .tc-badge.clear{border-color:var(--up);background:var(--up);color:#fff;transform:scale(1.05)}
-  .tc-head-ctrl{display:flex;align-items:center;gap:6px}
+  .tc-head-ctrl{display:flex;align-items:center;gap:6px;margin-left:auto}
   .tc-hist-btn{flex-shrink:0;border:none;background:none;color:var(--muted);font-size:13px;cursor:pointer;padding:3px 6px;border-radius:6px;display:inline-flex;align-items:center;transition:background .15s,color .15s;font-family:inherit}
   .tc-hist-btn:hover{background:var(--paper);color:var(--ink)}
   .tc-hist-btn.open{color:#A08339;background:var(--paper)}
-  .tc-list-toggle{display:flex;flex-shrink:0;background:var(--paper);border:1px solid var(--hairline);border-radius:999px;padding:2px;gap:2px;margin-right:2px}
-  .tc-list-btn{appearance:none;border:none;background:none;font:inherit;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 9px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;font-family:inherit}
+  .tc-list-toggle{position:relative;display:flex;flex-shrink:0;background:var(--paper);border:1px solid var(--hairline);border-radius:999px;padding:2px;gap:2px}
+  .tc-list-slider{position:absolute;top:2px;bottom:2px;left:0;width:0;border-radius:999px;background:var(--gold);z-index:0;pointer-events:none;transition:transform .24s cubic-bezier(.4,0,.2,1),width .24s cubic-bezier(.4,0,.2,1)}
+  .tc-list-btn{position:relative;z-index:1;appearance:none;border:none;background:none;font:inherit;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 9px;border-radius:999px;cursor:pointer;transition:color .15s;white-space:nowrap;font-family:inherit}
   .tc-list-btn:hover:not(.active){color:var(--ink)}
-  .tc-list-btn.active{background:var(--gold);color:#fff}
+  .tc-list-btn.active{color:#fff}
   @media(max-width:400px){.tc-list-btn{padding:3px 6px}}
   .tc-hist-wrap{margin:0 0 8px;padding:2px 2px 8px;border-bottom:1px dashed var(--hairline)}
   .tc-hist-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px}
@@ -2496,12 +2497,20 @@ function renderTodosCard(items, history){
   const urgent = list.filter(t => (t.kind||"urgent") !== "chill").length;
   const histOpen = expandedHistory.has("todos");
   const activeList = getActiveTodoList();
+  // The toggle lives directly after the "To-Dos" label (both fixed-width),
+  // NOT inside tc-head-ctrl -- that block's width changes constantly (the
+  // urgent/chill sub-label goes blank at 0 items, the badge digit count
+  // changes, etc), and nesting the toggle inside it made the whole toggle
+  // visibly shift sideways every time you switched lists. Keeping it a
+  // sibling, left-anchored right after the label, makes its position fixed
+  // regardless of what's happening on the right (Eli's request, Aug 2026).
   const listToggle = `<div class="tc-list-toggle" role="tablist">
+      <span class="tc-list-slider" aria-hidden="true"></span>
       <button type="button" class="tc-list-btn${activeList==="personal"?" active":""}" data-list="personal">Personal</button>
       <button type="button" class="tc-list-btn${activeList==="work"?" active":""}" data-list="work">Work</button>
     </div>`;
   return `<div class="bento-card todo-card" id="todosCard">
-      <div class="tc-head"><span class="h">To-Dos</span><span class="tc-head-ctrl">${listToggle}<span class="tc-sub" id="todosSub">${total ? `${urgent} urgent · ${total-urgent} chill` : ""}</span><button type="button" class="tc-hist-btn${histOpen?" open":""}" data-action="hist-toggle" title="Recently completed">&#8635;</button><span class="tc-badge${total===0?" clear":""}" id="todosBadge">${total===0?"✓":total}</span></span></div>
+      <div class="tc-head"><span class="h">To-Dos</span>${listToggle}<span class="tc-head-ctrl"><span class="tc-sub" id="todosSub">${total ? `${urgent} urgent · ${total-urgent} chill` : ""}</span><button type="button" class="tc-hist-btn${histOpen?" open":""}" data-action="hist-toggle" title="Recently completed">&#8635;</button><span class="tc-badge${total===0?" clear":""}" id="todosBadge">${total===0?"✓":total}</span></span></div>
       <div class="tc-hist-wrap" id="todosHistWrap" style="display:${histOpen?"block":"none"}">${histOpen ? historyListHTML(history) : ""}</div>
       <div id="todosInlineWrap">${todoRowsHTML(list)}</div>
       <form class="todo-add"><input type="text" placeholder="Add a to-do…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>
@@ -2641,6 +2650,31 @@ function wireTodoRows(root){
   });
 }
 
+/* FLIP (First-Last-Invert-Play): capture where every row currently sits,
+   let the caller perform the actual DOM reorder (instant, no animation of
+   its own), then invert each row that moved back to its old spot with a
+   transform and immediately transition that transform away to zero. Reads
+   as a smooth slide instead of the old instant snap (Eli's request, Aug
+   2026). Only the rows that actually moved get a transition applied. */
+function flipReorder(wrap, mutate){
+  const rows = [...wrap.querySelectorAll(".todo-item")];
+  const first = new Map(rows.map(el => [el, el.getBoundingClientRect().top]));
+  mutate();
+  rows.forEach(el => {
+    const dy = first.get(el) - el.getBoundingClientRect().top;
+    if(Math.abs(dy) < 0.5) return;
+    el.style.transition = "none";
+    el.style.transform = `translateY(${dy}px)`;
+  });
+  requestAnimationFrame(() => {
+    rows.forEach(el => {
+      el.style.transition = "transform .26s cubic-bezier(.2,.8,.2,1)";
+      el.style.transform = "";
+    });
+    setTimeout(() => { rows.forEach(el => { el.style.transition = ""; }); }, 300);
+  });
+}
+
 function wireTodoDrag(root){
   const wrap = root.querySelector("#todosInlineWrap");
   if(!wrap || wrap.dataset.dragWired) return;
@@ -2657,11 +2691,17 @@ function wireTodoDrag(root){
     const onMove = (ev) => {
       const y = ev.clientY;
       const siblings = [...wrap.querySelectorAll(".todo-item")].filter(el => el !== dragEl);
+      let target = null;
       for(const sib of siblings){
         const r = sib.getBoundingClientRect();
-        if(y < r.top + r.height/2){ wrap.insertBefore(dragEl, sib); return; }
+        if(y < r.top + r.height/2){ target = sib; break; }
       }
-      wrap.appendChild(dragEl);
+      const currentlyBefore = target ? target.previousElementSibling : wrap.lastElementChild;
+      if(currentlyBefore === dragEl) return; // no actual change -- skip the FLIP work
+      flipReorder(wrap, () => {
+        if(target) wrap.insertBefore(dragEl, target);
+        else wrap.appendChild(dragEl);
+      });
     };
     const onUp = () => {
       document.removeEventListener("pointermove", onMove);
@@ -2737,6 +2777,9 @@ function wireTodoListToggle(root){
     setActiveTodoList(val);
     applyActiveTodoList(root);
   });
+  // the slider is measured in px, so keep it aligned if the card's width
+  // changes (window resize, sidebar collapse, etc) -- instant, no slide.
+  window.addEventListener("resize", () => positionListSlider(root, true));
 }
 
 function applyActiveTodoList(root){
@@ -2751,6 +2794,29 @@ function applyActiveTodoList(root){
   if(expandedHistory.has("todos")){
     const hwrap = root.querySelector("#todosHistWrap");
     if(hwrap) hwrap.innerHTML = historyListHTML(itemsForList(state.history, active));
+  }
+  positionListSlider(root, false);
+}
+
+/* Slides the gold highlight behind whichever Personal/Work button is active,
+   instead of the old instant-background-swap (Eli's request, Aug 2026).
+   Measured in px off the actual button rects, so it works regardless of
+   "Personal" vs "Work" having different text widths -- pass instant=true to
+   skip the transition (first paint / after a resize, where a slide would
+   look like a glitch rather than an intentional animation). */
+function positionListSlider(root, instant){
+  const toggle = root.querySelector(".tc-list-toggle");
+  const slider = toggle ? toggle.querySelector(".tc-list-slider") : null;
+  const activeBtn = toggle ? toggle.querySelector(".tc-list-btn.active") : null;
+  if(!toggle || !slider || !activeBtn) return;
+  const left = activeBtn.offsetLeft;
+  const width = activeBtn.offsetWidth;
+  if(instant) slider.style.transition = "none";
+  slider.style.transform = `translateX(${left}px)`;
+  slider.style.width = width + "px";
+  if(instant){
+    slider.getBoundingClientRect(); // force reflow before re-enabling the transition
+    slider.style.transition = "";
   }
 }
 
@@ -2791,6 +2857,7 @@ function refreshTodoCards(root, state, prevState){
     wireTodoAddForm(root);
     wireTodoHistory(root);
     wireTodoListToggle(root);
+    positionListSlider(root, true);
   } else if(changed){
     const wrap = root.querySelector("#todosInlineWrap");
     if(wrap) wrap.innerHTML = todoRowsHTML(viewItems);

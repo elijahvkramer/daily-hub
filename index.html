@@ -2660,19 +2660,28 @@ function flipReorder(wrap, mutate){
   const rows = [...wrap.querySelectorAll(".todo-item")];
   const first = new Map(rows.map(el => [el, el.getBoundingClientRect().top]));
   mutate();
+  const moved = [];
   rows.forEach(el => {
     const dy = first.get(el) - el.getBoundingClientRect().top;
     if(Math.abs(dy) < 0.5) return;
     el.style.transition = "none";
     el.style.transform = `translateY(${dy}px)`;
+    moved.push(el);
   });
-  requestAnimationFrame(() => {
-    rows.forEach(el => {
-      el.style.transition = "transform .26s cubic-bezier(.2,.8,.2,1)";
-      el.style.transform = "";
-    });
-    setTimeout(() => { rows.forEach(el => { el.style.transition = ""; }); }, 300);
+  if(!moved.length) return;
+  // Force a synchronous layout flush so the browser paints the inverted
+  // (pre-move) position before we release it -- deliberately NOT using
+  // requestAnimationFrame here: rAF is throttled/paused on a backgrounded
+  // or unfocused tab, which would leave rows stuck mid-transform. Reading
+  // a layout property forces the recalc synchronously regardless of tab
+  // visibility, so the animation is reliable even if focus is fiddly
+  // during a drag (verified against this exact failure mode, Aug 2026).
+  void wrap.offsetHeight;
+  moved.forEach(el => {
+    el.style.transition = "transform .26s cubic-bezier(.2,.8,.2,1)";
+    el.style.transform = "";
   });
+  setTimeout(() => { moved.forEach(el => { el.style.transition = ""; }); }, 300);
 }
 
 function wireTodoDrag(root){

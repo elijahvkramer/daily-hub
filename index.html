@@ -186,6 +186,7 @@
   .np-col-story{break-inside:avoid;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--hairline)}
   .np-col-story .cs-t{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.24;color:var(--ink)}
   .np-col-story .cs-b{font-size:13.5px;line-height:1.62;color:#33363C;margin-top:5px}
+  .np-group-h{column-span:all;font-size:10.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#A08339;border-top:1px solid var(--hairline);padding-top:10px;margin:2px 0 10px}
   @media(max-width:640px){.np-secflow{column-count:1}}
   .np-detail{font-size:13.5px;line-height:1.68;color:#33363C;margin-top:10px;padding-top:10px;border-top:1px dashed var(--hairline)}
   .np-more{display:inline-block;margin-top:9px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#A08339;cursor:pointer;user-select:none}
@@ -1677,14 +1678,27 @@ function showNewsView(view){
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
   if(items.length){
     const leadHasDetail = !!leadIt.detail;
-    h += `<div class="np-lead-story"><div class="ls-t">${esc(headline(leadIt.lead))}</div>
+    // Optional per-item "group" field (e.g. Sports' Favorites/General split,
+    // Eli's request Aug 2026) -- shown as a small kicker above the lead story
+    // when present. Sections without it (everything else) render unchanged.
+    const leadGroupKick = leadIt.group ? `<div class="np-kick">${esc(leadIt.group)}</div>` : "";
+    h += `<div class="np-lead-story">${leadGroupKick}<div class="ls-t">${esc(headline(leadIt.lead))}</div>
       ${newsFig(leadIt, ".np-lead-story")}
       <div class="ls-b${leadPara.length>280?" two":""}">${esc(leadPara)}</div>
       ${leadHasDetail ? `<div class="np-detail" style="display:none">${esc(leadIt.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;
   }
   if(items.length > 1){
     h += `<div class="np-secflow">`;
+    // insert a full-width divider label whenever an item's group differs from
+    // the previous one, so e.g. Sports' Favorites items flow first with no
+    // extra label (already covered by the lead story's kicker above), then a
+    // single "GENERAL" divider appears right where the group changes.
+    let prevGroup = leadIt.group || null;
     items.slice(1).forEach(it => {
+      if(it.group && it.group !== prevGroup){
+        h += `<div class="np-group-h">${esc(it.group)}</div>`;
+        prevGroup = it.group;
+      }
       const hasDetail = !!it.detail;
       h += `<div class="np-col-story"><div class="cs-t">${esc(headline(it.lead))}</div><div class="cs-b">${esc(it.body)}</div>
         ${hasDetail ? `<div class="np-detail" style="display:none">${esc(it.detail)}</div><span class="np-more">Read more +</span>` : ""}</div>`;

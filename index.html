@@ -3347,7 +3347,12 @@ async function pQuote(sym){
   // query1.finance.yahoo.com now hard-blocks direct browser requests (503, always) --
   // going through a CORS proxy first (instead of eating that guaranteed failure on
   // every call) is what actually cuts the Today snapshot's load time down.
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`;
+  // The `_ts` param is a cache-buster: corsproxy.io/allorigins.win do their own
+  // server-side caching keyed off the exact target URL, independent of our
+  // fetch's cache:"no-store" (which only affects the browser's own cache) --
+  // without this a proxy can keep serving a stale quote for minutes, which is
+  // what caused a real day-change mismatch vs Fidelity (Eli, Aug 2026).
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d&_ts=${Date.now()}`;
   const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{
@@ -3368,7 +3373,8 @@ async function pQuote(sym){
 async function pSparkAll(syms){
   const out = {};
   if(!syms.length) return out;
-  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=1d&interval=5m`;
+  // see the cache-buster note in pQuote() above -- same fix, same reason.
+  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=1d&interval=5m&_ts=${Date.now()}`;
   const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{

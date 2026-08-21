@@ -429,7 +429,7 @@
   .ti-drag:active{cursor:grabbing}
   .todo-item.dragging{opacity:.55}
   .todo-item.dragging .ti-main{background:var(--gold-soft)}
-  .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent}
+  .ti-main .ti-check{width:18px;height:18px;border:2px solid var(--gold);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:11px;color:transparent;cursor:pointer}
   .ti-main .ti-text{flex:1;min-width:0;overflow-wrap:anywhere;cursor:text;border-radius:4px;transition:background .12s}
   .ti-main .ti-text:hover{background:rgba(0,0,0,.035)}
   .ti-main .ti-text-input{flex:1;min-width:0;font:inherit;color:inherit;background:#fff;border:1px solid var(--gold);border-radius:4px;padding:2px 6px;margin:-3px 0}
@@ -2551,7 +2551,11 @@ function wireTodoRows(root){
     const action = actionEl ? actionEl.dataset.action : null;
 
     if(!action){
-      if(e.target.closest(".ti-note-wrap") || e.target.closest(".ti-sub-wrap") || e.target.closest(".ti-drag")) return;
+      // Only the checkbox itself starts/cancels a complete -- a plain click
+      // anywhere else on the row (blank space, mid-edit, etc.) used to also
+      // trigger it, which was too easy to fire by accident. Eli's request,
+      // Aug 2026.
+      if(!e.target.closest(".ti-check")) return;
       if(pendingComplete.has(id)){
         clearTimeout(pendingComplete.get(id));
         pendingComplete.delete(id);

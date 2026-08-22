@@ -777,6 +777,26 @@
   @keyframes cfShake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
   .cf-acc-shake{animation:cfShake .5s cubic-bezier(.36,.07,.19,.97)}
 
+  /* ---------- built-in: Cryptogram of the Day (letter-substitution cipher) ---------- */
+  .cg-wrap{max-width:640px;margin:0 auto;text-align:center}
+  .cg-progress{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 14px}
+  .cg-board{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 0;margin-bottom:18px;line-height:1}
+  .cg-word{display:inline-flex;margin:0 7px 8px 0}
+  .cg-tile{display:inline-flex;flex-direction:column-reverse;align-items:center;gap:3px;width:27px;margin-right:3px;cursor:pointer;user-select:none}
+  .cg-tile:last-child{margin-right:0}
+  .cg-cipher{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+  .cg-guess{display:block;width:100%;height:26px;line-height:26px;border-bottom:2px solid var(--hairline);font-size:16px;font-weight:900;color:var(--ink);transition:border-color .15s,background .15s}
+  .cg-tile.active .cg-guess{border-color:#378ADD;background:rgba(55,138,221,.08);border-radius:4px 4px 0 0}
+  .cg-tile.ok .cg-guess{border-color:var(--up);color:var(--up)}
+  .cg-punct{display:inline-flex;align-items:flex-end;height:26px;padding-bottom:1px;width:9px;justify-content:center;font-size:15px;font-weight:900;color:var(--muted)}
+  .cg-keyboard{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:480px;margin:0 auto 14px}
+  .cg-key{appearance:none;font:inherit;font-size:13px;font-weight:900;width:30px;height:34px;border-radius:7px;border:1px solid var(--hairline);background:var(--card);color:var(--ink);cursor:pointer;transition:all .14s}
+  .cg-key:hover{border-color:var(--gold);background:var(--gold-soft)}
+  .cg-key.used{color:var(--muted);background:var(--paper)}
+  .cg-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+  .cg-freqwrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px}
+  .cg-freqchip{font-size:11px;font-weight:700;color:#3A3E45;background:var(--paper);border:1px solid var(--hairline);border-radius:6px;padding:4px 8px}
+
   /* built-in: Daily Grid */
   .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
   .dg-target{font-size:15px;color:var(--muted);font-weight:700;margin:6px 0 4px}
@@ -3979,6 +3999,7 @@ function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
   if(gamesView === "code"){ renderCodebreaker(); return; }
   if(gamesView === "case"){ renderCaseFile(); return; }
+  if(gamesView === "crypto"){ renderCryptogram(); return; }
   renderGamesLauncher();
 }
 
@@ -4041,7 +4062,8 @@ function renderGamesLauncher(){
   const built = [
     { id:"quiz",  name:"Word Quiz",   tag:"Vocabulary trainer from your briefings", icon:"◆", col:"#C8A24B", stat:qBestLabel() },
     { id:"code",  name:"Codebreaker", tag:"Crack the hidden color code by deduction", icon:"🔐", col:"#1D9E75", stat: localStorage.getItem("dh-code-best") ? "Best "+localStorage.getItem("dh-code-best")+" tries" : "Not cracked yet" },
-    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() }
+    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() },
+    { id:"crypto", name:"Cryptogram", tag:"Crack today's coded quote, letter by letter", icon:"🔎", col:"#378ADD", stat: cgStatLabel() }
   ];
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
@@ -4522,6 +4544,283 @@ function renderCaseFile(fresh){
   paint();
 }
 
+
+const CRYPTO_QUOTES = [
+  {text:"The shortest way to finish most jobs is to do only one thing at a time.",cat:"Wit & Wisdom"},
+  {text:"A locked door only proves someone thought the truth was worth hiding.",cat:"Wit & Wisdom"},
+  {text:"Curiosity is just patience wearing a more interesting hat.",cat:"Wit & Wisdom"},
+  {text:"Most arguments are two people agreeing loudly about different things.",cat:"Wit & Wisdom"},
+  {text:"The map is never the territory, but it is a fine place to start.",cat:"Wit & Wisdom"},
+  {text:"Nobody trips over mountains. It is the pebbles that end you.",cat:"Wit & Wisdom"},
+  {text:"A good question survives being answered. A bad one just stops.",cat:"Wit & Wisdom"},
+  {text:"Coffee cannot fix a bad plan, but it can fund one convincingly.",cat:"Wit & Wisdom"},
+  {text:"The quiet room is where every real decision actually gets made.",cat:"Wit & Wisdom"},
+  {text:"Habits are just opinions your body stopped arguing about.",cat:"Wit & Wisdom"},
+  {text:"Every expert was once someone who refused to quit at the boring part.",cat:"Wit & Wisdom"},
+  {text:"The fastest route between two people is a shared joke.",cat:"Wit & Wisdom"},
+  {text:"Doubt is only useless once you stop asking it questions.",cat:"Wit & Wisdom"},
+  {text:"A well kept secret weighs more the longer you carry it.",cat:"Wit & Wisdom"},
+  {text:"Most disasters begin with someone certain they could not be wrong.",cat:"Wit & Wisdom"},
+  {text:"The truth rarely announces itself. It just waits to be noticed.",cat:"Wit & Wisdom"},
+  {text:"Patience is not slowness. It is speed aimed correctly.",cat:"Wit & Wisdom"},
+  {text:"An honest mistake teaches faster than a clever excuse ever will.",cat:"Wit & Wisdom"},
+  {text:"The obvious answer is usually right and always underrated.",cat:"Wit & Wisdom"},
+  {text:"Nothing ages a plan faster than pretending it needs no changes.",cat:"Wit & Wisdom"},
+  {text:"A closed mind and a closed door look remarkably alike.",cat:"Wit & Wisdom"},
+  {text:"The first clue is rarely the important one, but it is never wasted.",cat:"Wit & Wisdom"},
+  {text:"People rarely lie about the big things. They lie about the small ones.",cat:"Wit & Wisdom"},
+  {text:"A steady hand matters less than a steady question.",cat:"Wit & Wisdom"},
+  {text:"The best detectives are just very organized worriers.",cat:"Wit & Wisdom"},
+  {text:"Silence often confesses what words are too proud to admit.",cat:"Wit & Wisdom"},
+  {text:"A borrowed idea, well used, is still an honest tool.",cat:"Wit & Wisdom"},
+  {text:"Every system works until someone assumes it always will.",cat:"Wit & Wisdom"},
+  {text:"The smallest detail is only small until it explains everything else.",cat:"Wit & Wisdom"},
+  {text:"Confidence and evidence are not the same animal, though they dress alike.",cat:"Wit & Wisdom"},
+  {text:"A late apology still arrives, it just brings less luggage.",cat:"Wit & Wisdom"},
+  {text:"Most locks are opened by patience long before they are opened by force.",cat:"Wit & Wisdom"},
+  {text:"Good notes outlast good memory every single time.",cat:"Wit & Wisdom"},
+  {text:"The map gets redrawn the moment someone finally asks why.",cat:"Wit & Wisdom"},
+  {text:"A calm voice can carry further than a loud one ever will.",cat:"Wit & Wisdom"},
+  {text:"Nobody solves a puzzle by staring harder at the wrong piece.",cat:"Wit & Wisdom"},
+  {text:"The truth does not need decoration, only enough light to be seen.",cat:"Wit & Wisdom"},
+  {text:"A single fact, checked twice, beats ten facts taken on faith.",cat:"Wit & Wisdom"},
+  {text:"Curiosity asks the question. Discipline finishes the answer.",cat:"Wit & Wisdom"},
+  {text:"The night shift always knows more than the day shift admits.",cat:"Wit & Wisdom"},
+  {text:"Every alibi is a story, and every story has a seam.",cat:"The Beat"},
+  {text:"Trust is built slowly and spent in a single careless afternoon.",cat:"The Beat"},
+  {text:"The quiet witness usually saw the most and said the least.",cat:"The Beat"},
+  {text:"A fresh set of eyes finds what tired eyes stopped looking for.",cat:"The Beat"},
+  {text:"Most puzzles are not hard, they are just poorly explained.",cat:"The Beat"},
+  {text:"The first theory is a guess wearing a confident coat.",cat:"The Beat"},
+  {text:"A well timed silence asks more than a dozen questions could.",cat:"The Beat"},
+  {text:"Evidence does not care which story you were hoping to hear.",cat:"The Beat"},
+  {text:"The devil is in the details, and the details rarely lie.",cat:"The Beat"},
+  {text:"A locked drawer tells you exactly where to look next.",cat:"The Beat"},
+  {text:"Somebody always remembers more once they think nobody is listening.",cat:"The Beat"},
+  {text:"The simplest explanation is not always true, but it is worth asking first.",cat:"The Beat"},
+  {text:"A case is never closed until every loose thread is accounted for.",cat:"The Beat"},
+  {text:"Good instincts are just old evidence you have not named yet.",cat:"The Beat"},
+  {text:"The fingerprints fade, but the motive almost never does.",cat:"The Beat"},
+  {text:"Nobody commits the perfect crime, they just meet an imperfect detective.",cat:"The Beat"},
+  {text:"A confession rushed is a confession worth doubting.",cat:"The Beat"},
+  {text:"The clock in the hallway remembers what the guests would rather forget.",cat:"The Beat"},
+  {text:"Every witness edits their story a little, on purpose or not.",cat:"The Beat"},
+  {text:"A good interrogation is mostly just very patient listening.",cat:"The Beat"},
+  {text:"The missing object usually explains the whole evening.",cat:"The Beat"},
+  {text:"Trust the timeline before you trust the testimony.",cat:"The Beat"},
+  {text:"A nervous laugh often hides the one detail that matters.",cat:"The Beat"},
+  {text:"The room always tells on the person who left it in a hurry.",cat:"The Beat"},
+  {text:"Somebody is always the last to admit what everyone else suspected.",cat:"The Beat"},
+  {text:"A steady alibi cracks fastest under the gentlest questions.",cat:"The Beat"},
+  {text:"The truth has no need to rehearse its own story.",cat:"The Beat"},
+  {text:"Every mystery starts the same way, with someone insisting nothing is wrong.",cat:"The Beat"},
+  {text:"A careful liar remembers the facts but forgets the feelings.",cat:"The Beat"},
+  {text:"The lamp left burning is rarely an accident worth ignoring.",cat:"The Beat"},
+  {text:"Good detectives collect questions the way others collect answers.",cat:"The Beat"},
+  {text:"The last person seen is rarely the last person involved.",cat:"The Beat"},
+  {text:"A dropped glove says more than a written statement ever could.",cat:"The Beat"},
+  {text:"Every case has one detail nobody thought worth mentioning.",cat:"The Beat"},
+  {text:"The safest lie is the one nobody bothers to check.",cat:"The Beat"},
+  {text:"A pattern noticed twice stops being a coincidence.",cat:"The Beat"},
+  {text:"The night porter sees more than the night manager ever will.",cat:"The Beat"},
+  {text:"Somebody always leaves a light on for the wrong reason.",cat:"The Beat"},
+  {text:"A single footprint can undo an entire evening of careful planning.",cat:"The Beat"},
+  {text:"The truth waits patiently for someone to finally ask the right person.",cat:"The Beat"},
+  {text:"Every alibi has a weak hour if you look closely enough.",cat:"The Beat"},
+  {text:"A borrowed key opens more than just the intended door.",cat:"The Beat"},
+  {text:"The quiet ones remember the loud ones perfectly.",cat:"The Beat"},
+  {text:"Good evidence does not need a good storyteller.",cat:"The Beat"},
+  {text:"The best cover story is the one nobody thinks to question.",cat:"The Beat"},
+  {text:"A missing hour explains more than a missing object usually does.",cat:"The Beat"},
+  {text:"Every suspect believes their version until the timeline disagrees.",cat:"The Beat"},
+  {text:"The smallest lie often protects the largest secret.",cat:"The Beat"},
+  {text:"A careful search finds what a hurried one always misses.",cat:"The Beat"},
+  {text:"The guest list tells you who was invited, not who stayed.",cat:"The Beat"},
+  {text:"Somebody always remembers the smell of smoke before anyone mentions a fire.",cat:"The Beat"},
+  {text:"A well practiced alibi still trembles under a second question.",cat:"The Beat"},
+  {text:"The truth is patient. It can wait out any number of excuses.",cat:"The Beat"},
+  {text:"Every locked room has a door somebody forgot to check twice.",cat:"The Beat"},
+  {text:"A calm suspect and an innocent suspect are not always the same person.",cat:"The Beat"},
+  {text:"The evidence board only lies if you arrange it wrong.",cat:"The Beat"},
+  {text:"Somebody in every room knows more than they have said out loud.",cat:"The Beat"},
+  {text:"A single inconsistency is worth more than a dozen confident denials.",cat:"The Beat"},
+  {text:"The last light on in the hallway usually has a story attached.",cat:"The Beat"},
+  {text:"Good notes today save a long argument tomorrow.",cat:"The Beat"},
+  {text:"A quiet Tuesday is the best cover any secret ever had.",cat:"The Beat"},
+];
+
+function cgDerangement(rnd){
+  // Fisher-Yates shuffle of 0..25, then a repair pass so no letter maps to itself
+  // (a real cryptogram never leaves a letter un-substituted).
+  const arr = Array.from({length:26}, (_,i) => i);
+  for(let i=25;i>0;i--){ const j = Math.floor(rnd()*(i+1)); const t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  let guard = 0;
+  while(arr.some((v,i) => v===i) && guard < 50){
+    for(let i=0;i<26;i++){
+      if(arr[i] === i){ const j = (i+1)%26; const t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+    }
+    guard++;
+  }
+  return arr; // arr[plainIndex] = cipherIndex
+}
+function cgEncrypt(text, map){
+  return text.toUpperCase().split("").map(ch => {
+    const p = ch.charCodeAt(0) - 65;
+    return (p >= 0 && p < 26) ? String.fromCharCode(65 + map[p]) : ch;
+  }).join("");
+}
+/* build one puzzle: {plain, cipher, cat, map, rev, id} */
+function cgBuild(seedStr){
+  const rnd = seedRand(hashStr(seedStr));
+  const q = CRYPTO_QUOTES[Math.floor(rnd() * CRYPTO_QUOTES.length)];
+  const map = cgDerangement(rnd);
+  const rev = new Array(26);
+  map.forEach((c,p) => rev[c] = p);   // rev[cipherIndex] = plainIndex
+  const plain = q.text.toUpperCase();
+  const cipher = cgEncrypt(plain, map);
+  return { plain, cipher, cat: q.cat, map, rev, id: "cg-" + hashStr(seedStr) };
+}
+function cgStatLabel(){
+  const best = localStorage.getItem("dh-cg-best");
+  return best ? "Best " + best + "s" : "Not solved yet";
+}
+
+let CG = null;
+function renderCryptogram(fresh){
+  const panel = $("#panel-quiz");
+  $("#staleNote").style.display = "none";
+  const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+  const seed = fresh ? ("free-" + Date.now()) : ("cg-" + today);
+  if(!CG || CG.seed !== seed){ CG = cgBuild(seed); CG.seed = seed; }
+  const gKey = "dh-cg-guesses-" + CG.id;
+  const hKey = "dh-cg-hints-" + CG.id;
+  const doneKey = "dh-cg-done-" + CG.id;
+  const startKey = "dh-cg-start-" + CG.id;
+
+  let guesses = {};
+  try{ guesses = JSON.parse(localStorage.getItem(gKey)||"{}") || {}; }catch(e){ guesses = {}; }
+  let hints = Number(localStorage.getItem(hKey) || "0");
+  let solved = localStorage.getItem(doneKey) === "1";
+  let showFreq = false;
+  let active = null; // the cipher letter currently selected on the board
+
+  if(!localStorage.getItem(startKey)) localStorage.setItem(startKey, String(Date.now()));
+
+  const freq = {};
+  for(const ch of CG.cipher){ if(/[A-Z]/.test(ch)) freq[ch] = (freq[ch]||0) + 1; }
+
+  const trueLetterFor = cl => String.fromCharCode(65 + CG.rev[cl.charCodeAt(0) - 65]);
+  const isCorrect = cl => !!guesses[cl] && guesses[cl] === trueLetterFor(cl);
+  const usedGuessLetters = () => new Set(Object.values(guesses));
+
+  const solvedCount = () => {
+    let n = 0, total = 0; const seen = new Set();
+    for(const ch of CG.cipher){
+      if(!/[A-Z]/.test(ch) || seen.has(ch)) continue;
+      seen.add(ch); total++;
+      if(isCorrect(ch)) n++;
+    }
+    return { n, total };
+  };
+  const allSolved = () => { const {n,total} = solvedCount(); return total > 0 && n === total; };
+  const save = () => localStorage.setItem(gKey, JSON.stringify(guesses));
+
+  const finishIfSolved = () => {
+    if(solved || !allSolved()) return;
+    solved = true;
+    localStorage.setItem(doneKey, "1");
+    const startedAt = Number(localStorage.getItem(startKey) || Date.now());
+    CG.elapsed = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+    if(localStorage.getItem("dh-cg-credit-"+CG.id) !== "1"){
+      localStorage.setItem("dh-cg-credit-"+CG.id, "1");
+      const prevBest = Number(localStorage.getItem("dh-cg-best") || "0");
+      if(!prevBest || CG.elapsed < prevBest) localStorage.setItem("dh-cg-best", String(CG.elapsed));
+      localStorage.setItem("dh-cg-streak", String(Number(localStorage.getItem("dh-cg-streak")||"0") + 1));
+    }
+  };
+
+  const tilesHTML = () => CG.cipher.split(" ").map(word => {
+    const letters = word.split("").map(ch => {
+      if(!/[A-Z]/.test(ch)) return `<span class="cg-punct">${esc(ch)}</span>`;
+      const g = guesses[ch] || "";
+      const ok = solved || isCorrect(ch);
+      return `<span class="cg-tile${active===ch?" active":""}${ok?" ok":""}" data-cl="${ch}">
+        <span class="cg-guess">${esc(g)}</span>
+        <span class="cg-cipher">${ch}</span>
+      </span>`;
+    }).join("");
+    return `<span class="cg-word">${letters}</span>`;
+  }).join(" ");
+
+  const keyboardHTML = () => {
+    const used = usedGuessLetters();
+    return Array.from({length:26}, (_,i) => String.fromCharCode(65+i)).map(L =>
+      `<button type="button" class="cg-key${used.has(L)?" used":""}" data-key="${L}">${L}</button>`
+    ).join("");
+  };
+
+  const freqHTML = () => {
+    const rows = Object.keys(freq).sort((a,b) => freq[b]-freq[a])
+      .map(ch => `<span class="cg-freqchip">${ch} × ${freq[ch]}</span>`).join("");
+    return `<div class="cg-freqwrap">${rows}</div>`;
+  };
+
+  const paint = () => {
+    const { n, total } = solvedCount();
+    panel.innerHTML = `<div class="cg-wrap">
+      <button class="pbtn game-back" id="cgBack">← Back to Games</button>
+      <div class="qprompt-label" style="color:#378ADD">Cryptogram${fresh?" · Free Play":" of the Day"}</div>
+      <div class="qprompt" style="font-size:14px;line-height:1.55;margin-bottom:2px">Every letter stands in for another, the same way throughout. Crack the code to reveal the quote.</div>
+      <div class="cg-progress">${solved ? "Solved!" : `${n} of ${total} letters cracked`}</div>
+      <div class="cg-board">${tilesHTML()}</div>
+      ${solved
+        ? `<div class="qreveal"><b>${esc(CG.plain)}</b><div class="qex">— filed under: ${esc(CG.cat)}${CG.elapsed?` · solved in ${CG.elapsed}s`:""}</div></div>
+           <button class="qbig qnext" id="cgNext">${fresh?"Another free puzzle":"New free-play puzzle"}</button>`
+        : `<div class="cg-keyboard">${keyboardHTML()}</div>
+           <div class="cg-tools">
+             <button class="cf-tool" id="cgFreqBtn">${showFreq?"Hide":"Show"} letter frequency</button>
+             <button class="cf-tool" id="cgHintBtn">Reveal a letter (${hints} used)</button>
+             <button class="cf-tool" id="cgClearBtn">Clear guesses</button>
+           </div>
+           ${showFreq ? freqHTML() : ""}`}
+      <div class="cf-stats">
+        <span>${esc(cgStatLabel())}</span>
+        <span>Streak ${esc(localStorage.getItem("dh-cg-streak")||"0")}</span>
+      </div>
+    </div>`;
+
+    $("#cgBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    if(solved){
+      $("#cgNext")?.addEventListener("click", () => { CG = null; renderCryptogram(true); });
+      return;
+    }
+    panel.querySelectorAll(".cg-tile[data-cl]").forEach(el => el.addEventListener("click", () => {
+      active = (el.dataset.cl === active) ? null : el.dataset.cl;
+      paint();
+    }));
+    panel.querySelectorAll(".cg-key[data-key]").forEach(el => el.addEventListener("click", () => {
+      if(!active) return;
+      guesses[active] = el.dataset.key;
+      save();
+      finishIfSolved();
+      paint();
+    }));
+    $("#cgFreqBtn")?.addEventListener("click", () => { showFreq = !showFreq; paint(); });
+    $("#cgHintBtn")?.addEventListener("click", () => {
+      const unsolved = Object.keys(freq).filter(ch => !isCorrect(ch));
+      if(!unsolved.length) return;
+      unsolved.sort((a,b) => freq[b]-freq[a]);   // reveal the most common letter first — most useful
+      const pick = unsolved[0];
+      guesses[pick] = trueLetterFor(pick);
+      hints++; localStorage.setItem(hKey, String(hints));
+      save();
+      finishIfSolved();
+      paint();
+    });
+    $("#cgClearBtn")?.addEventListener("click", () => { guesses = {}; save(); paint(); });
+  };
+  paint();
+}
 
 async function renderQuizTab(){
   const panel = $("#panel-quiz");

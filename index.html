@@ -763,6 +763,39 @@
   @keyframes cfShake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
   .cf-acc-shake{animation:cfShake .5s cubic-bezier(.36,.07,.19,.97)}
 
+  /* ---------- built-in: Crossword of the Day (criss-cross grid from Word of the Day bank) ---------- */
+  .cw-wrap{max-width:980px;margin:0 auto}
+  .cw-banner{background:var(--card);border:1px solid var(--hairline);border-radius:10px;box-shadow:var(--shadow);padding:11px 16px;font-size:13.5px;line-height:1.5;margin-bottom:14px;min-height:20px}
+  .cw-banner b{color:#378ADD}
+  .cw-cols{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start}
+  @media(max-width:860px){.cw-cols{grid-template-columns:1fr}}
+  .cw-cols > *{min-width:0}
+  .cw-board-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px;min-width:0}
+  .cw-gridwrap{overflow-x:auto;padding-bottom:4px;max-width:100%;display:flex;justify-content:center}
+  table.cw-grid{border-collapse:collapse}
+  table.cw-grid td{padding:0;width:29px;height:29px;position:relative}
+  .cw-blk{background:var(--ink)}
+  .cw-cellwrap{position:relative;width:29px;height:29px}
+  .cw-num{position:absolute;top:1px;left:2px;font-size:8px;font-weight:900;color:#A08339;pointer-events:none;line-height:1}
+  input.cw-cell{width:29px;height:29px;border:1px solid #D8D4C8;background:var(--paper);text-align:center;font:inherit;font-size:15px;font-weight:900;text-transform:uppercase;color:var(--ink);padding:0;box-sizing:border-box;caret-color:transparent}
+  input.cw-cell:focus{outline:none;background:rgba(55,138,221,.16);border-color:#378ADD}
+  input.cw-cell.active{background:var(--gold-soft)}
+  input.cw-cell.active:focus{background:rgba(55,138,221,.16)}
+  input.cw-cell.wrong{color:#C0463E}
+  input.cw-cell.checked-right{color:var(--up)}
+  input.cw-cell.solved{background:rgba(24,153,107,.14);border-color:var(--up);color:var(--up)}
+  .cw-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .cw-progress{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:10px}
+  .cw-clues-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;min-width:0;max-height:520px;overflow-y:auto}
+  .cw-cluegrp-h{font-size:10.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--ink);padding-bottom:7px;margin-bottom:8px}
+  .cw-cluegrp-h:not(:first-child){margin-top:16px}
+  .cw-clue{display:flex;gap:9px;padding:6px 4px;border-radius:6px;font-size:13px;line-height:1.45;color:#33363C;cursor:pointer;transition:background .12s}
+  .cw-clue:hover{background:var(--paper)}
+  .cw-clue.active{background:var(--gold-soft)}
+  .cw-clue .cwc-n{flex-shrink:0;font-weight:900;color:#A08339;width:18px}
+  .cw-clue.done{opacity:.5;text-decoration:line-through}
+  .cw-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);justify-content:center;margin-top:16px}
+
   /* built-in: Daily Grid */
   .dg-wrap{max-width:520px;margin:0 auto;text-align:center}
   .dg-target{font-size:15px;color:var(--muted);font-weight:700;margin:6px 0 4px}
@@ -3964,6 +3997,7 @@ async function fetchWords(){
 function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
   if(gamesView === "case"){ renderCaseFile(); return; }
+  if(gamesView === "crossword"){ renderCrossword(); return; }
   renderGamesLauncher();
 }
 
@@ -4024,7 +4058,8 @@ function renderGamesLauncher(){
   const played = getPlayedGames();
 
   const built = [
-    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() }
+    { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() },
+    { id:"crossword", name:"Crossword", tag:"Moderate criss-cross built from your Word of the Day bank", icon:"✏️", col:"#378ADD", stat: cwStatLabel() }
   ];
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
@@ -4443,6 +4478,459 @@ function renderCaseFile(fresh){
   paint();
 }
 
+
+/* ================= built-in: Crossword of the Day =================
+   Pulls today's clue set from the site's own Word of the Day bank and lays the
+   answers out as an irregular criss-cross grid (words interlock wherever they
+   share a letter -- not a symmetric, blocked NYT-style grid, which is a much
+   harder generation problem to get right). cwPlace greedily places each word
+   against an already-placed one, preferring whichever valid spot grows the
+   grid's bounding box the least, so the puzzle stays compact instead of
+   sprawling. Any word that can't be connected is simply left out of that
+   day's puzzle rather than forced in disconnected.
+
+   Unlike the other built-in games, this one does NOT fully re-render the
+   panel on every interaction -- the grid is built once as real <input> cells,
+   and typing updates individual cells directly. A crossword needs normal
+   physical-keyboard typing to feel usable, and re-attaching a listener on
+   every keystroke (the pattern the other games use, since they redraw
+   everything on each click) would stack up duplicate listeners over a
+   session. Attaching everything once, here, to DOM nodes that only get
+   replaced when a whole new puzzle is built, avoids that. */
+
+function cwPickWords(rnd, words, count){
+  const pool = words.slice();
+  const n = Math.min(count, pool.length);
+  for(let i=0;i<n;i++){
+    const j = i + Math.floor(rnd()*(pool.length-i));
+    const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
+  return pool.slice(0, n);
+}
+
+function cwPlace(termWords){
+  const grid = new Map();
+  const placed = [];
+  const key = (r,c) => r+","+c;
+  if(!termWords.length) return { placed, bbox:null };
+
+  const canPlace = (word, row, col, dir) => {
+    const cells = [];
+    for(let i=0;i<word.length;i++){
+      const r = row + (dir==="V" ? i : 0);
+      const c = col + (dir==="H" ? i : 0);
+      const existing = grid.get(key(r,c));
+      if(existing !== undefined && existing !== word[i]) return null;
+      cells.push([r,c,word[i]]);
+    }
+    const br = row - (dir==="V"?1:0), bc = col - (dir==="H"?1:0);
+    if(grid.has(key(br,bc))) return null;
+    const er = row + (dir==="V"?word.length:0), ec = col + (dir==="H"?word.length:0);
+    if(grid.has(key(er,ec))) return null;
+    let intersections = 0;
+    for(const [r,c] of cells){
+      const isNew = !grid.has(key(r,c));
+      if(isNew){
+        if(dir==="H"){ if(grid.has(key(r-1,c)) || grid.has(key(r+1,c))) return null; }
+        else{ if(grid.has(key(r,c-1)) || grid.has(key(r,c+1))) return null; }
+      } else intersections++;
+    }
+    return { cells, intersections };
+  };
+
+  let bbox = null;
+  const growth = cells => {
+    const rs = cells.map(c=>c[0]), cs = cells.map(c=>c[1]);
+    const nr0 = Math.min(...rs), nr1 = Math.max(...rs), nc0 = Math.min(...cs), nc1 = Math.max(...cs);
+    if(!bbox) return (nr1-nr0+1)*(nc1-nc0+1);
+    const [r0,r1,c0,c1] = bbox;
+    const mr0=Math.min(r0,nr0), mr1=Math.max(r1,nr1), mc0=Math.min(c0,nc0), mc1=Math.max(c1,nc1);
+    return (mr1-mr0+1)*(mc1-mc0+1) - (r1-r0+1)*(c1-c0+1);
+  };
+  const extendBbox = cells => {
+    const rs = cells.map(c=>c[0]), cs = cells.map(c=>c[1]);
+    const nr0=Math.min(...rs), nr1=Math.max(...rs), nc0=Math.min(...cs), nc1=Math.max(...cs);
+    bbox = bbox ? [Math.min(bbox[0],nr0), Math.max(bbox[1],nr1), Math.min(bbox[2],nc0), Math.max(bbox[3],nc1)] : [nr0,nr1,nc0,nc1];
+  };
+
+  const w0 = termWords[0];
+  const cells0 = w0.term.split("").map((ch,i) => [0,i,ch]);
+  cells0.forEach(([r,c,ch]) => grid.set(key(r,c), ch));
+  extendBbox(cells0);
+  placed.push({ word: w0.term, definition: w0.definition, row:0, col:0, dir:"H" });
+
+  for(let wi=1; wi<termWords.length; wi++){
+    const w = termWords[wi];
+    let best = null;
+    for(const p of placed){
+      for(let i=0;i<w.term.length;i++){
+        for(let j=0;j<p.word.length;j++){
+          if(w.term[i] !== p.word[j]) continue;
+          const ndir = p.dir === "H" ? "V" : "H";
+          const r = ndir==="V" ? p.row - i : p.row + j;
+          const c = ndir==="V" ? p.col + j : p.col - i;
+          const res = canPlace(w.term, r, c, ndir);
+          if(!res) continue;
+          const g = growth(res.cells);
+          if(!best || g < best.g || (g === best.g && res.intersections > best.intersections)){
+            best = { g, row:r, col:c, dir:ndir, cells: res.cells, intersections: res.intersections };
+          }
+        }
+      }
+    }
+    if(best){
+      best.cells.forEach(([r,c,ch]) => grid.set(key(r,c), ch));
+      extendBbox(best.cells);
+      placed.push({ word: w.term, definition: w.definition, row: best.row, col: best.col, dir: best.dir });
+    }
+  }
+
+  return { placed, bbox };
+}
+
+function cwNumber(placed, bbox){
+  const [r0,,c0] = bbox;
+  const norm = placed.map(p => ({...p, row: p.row - r0, col: p.col - c0}));
+  const startCells = norm.map(p => [p.row, p.col]);
+  const uniqueStarts = [...new Set(startCells.map(([r,c])=>r+","+c))]
+    .map(s => s.split(",").map(Number))
+    .sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+  const numMap = new Map();
+  uniqueStarts.forEach(([r,c], idx) => numMap.set(r+","+c, idx+1));
+  norm.forEach(p => { p.num = numMap.get(p.row+","+p.col); });
+  return norm;
+}
+
+function cwBuild(seedStr, wordBank, opts){
+  opts = opts || {};
+  if(!wordBank || !wordBank.length) return null;
+  // guard against duplicate terms in the source bank (shouldn't happen, but a repeat
+  // would otherwise let the same word get drawn twice into one puzzle)
+  const seenTerms = new Set();
+  wordBank = wordBank.filter(w => {
+    const k = w.term.toUpperCase();
+    if(seenTerms.has(k)) return false;
+    seenTerms.add(k);
+    return true;
+  });
+  if(!wordBank.length) return null;
+  const targetCount = opts.wordCount || 11;
+  const minWords = opts.minWords || Math.min(6, wordBank.length);
+  const attempts = opts.attempts || 14;
+  let best = null;
+  for(let a=0; a<attempts; a++){
+    const arnd = seedRand(hashStr(seedStr + "-a" + a));
+    const poolCount = Math.min(targetCount, wordBank.length);
+    const chosen = cwPickWords(arnd, wordBank, poolCount)
+      .slice()
+      .sort((x,y) => y.term.length - x.term.length);
+    const { placed, bbox } = cwPlace(chosen);
+    if(placed.length < minWords) continue;
+    const [r0,r1,c0,c1] = bbox;
+    const area = (r1-r0+1)*(c1-c0+1);
+    const seen = new Set();
+    placed.forEach(p => { for(let i=0;i<p.word.length;i++){ const r=p.row+(p.dir==="V"?i:0), c=p.col+(p.dir==="H"?i:0); seen.add(r+","+c); } });
+    const density = seen.size / area;
+    const score = placed.length * 1000 + density * 100;
+    if(!best || score > best.score) best = { placed, bbox, score, cellCount: seen.size, area };
+  }
+  if(!best) return null;
+  const norm = cwNumber(best.placed, best.bbox);
+  const [r0,r1,c0,c1] = best.bbox;
+  const rows = r1-r0+1, cols = c1-c0+1;
+  const solution = {};
+  norm.forEach(p => {
+    for(let i=0;i<p.word.length;i++){
+      const r = p.row + (p.dir==="V"?i:0), c = p.col + (p.dir==="H"?i:0);
+      solution[r+","+c] = p.word[i];
+    }
+  });
+  return { entries: norm, rows, cols, solution, id: "cw-" + hashStr(seedStr), cellCount: best.cellCount, area: best.area };
+}
+
+function cwStatLabel(){
+  const best = localStorage.getItem("dh-cw-best");
+  return best ? "Best " + best + "s" : "Not solved yet";
+}
+
+let CW = null;
+async function renderCrossword(fresh){
+  const panel = $("#panel-quiz");
+  $("#staleNote").style.display = "none";
+  panel.innerHTML = `<div class="spinner"></div>`;
+
+  let words;
+  try{
+    const bank = await fetchWords();
+    words = bank.map(w => ({ term: (w.term||"").toUpperCase().replace(/[^A-Z]/g,""), definition: w.definition }))
+                .filter(w => w.term.length >= 3);
+  }catch(e){ words = null; }
+
+  if(!words || words.length < 6){
+    panel.innerHTML = `<div class="cw-wrap">
+      <button class="pbtn game-back" id="cwBack">← Back to Games</button>
+      <div class="empty">Not enough words in the bank yet for a crossword — check back after a few more daily briefings.</div>
+    </div>`;
+    $("#cwBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+    return;
+  }
+
+  const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+  const seed = fresh ? ("free-" + Date.now()) : ("cw-" + today);
+  if(!CW || CW.seed !== seed){
+    const puzzle = cwBuild(seed, words);
+    if(!puzzle){
+      panel.innerHTML = `<div class="cw-wrap">
+        <button class="pbtn game-back" id="cwBack">← Back to Games</button>
+        <div class="empty">Couldn't lay out a grid today — try again in a moment.</div>
+      </div>`;
+      $("#cwBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+      return;
+    }
+    CW = puzzle; CW.seed = seed;
+  }
+  const P0 = CW;
+  const gKey = "dh-cw-guesses-" + P0.id;
+  const hKey = "dh-cw-hints-" + P0.id;
+  const doneKey = "dh-cw-done-" + P0.id;
+  const startKey = "dh-cw-start-" + P0.id;
+
+  let guesses = {};
+  try{ guesses = JSON.parse(localStorage.getItem(gKey)||"{}") || {}; }catch(e){ guesses = {}; }
+  let hints = Number(localStorage.getItem(hKey)||"0");
+  let solved = localStorage.getItem(doneKey) === "1";
+  if(!localStorage.getItem(startKey)) localStorage.setItem(startKey, String(Date.now()));
+
+  const cellKey = (r,c) => r+","+c;
+  const acrossAt = {}, downAt = {};
+  const entryCells = P0.entries.map(e => {
+    const cells = [];
+    for(let i=0;i<e.word.length;i++){
+      const r = e.row + (e.dir==="V"?i:0), c = e.col + (e.dir==="H"?i:0);
+      cells.push([r,c]);
+    }
+    return cells;
+  });
+  P0.entries.forEach((e,idx) => {
+    entryCells[idx].forEach(([r,c]) => {
+      if(e.dir==="H") acrossAt[cellKey(r,c)]=idx; else downAt[cellKey(r,c)]=idx;
+    });
+  });
+  const acrossEntries = P0.entries.map((e,i)=>({e,i})).filter(x=>x.e.dir==="H").sort((a,b)=>a.e.num-b.e.num);
+  const downEntries = P0.entries.map((e,i)=>({e,i})).filter(x=>x.e.dir==="V").sort((a,b)=>a.e.num-b.e.num);
+
+  let activeEntry = acrossEntries.length ? acrossEntries[0].i : downEntries[0].i;
+  let activeDir = P0.entries[activeEntry].dir;
+  let activeCell = { r: P0.entries[activeEntry].row, c: P0.entries[activeEntry].col };
+
+  const save = () => localStorage.setItem(gKey, JSON.stringify(guesses));
+  const isFillable = (r,c) => Object.prototype.hasOwnProperty.call(P0.solution, cellKey(r,c));
+  const entryAt = (r,c,dir) => dir==="H" ? acrossAt[cellKey(r,c)] : downAt[cellKey(r,c)];
+  const allSolved = () => Object.keys(P0.solution).every(k => guesses[k] === P0.solution[k]);
+
+  let onWin = () => {};
+  const finishIfSolved = () => {
+    if(solved || !allSolved()) return;
+    solved = true;
+    localStorage.setItem(doneKey, "1");
+    const startedAt = Number(localStorage.getItem(startKey) || Date.now());
+    P0.elapsed = Math.max(1, Math.round((Date.now()-startedAt)/1000));
+    if(localStorage.getItem("dh-cw-credit-"+P0.id) !== "1"){
+      localStorage.setItem("dh-cw-credit-"+P0.id, "1");
+      const prevBest = Number(localStorage.getItem("dh-cw-best")||"0");
+      if(!prevBest || P0.elapsed < prevBest) localStorage.setItem("dh-cw-best", String(P0.elapsed));
+      localStorage.setItem("dh-cw-streak", String(Number(localStorage.getItem("dh-cw-streak")||"0")+1));
+    }
+    onWin();
+  };
+
+  const numByCell = {};
+  P0.entries.forEach(e => { numByCell[cellKey(e.row,e.col)] = e.num; });
+
+  let gridHTML = `<table class="cw-grid"><tbody>`;
+  for(let r=0;r<P0.rows;r++){
+    gridHTML += `<tr>`;
+    for(let c=0;c<P0.cols;c++){
+      if(!isFillable(r,c)){ gridHTML += `<td class="cw-blk"></td>`; continue; }
+      const g = guesses[cellKey(r,c)] || "";
+      const num = numByCell[cellKey(r,c)];
+      gridHTML += `<td><div class="cw-cellwrap">${num!=null?`<span class="cw-num">${num}</span>`:""}<input class="cw-cell" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" data-r="${r}" data-c="${c}" value="${esc(g)}"></div></td>`;
+    }
+    gridHTML += `</tr>`;
+  }
+  gridHTML += `</tbody></table>`;
+
+  const clueRowHTML = x => `<div class="cw-clue" data-entry="${x.i}"><span class="cwc-n">${x.e.num}.</span><span>${esc(x.e.definition)} <span style="color:var(--muted);font-weight:700">(${x.e.word.length})</span></span></div>`;
+
+  panel.innerHTML = `<div class="cw-wrap">
+    <button class="pbtn game-back" id="cwBack">← Back to Games</button>
+    <div class="qprompt-label" style="color:#378ADD">Crossword${fresh?" · Free Play":" of the Day"}</div>
+    <div class="qprompt" style="font-size:14px;line-height:1.5;margin-bottom:10px">Fill the grid from the clues — every answer is a Word of the Day you've already seen in a briefing.</div>
+    <div class="cw-banner" id="cwBanner"></div>
+    <div class="cw-cols">
+      <div class="cw-board-panel">
+        <div class="cw-gridwrap">${gridHTML}</div>
+        <div class="cw-tools">
+          <button class="cf-tool" id="cwCheck">Check puzzle</button>
+          <button class="cf-tool" id="cwHint">Reveal a letter (${hints} used)</button>
+          <button class="cf-tool" id="cwClear">Clear grid</button>
+        </div>
+        <div class="cw-progress" id="cwProgress"></div>
+      </div>
+      <div class="cw-clues-panel">
+        <div class="cw-cluegrp-h">Across</div>
+        ${acrossEntries.map(clueRowHTML).join("")}
+        <div class="cw-cluegrp-h">Down</div>
+        ${downEntries.map(clueRowHTML).join("")}
+      </div>
+    </div>
+    <div id="cwWinBox"></div>
+    <div class="cf-stats" id="cwStats">
+      <span>${esc(cwStatLabel())}</span>
+      <span>Streak ${esc(localStorage.getItem("dh-cw-streak")||"0")}</span>
+    </div>
+  </div>`;
+
+  $("#cwBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+
+  const cells = {};
+  panel.querySelectorAll("input.cw-cell").forEach(inp => { cells[inp.dataset.r+","+inp.dataset.c] = inp; });
+  const clueEls = {};
+  panel.querySelectorAll(".cw-clue[data-entry]").forEach(el => { clueEls[el.dataset.entry] = el; });
+
+  const updateProgress = () => {
+    const total = Object.keys(P0.solution).length;
+    const filled = Object.keys(P0.solution).filter(k => guesses[k]).length;
+    const el = $("#cwProgress"); if(el) el.textContent = `${filled} of ${total} letters filled`;
+  };
+  const updateBanner = () => {
+    const e = P0.entries[activeEntry];
+    const el = $("#cwBanner"); if(el) el.innerHTML = `<b>${e.num} ${e.dir==="H"?"Across":"Down"}</b> — ${esc(e.definition)}`;
+  };
+  const updateClueDone = () => {
+    P0.entries.forEach((e,i) => {
+      const filled = entryCells[i].every(([r,c]) => guesses[cellKey(r,c)]);
+      clueEls[i]?.classList.toggle("done", filled);
+    });
+  };
+  const highlight = () => {
+    panel.querySelectorAll(".cw-cell.active").forEach(el => el.classList.remove("active"));
+    Object.values(clueEls).forEach(el => el.classList.remove("active"));
+    entryCells[activeEntry].forEach(([r,c]) => cells[cellKey(r,c)]?.classList.add("active"));
+    clueEls[activeEntry]?.classList.add("active");
+    updateBanner();
+  };
+
+  const setActiveEntry = idx => {
+    if(idx==null) return;
+    activeEntry = idx; activeDir = P0.entries[idx].dir;
+    activeCell = { r:P0.entries[idx].row, c:P0.entries[idx].col };
+    highlight();
+    cells[cellKey(activeCell.r, activeCell.c)]?.focus();
+  };
+
+  const moveFocus = (r,c) => {
+    const el = cells[cellKey(r,c)];
+    if(!el) return false;
+    activeCell = {r,c};
+    let idx = entryAt(r,c,activeDir);
+    if(idx==null){
+      const other = entryAt(r,c, activeDir==="H"?"V":"H");
+      if(other!=null){ activeDir = activeDir==="H"?"V":"H"; idx = other; }
+    }
+    if(idx!=null && idx!==activeEntry){ activeEntry = idx; highlight(); }
+    el.focus();
+    return true;
+  };
+  const advance = (dr,dc) => moveFocus(activeCell.r+dr, activeCell.c+dc);
+
+  panel.querySelectorAll("input.cw-cell").forEach(inp => {
+    inp.addEventListener("focus", () => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      activeCell = {r,c};
+      let idx = entryAt(r,c,activeDir);
+      if(idx==null) idx = entryAt(r,c, activeDir==="H"?"V":"H");
+      if(idx!=null && idx!==activeEntry){ activeDir = P0.entries[idx].dir; activeEntry = idx; highlight(); }
+    });
+    inp.addEventListener("input", () => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      const v = inp.value.toUpperCase().replace(/[^A-Z]/g,"").slice(-1);
+      inp.value = v;
+      if(v) guesses[cellKey(r,c)] = v; else delete guesses[cellKey(r,c)];
+      inp.classList.remove("wrong","checked-right");
+      save();
+      updateProgress(); updateClueDone();
+      finishIfSolved();
+      if(v && !solved) advance(activeDir==="H"?0:1, activeDir==="H"?1:0);
+    });
+    inp.addEventListener("keydown", ev => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      if(ev.key === "Backspace"){
+        if(inp.value) return; // let the input event clear it naturally
+        ev.preventDefault();
+        const dr = activeDir==="H"?0:-1, dc = activeDir==="H"?-1:0;
+        const pr = r+dr, pc = c+dc;
+        if(moveFocus(pr,pc)){
+          const prev = cells[cellKey(pr,pc)];
+          if(prev){ prev.value=""; delete guesses[cellKey(pr,pc)]; save(); updateProgress(); updateClueDone(); }
+        }
+      } else if(ev.key === "ArrowRight"){ ev.preventDefault(); activeDir="H"; moveFocus(r,c+1); }
+      else if(ev.key === "ArrowLeft"){ ev.preventDefault(); activeDir="H"; moveFocus(r,c-1); }
+      else if(ev.key === "ArrowDown"){ ev.preventDefault(); activeDir="V"; moveFocus(r+1,c); }
+      else if(ev.key === "ArrowUp"){ ev.preventDefault(); activeDir="V"; moveFocus(r-1,c); }
+      else if(ev.key === "Tab"){
+        ev.preventDefault();
+        const list = acrossEntries.concat(downEntries).map(x=>x.i);
+        const pos = list.indexOf(activeEntry);
+        const next = ev.shiftKey ? (pos-1+list.length)%list.length : (pos+1)%list.length;
+        setActiveEntry(list[next]);
+      }
+    });
+  });
+
+  panel.querySelectorAll(".cw-clue[data-entry]").forEach(el => {
+    el.addEventListener("click", () => setActiveEntry(+el.dataset.entry));
+  });
+
+  $("#cwCheck").addEventListener("click", () => {
+    Object.keys(P0.solution).forEach(k => {
+      const el = cells[k]; if(!el) return;
+      el.classList.remove("wrong","checked-right");
+      if(guesses[k]) el.classList.add(guesses[k]===P0.solution[k] ? "checked-right" : "wrong");
+    });
+  });
+  $("#cwHint").addEventListener("click", () => {
+    const k = cellKey(activeCell.r, activeCell.c);
+    if(!(k in P0.solution)) return;
+    guesses[k] = P0.solution[k];
+    const el = cells[k]; if(el){ el.value = guesses[k]; el.classList.remove("wrong"); el.classList.add("checked-right"); }
+    hints++; localStorage.setItem(hKey, String(hints));
+    const hb = $("#cwHint"); if(hb) hb.textContent = `Reveal a letter (${hints} used)`;
+    save(); updateProgress(); updateClueDone();
+    finishIfSolved();
+  });
+  $("#cwClear").addEventListener("click", () => {
+    guesses = {}; save();
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.value=""; el.classList.remove("wrong","checked-right"); });
+    updateProgress(); updateClueDone();
+  });
+
+  onWin = () => {
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.disabled = true; el.classList.add("solved"); });
+    const wb = $("#cwWinBox");
+    if(wb) wb.innerHTML = `<div class="qreveal" style="margin-top:14px"><b style="color:var(--up)">Solved!</b><div class="qex">Every answer today came from your Word of the Day bank${P0.elapsed?` · solved in ${P0.elapsed}s`:""}.</div></div>
+      <button class="qbig qnext" id="cwNext">${fresh?"Another free puzzle":"New free-play puzzle"}</button>`;
+    $("#cwNext")?.addEventListener("click", () => { CW = null; renderCrossword(true); });
+    const st = $("#cwStats");
+    if(st) st.innerHTML = `<span>${esc(cwStatLabel())}</span><span>Streak ${esc(localStorage.getItem("dh-cw-streak")||"0")}</span>`;
+  };
+
+  updateProgress(); updateClueDone(); highlight();
+  if(solved){
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.disabled = true; el.classList.add("solved"); });
+    onWin();
+  }
+}
 
 async function renderQuizTab(){
   const panel = $("#panel-quiz");

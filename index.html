@@ -703,20 +703,34 @@
   .cf-title{font-family:Georgia,serif;font-size:clamp(21px,3.2vw,29px);font-weight:900;line-height:1.15;padding:16px 22px 0}
   .cf-brief{font-size:14px;line-height:1.65;color:#3A3E45;padding:8px 22px 18px;max-width:760px}
   .cf-brief b{color:var(--ink)}
-  .cf-cols{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:start}
-  @media(max-width:900px){.cf-cols{grid-template-columns:1fr}}
-  /* min-width:0 matters — without it a grid/flex child refuses to shrink below its
-     content, and the deduction grid pushes the whole page sideways instead of scrolling */
-  .cf-cols > *{min-width:0}
-  .cf-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+  /* min-width:0 matters on the grid panel below -- without it a flex/grid child
+     refuses to shrink, and the deduction grid pushes the whole page sideways
+     instead of scrolling */
+  .cf-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;min-width:0;margin-bottom:14px}
   .cf-ph{font-size:10.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--ink);padding-bottom:7px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .cf-clue{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:13.5px;line-height:1.55;color:#33363C;cursor:pointer;transition:opacity .15s}
-  .cf-clue:last-child{border-bottom:none}
-  .cf-clue .cn{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--gold);font-size:10.5px;font-weight:900;display:grid;place-items:center;margin-top:1px}
-  .cf-clue.used{opacity:.38}
-  .cf-clue.used .cn{background:var(--up);color:#fff}
-  .cf-clue:hover{background:var(--paper)}
   .cf-legend{font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px}
+  /* suspect roster */
+  .cf-suspects{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  @media(max-width:640px){.cf-suspects{grid-template-columns:repeat(2,1fr)}}
+  .cf-suspect{appearance:none;font:inherit;text-align:left;background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .14s;box-shadow:var(--shadow)}
+  .cf-suspect:hover{border-color:var(--gold)}
+  .cf-suspect.active{background:var(--ink);border-color:var(--ink)}
+  .cf-suspect.active .cfs-nm{color:var(--gold)}
+  .cf-suspect.active .cfs-progress{color:#B8BCC2}
+  .cfs-nm{font-family:Georgia,serif;font-weight:900;font-size:14.5px;color:var(--ink)}
+  .cfs-progress{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  /* interrogation Q&A */
+  .cf-questions{display:flex;flex-direction:column;gap:8px}
+  .cf-q{appearance:none;font:inherit;text-align:left;font-size:13.5px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all .14s}
+  .cf-q:hover{border-color:var(--gold);background:var(--gold-soft)}
+  .cf-q-walk{border-style:dashed}
+  .cf-qa{background:var(--paper);border-left:3px solid var(--gold);border-radius:6px;padding:10px 13px}
+  .cf-q-asked{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#A08339;margin-bottom:4px}
+  .cf-a{font-size:13.5px;line-height:1.55;color:#33363C;font-style:italic}
+  /* evidence board */
+  .cf-ev-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--hairline);font-size:13px;line-height:1.55;color:#33363C;cursor:pointer}
+  .cf-ev-row:last-child{border-bottom:none}
+  .cf-ev-row input{margin-top:3px;flex-shrink:0}
   /* the staircase deduction grid */
   .cf-gridwrap{overflow-x:auto;padding-bottom:4px;max-width:100%}
   table.cf-grid{border-collapse:collapse;font-size:11px;margin:0 auto}
@@ -4186,37 +4200,42 @@ function cfBuild(seedStr, depth){
   const capF = s => s.charAt(0).toUpperCase() + s.slice(1);
   const who = (arr, v) => arr.indexOf(v);            // suspect index holding value v
 
-  /* --- candidate clue pool, all true of `sol` --- */
+  /* --- candidate clue pool, all true of `sol` ---
+     Each clue also carries `owner` (which suspect it's naturally "about", used to
+     hand it to that suspect as an interrogation question), `line` (a first-person
+     dialogue rendering of the same fact), and `topic` (the short "ask about ___"
+     label for the question button). None of these touch `rank` or `test` -- the
+     puzzle-solving logic below is exactly as it was. */
   const pool = [];
-  const add = (rank, text, test) => pool.push({rank, text, test});
+  const add = (rank, text, test, owner, line, topic) => pool.push({rank, text, test, owner, line, topic});
 
   for(let a=0;a<4;a++) for(let b=0;b<4;b++){
     /* negatives: suspect vs. category */
-    if(sol.r[a] !== b) add(2, `${S(a)} was never in ${R(b)}.`,      (r,o,t) => r[a] !== b);
-    if(sol.o[a] !== b) add(2, `${S(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[a] !== b);
-    if(sol.t[a] !== b) add(2, `${S(a)} was not the one seen at ${T(b)}.`, (r,o,t) => t[a] !== b);
+    if(sol.r[a] !== b) add(2, `${S(a)} was never in ${R(b)}.`,      (r,o,t) => r[a] !== b, a, `I was never anywhere near ${R(b)}.`, `Ask about ${R(b)}`);
+    if(sol.o[a] !== b) add(2, `${S(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[a] !== b, a, `${capF(O(b))}? Not mine -- I never even had it.`, `Ask about ${O(b)}`);
+    if(sol.t[a] !== b) add(2, `${S(a)} was not the one seen at ${T(b)}.`, (r,o,t) => t[a] !== b, a, `Whoever you saw at ${T(b)}, it wasn't me.`, `Ask about ${T(b)}`);
 
     /* cross-category links (the good stuff — these chain together) */
     const sr = who(sol.r, a);          // suspect in room a
     const so = who(sol.o, a);          // suspect who left object a
     const st = who(sol.t, a);          // suspect seen at time a
-    if(sol.o[sr] === b) add(1, `Whoever was in ${R(a)} left ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] === b);
-    else               add(2, `The person in ${R(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] !== b);
-    if(sol.t[sr] === b) add(1, `The person in ${R(a)} was seen at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] === b);
-    else               add(2, `${capF(R(a))} was empty at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] !== b);
-    if(sol.t[so] === b) add(1, `${capF(O(a))} was left by the person seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] === b);
-    else               add(2, `The person who left ${O(a)} was not seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] !== b);
-    if(sol.r[so] === b) add(1, `${capF(O(a))} was left by whoever was in ${R(b)}.`, (r,o,t) => r[o.indexOf(a)] === b);
+    if(sol.o[sr] === b) add(1, `Whoever was in ${R(a)} left ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] === b, sr, `I was in ${R(a)}, and yes — ${O(b)} was mine. I left it there.`, `Ask about ${O(b)}`);
+    else               add(2, `The person in ${R(a)} did not leave ${O(b)} behind.`, (r,o,t) => o[r.indexOf(a)] !== b, sr, `I was in ${R(a)}. ${capF(O(b))}? Not mine.`, `Ask about ${O(b)}`);
+    if(sol.t[sr] === b) add(1, `The person in ${R(a)} was seen at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] === b, sr, `I was in ${R(a)}, and someone saw me there around ${T(b)}.`, `Ask about ${T(b)}`);
+    else               add(2, `${capF(R(a))} was empty at ${T(b)}.`, (r,o,t) => t[r.indexOf(a)] !== b, sr, `I was in ${R(a)}. But ${T(b)}? I wasn't there then — the room was empty.`, `Ask about ${T(b)}`);
+    if(sol.t[so] === b) add(1, `${capF(O(a))} was left by the person seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] === b, so, `${capF(O(a))} was mine, and I was seen at ${T(b)}.`, `Ask about ${T(b)}`);
+    else               add(2, `The person who left ${O(a)} was not seen at ${T(b)}.`, (r,o,t) => t[o.indexOf(a)] !== b, so, `${capF(O(a))} was mine. But I wasn't seen at ${T(b)} — check again.`, `Ask about ${T(b)}`);
+    if(sol.r[so] === b) add(1, `${capF(O(a))} was left by whoever was in ${R(b)}.`, (r,o,t) => r[o.indexOf(a)] === b, so, `${capF(O(a))} was mine — I left it while I was in ${R(b)}.`, `Ask about ${R(b)}`);
 
     /* ordering (times are chronological) */
-    if(a !== b && sol.t[a] < sol.t[b]) add(1, `${S(a)} was seen before ${S(b)}.`, (r,o,t) => t[a] < t[b]);
-    if(a !== b && sol.t[sr] < sol.t[who(sol.r,b)]) add(1, `The person in ${R(a)} was seen before the person in ${R(b)}.`, (r,o,t) => t[r.indexOf(a)] < t[r.indexOf(b)]);
-    if(a !== b && sol.t[so] < sol.t[who(sol.o,b)]) add(1, `Whoever left ${O(a)} was seen before whoever left ${O(b)}.`, (r,o,t) => t[o.indexOf(a)] < t[o.indexOf(b)]);
-    if(a !== b && sol.t[a] === sol.t[who(sol.r,b)] - 1) add(1, `${S(a)} was seen immediately before the person in ${R(b)}.`, (r,o,t) => t[a] === t[r.indexOf(b)] - 1);
-    if(a !== b && sol.t[a] === sol.t[who(sol.o,b)] + 1) add(1, `${S(a)} was seen immediately after whoever left ${O(b)}.`, (r,o,t) => t[a] === t[o.indexOf(b)] + 1);
+    if(a !== b && sol.t[a] < sol.t[b]) add(1, `${S(a)} was seen before ${S(b)}.`, (r,o,t) => t[a] < t[b], a, `I know I was seen before ${S(b)}.`, `Ask about ${S(b)}`);
+    if(a !== b && sol.t[sr] < sol.t[who(sol.r,b)]) add(1, `The person in ${R(a)} was seen before the person in ${R(b)}.`, (r,o,t) => t[r.indexOf(a)] < t[r.indexOf(b)], sr, `I was in ${R(a)}, and I was seen before whoever was in ${R(b)}.`, `Ask about ${R(b)}`);
+    if(a !== b && sol.t[so] < sol.t[who(sol.o,b)]) add(1, `Whoever left ${O(a)} was seen before whoever left ${O(b)}.`, (r,o,t) => t[o.indexOf(a)] < t[o.indexOf(b)], so, `${capF(O(a))} was mine, and I was seen before whoever left ${O(b)}.`, `Ask about ${O(b)}`);
+    if(a !== b && sol.t[a] === sol.t[who(sol.r,b)] - 1) add(1, `${S(a)} was seen immediately before the person in ${R(b)}.`, (r,o,t) => t[a] === t[r.indexOf(b)] - 1, a, `I was seen right before the person in ${R(b)}.`, `Ask about ${R(b)}`);
+    if(a !== b && sol.t[a] === sol.t[who(sol.o,b)] + 1) add(1, `${S(a)} was seen immediately after whoever left ${O(b)}.`, (r,o,t) => t[a] === t[o.indexOf(b)] + 1, a, `I was seen right after whoever left ${O(b)}.`, `Ask about ${O(b)}`);
 
     /* last-resort anchors (rank 3 — only used if the deduction won't close without one) */
-    if(sol.r[a] === b) add(3, `${S(a)} was in ${R(b)}.`, (r,o,t) => r[a] === b);
+    if(sol.r[a] === b) add(3, `${S(a)} was in ${R(b)}.`, (r,o,t) => r[a] === b, a, `Fine — I was in ${R(b)}. Happy now?`, `Ask about ${R(b)}`);
   }
 
   /* shuffle within rank so cross-links come first, anchors last */
@@ -4253,20 +4272,42 @@ function cfBuild(seedStr, depth){
     if(countLeft(worlds, trial).n === 1) chosen.splice(i,1);
   }
   /* a minimal set is technically solvable but often needs case-splitting; add a few
-     true, redundant clues so there are more footholds and the chain stays fair */
+     true, redundant clues so there are more footholds and the chain stays fair.
+     Preferring whichever suspect currently has the fewest owned clues (still only
+     pulling from the same true, rank<=2 pool) means every suspect ends up with
+     something to say in the interrogation, instead of some going silent. */
   const have = new Set(chosen.map(c => c.text));
   const extras = rndSort.filter(c => c.rank <= 2 && !have.has(c.text));
-  for(let i=0; i<extras.length && chosen.length < 11; i++){ chosen.push(extras[i]); have.add(extras[i].text); }
+  while(extras.length && chosen.length < 11){
+    const cnt = [0,0,0,0];
+    chosen.forEach(c => cnt[c.owner]++);
+    extras.sort((x,y) => cnt[x.owner]-cnt[y.owner]);
+    const pick = extras.shift();
+    chosen.push(pick); have.add(pick.text);
+  }
 
   /* present them in a readable order: links, then negatives */
   chosen.sort((a,b) => a.rank - b.rank);
 
   const answerTime = ri(4);                            // the culprit is whoever was seen at this time
   const culprit = sol.t.indexOf(answerTime);
+
+  /* One suspect gets a false "walk me through your night" alibi claim -- a single
+     wrong detail (room, object, or time) dropped into an otherwise-ordinary answer
+     every suspect gives. It's never added to `chosen`/the evidence board, so it can
+     never corrupt the puzzle's logic -- it's flavor dialogue only, and the only way
+     to catch it is to notice it doesn't match what the real evidence (still fully
+     available on the grid) says about that suspect. */
+  const liarSuspect = ri(4);
+  const liarCat = ["r","o","t"][ri(3)];
+  const liarTrueVal = sol[liarCat][liarSuspect];
+  const liarOptions = [0,1,2,3].filter(v => v !== liarTrueVal);
+  const liarFalseVal = liarOptions[ri(liarOptions.length)];
+
   return { theme, sol, clues: chosen, answerTime, culprit,
+           liar: { suspect: liarSuspect, cat: liarCat, falseVal: liarFalseVal },
            id: theme.id + "-" + hashStr(seedStr) };
 }
-
 function caseStatLabel(){
   const s = Number(localStorage.getItem("dh-case-solved")||"0");
   return s ? s + (s===1?" case closed":" cases closed") : "No cases closed";
@@ -4290,6 +4331,8 @@ function renderCaseFile(fresh){
   try{ verdict = JSON.parse(localStorage.getItem(doneKey)||"null"); }catch(e){}
   let animateVerdict = false;   // true only for the repaint immediately after filing an accusation
   let lastPick = {s:"", r:"", o:""};   // preserves the accusation dropdowns across a repaint (e.g. after a wrong guess)
+  let gridOpen = false;                // deduction grid is a collapsed, optional secondary tool
+  let activeSuspect = 0;               // which suspect's question list is showing
 
   const CATS = [
     {k:"s", label:"Suspect", items:P0.suspects},
@@ -4341,13 +4384,56 @@ function renderCaseFile(fresh){
     return h + `</tbody></table>`;
   };
 
+  /* ---- interrogation helpers ---- */
+  const suspectClues = idx => CF.clues.map((c,i) => ({c,i})).filter(x => x.c.owner === idx);
+  const askedKey = i => "dh-case-clue-"+CF.id+"-"+i;
+  const isAsked = i => localStorage.getItem(askedKey(i)) === "1";
+  const walkKey = idx => "dh-case-walk-"+CF.id+"-"+idx;
+  const isWalkAsked = idx => localStorage.getItem(walkKey(idx)) === "1";
+  const cfWalkThrough = idx => {
+    const r = (CF.liar.suspect===idx && CF.liar.cat==="r") ? CF.liar.falseVal : CF.sol.r[idx];
+    const o = (CF.liar.suspect===idx && CF.liar.cat==="o") ? CF.liar.falseVal : CF.sol.o[idx];
+    const t = (CF.liar.suspect===idx && CF.liar.cat==="t") ? CF.liar.falseVal : CF.sol.t[idx];
+    return `I was in ${P0.rooms[r]}. I had ${P0.objs[o]} on me. Someone can place me around ${P0.times[t]}.`;
+  };
+  const askedCount = idx => suspectClues(idx).filter(x => isAsked(x.i)).length + (isWalkAsked(idx)?1:0);
+  const totalCount = idx => suspectClues(idx).length + 1;
+  const evidenceList = () => CF.clues.map((c,i)=>({c,i})).filter(x => isAsked(x.i));
+
+  const REBUTTALS = [
+    "You've got nothing on me. Try again.",
+    "That's quite a story. None of it's true.",
+    "I'd like to see you prove any of that.",
+    "Careful with accusations like that.",
+    "You're barking up the wrong tree entirely."
+  ];
+
   const paint = () => {
     const solvedNow = verdict && verdict.win;
-    let clueHTML = "";
-    CF.clues.forEach((c,i) => {
-      const used = localStorage.getItem("dh-case-clue-"+CF.id+"-"+i) === "1";
-      clueHTML += `<div class="cf-clue${used?" used":""}" data-cl="${i}"><span class="cn">${i+1}</span><span>${esc(c.text)}</span></div>`;
-    });
+
+    const suspectCardHTML = (name, idx) => {
+      const asked = askedCount(idx), total = totalCount(idx);
+      return `<button class="cf-suspect${idx===activeSuspect?" active":""}" data-s="${idx}">
+        <div class="cfs-nm">${esc(name)}</div>
+        <div class="cfs-progress">${asked} of ${total} answered</div>
+      </button>`;
+    };
+
+    const qList = suspectClues(activeSuspect);
+    const questionsHTML = qList.map(x => {
+      const asked = isAsked(x.i);
+      return asked
+        ? `<div class="cf-qa"><div class="cf-q-asked">${esc(x.c.topic)}</div><div class="cf-a">"${esc(x.c.line)}"</div></div>`
+        : `<button class="cf-q" data-ask="${x.i}">${esc(x.c.topic)}</button>`;
+    }).join("") + (isWalkAsked(activeSuspect)
+        ? `<div class="cf-qa"><div class="cf-q-asked">Walk me through your night</div><div class="cf-a">"${esc(cfWalkThrough(activeSuspect))}"</div></div>`
+        : `<button class="cf-q cf-q-walk" data-walk="${activeSuspect}">Walk me through your night</button>`);
+
+    const evi = evidenceList();
+    const evidenceHTML = evi.length
+      ? evi.map(x => `<label class="cf-ev-row"><input type="checkbox" class="cf-ev-check" data-ev="${x.i}"${lastPick.evidence && lastPick.evidence.has(x.i) ? " checked" : ""}><span><b>${esc(P0.suspects[x.c.owner])}:</b> "${esc(x.c.line)}"</span></label>`).join("")
+      : `<div class="cf-legend">Nothing gathered yet — question the suspects first.</div>`;
+
     const sel = (id, items, picked) => `<select id="${id}">${["<option value=\"\">— choose —</option>"]
       .concat(items.map((x,i) => `<option value="${i}"${String(i)===picked?" selected":""}>${esc(x)}</option>`)).join("")}</select>`;
 
@@ -4358,28 +4444,36 @@ function renderCaseFile(fresh){
           <span style="font-size:9.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#9BA0A6">${esc(P0.place)}</span>
           <span class="cf-stamp${solvedNow?" cf-stamp-solved":""}${solvedNow&&animateVerdict?" cf-stamp-anim":""}">${solvedNow?"Closed":"Unsolved"}</span></div>
         <div class="cf-title">${esc(P0.title)}</div>
-        <div class="cf-brief">Overnight, ${esc(P0.crime)}. Four people were inside, and each of them was in <b>exactly one room</b>, left <b>exactly one thing</b> behind, and was seen <b>exactly once</b>. No two share a room, an object, or a time. The clues below are all true. Work out the whole board, then file your accusation.</div>
+        <div class="cf-brief">Overnight, ${esc(P0.crime)}. Four people were inside, and each of them was in <b>exactly one room</b>, left <b>exactly one thing</b> behind, and was seen <b>exactly once</b>. Question them, gather what they say as evidence, then file your accusation. Everyone's answers are true — except one suspect is lying about one detail in their own alibi.</div>
       </div>
 
-      <div class="cf-cols">
-        <div class="cf-panel">
-          <div class="cf-ph">The Evidence<span style="font-size:9.5px;color:#A08339">${CF.clues.length} clues</span></div>
-          ${clueHTML}
-          <div class="cf-legend">Click a clue to grey it out once you've used it.</div>
-        </div>
-        <div class="cf-panel">
-          <div class="cf-ph">Deduction Grid</div>
-          <div class="cf-scrollnote">Swipe the grid sideways →</div>
-          <div class="cf-gridwrap">${gridHTML()}</div>
-          <div class="cf-legend">Click a square to cycle <b>blank → ✗ → ✓</b>. A ✓ means "these two go together"; ✗ rules it out.</div>
-          <div class="cf-tools">
-            <button class="cf-tool${auto?" on":""}" id="cfAuto">Auto-eliminate ${auto?"on":"off"}</button>
-            <button class="cf-tool" id="cfCheck">Check my marks</button>
-            <button class="cf-tool" id="cfClear">Clear grid</button>
-          </div>
-          <div id="cfCheckMsg" style="font-size:12px;font-weight:900;margin-top:9px"></div>
-        </div>
+      <div class="cf-suspects">${P0.suspects.map(suspectCardHTML).join("")}</div>
+
+      <div class="cf-panel cf-interrogation">
+        <div class="cf-ph">Questioning <span style="color:var(--ink)">${esc(P0.suspects[activeSuspect])}</span></div>
+        <div class="cf-questions">${questionsHTML}</div>
       </div>
+
+      <div class="cf-panel">
+        <div class="cf-ph">Evidence Board<span style="font-size:9.5px;color:#A08339">${evi.length} gathered</span></div>
+        ${evidenceHTML}
+      </div>
+
+      <div style="text-align:center;margin:14px 0">
+        <button class="cf-tool" id="cfGridToggle">${gridOpen?"Hide":"Show"} deduction grid ${gridOpen?"▴":"▾"}</button>
+      </div>
+      ${gridOpen ? `<div class="cf-panel">
+        <div class="cf-ph">Deduction Grid <span style="font-size:9.5px;color:var(--muted);text-transform:none;font-weight:700">(optional — cross-check the evidence here)</span></div>
+        <div class="cf-scrollnote">Swipe the grid sideways →</div>
+        <div class="cf-gridwrap">${gridHTML()}</div>
+        <div class="cf-legend">Click a square to cycle <b>blank → ✗ → ✓</b>. A ✓ means "these two go together"; ✗ rules it out.</div>
+        <div class="cf-tools">
+          <button class="cf-tool${auto?" on":""}" id="cfAuto">Auto-eliminate ${auto?"on":"off"}</button>
+          <button class="cf-tool" id="cfCheck">Check my marks</button>
+          <button class="cf-tool" id="cfClear">Clear grid</button>
+        </div>
+        <div id="cfCheckMsg" style="font-size:12px;font-weight:900;margin-top:9px"></div>
+      </div>` : ""}
 
       <div class="cf-acc" id="cfAcc">
         <div class="cf-ah">The Accusation</div>
@@ -4389,6 +4483,7 @@ function renderCaseFile(fresh){
           <div><label>Was in</label>${sel("cfR", P0.rooms, lastPick.r)}</div>
           <div><label>Left behind</label>${sel("cfO", P0.objs, lastPick.o)}</div>
         </div>
+        <div class="cf-legend" style="margin-top:12px;color:#D8DADD">Check off at least one piece of evidence above to cite in your accusation.</div>
         <button class="cf-submit" id="cfGo">File the accusation</button>
         <div id="cfVerdict"></div>
       </div>
@@ -4404,6 +4499,22 @@ function renderCaseFile(fresh){
     $("#cfBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
     $("#cfNew").addEventListener("click", () => { CF = null; renderCaseFile(true); });
 
+    panel.querySelectorAll(".cf-suspect[data-s]").forEach(el => el.addEventListener("click", () => {
+      activeSuspect = +el.dataset.s; paint();
+    }));
+    panel.querySelectorAll(".cf-q[data-ask]").forEach(el => el.addEventListener("click", () => {
+      localStorage.setItem(askedKey(+el.dataset.ask), "1"); paint();
+    }));
+    panel.querySelectorAll(".cf-q[data-walk]").forEach(el => el.addEventListener("click", () => {
+      localStorage.setItem(walkKey(+el.dataset.walk), "1"); paint();
+    }));
+    $("#cfGridToggle")?.addEventListener("click", () => { gridOpen = !gridOpen; paint(); });
+
+    panel.querySelectorAll(".cf-ev-check").forEach(el => el.addEventListener("change", () => {
+      if(!lastPick.evidence) lastPick.evidence = new Set();
+      if(el.checked) lastPick.evidence.add(+el.dataset.ev); else lastPick.evidence.delete(+el.dataset.ev);
+    }));
+
     panel.querySelectorAll(".cf-cell").forEach(td => td.addEventListener("click", () => {
       const [rk,ri2,ck,ci] = td.dataset.c.split("|");
       const cur = marks[cellKey(rk,+ri2,ck,+ci)] || "";
@@ -4411,17 +4522,10 @@ function renderCaseFile(fresh){
       setMark(rk, +ri2, ck, +ci, nxt);
       paint();
     }));
-    panel.querySelectorAll(".cf-clue").forEach(el => el.addEventListener("click", () => {
-      const i = el.dataset.cl, k = "dh-case-clue-"+CF.id+"-"+i;
-      const on = localStorage.getItem(k) === "1";
-      localStorage.setItem(k, on ? "0" : "1");
-      el.classList.toggle("used", !on);
-    }));
-    $("#cfAuto").addEventListener("click", () => { auto = !auto; localStorage.setItem("dh-case-auto", auto?"1":"0"); paint(); });
-    $("#cfClear").addEventListener("click", () => { marks = {}; save(); paint(); });
-    $("#cfCheck").addEventListener("click", () => {
+    $("#cfAuto")?.addEventListener("click", () => { auto = !auto; localStorage.setItem("dh-case-auto", auto?"1":"0"); paint(); });
+    $("#cfClear")?.addEventListener("click", () => { marks = {}; save(); paint(); });
+    $("#cfCheck")?.addEventListener("click", () => {
       const truth = (rk,ri2,ck,ci) => {
-        const val = k2 => k2 === "s" ? null : CF.sol[k2];
         const idxOf = (k2, sIdx) => k2 === "s" ? sIdx : CF.sol[k2][sIdx];
         let sFromRow = rk === "s" ? ri2 : CF.sol[rk].indexOf(ri2);
         return idxOf(ck, sFromRow) === ci;
@@ -4443,7 +4547,7 @@ function renderCaseFile(fresh){
       const c = CF.culprit;
       box.innerHTML = v.win
         ? `<div class="cf-verdict${animate?" cf-anim-win":""}"><b class="cf-solved">Case closed.</b> ${esc(P0.suspects[c])} was in ${esc(P0.rooms[CF.sol.r[c]])} and left ${esc(P0.objs[CF.sol.o[c]])} behind at ${esc(P0.times[CF.answerTime])}. The deduction holds.</div>`
-        : `<div class="cf-verdict${animate?" cf-anim-lose":""}"><b style="color:var(--down)">The accusation doesn't hold.</b> ${v.parts} of 3 correct. Go back to the grid — every clue is true, and only one arrangement satisfies all of them.</div>`;
+        : `<div class="cf-verdict${animate?" cf-anim-lose":""}"><b style="color:var(--down)">${esc(v.rebuttalName||"They")} ${v.rebuttal ? `says: "${esc(v.rebuttal)}"` : "denies it."}</b> ${v.parts} of 3 correct. Go back to the evidence — every answer given is true except one suspect's lie about their own night.</div>`;
       if(animate && !v.win){
         const acc = $("#cfAcc");
         if(acc){ acc.classList.remove("cf-acc-shake"); void acc.offsetWidth; acc.classList.add("cf-acc-shake"); }
@@ -4453,15 +4557,17 @@ function renderCaseFile(fresh){
 
     $("#cfGo").addEventListener("click", () => {
       const s = $("#cfS").value, r = $("#cfR").value, o = $("#cfO").value;
-      lastPick = {s, r, o};
+      lastPick.s = s; lastPick.r = r; lastPick.o = o;
       if(s === "" || r === "" || o === ""){ $("#cfVerdict").innerHTML = `<div class="cf-verdict">Fill in all three before you accuse anyone.</div>`; return; }
+      if(!lastPick.evidence || lastPick.evidence.size === 0){ $("#cfVerdict").innerHTML = `<div class="cf-verdict">Cite at least one piece of gathered evidence before you accuse anyone.</div>`; return; }
       const c = CF.culprit;
       let parts = 0;
       if(+s === c) parts++;
       if(+r === CF.sol.r[c]) parts++;
       if(+o === CF.sol.o[c]) parts++;
       const win = parts === 3;
-      verdict = {win, parts};
+      const rebuttal = win ? null : REBUTTALS[Math.floor(Math.random()*REBUTTALS.length)];
+      verdict = {win, parts, rebuttal, rebuttalName: win ? null : P0.suspects[+s]};
       localStorage.setItem(doneKey, JSON.stringify(verdict));
       if(win && localStorage.getItem("dh-case-credit-"+CF.id) !== "1"){
         localStorage.setItem("dh-case-credit-"+CF.id, "1");
@@ -4477,7 +4583,6 @@ function renderCaseFile(fresh){
   };
   paint();
 }
-
 
 /* ================= built-in: Crossword of the Day =================
    Pulls today's clue set from the site's own Word of the Day bank and lays the

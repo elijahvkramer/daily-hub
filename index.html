@@ -798,6 +798,19 @@
   input.cw-cell.wrong{color:#C0463E}
   input.cw-cell.checked-right{color:var(--up)}
   input.cw-cell.solved{background:rgba(24,153,107,.14);border-color:var(--up);color:var(--up)}
+
+  /* ---------- mini crossword (NYT Mini-style speedrun) ---------- */
+  .mini-timerbar{display:flex;align-items:center;justify-content:center;gap:16px;margin:6px 0 10px}
+  .mini-timer{font-size:34px;font-weight:900;letter-spacing:.02em;color:var(--ink);font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
+  .mini-best{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--card);border:1px solid var(--hairline);border-radius:20px;padding:6px 14px}
+  table.mini-grid td{width:42px;height:42px}
+  .mini-grid .cw-cellwrap{width:42px;height:42px}
+  .mini-grid input.cw-cell{width:42px;height:42px;font-size:20px}
+  @media(max-width:640px){
+    table.mini-grid td{width:34px;height:34px}
+    .mini-grid .cw-cellwrap{width:34px;height:34px}
+    .mini-grid input.cw-cell{width:34px;height:34px;font-size:17px}
+  }
   .cw-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .cw-progress{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:10px}
   .cw-clues-panel{background:var(--card);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;min-width:0;max-height:520px;overflow-y:auto}
@@ -4270,6 +4283,7 @@ function renderGamesTab(){
   if(gamesView === "quiz"){ renderQuizTab(); return; }
   if(gamesView === "case"){ renderCaseFile(); return; }
   if(gamesView === "crossword"){ renderCrossword(); return; }
+  if(gamesView === "mini"){ renderMiniCrossword(); return; }
   renderGamesLauncher();
 }
 
@@ -4331,7 +4345,8 @@ function renderGamesLauncher(){
 
   const built = [
     { id:"case", name:"The Case File", tag:"A daily whodunit — solve it on the deduction grid", icon:"🕵", col:"#7A4E8C", stat: caseStatLabel() },
-    { id:"crossword", name:"Crossword", tag:"Moderate 9×9 grid — fully checked, symmetric, new daily", icon:"✏️", col:"#378ADD", stat: cwStatLabel() }
+    { id:"crossword", name:"Crossword", tag:"Challenging 11×11 grid — fully checked, symmetric, new daily", icon:"✏️", col:"#378ADD", stat: cwStatLabel() },
+    { id:"mini", name:"Mini Crossword", tag:"Tiny 5×5 speedrun — beat your best time", icon:"⏱️", col:"#C8574B", stat: miniStatLabel() }
   ];
   const words = [
     { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
@@ -5034,46 +5049,29 @@ function cwSolveCSP(slots, wordBank, rnd, deadlineMs){
 }
 
 
-function cwBuild(seedStr, extraWords){
-  const bank = {};
-  Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
-  if(extraWords){
-    extraWords.forEach(w => {
-      const L = w.term.length;
-      if(bank[L] && L>=3 && L<=8 && !bank[L].some(wc => wc[0]===w.term)){
-        bank[L].push([w.term, w.definition]);
-      }
-    });
-  }
-  const N = 9;
-  const overallDeadline = Date.now() + 8000;
-  const fallbackTargets = [20, 19, 21, 18, 22];
-
-  // Phase 1: cheap combinatorial search for symmetric block patterns with a workable
-  // length distribution (every entry 3-8 letters, so our dictionary can cover it).
-  // This is pure grid geometry — no dictionary lookups — so we can afford hundreds of tries.
+// Tries to build one fully-checked, symmetric NxN grid. Returns null on failure so
+// cwBuild can fall back to an easier size rather than ever showing a broken puzzle.
+function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
   const candidates = [];
-  for(let p=0; p<600 && candidates.length<50; p++){
+  for(let p=0; p<phase1Tries && candidates.length<candidateCap; p++){
     const arnd = seedRand(hashStr(seedStr + "-p" + p));
-    const target = fallbackTargets[p % fallbackTargets.length];
+    const target = targets[p % targets.length];
     const blocks = cwGenBlocks(arnd, N, target);
     const slots = cwSlotsFor(blocks, N);
-    if(slots.length < 22) continue;
+    if(slots.length < minSlots) continue;
     const lens = slots.map(s => s.len);
     const maxLen = Math.max(...lens), minLen = Math.min(...lens);
-    if(maxLen > 8 || minLen < 3) continue;
+    if(maxLen > maxLenCap || minLen < 3) continue;
     if(!bank[maxLen] || !bank[maxLen].length) continue;
     candidates.push({ p, slots });
   }
 
-  // Phase 2: only the (expensive) dictionary-backtracking fill runs against patterns
-  // already known to be geometrically sound.
   for(const cand of candidates){
     if(Date.now() > overallDeadline) break;
-    for(let f=0; f<3; f++){
+    for(let f=0; f<fillTriesPerCand; f++){
       if(Date.now() > overallDeadline) break;
       const frnd = seedRand(hashStr(seedStr + "-f" + cand.p + "-" + f));
-      const assign = cwSolveCSP(cand.slots, bank, frnd, 400);
+      const assign = cwSolveCSP(cand.slots, bank, frnd, fillDeadlineMs);
       if(!assign) continue;
       const placed = cand.slots.map((s,i) => ({ word: assign[i][0], definition: assign[i][1], row: s.r, col: s.c, dir: s.dir }));
       const norm = cwNumber(placed, [0, N-1, 0, N-1]);
@@ -5093,6 +5091,27 @@ function cwBuild(seedStr, extraWords){
   return null;
 }
 
+function cwBuild(seedStr, extraWords){
+  const bank = {};
+  Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
+  if(extraWords){
+    extraWords.forEach(w => {
+      const L = w.term.length;
+      if(bank[L] && L>=3 && L<=8 && !bank[L].some(wc => wc[0]===w.term)){
+        bank[L].push([w.term, w.definition]);
+      }
+    });
+  }
+  // Primary: 11x11, denser blocks (34-46) so most entries land at 3-6 letters — our
+  // dictionary is deepest there, which is what makes a bigger grid solvable at all.
+  // ~40-46 clues vs. the old 9x9's ~32, so noticeably bigger and slower to finish.
+  const primary = cwBuildAtSize(seedStr, bank, 11, [34,36,38,40,42,44,46], 30, 6, Date.now()+10000, 90, 800, 3, 400);
+  if(primary) return primary;
+  // Fallback: the original 9x9 config, which tested 100% reliable, so the game can
+  // never come up empty even on an unlucky day for the bigger grid.
+  return cwBuildAtSize(seedStr + "-fallback9", bank, 9, [20,19,21,18,22], 22, 8, Date.now()+5000, 50, 600, 3, 400);
+}
+
 function cwStatLabel(){
   const best = localStorage.getItem("dh-cw-best");
   return best ? "Best " + best + "s" : "Not solved yet";
@@ -5102,7 +5121,8 @@ let CW = null;
 async function renderCrossword(fresh){
   const panel = $("#panel-quiz");
   $("#staleNote").style.display = "none";
-  panel.innerHTML = `<div class="spinner"></div>`;
+  panel.innerHTML = `<div class="spinner"></div><div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px">Building today's grid — this can take a few seconds…</div>`;
+  await new Promise(r => setTimeout(r, 30)); // let the spinner actually paint before the heavy synchronous fill runs
 
   // Word of the Day terms get folded into the fill bank as bonus options (not required —
   // the crossword's real dictionary is CW_WORDS, ~2,100 common words with original clues).
@@ -5367,6 +5387,335 @@ async function renderCrossword(fresh){
   if(solved){
     panel.querySelectorAll("input.cw-cell").forEach(el => { el.disabled = true; el.classList.add("solved"); });
     onWin();
+  }
+}
+
+/* ================= built-in: Mini Crossword (NYT Mini-style) =================
+   A tiny 5x5, fully-checked, lightly-blocked grid (0-6 blocks) built from the same
+   CW_WORDS dictionary/solver as the full Crossword — reliably fast to generate since
+   short words are our dictionary's deepest area. The whole point of this one is the
+   speedrun feel: a big live timer, a personal-best readout, and a streak counter,
+   mirroring the NYT Mini's minimal "how fast can you go" format. */
+function miniBuild(seedStr, extraWords){
+  const bank = {};
+  Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
+  if(extraWords){
+    extraWords.forEach(w => {
+      const L = w.term.length;
+      if(bank[L] && L>=3 && L<=5 && !bank[L].some(wc => wc[0]===w.term)){
+        bank[L].push([w.term, w.definition]);
+      }
+    });
+  }
+  const primary = cwBuildAtSize(seedStr, bank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
+  if(primary) return primary;
+  // Belt-and-suspenders fallback: a slightly denser block target, tried fresh.
+  return cwBuildAtSize(seedStr + "-minifallback", bank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
+}
+
+function miniStatLabel(){
+  const best = localStorage.getItem("dh-mini-best");
+  return best ? "Best " + miniFmtTime(Number(best)) : "Not solved yet";
+}
+function miniFmtTime(totalSeconds){
+  const s = Math.max(0, Math.round(totalSeconds));
+  const m = Math.floor(s/60), r = s%60;
+  return m + ":" + String(r).padStart(2,"0");
+}
+
+let MC = null;
+let miniTimerHandle = null;
+function miniStopTimer(){
+  if(miniTimerHandle){ clearInterval(miniTimerHandle); miniTimerHandle = null; }
+}
+
+async function renderMiniCrossword(fresh){
+  miniStopTimer();
+  const panel = $("#panel-quiz");
+  $("#staleNote").style.display = "none";
+  panel.innerHTML = `<div class="spinner"></div>`;
+  await new Promise(r => setTimeout(r, 20));
+
+  let words = null;
+  try{
+    const bank = await fetchWords();
+    words = bank.map(w => ({ term: (w.term||"").toUpperCase().replace(/[^A-Z]/g,""), definition: w.definition }))
+                .filter(w => w.term.length >= 3 && w.term.length <= 5);
+  }catch(e){ words = null; }
+
+  const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+  const seed = fresh ? ("free-" + Date.now()) : ("mini-" + today);
+  if(!MC || MC.seed !== seed){
+    const puzzle = miniBuild(seed, words);
+    if(!puzzle){
+      panel.innerHTML = `<div class="cw-wrap">
+        <button class="pbtn game-back" id="miniBack">← Back to Games</button>
+        <div class="empty">Couldn't lay out today's mini — try again in a moment.</div>
+      </div>`;
+      $("#miniBack").addEventListener("click", () => { gamesView="launcher"; renderGamesLauncher(); });
+      return;
+    }
+    MC = puzzle; MC.seed = seed;
+  }
+  const P0 = MC;
+  const gKey = "dh-mini-guesses-" + P0.id;
+  const hKey = "dh-mini-hints-" + P0.id;
+  const doneKey = "dh-mini-done-" + P0.id;
+  const elapsedKey = "dh-mini-elapsed-" + P0.id;
+
+  let guesses = {};
+  try{ guesses = JSON.parse(localStorage.getItem(gKey)||"{}") || {}; }catch(e){ guesses = {}; }
+  let hints = Number(localStorage.getItem(hKey)||"0");
+  let solved = localStorage.getItem(doneKey) === "1";
+  let accumulatedSec = Number(localStorage.getItem(elapsedKey) || "0");
+  const sessionStart = Date.now();
+  const currentElapsedSec = () => accumulatedSec + (solved ? 0 : (Date.now()-sessionStart)/1000);
+  const persistElapsed = () => { accumulatedSec = currentElapsedSec(); localStorage.setItem(elapsedKey, String(accumulatedSec)); };
+
+  const cellKey = (r,c) => r+","+c;
+  const acrossAt = {}, downAt = {};
+  const entryCells = P0.entries.map(e => {
+    const cells = [];
+    for(let i=0;i<e.word.length;i++){
+      const r = e.row + (e.dir==="V"?i:0), c = e.col + (e.dir==="H"?i:0);
+      cells.push([r,c]);
+    }
+    return cells;
+  });
+  P0.entries.forEach((e,idx) => {
+    entryCells[idx].forEach(([r,c]) => {
+      if(e.dir==="H") acrossAt[cellKey(r,c)]=idx; else downAt[cellKey(r,c)]=idx;
+    });
+  });
+  const acrossEntries = P0.entries.map((e,i)=>({e,i})).filter(x=>x.e.dir==="H").sort((a,b)=>a.e.num-b.e.num);
+  const downEntries = P0.entries.map((e,i)=>({e,i})).filter(x=>x.e.dir==="V").sort((a,b)=>a.e.num-b.e.num);
+
+  let activeEntry = acrossEntries.length ? acrossEntries[0].i : downEntries[0].i;
+  let activeDir = P0.entries[activeEntry].dir;
+  let activeCell = { r: P0.entries[activeEntry].row, c: P0.entries[activeEntry].col };
+
+  const save = () => localStorage.setItem(gKey, JSON.stringify(guesses));
+  const isFillable = (r,c) => Object.prototype.hasOwnProperty.call(P0.solution, cellKey(r,c));
+  const entryAt = (r,c,dir) => dir==="H" ? acrossAt[cellKey(r,c)] : downAt[cellKey(r,c)];
+  const allSolved = () => Object.keys(P0.solution).every(k => guesses[k] === P0.solution[k]);
+
+  let onWin = () => {};
+  const finishIfSolved = () => {
+    if(solved || !allSolved()) return;
+    solved = true;
+    persistElapsed();
+    miniStopTimer();
+    localStorage.setItem(doneKey, "1");
+    P0.elapsed = Math.max(1, Math.round(accumulatedSec));
+    if(localStorage.getItem("dh-mini-credit-"+P0.id) !== "1"){
+      localStorage.setItem("dh-mini-credit-"+P0.id, "1");
+      const prevBest = Number(localStorage.getItem("dh-mini-best")||"0");
+      if(!prevBest || P0.elapsed < prevBest) localStorage.setItem("dh-mini-best", String(P0.elapsed));
+      localStorage.setItem("dh-mini-streak", String(Number(localStorage.getItem("dh-mini-streak")||"0")+1));
+      localStorage.setItem("dh-mini-plays", String(Number(localStorage.getItem("dh-mini-plays")||"0")+1));
+    }
+    onWin();
+  };
+
+  const numByCell = {};
+  P0.entries.forEach(e => { numByCell[cellKey(e.row,e.col)] = e.num; });
+
+  let gridHTML = `<table class="cw-grid mini-grid"><tbody>`;
+  for(let r=0;r<P0.rows;r++){
+    gridHTML += `<tr>`;
+    for(let c=0;c<P0.cols;c++){
+      if(!isFillable(r,c)){ gridHTML += `<td class="cw-blk"></td>`; continue; }
+      const g = guesses[cellKey(r,c)] || "";
+      const num = numByCell[cellKey(r,c)];
+      gridHTML += `<td><div class="cw-cellwrap">${num!=null?`<span class="cw-num">${num}</span>`:""}<input class="cw-cell" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" data-r="${r}" data-c="${c}" value="${esc(g)}"></div></td>`;
+    }
+    gridHTML += `</tr>`;
+  }
+  gridHTML += `</tbody></table>`;
+
+  const clueRowHTML = x => `<div class="cw-clue" data-entry="${x.i}"><span class="cwc-n">${x.e.num}.</span><span>${esc(x.e.definition)} <span style="color:var(--muted);font-weight:700">(${x.e.word.length})</span></span></div>`;
+
+  const bestSoFar = localStorage.getItem("dh-mini-best");
+
+  panel.innerHTML = `<div class="cw-wrap mini-wrap">
+    <button class="pbtn game-back" id="miniBack">← Back to Games</button>
+    <div class="qprompt-label" style="color:#C8574B">Mini Crossword${fresh?" · Free Play":""}</div>
+    <div class="qprompt" style="font-size:14px;line-height:1.5;margin-bottom:6px">A tiny 5×5, fully-checked grid — built for speed. How fast can you clear it?</div>
+    <div class="mini-timerbar">
+      <div class="mini-timer" id="miniTimer">${miniFmtTime(currentElapsedSec())}</div>
+      <div class="mini-best">${bestSoFar ? `Best: ${miniFmtTime(Number(bestSoFar))}` : "No best time yet"}</div>
+    </div>
+    <div class="cw-banner" id="miniBanner"></div>
+    <div class="cw-cols mini-cols">
+      <div class="cw-board-panel">
+        <div class="cw-gridwrap">${gridHTML}</div>
+        <div class="cw-tools">
+          <button class="cf-tool" id="miniCheck">Check puzzle</button>
+          <button class="cf-tool" id="miniHint">Reveal a letter (${hints} used)</button>
+          <button class="cf-tool" id="miniClear">Clear grid</button>
+        </div>
+        <div class="cw-progress" id="miniProgress"></div>
+      </div>
+      <div class="cw-clues-panel">
+        <div class="cw-cluegrp-h">Across</div>
+        ${acrossEntries.map(clueRowHTML).join("")}
+        <div class="cw-cluegrp-h">Down</div>
+        ${downEntries.map(clueRowHTML).join("")}
+      </div>
+    </div>
+    <div id="miniWinBox"></div>
+    <div class="cf-stats" id="miniStats">
+      <span>${esc(miniStatLabel())}</span>
+      <span>Streak ${esc(localStorage.getItem("dh-mini-streak")||"0")}</span>
+    </div>
+  </div>`;
+
+  $("#miniBack").addEventListener("click", () => { if(!solved) persistElapsed(); miniStopTimer(); gamesView="launcher"; renderGamesLauncher(); });
+
+  const cells = {};
+  panel.querySelectorAll("input.cw-cell").forEach(inp => { cells[inp.dataset.r+","+inp.dataset.c] = inp; });
+  const clueEls = {};
+  panel.querySelectorAll(".cw-clue[data-entry]").forEach(el => { clueEls[el.dataset.entry] = el; });
+
+  const updateProgress = () => {
+    const total = Object.keys(P0.solution).length;
+    const filled = Object.keys(P0.solution).filter(k => guesses[k]).length;
+    const el = $("#miniProgress"); if(el) el.textContent = `${filled} of ${total} letters filled`;
+  };
+  const updateBanner = () => {
+    const e = P0.entries[activeEntry];
+    const el = $("#miniBanner"); if(el) el.innerHTML = `<b>${e.num} ${e.dir==="H"?"Across":"Down"}</b> — ${esc(e.definition)}`;
+  };
+  const updateClueDone = () => {
+    P0.entries.forEach((e,i) => {
+      const filled = entryCells[i].every(([r,c]) => guesses[cellKey(r,c)]);
+      clueEls[i]?.classList.toggle("done", filled);
+    });
+  };
+  const highlight = () => {
+    panel.querySelectorAll(".cw-cell.active").forEach(el => el.classList.remove("active"));
+    Object.values(clueEls).forEach(el => el.classList.remove("active"));
+    entryCells[activeEntry].forEach(([r,c]) => cells[cellKey(r,c)]?.classList.add("active"));
+    clueEls[activeEntry]?.classList.add("active");
+    updateBanner();
+  };
+
+  const setActiveEntry = idx => {
+    if(idx==null) return;
+    activeEntry = idx; activeDir = P0.entries[idx].dir;
+    activeCell = { r:P0.entries[idx].row, c:P0.entries[idx].col };
+    highlight();
+    cells[cellKey(activeCell.r, activeCell.c)]?.focus();
+  };
+
+  const moveFocus = (r,c) => {
+    const el = cells[cellKey(r,c)];
+    if(!el) return false;
+    activeCell = {r,c};
+    let idx = entryAt(r,c,activeDir);
+    if(idx==null){
+      const other = entryAt(r,c, activeDir==="H"?"V":"H");
+      if(other!=null){ activeDir = activeDir==="H"?"V":"H"; idx = other; }
+    }
+    if(idx!=null && idx!==activeEntry){ activeEntry = idx; highlight(); }
+    el.focus();
+    return true;
+  };
+  const advance = (dr,dc) => moveFocus(activeCell.r+dr, activeCell.c+dc);
+
+  panel.querySelectorAll("input.cw-cell").forEach(inp => {
+    inp.addEventListener("focus", () => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      activeCell = {r,c};
+      let idx = entryAt(r,c,activeDir);
+      if(idx==null) idx = entryAt(r,c, activeDir==="H"?"V":"H");
+      if(idx!=null && idx!==activeEntry){ activeDir = P0.entries[idx].dir; activeEntry = idx; highlight(); }
+    });
+    inp.addEventListener("input", () => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      const v = inp.value.toUpperCase().replace(/[^A-Z]/g,"").slice(-1);
+      inp.value = v;
+      if(v) guesses[cellKey(r,c)] = v; else delete guesses[cellKey(r,c)];
+      inp.classList.remove("wrong","checked-right");
+      save();
+      updateProgress(); updateClueDone();
+      finishIfSolved();
+      if(v && !solved) advance(activeDir==="H"?0:1, activeDir==="H"?1:0);
+    });
+    inp.addEventListener("keydown", ev => {
+      const r = +inp.dataset.r, c = +inp.dataset.c;
+      if(ev.key === "Backspace"){
+        if(inp.value) return;
+        ev.preventDefault();
+        const dr = activeDir==="H"?0:-1, dc = activeDir==="H"?-1:0;
+        const pr = r+dr, pc = c+dc;
+        if(moveFocus(pr,pc)){
+          const prev = cells[cellKey(pr,pc)];
+          if(prev){ prev.value=""; delete guesses[cellKey(pr,pc)]; save(); updateProgress(); updateClueDone(); }
+        }
+      } else if(ev.key === "ArrowRight"){ ev.preventDefault(); activeDir="H"; moveFocus(r,c+1); }
+      else if(ev.key === "ArrowLeft"){ ev.preventDefault(); activeDir="H"; moveFocus(r,c-1); }
+      else if(ev.key === "ArrowDown"){ ev.preventDefault(); activeDir="V"; moveFocus(r+1,c); }
+      else if(ev.key === "ArrowUp"){ ev.preventDefault(); activeDir="V"; moveFocus(r-1,c); }
+      else if(ev.key === "Tab"){
+        ev.preventDefault();
+        const list = acrossEntries.concat(downEntries).map(x=>x.i);
+        const pos = list.indexOf(activeEntry);
+        const next = ev.shiftKey ? (pos-1+list.length)%list.length : (pos+1)%list.length;
+        setActiveEntry(list[next]);
+      }
+    });
+  });
+
+  panel.querySelectorAll(".cw-clue[data-entry]").forEach(el => {
+    el.addEventListener("click", () => setActiveEntry(+el.dataset.entry));
+  });
+
+  $("#miniCheck").addEventListener("click", () => {
+    Object.keys(P0.solution).forEach(k => {
+      const el = cells[k]; if(!el) return;
+      el.classList.remove("wrong","checked-right");
+      if(guesses[k]) el.classList.add(guesses[k]===P0.solution[k] ? "checked-right" : "wrong");
+    });
+  });
+  $("#miniHint").addEventListener("click", () => {
+    const k = cellKey(activeCell.r, activeCell.c);
+    if(!(k in P0.solution)) return;
+    guesses[k] = P0.solution[k];
+    const el = cells[k]; if(el){ el.value = guesses[k]; el.classList.remove("wrong"); el.classList.add("checked-right"); }
+    hints++; localStorage.setItem(hKey, String(hints));
+    const hb = $("#miniHint"); if(hb) hb.textContent = `Reveal a letter (${hints} used)`;
+    save(); updateProgress(); updateClueDone();
+    finishIfSolved();
+  });
+  $("#miniClear").addEventListener("click", () => {
+    guesses = {}; save();
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.value=""; el.classList.remove("wrong","checked-right"); });
+    updateProgress(); updateClueDone();
+  });
+
+  onWin = () => {
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.disabled = true; el.classList.add("solved"); });
+    const timerEl = $("#miniTimer"); if(timerEl) timerEl.textContent = miniFmtTime(P0.elapsed);
+    const isNewBest = Number(localStorage.getItem("dh-mini-best")||"0") === P0.elapsed;
+    const wb = $("#miniWinBox");
+    if(wb) wb.innerHTML = `<div class="qreveal" style="margin-top:14px"><b style="color:var(--up)">Solved in ${miniFmtTime(P0.elapsed)}!</b><div class="qex">${isNewBest ? "New personal best 🎉" : `Personal best: ${miniFmtTime(Number(localStorage.getItem("dh-mini-best")||"0"))}`}</div></div>
+      <button class="qbig qnext" id="miniNext">${fresh?"Another free puzzle":"New free-play puzzle"}</button>`;
+    $("#miniNext")?.addEventListener("click", () => { MC = null; renderMiniCrossword(true); });
+    const st = $("#miniStats");
+    if(st) st.innerHTML = `<span>${esc(miniStatLabel())}</span><span>Streak ${esc(localStorage.getItem("dh-mini-streak")||"0")}</span>`;
+  };
+
+  updateProgress(); updateClueDone(); highlight();
+  if(solved){
+    panel.querySelectorAll("input.cw-cell").forEach(el => { el.disabled = true; el.classList.add("solved"); });
+    P0.elapsed = Math.max(1, Math.round(accumulatedSec));
+    onWin();
+  } else {
+    const timerEl = $("#miniTimer");
+    miniTimerHandle = setInterval(() => {
+      if(timerEl) timerEl.textContent = miniFmtTime(currentElapsedSec());
+    }, 250);
   }
 }
 

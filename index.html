@@ -841,6 +841,21 @@
   .hist-tip .tv{color:var(--gold);font-weight:900}
   .hist-delta{font-weight:900;font-size:13px}
 
+  /* stock detail modal */
+  .modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(20,21,24,.62);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFadeIn .15s ease-out}
+  @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+  .modal-card{background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:840px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px 26px;position:relative}
+  .modal-close{position:absolute;top:16px;right:16px;appearance:none;border:none;background:var(--paper);width:32px;height:32px;border-radius:50%;font-size:15px;color:var(--muted);cursor:pointer;transition:all .14s}
+  .modal-close:hover{background:var(--gold-soft);color:var(--ink)}
+  .sm-head{display:flex;align-items:center;gap:14px;padding-right:36px}
+  .sm-head .mk{width:44px;height:44px;border-radius:10px;color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sm-tk{font-family:Georgia,serif;font-weight:900;font-size:19px;color:var(--ink)}
+  .sm-nm{font-family:'Lato',sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);margin-left:8px}
+  .sm-price{font-size:14px;font-weight:700;color:var(--ink);margin-top:3px}
+  .sm-price .pchgline{font-weight:900;margin-left:8px}
+  .sm-costrow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:#3A3E45;margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline)}
+  .sm-costrow b{color:var(--ink)}
+
   /* holdings in the news */
   .hn-row{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 2px;border-bottom:1px solid var(--hairline);font-size:14.5px;line-height:1.6;color:#3A3E45;align-items:start}
   .hn-row:last-child{border-bottom:none}
@@ -1173,6 +1188,13 @@ function niceDate(d){
 function shortDate(d){
   const dt = new Date(d+"T12:00:00");
   return dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+}
+/* same as shortDate but with the year -- used in the portfolio history hover tooltip,
+   where the point could be from any of the last five years and "Fri, Aug 21" alone
+   doesn't say which one (Eli's request, Aug 2026). */
+function longDate(d){
+  const dt = new Date(d+"T12:00:00");
+  return dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
 }
 
 /* ================= boot ================= */
@@ -3372,7 +3394,7 @@ function renderFriendsBody(){
    and are decrypted at the site gate. */
 let HOLDINGS = null;
 
-const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false, _fetchPromise:null };
+const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false, _fetchPromise:null, stockHist:{}, stockLoading:{} };
 const PPAL = ["#C8A24B","#3E4C59","#5C7A6B","#8A9BA8","#A08339","#7B6D8D","#C97B63","#B5A78C","#4A5568","#6B7177","#D9C7A0","#2F4858"];
 function pcolor(t){ let x = 0; for(const c of t) x = (x*31 + c.charCodeAt(0)) >>> 0; return PPAL[x % PPAL.length]; }
 const usd = (n,dec=2) => "$" + Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
@@ -3557,7 +3579,7 @@ function renderPortfolio(){
   /* portfolio value history */
   h += `<div class="kicker">Portfolio Value · History</div><div class="chart-card" id="histCard">
     <div class="ptoolbar" style="margin-bottom:10px">
-      <div class="seg" id="histSeg">${["1W","1M","3M","6M","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+      <div class="seg" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
       <span class="pstatus" id="histHead"></span>
     </div>
     <div id="histBody" style="position:relative"></div>
@@ -3656,7 +3678,10 @@ async function loadIntraday(){
 }
 /* Combine each holding's intraday prices (forward-filled onto a common timestamp spine) into
    the portfolio's total market value at each 5-min mark through the session. */
-function intradaySeries(){
+function intradaySeries(positions){
+  positions = positions || P.pos;   // Home snapshot always wants all accounts; the portfolio
+                                     // page's own "Today" range passes pView() so an account
+                                     // filter (e.g. just the Roth) is reflected here too.
   if(!P.intraday) return null;
   const syms = Object.keys(P.intraday); if(!syms.length) return null;
   const spineSym = P.intraday["SPY"] ? "SPY" : syms[0];
@@ -3668,7 +3693,7 @@ function intradaySeries(){
     for(const ts of spine){ while(j<t.length && t[j]<=ts){ if(c[j]!=null) last=c[j]; j++; } arr.push(last); }
     aligned[s] = arr;
   }
-  const positions = P.pos, pts = [];
+  const pts = [];
   spine.forEach((ts,i) => {
     let total = 0;
     positions.forEach(p => {
@@ -3743,11 +3768,19 @@ function histSeries(){
 const HIST_RANGES = {"1W":7, "1M":31, "3M":93, "6M":186, "1Y":370, "5Y":1856};
 function renderHistory(){
   const body = $("#histBody"); if(!body) return;
+  const range = P.histRange || "1M";
+  if(range === "Today"){ renderHistoryIntraday(body); return; }
   if(!P.histReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadHistory(); return; }
   const all = histSeries();
   if(!all || all.length < 2){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; $("#histHead").textContent = ""; return; }
-  const days = HIST_RANGES[P.histRange || "1M"];
-  const cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA");
+  let cutoff;
+  if(range === "YTD"){
+    const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0);
+    cutoff = jan1.toLocaleDateString("en-CA");
+  } else {
+    const days = HIST_RANGES[range] || HIST_RANGES["1M"];
+    cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA");
+  }
   let pts = all.filter(p => p.d >= cutoff);
   if(pts.length < 2) pts = all.slice(-2);
 
@@ -3792,9 +3825,233 @@ function renderHistory(){
     tip.style.display = "block";
     tip.style.left = (px/W*100) + "%";
     tip.style.top = (py/H*r.height) + "px";
-    tip.innerHTML = `${esc(shortDate(pts[i].d))} · <span class="tv">${usd(pts[i].v,0)}</span>`;
+    tip.innerHTML = `${esc(longDate(pts[i].d))} · <span class="tv">${usd(pts[i].v,0)}</span>`;
   });
   $("#histHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
+}
+
+/* the "Today" range on the portfolio history chart -- same open-to-now intraday
+   series and coloring rules as the Home snapshot's little sparkline (buildIntradayChart),
+   just drawn at the full history-card size with the same hover crosshair/tooltip the
+   other ranges have, since "how did the market move today" deserves more than a thumbnail
+   once you're already on the full portfolio page. Respects the account filter (pView()),
+   unlike the Home snapshot which always shows every account. */
+function renderHistoryIntraday(body){
+  if(!P.intraReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadIntraday().then(() => { if(S.tab === "portfolio" && (P.histRange||"1M") === "Today") renderHistory(); }); return; }
+  const ser = intradaySeries(pView());
+  const head = $("#histHead");
+  if(!ser){ body.innerHTML = `<div class="empty">Today's session data isn't available yet — try Refresh.</div>`; if(head) head.textContent = ""; return; }
+  const t = pTotals(pView());
+  const { pts, start, end } = ser;
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(t.day)}">${usdS(t.day)} (${pctS(t.dayPct)})</span>&nbsp; Today's session`;
+
+  const W = 800, H = 250, PL = 62, PR = 14, PT = 12, PB = 30;
+  const span = (end - start) || 1;
+  const X = ts => PL + (W-PL-PR) * Math.max(0, Math.min(1, (ts-start)/span));
+  const vals = pts.map(p => p.v);
+  let min = Math.min(...vals), max = Math.max(...vals);
+  const pad = (max-min)*0.06 || max*0.005; min -= pad; max += pad;
+  const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
+  // color follows today's actual $ change, same reasoning as buildIntradayChart above
+  const col = t.day >= 0 ? "#18996B" : "#DC4B43";
+  let line = "", area = `M ${X(pts[0].ts).toFixed(1)} ${H-PB}`;
+  pts.forEach((p,i) => { const x = X(p.ts).toFixed(1), y = Y(p.v).toFixed(1); line += `${i?"L":"M"} ${x} ${y} `; area += ` L ${x} ${y}`; });
+  area += ` L ${X(pts[pts.length-1].ts).toFixed(1)} ${H-PB} Z`;
+  const grid = [min+pad, (min+max)/2, max-pad].map(v =>
+    `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#E7E7E1" stroke-width="1"/>
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6B7177" font-family="Lato">${usd(v,0)}</text>`).join("");
+  const fmtTime = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
+  const fmtTipTime = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"}) + " ET";
+  body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="histSvg">
+    <defs><linearGradient id="histGradIntra" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    <path d="${area}" fill="url(#histGradIntra)"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts[pts.length-1].ts).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="4" fill="${col}"/>
+    <line id="histHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="#C8A24B" stroke-width="1" style="display:none"/>
+    <circle id="histDot" r="4.5" fill="#C8A24B" style="display:none"/>
+    <text x="${PL}" y="${H-8}" font-size="11" fill="#6B7177" font-family="Lato">Open</text>
+    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="#6B7177" font-family="Lato">Close</text>
+    <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="histHit"/>
+  </svg><div class="hist-tip" id="histTip"></div>`;
+  const svg = $("#histSvg"), tip = $("#histTip"), hair = $("#histHair"), dot = $("#histDot");
+  $("#histHit").addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width * W;
+    const targetTs = start + Math.max(0, Math.min(1, (fx-PL)/(W-PL-PR))) * span;
+    let idx = 0, best = Infinity;
+    pts.forEach((p,i) => { const d = Math.abs(p.ts - targetTs); if(d < best){ best = d; idx = i; } });
+    const px = X(pts[idx].ts), py = Y(pts[idx].v);
+    hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
+    dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
+    tip.style.display = "block";
+    tip.style.left = (px/W*100) + "%";
+    tip.style.top = (py/H*r.height) + "px";
+    tip.innerHTML = `${esc(fmtTipTime(pts[idx].ts))} · <span class="tv">${usd(pts[idx].v,0)}</span>`;
+  });
+  $("#histHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
+}
+
+
+/* ---------- stock detail modal (price history + your cost basis) ---------- */
+const SM_RANGES = ["Today","1W","1M","3M","6M","YTD","1Y","5Y"];
+let SM = null;   // { ticker, sym, range }
+function closeStockModal(){
+  const ov = $("#stockModalOverlay"); if(ov) ov.remove();
+  if(SM && SM._escHandler) document.removeEventListener("keydown", SM._escHandler);
+  SM = null;
+}
+async function openStockModal(ticker){
+  const pos = pViewMerged().find(p => p.ticker === ticker);
+  if(!pos || pos.type === "cash") return;   // no price history to show for a cash sweep
+  closeStockModal();
+  const sym = pos.fetchSymbol || pos.ticker;
+  SM = { ticker, sym, range: "1Y" };
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "stockModalOverlay";
+  overlay.innerHTML = `<div class="modal-card">
+    <button class="modal-close" id="smClose">✕</button>
+    <div class="sm-head">
+      <div class="mk" style="background:${pcolor(pos.ticker)}">${esc(pos.ticker.slice(0,4))}</div>
+      <div>
+        <div class="sm-tk">${esc(pos.ticker)}<span class="sm-nm">${esc(pos.name)}</span></div>
+        <div class="sm-price">${usd(pos.price)} <span class="pchgline ${pcls(pos.dayDollar)}">${usdS(pos.dayDollar)} (${pctS(pos.dayPct)}) today</span></div>
+      </div>
+    </div>
+    <div class="ptoolbar" style="margin:14px 0 8px">
+      <div class="seg" id="smSeg">${SM_RANGES.map(r => `<button data-r="${r}" class="${SM.range===r?"on":""}">${r}</button>`).join("")}</div>
+      <span class="pstatus" id="smHead"></span>
+    </div>
+    <div id="smBody" style="position:relative"><div class="spinner" style="margin:46px auto"></div></div>
+    ${pos.hasCost ? `<div class="sm-costrow">
+        <span>Your avg cost: <b>${usd(pos.avgCost)}</b> · ${pos.shares.toLocaleString("en-US",{maximumFractionDigits:8})} shares</span>
+        <span class="${pcls(pos.gainPct)}">${pctS(pos.gainPct)} (${usdS(pos.gainDollar)}) since purchase</span>
+      </div>` : `<div class="sm-costrow"><span style="color:var(--muted)">No cost basis on record for ${esc(pos.ticker)}.</span></div>`}
+    <div class="chart-cap">Yahoo Finance daily closes (unofficial) · dashed line marks your average cost per share · educational, not investment advice.</div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("click", e => { if(e.target === overlay) closeStockModal(); });
+  $("#smClose").addEventListener("click", closeStockModal);
+  SM._escHandler = e => { if(e.key === "Escape") closeStockModal(); };
+  document.addEventListener("keydown", SM._escHandler);
+  overlay.querySelectorAll("#smSeg button").forEach(b => b.addEventListener("click", () => {
+    SM.range = b.dataset.r;
+    overlay.querySelectorAll("#smSeg button").forEach(x => x.classList.toggle("on", x === b));
+    renderStockChart(pos);
+  }));
+
+  if(!P.stockHist[sym] && !P.stockLoading[sym]){
+    P.stockLoading[sym] = true;
+    P.stockHist[sym] = await fetchHistSym(sym);
+    P.stockLoading[sym] = false;
+  }
+  if(SM && SM.ticker === ticker) renderStockChart(pos);
+}
+function renderStockChart(pos){
+  const body = $("#smBody"); if(!body || !SM) return;
+  const sym = SM.sym, range = SM.range;
+  const head = $("#smHead");
+
+  if(range === "Today"){
+    const ser = P.intraday && P.intraday[sym] ? { pts: P.intraday[sym].t.map((ts,i) => ({ts, v:P.intraday[sym].c[i]})).filter(p => p.v != null), start: P.intraMeta?.start, end: P.intraMeta?.end } : null;
+    if(!ser || ser.pts.length < 2 || ser.start == null){ body.innerHTML = `<div class="empty">Today's intraday data isn't available for ${esc(pos.ticker)} right now.</div>`; if(head) head.textContent = ""; return; }
+    const first = ser.pts[0].v, last = ser.pts[ser.pts.length-1].v, delta = last - first, dPct = first ? delta/first*100 : 0;
+    if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; Today's session`;
+    drawSmChart(body, ser.pts.map(p => ({x:p.ts, v:p.v})), {
+      timeAxis:true, start:ser.start, end:ser.end,
+      refLine: pos.hasCost ? pos.avgCost : null, refLabel: pos.hasCost ? `Your cost ${usd(pos.avgCost)}` : "",
+      fmtX0: () => "Open", fmtX1: () => "Close",
+      fmtTip: p => `${esc(new Date(p.x*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"}))} ET · <span class="tv">${usd(p.v)}</span>`
+    });
+    return;
+  }
+
+  const hist = P.stockHist[sym];
+  if(!hist || !hist.t || !hist.t.length){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; if(head) head.textContent = ""; return; }
+  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA");
+  let pts = hist.t.map((ts,i) => ({d: dstr(ts), v: hist.c[i]})).filter(p => p.v != null);
+  let cutoff;
+  if(range === "YTD"){ const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0); cutoff = jan1.toLocaleDateString("en-CA"); }
+  else { const days = HIST_RANGES[range] || HIST_RANGES["1M"]; cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA"); }
+  let view = pts.filter(p => p.d >= cutoff);
+  if(view.length < 2) view = pts.slice(-2);
+  if(view.length < 2){ body.innerHTML = `<div class="empty">Not enough price history for that range yet.</div>`; if(head) head.textContent = ""; return; }
+  // splice in today's live price if it's newer than the last daily close on record
+  const today = new Date().toLocaleDateString("en-CA");
+  if(pos.price != null && view[view.length-1].d < today) view.push({d: today, v: pos.price});
+
+  const first = view[0].v, last = view[view.length-1].v, delta = last - first, dPct = first ? delta/first*100 : 0;
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(view[0].d))} → ${esc(shortDate(view[view.length-1].d))}`;
+  drawSmChart(body, view.map(p => ({x:p.d, v:p.v})), {
+    timeAxis:false,
+    refLine: pos.hasCost ? pos.avgCost : null, refLabel: pos.hasCost ? `Your cost ${usd(pos.avgCost)}` : "",
+    fmtX0: p => shortDate(p.x), fmtX1: p => shortDate(p.x),
+    fmtTip: p => `${esc(longDate(p.x))} · <span class="tv">${usd(p.v)}</span>`
+  });
+}
+/* self-contained chart renderer for the stock modal -- deliberately not shared with
+   renderHistory()/renderHistoryIntraday() above so changes here can't affect the
+   already-working portfolio-value chart (a little duplication, on purpose). */
+function drawSmChart(body, pts, opts){
+  const W=760, H=230, PL=58, PR=14, PT=12, PB=28;
+  const vals = pts.map(p=>p.v).concat(opts.refLine!=null ? [opts.refLine] : []);
+  let min=Math.min(...vals), max=Math.max(...vals);
+  const pad=(max-min)*0.06||max*0.01; min-=pad; max+=pad;
+  const span = opts.timeAxis ? ((opts.end-opts.start)||1) : null;
+  const X = (p,i) => opts.timeAxis
+    ? PL + (W-PL-PR) * Math.max(0, Math.min(1, (p.x-opts.start)/span))
+    : PL + (W-PL-PR) * (pts.length===1 ? 0 : i/(pts.length-1));
+  const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
+  const delta = pts[pts.length-1].v - pts[0].v;
+  const col = delta >= 0 ? "#18996B" : "#DC4B43";
+  let line="", area=`M ${X(pts[0],0).toFixed(1)} ${H-PB}`;
+  pts.forEach((p,i) => { const x=X(p,i).toFixed(1), y=Y(p.v).toFixed(1); line += `${i?"L":"M"} ${x} ${y} `; area += ` L ${x} ${y}`; });
+  area += ` L ${X(pts[pts.length-1],pts.length-1).toFixed(1)} ${H-PB} Z`;
+  const grid = [min+pad,(min+max)/2,max-pad].map(v =>
+    `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#E7E7E1" stroke-width="1"/>
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="#6B7177" font-family="Lato">${usd(v,2)}</text>`).join("");
+  const refSvg = opts.refLine!=null
+    ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="#9BA0A6" stroke-width="1.5" stroke-dasharray="5,4"/>
+       <text x="${W-PR}" y="${(Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="#6B7177" font-family="Lato" font-weight="700">${esc(opts.refLabel||"")}</text>`
+    : "";
+  body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="smSvg">
+    <defs><linearGradient id="smGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    ${refSvg}
+    <path d="${area}" fill="url(#smGrad)"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts[pts.length-1],pts.length-1).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="3.5" fill="${col}"/>
+    <line id="smHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="#C8A24B" stroke-width="1" style="display:none"/>
+    <circle id="smDot" r="4" fill="#C8A24B" style="display:none"/>
+    <text x="${PL}" y="${H-7}" font-size="10.5" fill="#6B7177" font-family="Lato">${esc(opts.fmtX0(pts[0]))}</text>
+    <text x="${W-PR}" y="${H-7}" text-anchor="end" font-size="10.5" fill="#6B7177" font-family="Lato">${esc(opts.fmtX1(pts[pts.length-1]))}</text>
+    <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="smHit"/>
+  </svg><div class="hist-tip" id="smTip"></div>`;
+  const svg = $("#smSvg"), tip = $("#smTip"), hair = $("#smHair"), dot = $("#smDot");
+  $("#smHit").addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width * W;
+    let idx;
+    if(opts.timeAxis){
+      const targetX = opts.start + Math.max(0, Math.min(1, (fx-PL)/(W-PL-PR))) * span;
+      idx = 0; let best = Infinity;
+      pts.forEach((p,i) => { const d = Math.abs(p.x - targetX); if(d < best){ best = d; idx = i; } });
+    } else {
+      idx = Math.max(0, Math.min(pts.length-1, Math.round((fx-PL)/((W-PL-PR)/(pts.length-1||1)))));
+    }
+    const px = X(pts[idx],idx), py = Y(pts[idx].v);
+    hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
+    dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
+    tip.style.display = "block";
+    tip.style.left = (px/W*100) + "%";
+    tip.style.top = (py/H*r.height) + "px";
+    tip.innerHTML = opts.fmtTip(pts[idx]);
+  });
+  $("#smHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
 
 /* ---------- your holdings in the news ---------- */
@@ -3886,7 +4143,7 @@ function drawPBars(t){
     row.innerHTML = `<div class="hname"><b>${esc(p.ticker)}</b> <span style="color:var(--muted);font-weight:400;font-size:11px">${share.toFixed(1)}%</span></div>
       <div class="htrack"><div class="hmid" style="left:${negShare}%"></div>
       <div class="hbar" style="${barStyle};width:0;overflow:visible"><span style="${labelStyle}">${esc(label)}</span></div></div>`;
-    row.addEventListener("click", () => { P.filter = P.filter === p.ticker ? null : p.ticker; renderPortfolio(); });
+    row.addEventListener("click", () => { if(p.type !== "cash") openStockModal(p.ticker); });
     el.appendChild(row);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ row.querySelector(".hbar").style.width = w + "%"; }));
   });
@@ -3935,7 +4192,8 @@ function pTable(){
       <td>${isCash ? "—" : `<span class="pchg ${pcls(p.dayDollar)}">${usdS(p.dayDollar)}</span>`}</td>
       <td class="${p.hasCost ? pcls(p.gainDollar) : ""}">${p.hasCost ? usdS(p.gainDollar) : "—"}</td>
       <td>${p.hasCost ? `<span class="pchg ${pcls(p.gainPct)}">${pctS(p.gainPct)}</span>` : "—"}</td>`;
-    tr.addEventListener("click", () => { P.filter = P.filter === p.ticker ? null : p.ticker; renderPortfolio(); });
+    tr.style.cursor = isCash ? "default" : "pointer";
+    tr.addEventListener("click", () => { if(!isCash) openStockModal(p.ticker); });
     tb.appendChild(tr);
   });
 }

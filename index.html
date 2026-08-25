@@ -5105,7 +5105,7 @@ function cwBuild(seedStr, extraWords){
   // Primary: 11x11, denser blocks (34-46) so most entries land at 3-6 letters — our
   // dictionary is deepest there, which is what makes a bigger grid solvable at all.
   // ~40-46 clues vs. the old 9x9's ~32, so noticeably bigger and slower to finish.
-  const primary = cwBuildAtSize(seedStr, bank, 11, [34,36,38,40,42,44,46], 30, 6, Date.now()+10000, 90, 800, 3, 400);
+  const primary = cwBuildAtSize(seedStr, bank, 11, [34,36,38,40,42,44,46], 30, 6, Date.now()+11000, 100, 900, 3, 400);
   if(primary) return primary;
   // Fallback: the original 9x9 config, which tested 100% reliable, so the game can
   // never come up empty even on an unlucky day for the bigger grid.

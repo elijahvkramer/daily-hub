@@ -5676,9 +5676,10 @@ async function renderCrossword(fresh){
     return true;
   };
   const advance = (dr,dc) => moveFocus(activeCell.r+dr, activeCell.c+dc);
-  // After typing a letter, snap to the next blank cell still left in THIS word. If the
-  // word's now completely filled, just take one simple step forward (which may spill
-  // into the next word) — matches how a real paper crossword flows.
+  // After typing a letter, snap to the next blank cell still left in THIS word. If
+  // the word's now completely filled, jump straight to the next word that still
+  // needs letters (same target the Enter key uses) instead of spilling into
+  // whatever cell happens to be next.
   const advanceAfterType = () => {
     const dr = activeDir==="H"?0:1, dc = activeDir==="H"?1:0;
     const entryC = entryCells[activeEntry];
@@ -5686,6 +5687,15 @@ async function renderCrossword(fresh){
     for(let i=pos+1;i<entryC.length;i++){
       const [r,c] = entryC[i];
       if(!guesses[cellKey(r,c)]) return moveFocus(r,c);
+    }
+    const stillBlank = entryC.find(([r,c]) => !guesses[cellKey(r,c)]);
+    if(stillBlank) return moveFocus(stillBlank[0], stillBlank[1]);
+    const list = acrossEntries.concat(downEntries).map(x=>x.i);
+    const n = list.length;
+    const startPos = list.indexOf(activeEntry);
+    for(let step=1; step<=n; step++){
+      const idx = list[(startPos + step) % n];
+      if(entryCells[idx].some(([r2,c2]) => !guesses[cellKey(r2,c2)])){ return setActiveEntry(idx); }
     }
     return advance(dr,dc);
   };
@@ -5728,7 +5738,14 @@ async function renderCrossword(fresh){
     inp.addEventListener("keydown", ev => {
       const r = +inp.dataset.r, c = +inp.dataset.c;
       if(ev.key === "Backspace"){
-        if(inp.value) return; // let the input event clear it naturally
+        if(inp.value){
+          // Clear the current cell outright -- no need to select/highlight the
+          // letter first, one Backspace press deletes it.
+          ev.preventDefault();
+          inp.value = "";
+          inp.dispatchEvent(new Event("input", {bubbles:true}));
+          return;
+        }
         ev.preventDefault();
         const dr = activeDir==="H"?0:-1, dc = activeDir==="H"?-1:0;
         const pr = r+dr, pc = c+dc;
@@ -6087,9 +6104,10 @@ async function renderMiniCrossword(fresh){
     return true;
   };
   const advance = (dr,dc) => moveFocus(activeCell.r+dr, activeCell.c+dc);
-  // After typing a letter, snap to the next blank cell still left in THIS word. If the
-  // word's now completely filled, just take one simple step forward (which may spill
-  // into the next word) — matches how a real paper crossword flows.
+  // After typing a letter, snap to the next blank cell still left in THIS word. If
+  // the word's now completely filled, jump straight to the next word that still
+  // needs letters (same target the Enter key uses) instead of spilling into
+  // whatever cell happens to be next.
   const advanceAfterType = () => {
     const dr = activeDir==="H"?0:1, dc = activeDir==="H"?1:0;
     const entryC = entryCells[activeEntry];
@@ -6097,6 +6115,15 @@ async function renderMiniCrossword(fresh){
     for(let i=pos+1;i<entryC.length;i++){
       const [r,c] = entryC[i];
       if(!guesses[cellKey(r,c)]) return moveFocus(r,c);
+    }
+    const stillBlank = entryC.find(([r,c]) => !guesses[cellKey(r,c)]);
+    if(stillBlank) return moveFocus(stillBlank[0], stillBlank[1]);
+    const list = acrossEntries.concat(downEntries).map(x=>x.i);
+    const n = list.length;
+    const startPos = list.indexOf(activeEntry);
+    for(let step=1; step<=n; step++){
+      const idx = list[(startPos + step) % n];
+      if(entryCells[idx].some(([r2,c2]) => !guesses[cellKey(r2,c2)])){ return setActiveEntry(idx); }
     }
     return advance(dr,dc);
   };
@@ -6139,7 +6166,14 @@ async function renderMiniCrossword(fresh){
     inp.addEventListener("keydown", ev => {
       const r = +inp.dataset.r, c = +inp.dataset.c;
       if(ev.key === "Backspace"){
-        if(inp.value) return;
+        if(inp.value){
+          // Clear the current cell outright -- no need to select/highlight the
+          // letter first, one Backspace press deletes it.
+          ev.preventDefault();
+          inp.value = "";
+          inp.dispatchEvent(new Event("input", {bubbles:true}));
+          return;
+        }
         ev.preventDefault();
         const dr = activeDir==="H"?0:-1, dc = activeDir==="H"?-1:0;
         const pr = r+dr, pc = c+dc;

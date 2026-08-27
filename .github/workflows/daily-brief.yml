@@ -1,0 +1,36 @@
+name: Daily Hub Brief
+on:
+  schedule:
+    # 9:00am US Central. NOTE: fixed UTC offset -- this is 9am CDT (Mar-Nov).
+    # Once CST resumes in November this will fire at 8am Central until updated to "0 15 * * *".
+    - cron: "0 14 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+    concurrency:
+      group: daily-hub-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install Python deps
+        run: pip install --quiet cryptography
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "Follow the instructions in .github/claude-daily-brief-prompt.md exactly, end to end."
+          claude_args: |
+            --model claude-sonnet-5
+            --allowedTools "Bash,Read,Write,Edit,WebSearch,WebFetch"
+            --max-turns 60
+        env:
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}

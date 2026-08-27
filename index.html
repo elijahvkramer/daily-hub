@@ -4402,18 +4402,66 @@ function freehandRasterizeRings(rings, res){
   ctx.fill("nonzero");
   return ctx.getImageData(0,0,res,res).data;
 }
-function freehandScore(userStrokes, trueRings){
-  const res = 220;
-  const userAlpha = freehandRasterizeRings(userStrokes, res);
-  const trueAlpha = freehandRasterizeRings(trueRings, res);
-  let inter = 0, union = 0;
-  for(let i=3;i<userAlpha.length;i+=4){
-    const u = userAlpha[i] > 40, t = trueAlpha[i] > 40;
-    if(u || t) union++;
-    if(u && t) inter++;
+function freehandPolygonArea(ring){
+  let a = 0;
+  for(let i=0;i<ring.length;i++){
+    const [x1,y1] = ring[i];
+    const [x2,y2] = ring[(i+1)%ring.length];
+    a += x1*y2 - x2*y1;
   }
-  if(union === 0) return 0;
-  return Math.round((inter/union) * 1000) / 10;
+  return Math.abs(a) / 2;
+}
+function freehandTotalArea(rings){
+  return rings.reduce((sum, r) => sum + (r.length >= 3 ? freehandPolygonArea(r) : 0), 0);
+}
+function freehandBBox(rings){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  rings.forEach(ring => ring.forEach(([x,y]) => {
+    if(x<minX) minX=x; if(x>maxX) maxX=x;
+    if(y<minY) minY=y; if(y>maxY) maxY=y;
+  }));
+  if(minX===Infinity){ minX=minY=maxX=maxY=0; }
+  return { cx:(minX+maxX)/2, cy:(minY+maxY)/2 };
+}
+// Nobody drawing from memory knows exactly what scale or orientation the real
+// border comes in, so scoring shouldn't punish that. This finds the rotation
+// and uniform scale (never stretched -- that would let a blob "cheat" its way
+// to a decent score) that best lines the true border up with what was drawn,
+// then scores the shape match at that best fit. The same fitted geometry is
+// reused for the red overlay, so what you see lines up with what you scored.
+function freehandBestFit(userStrokes, trueRings){
+  const res = 200;
+  const userAlpha = freehandRasterizeRings(userStrokes, res);
+  const userArea = Math.max(freehandTotalArea(userStrokes), 1);
+  const userBox = freehandBBox(userStrokes);
+  const trueArea = Math.max(freehandTotalArea(trueRings), 1);
+  const trueBox = freehandBBox(trueRings);
+  const scale = Math.sqrt(userArea / trueArea);
+
+  let best = null;
+  for(let deg=-40; deg<=40; deg+=4){
+    const rad = deg * Math.PI/180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const fitted = trueRings.map(ring => ring.map(([x,y]) => {
+      const dx = (x - trueBox.cx) * scale, dy = (y - trueBox.cy) * scale;
+      return [ userBox.cx + dx*cos - dy*sin, userBox.cy + dx*sin + dy*cos ];
+    }));
+    const trueAlpha = freehandRasterizeRings(fitted, res);
+    let inter = 0, union = 0;
+    for(let i=3;i<userAlpha.length;i+=4){
+      const u = userAlpha[i] > 40, t = trueAlpha[i] > 40;
+      if(u || t) union++;
+      if(u && t) inter++;
+    }
+    const iou = union > 0 ? inter/union : 0;
+    if(!best || iou > best.iou){ best = { iou, deg, fitted }; }
+  }
+  return {
+    score: Math.round(best.iou * 1000) / 10,
+    fittedRings: best.fitted,
+    rotationDeg: best.deg,
+    scalePct: Math.round(scale * 100)
+  };
 }
 
 let FH = null;
@@ -4530,12 +4578,14 @@ async function renderFreehand(fresh){
       return;
     }
     const trueRings = FREEHAND_COUNTRIES[country];
-    const score = freehandScore(meaningfulStrokes, trueRings);
+    const fit = freehandBestFit(meaningfulStrokes, trueRings);
+    const score = fit.score;
 
-    // Overlay the real border in a contrasting color so you can see how close you got.
+    // Overlay the real border, resized and rotated to the best-fit match against
+    // what was actually drawn -- not dropped in at a fixed scale/orientation.
     ctx.strokeStyle = "#C8574B";
     ctx.lineWidth = 5;
-    trueRings.forEach(ring => {
+    fit.fittedRings.forEach(ring => {
       if(!ring.length) return;
       ctx.beginPath();
       ctx.moveTo(ring[0][0], ring[0][1]);
@@ -4560,8 +4610,12 @@ async function renderFreehand(fresh){
     }
 
     const lbl = freehandScoreLabel(score);
+    const rotAbs = Math.abs(fit.rotationDeg);
+    const fitNote = rotAbs === 0 && fit.scalePct === 100
+      ? "It lined up at your exact size and orientation."
+      : `It's shown tilted ${rotAbs}° and sized to ${fit.scalePct}% to best match how you drew it -- only the shape itself is graded.`;
     const rb = $("#fhResult");
-    if(rb) rb.innerHTML = `<div class="qreveal" style="margin-top:14px"><b style="color:${lbl.color}">Scored ${score}%</b><div class="qex">${lbl.text} The real border for ${esc(country)} is now overlaid in red.</div></div>
+    if(rb) rb.innerHTML = `<div class="qreveal" style="margin-top:14px"><b style="color:${lbl.color}">Scored ${score}%</b><div class="qex">${lbl.text} The real border for ${esc(country)} is now overlaid in red. ${fitNote}</div></div>
       <button class="qbig qnext" id="fhNext">${fresh?"Another free round":"Free-play round"}</button>`;
     $("#fhNext")?.addEventListener("click", () => renderFreehand(true));
     const st = $("#fhStats");

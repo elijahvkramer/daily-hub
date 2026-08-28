@@ -1,9 +1,11 @@
 name: Daily Hub Brief
 on:
   schedule:
-    # 9:00am US Central. NOTE: fixed UTC offset -- this is 9am CDT (Mar-Nov).
-    # Once CST resumes in November this will fire at 8am Central until updated to "0 15 * * *".
-    - cron: "0 14 * * *"
+    # 9:07am US Central. NOTE: fixed UTC offset -- this is 9:07am CDT (Mar-Nov).
+    # Minute is offset from :00 on purpose -- GitHub Actions documents that
+    # exact-top-of-hour schedules see more delay/drop risk under load.
+    # Once CST resumes in November this will fire at 8:07am Central until updated to "7 15 * * *".
+    - cron: "7 14 * * *"
   workflow_dispatch: {}
 
 jobs:

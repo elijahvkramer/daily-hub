@@ -3506,7 +3506,7 @@ async function pQuote(sym){
   // without this a proxy can keep serving a stale quote for minutes, which is
   // what caused a real day-change mismatch vs Fidelity (Eli, Aug 2026).
   const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d&_ts=${Date.now()}`;
-  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   // Race both proxies instead of trying them one after another -- whichever proxy is
   // currently down no longer costs a full failed round-trip before the other is even
   // attempted (real case, Aug 2026: corsproxy.io started returning 401s, and the old
@@ -3530,7 +3530,7 @@ async function pSparkAll(syms){
   if(!syms.length) return {};
   // see the cache-buster note in pQuote() above -- same fix, same reason.
   const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=1d&interval=5m&_ts=${Date.now()}`;
-  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   // Race both proxies instead of trying them one after another -- see pQuote() above.
   const attempts = urls.map(u => (async () => {
     const r = await fetch(u, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
@@ -3744,7 +3744,7 @@ function renderPortfolio(){
 /* ---------- portfolio value history ---------- */
 async function fetchHistSym(sym){
   const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5y`;
-  const urls = ["https://corsproxy.io/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+  const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
   for(const u of urls){
     try{
       const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;

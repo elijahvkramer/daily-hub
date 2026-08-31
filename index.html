@@ -3754,12 +3754,46 @@ async function fetchHistSym(sym){
   }
   return null;
 }
+/* One batched request for every holding's 5y daily history, via the same Yahoo v7
+   "spark" endpoint pSparkAll uses for intraday -- replaces firing one fetchHistSym()
+   call PER TICKER (12+ requests fired in parallel). That per-symbol fan-out is what
+   broke the Portfolio Value History chart (again) in Aug 2026: cors-get-proxy.sirjosh
+   .workers.dev is now dead outright (connection failure, not even a 503), so every
+   one of those 12+ requests fell through to api.allorigins.win at once -- a shared
+   public proxy that only tolerates a request every few seconds from one client and
+   503s the rest of a burst. The home snapshot never showed this because pSparkAll
+   already batches into one request; history didn't, until now. */
+async function pSparkHist(syms){
+  if(!syms.length) return {};
+  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=5y&interval=1d&_ts=${Date.now()}`;
+  const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
+    const attempts = urls.map(u => (async () => {
+    const r = await fetch(u, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
+    const j = await r.json(); const results = j?.spark?.result;
+    const out = {};
+    if(Array.isArray(results)){
+      for(const x of results){
+        const resp = x.response?.[0];
+        if(x.symbol && resp?.timestamp && resp?.indicators?.quote?.[0]?.close)
+          out[x.symbol] = {t:resp.timestamp, c:resp.indicators.quote[0].close};
+      }
+    }
+    if(!Object.keys(out).length) throw new Error("no data");
+    return out;
+    })());
+  try{ return await Promise.any(attempts); }catch(e){ return {}; }
+}
 async function loadHistory(){
   if(P.histReady || P.histLoading) return;
   P.histLoading = true;
   P.histData = {};
   const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
-  await Promise.all(syms.map(async s => { const h = await fetchHistSym(s); if(h) P.histData[s] = h; }));
+  P.histData = await pSparkHist(syms);
+  // Per-symbol fallback only for whatever the batched call didn't return (keeps
+  // the chart resilient to Yahoo omitting a single odd ticker) -- NOT the default
+  // path, so this never re-creates the original one-request-per-ticker burst.
+  const missing = syms.filter(s => !P.histData[s]);
+  if(missing.length) await Promise.all(missing.map(async s => { const h = await fetchHistSym(s); if(h) P.histData[s] = h; }));
   P.histLoading = false; P.histReady = true;
   if(S.tab === "portfolio") renderHistory();
 }

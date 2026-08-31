@@ -3754,34 +3754,48 @@ async function fetchHistSym(sym){
   }
   return null;
 }
-/* One batched request for every holding's 5y daily history, via the same Yahoo v7
-   "spark" endpoint pSparkAll uses for intraday -- replaces firing one fetchHistSym()
-   call PER TICKER (12+ requests fired in parallel). That per-symbol fan-out is what
-   broke the Portfolio Value History chart (again) in Aug 2026: cors-get-proxy.sirjosh
-   .workers.dev is now dead outright (connection failure, not even a 503), so every
-   one of those 12+ requests fell through to api.allorigins.win at once -- a shared
-   public proxy that only tolerates a request every few seconds from one client and
-   503s the rest of a burst. The home snapshot never showed this because pSparkAll
-   already batches into one request; history didn't, until now. */
-async function pSparkHist(syms){
+/* Every holding’s 5y daily history, via the same Yahoo v7 "spark" endpoint
+   pSparkAll uses for intraday. Batched in small chunks (not all-at-once, not
+   one-request-per-symbol) because both extremes break the free CORS proxies:
+   12 parallel per-symbol requests 503/hang the shared proxy (the original Aug
+   2026 bug), while one big all-symbol request times out relaying a large 5y
+   payload. Crypto (dash tickers, e.g. BTC-USD) is excluded from the batch --
+   Yahoo’s 5y/1d data for round-the-clock crypto is large enough to hang this
+   endpoint regardless of chunk size -- and left for the per-symbol fallback,
+   which is capped so one bad symbol can’t stall the chart. */
+async function pSparkBatch(syms){
   if(!syms.length) return {};
   const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=5y&interval=1d&_ts=${Date.now()}`;
   const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url="+encodeURIComponent(target), "https://api.allorigins.win/raw?url="+encodeURIComponent(target)];
-    const attempts = urls.map(u => (async () => {
-    const r = await fetch(u, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
-    const j = await r.json(); const results = j?.spark?.result;
-    const out = {};
-    if(Array.isArray(results)){
-      for(const x of results){
-        const resp = x.response?.[0];
-        if(x.symbol && resp?.timestamp && resp?.indicators?.quote?.[0]?.close)
-          out[x.symbol] = {t:resp.timestamp, c:resp.indicators.quote[0].close};
+  const attempts = urls.map(u => (async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try{
+      const r = await fetch(u, {cache:"no-store", signal: ctrl.signal}); if(!r.ok) throw new Error("bad status");
+      const j = await r.json(); const results = j?.spark?.result;
+      const out = {};
+      if(Array.isArray(results)){
+        for(const x of results){
+          const resp = x.response?.[0];
+          if(x.symbol && resp?.timestamp && resp?.indicators?.quote?.[0]?.close)
+            out[x.symbol] = {t:resp.timestamp, c:resp.indicators.quote[0].close};
+        }
       }
-    }
-    if(!Object.keys(out).length) throw new Error("no data");
-    return out;
-    })());
+      if(!Object.keys(out).length) throw new Error("no data");
+      return out;
+    } finally { clearTimeout(timer); }
+  })());
   try{ return await Promise.any(attempts); }catch(e){ return {}; }
+}
+async function pSparkHist(syms){
+  if(!syms.length) return {};
+  const equities = syms.filter(s => !s.includes("-"));
+  const CHUNK = 4;
+  const out = {};
+  for(let i=0; i<equities.length; i+=CHUNK){
+    Object.assign(out, await pSparkBatch(equities.slice(i, i+CHUNK)));
+  }
+  return out;
 }
 async function loadHistory(){
   if(P.histReady || P.histLoading) return;
@@ -3789,11 +3803,18 @@ async function loadHistory(){
   P.histData = {};
   const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
   P.histData = await pSparkHist(syms);
-  // Per-symbol fallback only for whatever the batched call didn't return (keeps
-  // the chart resilient to Yahoo omitting a single odd ticker) -- NOT the default
-  // path, so this never re-creates the original one-request-per-ticker burst.
+  // Per-symbol fallback only for whatever the batched calls didn’t return (crypto,
+  // plus any equity chunk that still failed). Sequential, not Promise.all -- the
+  // free proxy tolerates one request at a time far better than a burst, and this
+  // is the same lesson that motivated chunking the batch above. fetchHistSym()
+  // itself has no timeout (it’s also used by the single-stock detail modal, where
+  // that’s fine) -- but a hung request here for one symbol (crypto especially)
+  // must not stall the whole chart forever, so each fallback attempt is capped.
   const missing = syms.filter(s => !P.histData[s]);
-  if(missing.length) await Promise.all(missing.map(async s => { const h = await fetchHistSym(s); if(h) P.histData[s] = h; }));
+  for(const s of missing){
+    const h = await Promise.race([fetchHistSym(s), new Promise(res => setTimeout(() => res(null), 15000))]);
+    if(h) P.histData[s] = h;
+  }
   P.histLoading = false; P.histReady = true;
   if(S.tab === "portfolio") renderHistory();
 }

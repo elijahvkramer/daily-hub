@@ -5301,10 +5301,10 @@ function cwDaysBetween(a, b){
   return Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 86400000);
 }
 function cwLoadWordHistory(){
-  try{ return JSON.parse(localStorage.getItem("dh-cw-word-history") || "{}"); }catch(e){ return {}; }
+  try{ return JSON.parse(localStorage.getItem("dh-cw-word-history-v2") || "{}"); }catch(e){ return {}; }
 }
 function cwSaveWordHistory(hist){
-  try{ localStorage.setItem("dh-cw-word-history", JSON.stringify(hist)); }catch(e){}
+  try{ localStorage.setItem("dh-cw-word-history-v2", JSON.stringify(hist)); }catch(e){}
 }
 // Excludes recently-shown words from a length-bucketed bank so their clues don't
 // repeat too soon. Keeps a minimum pool per length so grid-fill reliability never
@@ -5326,20 +5326,31 @@ function cwFilterRecentBank(bank, windowDays){
     if(fresh.length >= minKeep){
       out[L] = fresh;
     } else {
-      stale.sort((a,b) => (hist[a[0]] || "") < (hist[b[0]] || "") ? -1 : 1);
-      out[L] = fresh.concat(stale.slice(0, minKeep - fresh.length));
+      // Sort oldest-first, but shuffle within same-date groups (a whole day's
+      // worth of entries share one date string) so the padding fallback doesn't
+      // deterministically pick the exact same words every time it kicks in.
+      const withRand = stale.map(wc => ({ wc, date: hist[wc[0]] || "", r: Math.random() }));
+      withRand.sort((a,b) => a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.r - b.r);
+      out[L] = fresh.concat(withRand.slice(0, minKeep - fresh.length).map(x => x.wc));
     }
   });
   return out;
 }
 // Records the words placed in a freshly-built grid, so future builds know to
 // steer away from them for a while. Returns the grid unchanged for chaining.
-function cwRecordWordUsage(grid){
+function cwRecordWordUsage(grid, baseSeed){
   if(!grid) return grid;
+  // Keyed on the CALLER's seed (the day, or a specific free-play round), not
+  // grid.id -- grid.id varies by which internal retry tier happened to succeed,
+  // so it can't reliably tell "this is the same puzzle being rebuilt" from
+  // "this is a genuinely new one."
+  const recordedKey = "dh-cw-recorded-" + baseSeed;
+  try{ if(localStorage.getItem(recordedKey) === "1") return grid; }catch(e){}
   const hist = cwLoadWordHistory();
   const today = cwTodayStr();
   grid.entries.forEach(e => { hist[e.word] = today; });
   cwSaveWordHistory(hist);
+  try{ localStorage.setItem(recordedKey, "1"); }catch(e){}
   return grid;
 }
 
@@ -5573,28 +5584,30 @@ function cwBuild(seedStr, extraWords){
   // Steer away from words shown recently so the same clue doesn't repeat too soon.
   const filteredBank = cwFilterRecentBank(bank, 21);
 
+  const targets = [48,50,52,54,56,58,60];
+
+  // One bounded attempt against the recency-filtered bank -- a shrunk pool is
+  // meaningfully harder for the solver, so this gets a short budget and is
+  // allowed to just fail fast rather than eat into the reliable path's time.
+  const quick = cwBuildAtSize(seedStr + "-filtered", filteredBank, 12, targets, 40, 6, Date.now()+8000, 150, 1200, 3, 400);
+  if(quick) return cwRecordWordUsage(quick, seedStr);
+
   // Always a full 12x12 grid — no more shrinking to a smaller size on a bad day.
   // A 12x12 has ~50 slots to fill (vs. ~30-40 for the old 11x11), which is a
   // meaningfully harder constraint problem, so each tier gets a real time budget and
   // there are three of them, escalating in patience, so a complete puzzle is
-  // essentially guaranteed no matter how the dice land on a given day.
+  // essentially guaranteed no matter how the dice land on a given day. This runs
+  // against the full, unfiltered bank -- a repeated clue on a rare bad-luck day
+  // beats a puzzle that's slow to load or fails outright.
   const attempts = [
     { deadline: 16000, cap: 200, p1: 2000, fills: 5, fillMs: 500 },
     { deadline: 25000, cap: 300, p1: 3000, fills: 8, fillMs: 600 },
     { deadline: 30000, cap: 400, p1: 4000, fills: 10, fillMs: 700 },
   ];
-  const targets = [48,50,52,54,56,58,60];
   for(let i=0;i<attempts.length;i++){
     const a = attempts[i];
-    const g = cwBuildAtSize(seedStr + (i ? "-try"+i : ""), filteredBank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
-    if(g) return cwRecordWordUsage(g);
-  }
-  // Last resort: same tiers again but against the full, unfiltered bank. A repeated
-  // clue on a rare bad-luck day beats a puzzle that fails to load.
-  for(let i=0;i<attempts.length;i++){
-    const a = attempts[i];
-    const g = cwBuildAtSize(seedStr + "-full" + i, bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
-    if(g) return cwRecordWordUsage(g);
+    const g = cwBuildAtSize(seedStr + (i ? "-try"+i : ""), bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
+    if(g) return cwRecordWordUsage(g, seedStr);
   }
   return null;
 }
@@ -6003,11 +6016,11 @@ function miniBuild(seedStr, extraWords){
   const filteredBank = cwFilterRecentBank(bank, 21);
 
   const primary = cwBuildAtSize(seedStr, filteredBank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
-  if(primary) return cwRecordWordUsage(primary);
+  if(primary) return cwRecordWordUsage(primary, seedStr);
   const fb = cwBuildAtSize(seedStr + "-minifallback", filteredBank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
-  if(fb) return cwRecordWordUsage(fb);
+  if(fb) return cwRecordWordUsage(fb, seedStr);
   const fb2 = cwBuildAtSize(seedStr + "-minifallback2", bank, 5, [0,2,4,6,8], 8, 5, Date.now()+5000, 60, 400, 3, 300);
-  return cwRecordWordUsage(fb2);
+  return cwRecordWordUsage(fb2, seedStr);
 }
 
 function miniStatLabel(){

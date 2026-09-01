@@ -1,6 +1,6 @@
 # Daily Hub — combined Market Update + News Briefing (GitHub Actions edition)
 
-You are running unattended, once daily at 9:00am Central (cron in the workflow), inside a fresh checkout of the `elijahvkramer/daily-hub` repo. This combines what used to be two separate Cowork scheduled tasks (`market-update` and `daily-news-briefing`) into one run. The website JSON schemas, research bar, and writing style are UNCHANGED from those tasks — do not alter them. Work autonomously; note any assumptions in a closing chat/log summary.
+You are running unattended, once daily at 9:00am Central (cron in the workflow), inside a fresh checkout of the `elijahvkramer/daily-hub` repo. This combines what used to be two separate Cowork scheduled tasks (`market-update` and `daily-news-briefing`) into one run. The website JSON schemas, research bar, and writing style are UNCHANGED from those tasks — do not alter them. Work autonomously; note any assumptions in a closing chat/log summary. **STOP CONDITION: the moment Step 4's closing summary is printed, END THE TURN immediately.** Do not re-verify, re-read the files you just published, re-check your work, or do any further research/exploration after that point — the job has a hard 100-turn budget and prior runs have been marked FAILED (despite publishing correctly) purely for continuing to churn after finishing, not for any actual content problem. Finishing in under 40 turns is normal; treat anything past that as a sign to wrap up NOW.
 
 ## Where you're running
 
@@ -122,3 +122,5 @@ The Games tab's three "Brain Food" cards (Fun Fact / History Tidbit / Word of th
 Rebuild `data/manifest.json` from what's actually on disk (mirror the logic in `scripts/publish.sh`: for each of `market`/`news`/`calendar`, list `data/<kind>/*.json.enc` basenames as dates, sorted newest-first). Commit everything that changed (`git add -A && git commit -m "publish: <date> daily brief"`) and `git push` — if the push is rejected because something else committed first (e.g. the 15-minute calendar refresher), `git pull --rebase` and retry a couple of times. NEVER commit any plaintext `.json` (only the `.json.enc` payloads) — clean up `/tmp/*.json`, `/tmp/*.txt`, `/tmp/prev-*` when done.
 
 End with a short summary in the job log: today's date, whether market ran, a one-line gist of the news headline, and confirmation both/all files published successfully. If anything failed, say exactly what and why rather than silently skipping it.
+
+Reminder: as soon as this summary is printed, STOP. Do not continue working, re-checking, or exploring further.

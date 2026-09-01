@@ -1,11 +1,20 @@
 name: Daily Hub Brief
 on:
   schedule:
-    # 7:07am US Central. NOTE: fixed UTC offset -- this is 7:07am CDT (Mar-Nov).
-    # Minute is offset from :00 on purpose -- GitHub Actions documents that
-    # exact-top-of-hour schedules see more delay/drop risk under load.
-    # Once CST resumes in November this will fire at 6:07am Central until updated to "7 13 * * *".
-    - cron: "7 12 * * *"
+    # GitHub currently honors only a small fraction of scheduled fires under load.
+    # Measured on this very repo: calendar-refresh.yml asks for 48 fires/day and got
+    # ~25-36 actual runs/day through Aug 26 2026, then dropped to 2-6/day from Aug 27
+    # on -- roughly a 10% honor rate. So a single daily fire has ~10% odds of running
+    # anywhere near on time, which is exactly why the old 7:07am cron kept landing
+    # hours late (11:35am, 11:39am, 2:05pm) or not at all.
+    # Fix: fire every 5 minutes across the 6:00-9:00am CDT window (36 attempts) and let
+    # the "already published?" guard below no-op every attempt after the first one wins.
+    # At a ~10% honor rate that is a ~97% chance at least one fires inside the window.
+    # Minutes avoid :00/:05/:15/:30 -- GitHub documents extra delay/drop risk at the
+    # common cron marks.
+    # NOTE: fixed UTC offset -- this is 6:02-8:57am CDT (Mar-Nov). When CST resumes in
+    # November it becomes 5:02-7:57am Central; shift the hours to "12-14" then.
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 11-13 * * *"
   workflow_dispatch: {}
 
 jobs:
@@ -23,10 +32,31 @@ jobs:
         with:
           fetch-depth: 1
 
+      # With 36 fires a day, every attempt after the winner must cost ~nothing.
+      # This reads the LIVE tip of main rather than the checked-out SHA: a scheduled
+      # run that queued behind the concurrency group can carry a SHA from before the
+      # publish commit an earlier fire made this morning, and would redo the work.
+      # Skipped entirely on workflow_dispatch so a manual run can always force a redo.
+      - name: Skip if today is already published
+        id: guard
+        if: github.event_name == 'schedule'
+        run: |
+          git fetch -q --depth=1 origin main
+          git show origin/main:data/manifest.json > /tmp/manifest.json
+          if TODAY="$(date -u +%F)" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/manifest.json')).get('news',[]) else 1)"; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) already published -- skipping the rest of this run."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) not published yet -- proceeding."
+          fi
+
       - name: Install Python deps
+        if: steps.guard.outputs.already != 'true'
         run: pip install --quiet cryptography
 
       - uses: anthropics/claude-code-action@v1
+        if: steps.guard.outputs.already != 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "Follow the instructions in .github/claude-daily-brief-prompt.md exactly, end to end."

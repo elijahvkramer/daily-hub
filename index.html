@@ -5530,9 +5530,17 @@ function cwSolveCSP(slots, wordBank, rnd, deadlineMs){
 
 // Tries to build one fully-checked, symmetric NxN grid. Returns null on failure so
 // cwBuild can fall back to an easier size rather than ever showing a broken puzzle.
-function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
+// Hands control back to the browser for a tick. The grid search below can
+// legitimately run for many seconds; without yield points anywhere in that
+// stretch, the whole thing executes as one uninterrupted block on the main
+// thread and the browser's own "Page Unresponsive" watchdog can fire even
+// though the search is working exactly as intended.
+function cwYield(){ return new Promise(r => setTimeout(r, 0)); }
+
+async function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
   const candidates = [];
   for(let p=0; p<phase1Tries && candidates.length<candidateCap; p++){
+    if(p>0 && p%200===0) await cwYield();
     const arnd = seedRand(hashStr(seedStr + "-p" + p));
     const target = targets[p % targets.length];
     const blocks = cwGenBlocks(arnd, N, target);
@@ -5549,6 +5557,7 @@ function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDe
     if(Date.now() > overallDeadline) break;
     for(let f=0; f<fillTriesPerCand; f++){
       if(Date.now() > overallDeadline) break;
+      await cwYield();
       const frnd = seedRand(hashStr(seedStr + "-f" + cand.p + "-" + f));
       const assign = cwSolveCSP(cand.slots, bank, frnd, fillDeadlineMs);
       if(!assign) continue;
@@ -5570,7 +5579,7 @@ function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDe
   return null;
 }
 
-function cwBuild(seedStr, extraWords){
+async function cwBuild(seedStr, extraWords){
   const bank = {};
   Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
   if(extraWords){
@@ -5589,7 +5598,7 @@ function cwBuild(seedStr, extraWords){
   // One bounded attempt against the recency-filtered bank -- a shrunk pool is
   // meaningfully harder for the solver, so this gets a short budget and is
   // allowed to just fail fast rather than eat into the reliable path's time.
-  const quick = cwBuildAtSize(seedStr + "-filtered", filteredBank, 12, targets, 40, 6, Date.now()+8000, 150, 1200, 3, 400);
+  const quick = await cwBuildAtSize(seedStr + "-filtered", filteredBank, 12, targets, 40, 6, Date.now()+8000, 150, 1200, 3, 400);
   if(quick) return cwRecordWordUsage(quick, seedStr);
 
   // Always a full 12x12 grid — no more shrinking to a smaller size on a bad day.
@@ -5606,7 +5615,7 @@ function cwBuild(seedStr, extraWords){
   ];
   for(let i=0;i<attempts.length;i++){
     const a = attempts[i];
-    const g = cwBuildAtSize(seedStr + (i ? "-try"+i : ""), bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
+    const g = await cwBuildAtSize(seedStr + (i ? "-try"+i : ""), bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
     if(g) return cwRecordWordUsage(g, seedStr);
   }
   return null;
@@ -5636,7 +5645,7 @@ async function renderCrossword(fresh){
   const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
   const seed = fresh ? ("free-" + Date.now()) : ("cw-" + today);
   if(!CW || CW.seed !== seed){
-    const puzzle = cwBuild(seed, words);
+    const puzzle = await cwBuild(seed, words);
     if(!puzzle){
       panel.innerHTML = `<div class="cw-wrap">
         <button class="pbtn game-back" id="cwBack">← Back to Games</button>
@@ -5985,7 +5994,7 @@ async function renderCrossword(fresh){
    short words are our dictionary's deepest area. The whole point of this one is the
    speedrun feel: a big live timer, a personal-best readout, and a streak counter,
    mirroring the NYT Mini's minimal "how fast can you go" format. */
-function miniBuild(seedStr, extraWords){
+async function miniBuild(seedStr, extraWords){
   const bank = {};
   Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
   // Mini gets its own harder-skewed pool: drop the most overused giveaway words (mostly
@@ -6015,11 +6024,11 @@ function miniBuild(seedStr, extraWords){
   // is a much better outcome than a broken puzzle.
   const filteredBank = cwFilterRecentBank(bank, 21);
 
-  const primary = cwBuildAtSize(seedStr, filteredBank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
+  const primary = await cwBuildAtSize(seedStr, filteredBank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
   if(primary) return cwRecordWordUsage(primary, seedStr);
-  const fb = cwBuildAtSize(seedStr + "-minifallback", filteredBank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
+  const fb = await cwBuildAtSize(seedStr + "-minifallback", filteredBank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
   if(fb) return cwRecordWordUsage(fb, seedStr);
-  const fb2 = cwBuildAtSize(seedStr + "-minifallback2", bank, 5, [0,2,4,6,8], 8, 5, Date.now()+5000, 60, 400, 3, 300);
+  const fb2 = await cwBuildAtSize(seedStr + "-minifallback2", bank, 5, [0,2,4,6,8], 8, 5, Date.now()+5000, 60, 400, 3, 300);
   return cwRecordWordUsage(fb2, seedStr);
 }
 
@@ -6056,7 +6065,7 @@ async function renderMiniCrossword(fresh){
   const today = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
   const seed = fresh ? ("free-" + Date.now()) : ("mini-" + today);
   if(!MC || MC.seed !== seed){
-    const puzzle = miniBuild(seed, words);
+    const puzzle = await miniBuild(seed, words);
     if(!puzzle){
       panel.innerHTML = `<div class="cw-wrap">
         <button class="pbtn game-back" id="miniBack">← Back to Games</button>

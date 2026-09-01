@@ -33,6 +33,6 @@ jobs:
           claude_args: |
             --model claude-sonnet-5
             --allowedTools "Bash,Read,Write,Edit,WebSearch,WebFetch"
-            --max-turns 60
+            --max-turns 100
         env:
           CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}

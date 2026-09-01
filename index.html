@@ -5555,9 +5555,17 @@ async function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, ove
 
   for(const cand of candidates){
     if(Date.now() > overallDeadline) break;
+    // Yield once per CANDIDATE, not once per fill-try: each cwSolveCSP call below is
+    // already internally time-boxed to a few hundred ms, so a single unbroken run of
+    // (up to fillTriesPerCand) of them between yields still stays far under the
+    // browser's hang threshold. Yielding before every individual fill-try instead
+    // multiplies out to thousands of setTimeout(0) calls per tier, and real browsers
+    // clamp that to ~4ms minimum (jsdom does not), which silently eats seconds of the
+    // outer deadline budget on nothing but timer overhead and was causing legitimate
+    // build failures that never showed up in jsdom testing.
+    await cwYield();
     for(let f=0; f<fillTriesPerCand; f++){
       if(Date.now() > overallDeadline) break;
-      await cwYield();
       const frnd = seedRand(hashStr(seedStr + "-f" + cand.p + "-" + f));
       const assign = cwSolveCSP(cand.slots, bank, frnd, fillDeadlineMs);
       if(!assign) continue;

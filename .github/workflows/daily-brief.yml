@@ -1,20 +1,30 @@
 name: Daily Hub Brief
 on:
+  # PRIMARY TRIGGER -- piggyback on Calendar Refresh.
+  #
+  # Why: GitHub's scheduler is dropping this workflow specifically. Measured 2026-09-02:
+  # daily-brief asked for 36 scheduled fires between 11:00-13:57 UTC and got ZERO, while
+  # calendar-refresh fired at 11:43 UTC inside that same window and succeeded. So the
+  # scheduler was alive for this repo and simply refused this workflow. Asking MORE often
+  # made it worse, not better (1 fire/day was honored ~60% of days; 36/day -> 0%).
+  #
+  # Calendar Refresh, by contrast, is honored 3-6 times every single day. Every one of its
+  # completions now gives the brief another chance, and the guard below decides whether
+  # this particular tick should actually publish. Replayed against the last 7 days of real
+  # calendar-refresh fire times, this publishes 7/7 days -- five of them before 7:15am CT,
+  # worst case 9:51am.
+  workflow_run:
+    workflows: ["Calendar Refresh"]
+    types: [completed]
+
+  # SECONDARY -- two low-frequency scheduled fires, at roughly the cadence GitHub was
+  # still honoring before. If one lands it publishes earlier than the calendar tick would.
+  # These are UTC and drift an hour with DST, which is harmless: the guard refuses to
+  # publish outside 6am-5pm Central regardless of what the clock in the cron says.
   schedule:
-    # GitHub currently honors only a small fraction of scheduled fires under load.
-    # Measured on this very repo: calendar-refresh.yml asks for 48 fires/day and got
-    # ~25-36 actual runs/day through Aug 26 2026, then dropped to 2-6/day from Aug 27
-    # on -- roughly a 10% honor rate. So a single daily fire has ~10% odds of running
-    # anywhere near on time, which is exactly why the old 7:07am cron kept landing
-    # hours late (11:35am, 11:39am, 2:05pm) or not at all.
-    # Fix: fire every 5 minutes across the 6:00-9:00am CDT window (36 attempts) and let
-    # the "already published?" guard below no-op every attempt after the first one wins.
-    # At a ~10% honor rate that is a ~97% chance at least one fires inside the window.
-    # Minutes avoid :00/:05/:15/:30 -- GitHub documents extra delay/drop risk at the
-    # common cron marks.
-    # NOTE: fixed UTC offset -- this is 6:02-8:57am CDT (Mar-Nov). When CST resumes in
-    # November it becomes 5:02-7:57am Central; shift the hours to "12-14" then.
-    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 11-13 * * *"
+    - cron: "7 12 * * *"
+    - cron: "7 13 * * *"
+
   workflow_dispatch: {}
 
 jobs:
@@ -32,31 +42,40 @@ jobs:
         with:
           fetch-depth: 1
 
-      # With 36 fires a day, every attempt after the winner must cost ~nothing.
-      # This reads the LIVE tip of main rather than the checked-out SHA: a scheduled
-      # run that queued behind the concurrency group can carry a SHA from before the
-      # publish commit an earlier fire made this morning, and would redo the work.
-      # Skipped entirely on workflow_dispatch so a manual run can always force a redo.
-      - name: Skip if today is already published
+      # Several ticks a day reach this job; at most one may do real work.
+      #  - Reads the LIVE tip of main, not the checked-out SHA: a tick that queued behind
+      #    the concurrency group can carry a SHA from before this morning's publish commit.
+      #  - Date is checked in UTC because that is what the brief publishes under
+      #    (see claude-daily-brief-prompt.md Step 0), while the time-of-day window is
+      #    checked in real Central time via tzdata, so it is DST-correct without arithmetic.
+      #    Inside 6am-5pm Central the UTC and Central dates always agree, so the two can't
+      #    disagree about which day "today" is.
+      #  - Skipped entirely on workflow_dispatch, so a manual run can always force a redo.
+      - name: Decide whether this tick should publish
         id: guard
-        if: github.event_name == 'schedule'
+        if: github.event_name != 'workflow_dispatch'
         run: |
+          HOUR=$(TZ="America/Chicago" date +%-H)
+          TODAY=$(date -u +%F)
           git fetch -q --depth=1 origin main
           git show origin/main:data/manifest.json > /tmp/manifest.json
-          if TODAY="$(date -u +%F)" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/manifest.json')).get('news',[]) else 1)"; then
-            echo "already=true" >> "$GITHUB_OUTPUT"
-            echo "$(date -u +%F) already published -- skipping the rest of this run."
+          if [ "$HOUR" -lt 6 ] || [ "$HOUR" -gt 17 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "It is ${HOUR}:xx Central -- outside the 6am-5pm publish window. Skipping."
+          elif TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/manifest.json')).get('news',[]) else 1)"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "$TODAY is already published. Skipping."
           else
-            echo "already=false" >> "$GITHUB_OUTPUT"
-            echo "$(date -u +%F) not published yet -- proceeding."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "$TODAY not published yet and it is ${HOUR}:xx Central -- publishing now."
           fi
 
       - name: Install Python deps
-        if: steps.guard.outputs.already != 'true'
+        if: steps.guard.outputs.skip != 'true'
         run: pip install --quiet cryptography
 
       - uses: anthropics/claude-code-action@v1
-        if: steps.guard.outputs.already != 'true'
+        if: steps.guard.outputs.skip != 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "Follow the instructions in .github/claude-daily-brief-prompt.md exactly, end to end."

@@ -5535,12 +5535,21 @@ function cwSolveCSP(slots, wordBank, rnd, deadlineMs){
 // stretch, the whole thing executes as one uninterrupted block on the main
 // thread and the browser's own "Page Unresponsive" watchdog can fire even
 // though the search is working exactly as intended.
-function cwYield(){ return new Promise(r => setTimeout(r, 0)); }
-
-async function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
+// Pure, synchronous grid solver. Deliberately has ZERO awareness of the main thread's
+// event loop -- it is designed to run to completion inside a Web Worker (see
+// cwGetWorker/cwBuildAtSizeAsync below), where blocking for however long the search
+// takes is completely harmless: a busy worker never freezes rendering or input, so
+// Chrome's "Page Unresponsive" watchdog (which only fires when the MAIN thread goes
+// unresponsive) can never trigger no matter how long this runs. An earlier attempt
+// tried to keep this on the main thread and stay responsive via periodic
+// `await` yields instead -- that approach turned out to be fragile in practice
+// (real browsers clamp setTimeout(0) far more aggressively than jsdom, so the exact
+// yield frequency needed was a moving target that kept either still hanging or eating
+// the deadline budget on pure timer overhead). Moving the work off the main thread
+// entirely sidesteps that whole class of problem rather than continuing to tune it.
+function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
   const candidates = [];
   for(let p=0; p<phase1Tries && candidates.length<candidateCap; p++){
-    if(p>0 && p%200===0) await cwYield();
     const arnd = seedRand(hashStr(seedStr + "-p" + p));
     const target = targets[p % targets.length];
     const blocks = cwGenBlocks(arnd, N, target);
@@ -5555,15 +5564,6 @@ async function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, ove
 
   for(const cand of candidates){
     if(Date.now() > overallDeadline) break;
-    // Yield once per CANDIDATE, not once per fill-try: each cwSolveCSP call below is
-    // already internally time-boxed to a few hundred ms, so a single unbroken run of
-    // (up to fillTriesPerCand) of them between yields still stays far under the
-    // browser's hang threshold. Yielding before every individual fill-try instead
-    // multiplies out to thousands of setTimeout(0) calls per tier, and real browsers
-    // clamp that to ~4ms minimum (jsdom does not), which silently eats seconds of the
-    // outer deadline budget on nothing but timer overhead and was causing legitimate
-    // build failures that never showed up in jsdom testing.
-    await cwYield();
     for(let f=0; f<fillTriesPerCand; f++){
       if(Date.now() > overallDeadline) break;
       const frnd = seedRand(hashStr(seedStr + "-f" + cand.p + "-" + f));
@@ -5587,6 +5587,67 @@ async function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, ove
   return null;
 }
 
+// Runs cwBuildAtSize (and everything it depends on) inside a Web Worker so the
+// potentially many-second search never touches the main thread. The worker's source
+// is assembled at runtime from the already-defined main-thread functions via
+// toString() -- this keeps the algorithm defined in exactly one place rather than
+// hand-maintaining two copies that could drift apart, at the cost of those functions
+// needing to stay dependency-free (no closures over outer variables), which they
+// already are.
+let cwWorker = null, cwWorkerReqId = 0;
+const cwWorkerPending = {};
+function cwGetWorker(){
+  if(cwWorker) return cwWorker;
+  const fnSrc = [hashStr, seedRand, cwGenBlocks, cwSlotsFor, cwNumber, cwSolveCSP, cwBuildAtSize]
+    .map(f => f.toString()).join("\n\n");
+  const workerSrc = fnSrc + `
+self.onmessage = function(e){
+  const { id, args } = e.data;
+  try{
+    const result = cwBuildAtSize.apply(null, args);
+    self.postMessage({ id, result });
+  }catch(err){
+    self.postMessage({ id, error: String((err && err.message) || err) });
+  }
+};`;
+  const blob = new Blob([workerSrc], { type: "application/javascript" });
+  const w = new Worker(URL.createObjectURL(blob));
+  w.onmessage = (e) => {
+    const { id, result, error } = e.data || {};
+    const p = cwWorkerPending[id];
+    if(!p) return;
+    delete cwWorkerPending[id];
+    if(error) p.reject(new Error(error)); else p.resolve(result);
+  };
+  w.onerror = (err) => {
+    Object.values(cwWorkerPending).forEach(p => p.reject(err));
+    for(const k in cwWorkerPending) delete cwWorkerPending[k];
+    cwWorker = null; // a fresh worker gets created on the next call
+  };
+  cwWorker = w;
+  return w;
+}
+
+// Async wrapper cwBuild/miniBuild actually call. Runs the solve in the worker; if
+// Workers/Blob aren't available or the worker fails for any reason, falls back to
+// running cwBuildAtSize directly on the main thread so the game still works (just
+// without the responsiveness guarantee) rather than breaking outright.
+function cwBuildAtSizeAsync(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs){
+  const args = [seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs];
+  return new Promise((resolve, reject) => {
+    if(typeof Worker === "undefined" || typeof Blob === "undefined"){ reject(new Error("Worker unsupported")); return; }
+    try{
+      const w = cwGetWorker();
+      const id = ++cwWorkerReqId;
+      cwWorkerPending[id] = { resolve, reject };
+      w.postMessage({ id, args });
+    }catch(err){ reject(err); }
+  }).catch(err => {
+    console.warn("Crossword worker unavailable, falling back to main thread:", err);
+    return cwBuildAtSize.apply(null, args);
+  });
+}
+
 async function cwBuild(seedStr, extraWords){
   const bank = {};
   Object.keys(CW_WORDS).forEach(L => { bank[L] = CW_WORDS[L].slice(); });
@@ -5606,7 +5667,7 @@ async function cwBuild(seedStr, extraWords){
   // One bounded attempt against the recency-filtered bank -- a shrunk pool is
   // meaningfully harder for the solver, so this gets a short budget and is
   // allowed to just fail fast rather than eat into the reliable path's time.
-  const quick = await cwBuildAtSize(seedStr + "-filtered", filteredBank, 12, targets, 40, 6, Date.now()+8000, 150, 1200, 3, 400);
+  const quick = await cwBuildAtSizeAsync(seedStr + "-filtered", filteredBank, 12, targets, 40, 6, Date.now()+8000, 150, 1200, 3, 400);
   if(quick) return cwRecordWordUsage(quick, seedStr);
 
   // Always a full 12x12 grid — no more shrinking to a smaller size on a bad day.
@@ -5623,7 +5684,7 @@ async function cwBuild(seedStr, extraWords){
   ];
   for(let i=0;i<attempts.length;i++){
     const a = attempts[i];
-    const g = await cwBuildAtSize(seedStr + (i ? "-try"+i : ""), bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
+    const g = await cwBuildAtSizeAsync(seedStr + (i ? "-try"+i : ""), bank, 12, targets, 40, 6, Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs);
     if(g) return cwRecordWordUsage(g, seedStr);
   }
   return null;
@@ -6032,11 +6093,11 @@ async function miniBuild(seedStr, extraWords){
   // is a much better outcome than a broken puzzle.
   const filteredBank = cwFilterRecentBank(bank, 21);
 
-  const primary = await cwBuildAtSize(seedStr, filteredBank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
+  const primary = await cwBuildAtSizeAsync(seedStr, filteredBank, 5, [0,2,4,6], 8, 5, Date.now()+6000, 60, 400, 3, 300);
   if(primary) return cwRecordWordUsage(primary, seedStr);
-  const fb = await cwBuildAtSize(seedStr + "-minifallback", filteredBank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
+  const fb = await cwBuildAtSizeAsync(seedStr + "-minifallback", filteredBank, 5, [2,4,6,8], 8, 5, Date.now()+4000, 60, 400, 3, 300);
   if(fb) return cwRecordWordUsage(fb, seedStr);
-  const fb2 = await cwBuildAtSize(seedStr + "-minifallback2", bank, 5, [0,2,4,6,8], 8, 5, Date.now()+5000, 60, 400, 3, 300);
+  const fb2 = await cwBuildAtSizeAsync(seedStr + "-minifallback2", bank, 5, [0,2,4,6,8], 8, 5, Date.now()+5000, 60, 400, 3, 300);
   return cwRecordWordUsage(fb2, seedStr);
 }
 

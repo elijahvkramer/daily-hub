@@ -14,7 +14,7 @@ on:
   # calendar-refresh fire times, this publishes 7/7 days -- five of them before 7:15am CT,
   # worst case 9:51am.
   workflow_run:
-    workflows: ["Calendar Refresh"]
+    workflows: ["Calendar Refresh", "Morning Tick"]
     types: [completed]
 
   # SECONDARY -- two low-frequency scheduled fires, at roughly the cadence GitHub was
@@ -48,9 +48,13 @@ jobs:
       #  - Date is checked in UTC because that is what the brief publishes under
       #    (see claude-daily-brief-prompt.md Step 0), while the time-of-day window is
       #    checked in real Central time via tzdata, so it is DST-correct without arithmetic.
-      #    Inside 6am-5pm Central the UTC and Central dates always agree, so the two can't
+      #    Inside 4am-5pm Central the UTC and Central dates always agree, so the two can't
       #    disagree about which day "today" is.
       #  - Skipped entirely on workflow_dispatch, so a manual run can always force a redo.
+      #  - Floor is 4am, not 6am: on 2026-09-03 a calendar tick landed at 4:46am CT and
+      #    the old 6am floor rejected it, so the brief did not publish until the next
+      #    tick at 9:32am. Publishing early is harmless -- the market section covers the
+      #    PRIOR trading day's close, which is final long before 4am.
       - name: Decide whether this tick should publish
         id: guard
         if: github.event_name != 'workflow_dispatch'
@@ -59,9 +63,9 @@ jobs:
           TODAY=$(date -u +%F)
           git fetch -q --depth=1 origin main
           git show origin/main:data/manifest.json > /tmp/manifest.json
-          if [ "$HOUR" -lt 6 ] || [ "$HOUR" -gt 17 ]; then
+          if [ "$HOUR" -lt 4 ] || [ "$HOUR" -gt 17 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "It is ${HOUR}:xx Central -- outside the 6am-5pm publish window. Skipping."
+            echo "It is ${HOUR}:xx Central -- outside the 4am-5pm publish window. Skipping."
           elif TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/manifest.json')).get('news',[]) else 1)"; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "$TODAY is already published. Skipping."

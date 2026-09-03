@@ -1,0 +1,27 @@
+name: Morning Tick
+
+# This workflow does nothing on its own. It exists purely as a clock: "Daily Hub Brief"
+# listens for its completion via workflow_run and decides there whether to publish.
+#
+# Why it is a separate file: GitHub is refusing daily-brief.yml's OWN cron entirely --
+# 0 honored fires across 2026-09-02 and 09-03, at both 36 fires/day and 2 fires/day --
+# while honoring calendar-refresh.yml's cron 3-6x every day in the same repo. The
+# refusal therefore looks per-workflow, not per-repo. A brand-new workflow id may be
+# honored where daily-brief's schedule is not. If it is, the brief lands early morning
+# instead of waiting on whenever the next calendar tick happens to fall. If GitHub
+# refuses this one too, nothing is lost: the calendar-refresh path still triggers the
+# brief exactly as it does today.
+on:
+  schedule:
+    # Every 20 min across 5:00-8:59am CDT (4:00-7:59am CST). Deliberately modest --
+    # daily-brief's 36-fires/day attempt was honored 0 times, so this does not try to
+    # brute-force the scheduler, it just asks a reasonable number of times in the window
+    # that matters. The brief's own guard is what enforces the real publish rules.
+    - cron: "3,23,43 10-13 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "tick $(date -u +%FT%TZ) / $(TZ=America/Chicago date +'%F %T %Z')"

@@ -80,12 +80,32 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         if: steps.guard.outputs.skip != 'true'
+        continue-on-error: true
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "Follow the instructions in .github/claude-daily-brief-prompt.md exactly, end to end."
           claude_args: |
             --model claude-sonnet-5
             --allowedTools "Bash,Read,Write,Edit,WebSearch,WebFetch"
-            --max-turns 100
+            --max-turns 150
         env:
           CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
+
+      # The action fails the job whenever Claude exceeds --max-turns, even when the brief
+      # published perfectly. That is exactly what happened 2026-09-04: the brief published
+      # at 6:57am and the run still went red, at 105 turns against a cap of 100. Run status
+      # should reflect the deliverable, not how chatty the agent was -- so the step above is
+      # allowed to fail and this step is the real verdict. A red X here now means one thing:
+      # today genuinely did not publish.
+      - name: Verify today actually published
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          TODAY=$(date -u +%F)
+          git fetch -q --depth=1 origin main
+          git show origin/main:data/manifest.json > /tmp/verify.json
+          if TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/verify.json')).get('news',[]) else 1)"; then
+            echo "$TODAY published successfully."
+          else
+            echo "::error::$TODAY did NOT publish -- the brief is missing from the manifest."
+            exit 1
+          fi

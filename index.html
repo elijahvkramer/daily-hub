@@ -5538,11 +5538,23 @@ function cwSolveCSP(slots, wordBank, rnd, deadlineMs){
   const slotsByLen = {};
   slots.forEach((s,i) => { (slotsByLen[s.len] = slotsByLen[s.len] || []).push(i); });
 
+  /* The dictionary is deliberately large (~7,600 words) so that DIFFERENT DAYS
+     draw different answers. But handing every slot a 2,000+ entry domain makes
+     forward-checking crawl — each assignment rescans every candidate in every
+     crossing domain. So each puzzle works from a bounded RANDOM SAMPLE of the
+     bank, drawn with the seeded RNG for this attempt: variety across days comes from
+     the sample changing, speed comes from the working set staying small.
+     Partial Fisher-Yates — we only need the first POOL_CAP to be shuffled. */
+  const POOL_CAP = 2600;
   const pools = {};
   Object.keys(wordBank).forEach(L => {
     const arr = wordBank[L].slice();
-    for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
-    pools[L] = arr;
+    const take = Math.min(arr.length, POOL_CAP);
+    for(let i=0;i<take;i++){
+      const j = i + Math.floor(rnd()*(arr.length - i));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    pools[L] = arr.slice(0, take);
   });
   const domains = slots.map(s => (pools[s.len] || []).slice());
   const assignment = new Array(n).fill(null);
@@ -5619,6 +5631,10 @@ function cwSolveCSP(slots, wordBank, rnd, deadlineMs){
 function cwBuildAtSize(seedStr, bank, N, targets, minSlots, maxLenCap, overallDeadline, candidateCap, phase1Tries, fillTriesPerCand, fillDeadlineMs, maxThreeShare, minLong){
   const candidates = [];
   for(let p=0; p<phase1Tries && candidates.length<candidateCap; p++){
+    // grid generation is no longer cheap (symmetric placement + run-length
+    // repair), so this loop has to respect the budget too -- otherwise it can
+    // consume the whole deadline and leave no time to actually fill anything
+    if((p & 15)===0 && Date.now() > overallDeadline) break;
     const arnd = seedRand(hashStr(seedStr + "-p" + p));
     const target = targets[p % targets.length];
     const blocks = cwGenBlocks(arnd, N, target, maxLenCap);
@@ -5744,26 +5760,31 @@ async function cwBuild(seedStr, extraWords){
 
   const targets = [38,40,42,44,46];
 
-  /* Tiers, in descending order of quality. Every tier that can uses the
-     recency-FILTERED bank — previously only the first short attempt did, and it
-     usually failed, so in practice the repeat-avoidance almost never applied.
-     maxLenCap is 7 (was 6, which made answers longer than six letters literally
-     impossible), and maxThreeShare caps how much of the grid may be 3-letter
-     answers. The last tier drops both quality gates so a puzzle ALWAYS builds. */
+  /* Tiers, best-quality first. Every tier that can uses the recency-FILTERED
+     bank -- previously only the first (short, usually-failing) attempt did, so
+     repeat-avoidance almost never actually applied.
+
+     candidateCap is deliberately SMALL. Only about one generated grid in a
+     hundred passes the slot-profile gate, so asking for hundreds of candidates
+     costs tens of seconds of pure grid generation before a single fill is even
+     attempted. A dozen good candidates is plenty, and phase 1 now respects the
+     deadline as well.
+
+     The final tier drops both quality gates and returns to the old loose
+     profile, so a puzzle ALWAYS builds rather than erroring out. */
   const attempts = [
-    { bank: filteredBank, deadline: 18000, cap: 250, p1: 2500, fills: 8, fillMs: 600, three: 0.35, long: 2 },
-    { bank: filteredBank, deadline: 22000, cap: 350, p1: 3500, fills: 8, fillMs: 700, three: 0.38, long: 1 },
-    { bank: bank,         deadline: 22000, cap: 350, p1: 3500, fills: 8, fillMs: 700, three: 0.38, long: 1 },
-    { bank: bank,         deadline: 20000, cap: 400, p1: 4000, fills: 8, fillMs: 700, three: 0.45, long: 0 },
-    // last resort: original loose profile, guarantees a grid rather than an error
-    { bank: bank,         deadline: 25000, cap: 400, p1: 4000, fills: 10, fillMs: 700, three: null, long: 0, cap6: true }
+    { bank: filteredBank, deadline: 12000, cap: 12, p1: 4000, fills: 8, fillMs: 700, three: 0.32, long: 2 },
+    { bank: filteredBank, deadline: 14000, cap: 16, p1: 5000, fills: 8, fillMs: 700, three: 0.38, long: 1 },
+    { bank: bank,         deadline: 14000, cap: 16, p1: 5000, fills: 8, fillMs: 700, three: 0.38, long: 1 },
+    { bank: bank,         deadline: 12000, cap: 20, p1: 5000, fills: 8, fillMs: 700, three: 0.45, long: 0 },
+    { bank: bank,         deadline: 15000, cap: 60, p1: 3000, fills: 8, fillMs: 700, three: null, long: 0, loose: true }
   ];
   for(let i=0;i<attempts.length;i++){
     const a = attempts[i];
     const g = await cwBuildAtSizeAsync(
       seedStr + (i ? "-try"+i : ""), a.bank, 12,
-      a.cap6 ? [48,50,52,54,56,58,60] : targets,
-      40, a.cap6 ? 6 : 7,
+      a.loose ? [48,50,52,54,56,58,60] : targets,
+      40, a.loose ? 6 : 7,
       Date.now()+a.deadline, a.cap, a.p1, a.fills, a.fillMs,
       a.three, a.long
     );

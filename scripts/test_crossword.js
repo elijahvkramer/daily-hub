@@ -18,11 +18,20 @@ const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 function grab(name){
   const i = html.indexOf("function " + name + "(");
   if(i < 0) throw new Error("missing function " + name);
-  let k = html.indexOf("{", i), depth = 0, instr = null, esc = false;
+  let k = html.indexOf("{", i), depth = 0, instr = null, esc = false, cmt = null;
   for(; k < html.length; k++){
-    const ch = html[k];
-    if(instr){ if(esc) esc = false; else if(ch === "\\") esc = true; else if(ch === instr) instr = null; }
-    else if(ch === '"' || ch === "'" || ch === "`") instr = ch;
+    const ch = html[k], nx = html[k+1];
+    // comments must be skipped, or an apostrophe inside one ("the grid's runs")
+    // reads as a string opener and the brace matching runs off the end
+    if(cmt){
+      if(cmt === "//" && ch === "\n") cmt = null;
+      else if(cmt === "/*" && ch === "*" && nx === "/"){ cmt = null; k++; }
+      continue;
+    }
+    if(instr){ if(esc) esc = false; else if(ch === "\\") esc = true; else if(ch === instr) instr = null; continue; }
+    if(ch === "/" && nx === "/"){ cmt = "//"; k++; continue; }
+    if(ch === "/" && nx === "*"){ cmt = "/*"; k++; continue; }
+    if(ch === '"' || ch === "'" || ch === "`") instr = ch;
     else if(ch === "{") depth++;
     else if(ch === "}"){ depth--; if(!depth) return html.slice(i, k+1); }
   }
@@ -79,13 +88,13 @@ let built = 0;
 for(const d of days){
   let g = null;
   const tiers = [
-    [targets, 7, 0.35, 2, 18000],
-    [targets, 7, 0.38, 1, 22000],
-    [[48,50,52,54,56,58,60], 6, null, 0, 20000]
+    [targets, 7, 0.32, 2, 12000, 12, 4000],
+    [targets, 7, 0.38, 1, 14000, 16, 5000],
+    [[48,50,52,54,56,58,60], 6, null, 0, 15000, 60, 3000]
   ];
   for(let i = 0; i < tiers.length && !g; i++){
-    const [t, capL, three, long, dl] = tiers[i];
-    g = G.cwBuildAtSize("cw-"+d+(i?"-try"+i:""), bank, 12, t, 40, capL, Date.now()+dl, 300, 3000, 8, 650, three, long);
+    const [t, capL, three, long, dl, cap, p1] = tiers[i];
+    g = G.cwBuildAtSize("cw-"+d+(i?"-try"+i:""), bank, 12, t, 40, capL, Date.now()+dl, cap, p1, 8, 700, three, long);
   }
   if(!g){ fail("no grid built for " + d); continue; }
   built++;

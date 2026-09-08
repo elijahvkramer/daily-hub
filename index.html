@@ -4798,6 +4798,9 @@ function renderGamesLauncher(){
     { name:"TimeGuessr", tag:"Guess the photo's time & place", url:"https://timeguessr.com/", domain:"timeguessr.com" },
     { name:"MapTap", tag:"Tap today's 5 history spots on a 3D globe", url:"https://maptap.gg/", domain:"maptap.gg" }
   ];
+  const estimate = [
+    { name:"Size It Up", tag:"Resize five objects against a reference — score up to 500", url:"https://magnitudle.com/size-it-up", domain:"magnitudle.com" }
+  ];
   const linkBtn = g => `<a class="pz-link${played.has(g.name)?" played":""}" href="${g.url}" target="_blank" rel="noopener noreferrer" data-game="${esc(g.name)}">
       <img src="${favicon(g.domain)}" alt="" loading="lazy">
       <div><div class="pl-nm">${esc(g.name)}</div><div class="pl-tg">${esc(g.tag)}</div></div>
@@ -4821,6 +4824,8 @@ function renderGamesLauncher(){
     <div class="pz-links">${words.map(linkBtn).join("")}</div>
     <div class="game-cat">Around the World</div>
     <div class="pz-links">${geo.map(linkBtn).join("")}</div>
+    <div class="game-cat">Estimation &amp; Visual</div>
+    <div class="pz-links">${estimate.map(linkBtn).join("")}</div>
   </div>`;
 
   const open = id => { markGamePlayed(id); gamesView = id; renderGamesTab(); };

@@ -27,9 +27,6 @@ import sys
 from zoneinfo import ZoneInfo
 
 import requests
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from google.oauth2 import service_account
 import google.auth.transport.requests as gareq
 
@@ -179,26 +176,10 @@ def bucket_events(items, today_date_str):
     return dedupe(today), dedupe(radar)
 
 
-# ---------- encryption (matches scripts/encrypt_calendar.py) ----------
+# ---------- encryption (shared with every other script: scripts/dh_crypto.py) ----------
 
-def encrypt_payload(data_bytes, passphrase):
-    salt = os.urandom(16)
-    iv = os.urandom(12)
-    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                      iterations=300_000).derive(passphrase)
-    ct = AESGCM(key).encrypt(iv, data_bytes, None)
-    b64 = lambda b: base64.b64encode(b).decode()
-    return {"v": 1, "kdf": "PBKDF2-SHA256", "iter": 300_000,
-            "salt": b64(salt), "iv": b64(iv), "ct": b64(ct)}
-
-
-def decrypt_payload(payload, passphrase):
-    salt = base64.b64decode(payload["salt"])
-    iv = base64.b64decode(payload["iv"])
-    ct = base64.b64decode(payload["ct"])
-    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                      iterations=payload.get("iter", 300_000)).derive(passphrase)
-    return AESGCM(key).decrypt(iv, ct, None)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dh_crypto import encrypt_bytes as encrypt_payload, decrypt_payload  # noqa: E402
 
 
 # ---------- main ----------
@@ -290,6 +271,31 @@ def main():
     with open(manifest_path, "w") as f:
         json.dump(m, f, indent=1)
     print("  manifest rebuilt")
+
+    run_companions(pass_path, repo_dir)
+
+
+def run_companions(pass_path, repo_dir):
+    """Piggyback the two other server-side refreshes on this run -- it is the one schedule
+    GitHub honors reliably for this repo, and keeping them here (rather than as extra
+    workflow steps) means no workflow-file edits, which the publishing token can't make.
+    Neither may ever fail the calendar refresh: a Yahoo hiccup or a slow crossword build
+    just leaves the previous file in place and the site falls back gracefully."""
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))
+    jobs = [
+        ("portfolio quotes", [sys.executable, os.path.join(here, "refresh_quotes.py"), pass_path, repo_dir], 120),
+        ("crossword", ["node", os.path.join(here, "build_crossword.js"), pass_path, repo_dir], 240),
+    ]
+    for name, cmd, timeout in jobs:
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            out = (r.stdout or "").strip().splitlines()
+            print(f"  {name}: " + (out[-1] if out else f"exit {r.returncode}"))
+            if r.returncode != 0 and r.stderr:
+                print("   " + r.stderr.strip().splitlines()[-1], file=sys.stderr)
+        except Exception as e:  # noqa: BLE001
+            print(f"  {name}: skipped ({e})", file=sys.stderr)
 
 
 if __name__ == "__main__":

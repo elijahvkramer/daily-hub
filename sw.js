@@ -2,9 +2,9 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-09-08a";
+const VERSION = "dh-2026-09-09a";
 const SHELL_CACHE = "shell-" + VERSION;
-const DATA_CACHE  = "data-v1";        // survives shell upgrades — editions don't change
+const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";
 
 const SHELL = [
@@ -37,13 +37,13 @@ async function precacheLatest(){
     const c = await caches.open(DATA_CACHE);
     await c.put(key("data/manifest.json"), r.clone());   // clone BEFORE reading the body
     const m = await r.json();
-    const urls = ["data/holdings.json.enc", "data/words.json.enc"];
+    const urls = ["data/holdings.json.enc", "data/words.json.enc", "data/quotes.json.enc"];
     ["news","market","calendar"].forEach(k =>
       (m[k]||[]).slice(0,5).forEach(d => urls.push(`data/${k}/${d}.json.enc`)));
     await Promise.allSettled(urls.map(async u => {
       try{
-        if(await c.match(key(u))) return;
-        const res = await fetch(u);
+        if(/\/\d{4}-\d{2}-\d{2}\.json\.enc$/.test(u) && await c.match(key(u))) return;   // dated editions: keep what we have
+        const res = await fetch(u + "?sw=" + Date.now());
         if(res.ok) await c.put(key(u), res.clone());
       }catch(e){}
     }));
@@ -90,16 +90,14 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  /* editions — the manifest must be fresh, the encrypted days never change */
+  /* data files — network first, cache as the offline fallback. (These used to be cache-first
+     on the theory that "editions never change", but today's calendar day is rewritten every
+     refresh, and holdings/words/quotes are rewritten in place, so a cache-first hit could be
+     hours stale. The page itself only comes here when raw.githubusercontent.com failed.) */
   if(isData(url.pathname)){
-    const fresh = url.pathname.endsWith("manifest.json");
     e.respondWith((async () => {
       const c = await caches.open(DATA_CACHE);
       const k = key(url.pathname);
-      if(!fresh){
-        const hit = await c.match(k);
-        if(hit) return hit;
-      }
       try{
         const res = await fetch(req);
         if(res.ok) c.put(k, res.clone());

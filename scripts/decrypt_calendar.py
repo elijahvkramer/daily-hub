@@ -11,23 +11,16 @@ Used by scheduled tasks (e.g. daily-news-briefing) to read recent past
 editions before publishing a new one, so they can check for repeated
 stories/content rather than re-decrypting by hand each time.
 """
-import base64, json, sys
+import json, os, sys
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dh_crypto import decrypt_payload, read_passphrase
 
 def main():
     enc_path, pass_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-    passphrase = open(pass_path).read().strip().encode()
+    passphrase = read_passphrase(pass_path)
     payload = json.load(open(enc_path))
-
-    salt = base64.b64decode(payload["salt"])
-    iv = base64.b64decode(payload["iv"])
-    ct = base64.b64decode(payload["ct"])
-    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                     iterations=payload.get("iter", 300_000)).derive(passphrase)
-    pt = AESGCM(key).decrypt(iv, ct, None)
+    pt = decrypt_payload(payload, passphrase)
 
     with open(out_path, "wb") as f:
         f.write(pt)

@@ -21,58 +21,60 @@ for c in "/sessions/"*"/mnt/Cowork OS/00_Resources" "$HOME/Documents/Cowork OS/0
   [[ -f "$c/.github-token" ]] && RES_DIR="$c" && break
 done
 
-TOKEN_FILE="${GH_TOKEN_FILE:-}"
-if [[ -z "$TOKEN_FILE" ]]; then
-  [[ -n "$RES_DIR" ]] || { echo "resources dir with .github-token not found (and GH_TOKEN_FILE not set)" >&2; exit 1; }
-  TOKEN_FILE="$RES_DIR/.github-token"
-fi
-TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
-
 PASS_FILE="${CAL_PASS_FILE:-}"
 if [[ -z "$PASS_FILE" ]]; then
   [[ -n "$RES_DIR" ]] || { echo "resources dir with .calendar-passphrase not found (and CAL_PASS_FILE not set)" >&2; exit 1; }
   PASS_FILE="$RES_DIR/.calendar-passphrase"
 fi
 
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
-git clone -q --depth 1 "https://x-access-token:${TOKEN}@github.com/elijahvkramer/daily-hub.git" "$WORK/repo"
-cd "$WORK/repo"
-git config user.email "elijahvkramer@gmail.com"
-git config user.name "Daily Hub Bot"
+# Two ways to run:
+#  (a) inside an already-authenticated checkout (GitHub Actions -- the daily brief): no token
+#      needed, work in place and let the caller's git credentials push;
+#  (b) from anywhere else with a token file: clone, edit, push (the original Cowork flow).
+IN_REPO=0
+if [[ -z "${GH_TOKEN_FILE:-}" && -z "$RES_DIR" && -f "scripts/dh_crypto.py" && -d ".git" ]]; then
+  IN_REPO=1
+  echo "no token file; running inside the current checkout"
+else
+  TOKEN_FILE="${GH_TOKEN_FILE:-}"
+  if [[ -z "$TOKEN_FILE" ]]; then
+    [[ -n "$RES_DIR" ]] || { echo "resources dir with .github-token not found (and GH_TOKEN_FILE not set)" >&2; exit 1; }
+    TOKEN_FILE="$RES_DIR/.github-token"
+  fi
+  TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+  WORK="$(mktemp -d)"
+  trap 'rm -rf "$WORK"' EXIT
+  git clone -q --depth 1 "https://x-access-token:${TOKEN}@github.com/elijahvkramer/daily-hub.git" "$WORK/repo"
+  cd "$WORK/repo"
+  git config user.email "elijahvkramer@gmail.com"
+  git config user.name "Daily Hub Bot"
+fi
 
 WORD_SRC="$SRC" PASS_FILE="$PASS_FILE" python3 - <<'PY'
-import base64, json, os
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
+import json, os, sys
+sys.path.insert(0, "scripts")
+from dh_crypto import decrypt_json, encrypt_json   # fixed site salt -- see scripts/dh_crypto.py
 
 passphrase = open(os.environ["PASS_FILE"]).read().strip().encode()
 new = json.load(open(os.environ["WORD_SRC"]))
 assert {"term","definition"} <= set(new), "word object needs at least term + definition"
 
-def key_for(salt): return PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=300_000).derive(passphrase)
-
 words = []
 if os.path.exists("data/words.json.enc"):
-    p = json.load(open("data/words.json.enc"))
-    pt = AESGCM(key_for(base64.b64decode(p["salt"]))).decrypt(base64.b64decode(p["iv"]), base64.b64decode(p["ct"]), None)
-    words = json.loads(pt)
+    words = decrypt_json(json.load(open("data/words.json.enc")), passphrase)
 
 words = [w for w in words if w["term"].lower() != new["term"].lower()]  # dedupe / update
 words.append(new)
 words.sort(key=lambda w: w.get("date",""))
 
-salt, iv = os.urandom(16), os.urandom(12)
-ct = AESGCM(key_for(salt)).encrypt(iv, json.dumps(words).encode(), None)
-b64 = lambda b: base64.b64encode(b).decode()
-json.dump({"v":1,"kdf":"PBKDF2-SHA256","iter":300_000,"salt":b64(salt),"iv":b64(iv),"ct":b64(ct)}, open("data/words.json.enc","w"))
+json.dump(encrypt_json(words, passphrase), open("data/words.json.enc","w"))
 print(f"word bank now has {len(words)} words (added {new['term']})")
 PY
 
 git add data/words.json.enc
 if git diff --cached --quiet; then echo "nothing to publish"; exit 0; fi
 git commit -qm "words: update quiz bank"
+if [[ "$IN_REPO" == "1" ]]; then echo "word committed in place (push with the rest of today's publish)"; exit 0; fi
 for attempt in 1 2 3 4; do
   if git push -q origin main; then echo "word published"; exit 0; fi
   sleep $((attempt * 3)); git fetch -q origin main; git rebase -q origin/main || { git rebase --abort; exit 1; }

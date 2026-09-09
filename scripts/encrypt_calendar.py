@@ -4,31 +4,22 @@
 Usage: python3 encrypt_calendar.py <plaintext.json> <passphrase-file> <out.json.enc>
 
 Format matches the site's WebCrypto decryptor:
-PBKDF2-SHA256 (300,000 iterations, 16-byte salt) -> AES-256-GCM (12-byte IV).
+PBKDF2-SHA256 (300,000 iterations, fixed site salt) -> AES-256-GCM (12-byte random IV).
 Output: {"v":1,"kdf":"PBKDF2-SHA256","iter":300000,"salt":b64,"iv":b64,"ct":b64}
 (ct includes the GCM tag, as WebCrypto expects.)
 """
-import base64, json, os, sys
+import json, os, sys
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dh_crypto import encrypt_bytes, read_passphrase  # fixed site salt -- see dh_crypto.py
 
 def main():
     plain_path, pass_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-    passphrase = open(pass_path).read().strip().encode()
+    passphrase = read_passphrase(pass_path)
     data = open(plain_path, "rb").read()
     json.loads(data)  # validate JSON before encrypting
 
-    salt = os.urandom(16)
-    iv = os.urandom(12)
-    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                     iterations=300_000).derive(passphrase)
-    ct = AESGCM(key).encrypt(iv, data, None)
-
-    b64 = lambda b: base64.b64encode(b).decode()
-    payload = {"v": 1, "kdf": "PBKDF2-SHA256", "iter": 300_000,
-               "salt": b64(salt), "iv": b64(iv), "ct": b64(ct)}
+    payload = encrypt_bytes(data, passphrase)
     with open(out_path, "w") as f:
         json.dump(payload, f)
     print(f"encrypted -> {out_path}")

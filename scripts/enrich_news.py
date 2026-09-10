@@ -12,10 +12,12 @@ it only fills fields that are missing, never rewrites prose, and never touches a
 already has a photo.
 
 Resolution order per item:
-  1. `url` already on the item        -> that article's og:image
-  2. Google News RSS search on the headline -> best-matching real article
+  1. a real published story about the same event, matched out of ~10 publisher RSS feeds
+     (BBC, Guardian, Al Jazeera, CBS, CNBC, Fox, Yahoo/CBS Sports) -> that story's own photo
+  2. `url` already on the item        -> that article's og:image
+  3. Google News RSS search on the headline -> best-matching real article
                                        -> fills url + source, then that article's og:image
-  3. Wikipedia page image for the item's `imgQuery` or the strongest proper noun in the lead
+  4. Wikipedia page image for the item's `imgQuery` or the strongest proper noun in the lead
 Every candidate image is verified (HTTP 200, image content-type, >= 400px wide by header or
 by a small ranged read) before it is written, so the page never gets a broken box.
 
@@ -133,6 +135,104 @@ def keywords(text, n=8):
     return out
 
 
+# Publisher feeds carry the actual news photo in media:content / media:thumbnail / enclosure.
+# One fetch per feed per run (not per story), so the whole index costs ~10 requests and the
+# matching is then local. This is the primary source of *real* photos; Google News (below) is
+# a secondary, and Wikipedia -- which only ever yields a stock photo of a subject -- is last.
+NEWS_FEEDS = [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://feeds.bbci.co.uk/news/technology/rss.xml",
+    "https://www.theguardian.com/world/rss",
+    "https://www.theguardian.com/us-news/rss",
+    "https://www.aljazeera.com/xml/rss/all.xml",
+    "https://moxie.foxnews.com/google-publisher/latest.xml",
+    "https://www.cbsnews.com/latest/rss/main",
+    "https://www.cbsnews.com/latest/rss/politics",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114",
+    "https://sports.yahoo.com/rss/",
+    "https://www.cbssports.com/rss/headlines/",
+]
+MEDIA_NS = "{http://search.yahoo.com/mrss/}"
+_FEED_INDEX = None
+_USED_IMGS = set()
+
+
+def _feed_items(xml_bytes, feed_url):
+    out = []
+    try:
+        root = ET.fromstring(xml_bytes)
+    except Exception as e:  # noqa: BLE001
+        print(f"    . feed parse {feed_url[:48]}: {e}", file=sys.stderr)
+        return out
+    for it in root.iter("item"):
+        title = (it.findtext("title") or "").strip()
+        if not title:
+            continue
+        desc = it.findtext("description") or ""
+        img = None
+        for tag in (MEDIA_NS + "content", MEDIA_NS + "thumbnail"):
+            for el in it.findall(tag):
+                u = el.get("url")
+                if u and not BAD_IMG.search(u):
+                    w = el.get("width")
+                    if w and w.isdigit() and int(w) < 300:
+                        continue
+                    img = u
+                    break
+            if img:
+                break
+        if not img:
+            for el in it.findall("enclosure"):
+                u, t = el.get("url"), (el.get("type") or "")
+                if u and t.startswith("image") and not BAD_IMG.search(u):
+                    img = u
+                    break
+        if not img:                                   # some feeds only inline it in the HTML
+            m = re.search(r'<img[^>]+src="([^"]+)"', html.unescape(desc))
+            if m and not BAD_IMG.search(m.group(1)):
+                img = m.group(1)
+        if img:
+            out.append({"title": title, "img": img, "link": (it.findtext("link") or "").strip(),
+                        "desc": re.sub(r"<[^>]+>", " ", html.unescape(desc))[:400], "feed": feed_url})
+    return out
+
+
+def feed_index():
+    """Build (once per run) the pool of recent published stories that carry a photo."""
+    global _FEED_INDEX
+    if _FEED_INDEX is not None:
+        return _FEED_INDEX
+    _FEED_INDEX = []
+    ok = 0
+    for url in NEWS_FEEDS:
+        try:
+            status, _, body, _ = get(url, timeout=12, max_bytes=600_000)
+            if status != 200:
+                print(f"    . feed {url[:48]}: HTTP {status}", file=sys.stderr)
+                continue
+            items = _feed_items(body, url)
+            _FEED_INDEX.extend(items)
+            if items:
+                ok += 1
+        except Exception as e:  # noqa: BLE001
+            print(f"    . feed {url[:48]}: {e}", file=sys.stderr)
+    print(f"  feed index: {len(_FEED_INDEX)} photo-bearing stories from {ok}/{len(NEWS_FEEDS)} feeds")
+    return _FEED_INDEX
+
+
+def feed_match(item):
+    """Best photo-bearing published story for this item, or None."""
+    text = (item.get("lead") or "") + " " + (item.get("body") or "")
+    best, best_score = None, 0.0
+    for cand in feed_index():
+        if cand["img"] in _USED_IMGS:
+            continue
+        sc = max(overlap(cand["title"], text), overlap(cand["title"] + " " + cand["desc"], text) * 0.9)
+        if sc > best_score:
+            best, best_score = cand, sc
+    return best if best_score >= 0.42 else None
+
+
 def news_search(query, when="2d"):
     """Google News RSS -> [(title, link, source, pubDate)]. Public feed, no key."""
     url = ("https://news.google.com/rss/search?q=" +
@@ -228,9 +328,26 @@ def enrich(item, budget):
     """Fill img/imgCaption (and url/source when we can find them). Returns a note string."""
     if item.get("img"):
         return None
-    # 1. article already known
+    # 1. a real published story about the same event, from the feed index
+    hit = feed_match(item)
+    if hit and hit["img"] not in _USED_IMGS and image_ok(hit["img"]):
+        _USED_IMGS.add(hit["img"])
+        item["img"] = hit["img"]
+        host = ""
+        try:
+            host = urllib.parse.urlparse(hit["link"] or hit["feed"]).hostname.replace("www.", "")
+        except Exception:  # noqa: BLE001
+            pass
+        cap = re.sub(r"\s+\|\s+.*$", "", hit["title"]).strip()
+        item.setdefault("imgCaption", (cap[:110] + ("…" if len(cap) > 110 else "")) if cap else (host or "News photo"))
+        if hit["link"] and not item.get("url"):
+            item["url"] = hit["link"]
+        if host and not item.get("source"):
+            item["source"] = host
+        return "feed"
+    # 2. article already known
     url = item.get("url")
-    # 2. find the article
+    # 3. find the article
     if not url and budget["search"] > 0:
         budget["search"] -= 1
         url, source = resolve_article(item)
@@ -297,7 +414,7 @@ def main():
     # Bounded work per run: the job repeats every ~30 minutes, so it converges over the day
     # instead of hammering anything in one burst.
     budget = {"search": 10, "page": 14, "wiki": 12}
-    got = {"article": 0, "wiki": 0}
+    got = {"feed": 0, "article": 0, "wiki": 0}
     for it in missing:
         note = enrich(it, budget)
         if note:
@@ -305,9 +422,10 @@ def main():
         if budget["page"] <= 0 and budget["wiki"] <= 0:
             break
 
-    filled = got["article"] + got["wiki"]
+    filled = got["feed"] + got["article"] + got["wiki"]
     status = {"date": date, "items": len(items), "had_photos": len(items) - len(missing),
-              "filled_this_run": filled, "from_article": got["article"], "from_wikipedia": got["wiki"],
+              "filled_this_run": filled, "from_feed": got["feed"], "from_article": got["article"],
+              "from_wikipedia": got["wiki"], "feed_pool": len(feed_index()) if _FEED_INDEX is not None else 0,
               "still_missing": len(missing) - filled}
     try:
         with open(os.path.join(repo, "data", "news.status.json"), "w") as f:
@@ -323,8 +441,8 @@ def main():
         return 0
     with open(path, "w") as f:
         json.dump(encrypt_json(edition, passphrase), f)
-    print(f"news {date}: +{filled} photos ({got['article']} from the article, {got['wiki']} from Wikipedia); "
-          f"{status['still_missing']} still without")
+    print(f"news {date}: +{filled} photos ({got['feed']} from a wire feed, {got['article']} from the article, "
+          f"{got['wiki']} from Wikipedia); {status['still_missing']} still without")
     return 0
 
 

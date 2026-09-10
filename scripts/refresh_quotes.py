@@ -113,6 +113,45 @@ def fetch_stooq(syms, session):
     return out
 
 
+def fetch_cnbc(syms, session):
+    """Third source: CNBC's public quote endpoint. Yahoo blocks datacenter IPs and Stooq has
+    also come back empty from the runner, so this is the one that has to carry it. Shape is
+    parsed defensively -- any field that isn't there is simply skipped."""
+    out = {}
+    if not syms:
+        return out
+    tickers = [s for s in syms if "-" not in s]
+    if not tickers:
+        return out
+    url = ("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol"
+           "?symbols=" + "%7C".join(tickers) +
+           "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1")
+    try:
+        r = session.get(url, timeout=15)
+        r.raise_for_status()
+        payload = r.json()
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! cnbc: {e}", file=sys.stderr)
+        return out
+    quotes = (((payload or {}).get("FormattedQuoteResult") or {}).get("FormattedQuote")) or []
+    if isinstance(quotes, dict):
+        quotes = [quotes]
+    for q in quotes:
+        try:
+            sym = (q.get("symbol") or q.get("issue_id") or "").upper()
+            last = q.get("last") or q.get("lastPrice")
+            prev = q.get("previous_day_closing") or q.get("previousDayClosing") or last
+            if not sym or last is None:
+                continue
+            price = float(str(last).replace(",", ""))
+            prevf = float(str(prev).replace(",", ""))
+            ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+            out[sym] = {"price": price, "prev": prevf, "time": ts, "src": "cnbc"}
+        except Exception:  # noqa: BLE001
+            continue
+    return out
+
+
 def write_status(repo, **kv):
     """Plaintext, symbol-free status so a run can be diagnosed from the repo alone."""
     try:
@@ -161,12 +200,15 @@ def main():
         time.sleep(0.25)  # be polite; 12 symbols is well under any limit
     source = "yahoo"
     if not fresh:
-        # Yahoo refused every call (it rate-limits datacenter IPs on and off) -- Stooq fallback
-        st = fetch_stooq(syms, session)
-        for s, q in st.items():
-            quotes[s] = q
-            fresh += 1
-        source = "stooq"
+        # Yahoo refused every call (it rate-limits datacenter IPs on and off)
+        for name, fn in (("stooq", fetch_stooq), ("cnbc", fetch_cnbc)):
+            got = fn(syms, session)
+            for s, q in got.items():
+                quotes[s] = q
+                fresh += 1
+            if fresh:
+                source = name
+                break
 
     if not fresh:
         print("Yahoo and Stooq returned nothing for any symbol; leaving the previous quotes file untouched")

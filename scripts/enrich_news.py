@@ -151,6 +151,13 @@ def news_search(query, when="2d"):
         link = (it.findtext("link") or "").strip()
         src_el = it.find("source")
         source = (src_el.text or "").strip() if src_el is not None else ""
+        # Prefer the publisher's own URL when the description carries it: the <link> is a
+        # news.google.com redirect that frequently serves a consent/JS interstitial, which
+        # has no og:image on it.
+        desc = it.findtext("description") or ""
+        m = re.search(r'href="(https?://(?!news\.google\.)[^"]+)"', html.unescape(desc))
+        if m:
+            link = m.group(1)
         if title and link:
             items.append((title, link, source, (it.findtext("pubDate") or "")))
     return items
@@ -207,9 +214,14 @@ def wiki_image(subject):
 def lead_subject(item):
     """The strongest proper-noun phrase in the lead -- last-resort photo subject."""
     txt = re.sub(r"\s+", " ", item.get("lead") or "")
-    runs = re.findall(r"[A-Z][A-Za-z.'-]+(?:\s+(?:of\s+|the\s+)?[A-Z][A-Za-z.'-]+){0,3}", txt)
-    runs = [r for r in runs if len(r) > 4 and r.split()[0].lower() not in STOP]
-    return max(runs, key=len) if runs else None
+    runs = re.findall(r"[A-Z][A-Za-z.'’-]+(?:\s+(?:of\s+|the\s+)?[A-Z][A-Za-z.'’-]+){0,3}", txt)
+    out = []
+    for r in runs:
+        r = re.sub(r"['’]s\b", "", r).strip()          # "Zelenskyy's" -> "Zelenskyy"
+        r = re.sub(r"^\w+\s+(?=[A-Z])", "", r) if re.match(r"^[A-Z]{2,4}\s+[A-Z]", r) else r
+        if len(r) > 4 and r.split()[0].lower() not in STOP:
+            out.append(r)
+    return max(out, key=len) if out else None
 
 
 def enrich(item, budget):

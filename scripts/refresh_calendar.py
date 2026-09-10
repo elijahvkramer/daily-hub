@@ -285,7 +285,6 @@ def run_companions(pass_path, repo_dir):
     here = os.path.dirname(os.path.abspath(__file__))
     jobs = [
         ("portfolio quotes", [sys.executable, os.path.join(here, "refresh_quotes.py"), pass_path, repo_dir], 120),
-        ("season ticket", [sys.executable, os.path.join(here, "refresh_sports.py"), pass_path, repo_dir], 90),
         ("crossword", ["node", os.path.join(here, "build_crossword.js"), pass_path, repo_dir], 240),
     ]
     for name, cmd, timeout in jobs:

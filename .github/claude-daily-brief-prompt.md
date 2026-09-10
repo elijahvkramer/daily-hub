@@ -65,7 +65,7 @@ cp /tmp/market.json.enc "data/market/$(date -u +%F).json.enc"
 
 ## Step 2: News briefing (every day)
 
-Minimize usage — no PDFs, no image rendering. ~12-16 searches total: roughly 1-2 per general topic below, one search per followed sports team, the current-status confirmations described below (cheap, targeted), plus at most 1-2 optional follow-ups for a `detail` paragraph that needs more specifics.
+Minimize usage — no PDFs, no image rendering. ~16-22 searches total (the article pages need real depth, so read the source article for each item you keep): roughly 1-2 per general topic below, one search per followed sports team, the current-status confirmations described below (cheap, targeted), plus at most 1-2 optional follow-ups for a `detail` paragraph that needs more specifics.
 
 Time window — strict: Tuesday-Friday, only cover things that happened in the past 24 hours. Monday, past 72 hours. Continued coverage of an older story does NOT qualify just because it's still trending — something genuinely new and dated must have happened in the window. Before including anything, ask "did the newsworthy thing itself happen in the window, or is this just an older story still surfacing in search?" If the latter, drop it.
 
@@ -85,7 +85,9 @@ Topics, in this order (each its own section; skip a topic with a one-line "nothi
    - General (min 2 items/day): NFL, Men's College Basketball, College Football, PGA, UFC, Men's Grand Slam Tennis, NBA — 1-2 searches covers this whole set.
    - Favorites items first, then General. A story fitting either goes to Favorites, never duplicated in both.
 
-4-6 items per section (Sports typically runs 4-7 total, that's fine). Include a `detail` field (4-6 sentence expansion) on as many items as you reasonably can.
+4-6 items per section (Sports typically runs 4-7 total, that's fine).
+
+**Depth (required — the site renders each item as a full article page).** Every item carries `detail`: 2-3 paragraphs, 150-260 words total, separated by a blank line (`\n\n`), written like a wire-service story — what happened, the context a smart reader needs, what happens next. Not a restatement of `lead`+`body`. Add `whyItMatters` (one plain sentence) on every item, and `quote` — `{"text": "...", "who": "Name, title"}` — whenever a source article carries a real, attributable quote (never invent or paraphrase one into quotation marks). `imgCaption` (under 12 words, what the photo shows) whenever `img` is set.
 
 **Source + photo per item (required).** Every item carries `url` — the single best article it was drawn from (a wire service, major outlet, or the team's beat writer; the actual article page, not a homepage or search page) — and `source` — the outlet's short name ("Reuters", "AP", "ESPN", "Kentucky Sports Radio"). Then run **one** command for the whole edition to pull each article's lead photo:
 
@@ -111,7 +113,7 @@ Write `/tmp/news.json`:
   "glance": [ {"label":"Military & Conflict","teaser":"3-6 word chip"}, "x6, one per section incl. Random and Sports" ],
   "sections": [
     {"title":"US Military & Foreign Conflict","items":[
-      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences.","detail":"optional 4-6 sentence expansion","storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgQuery":"fallback only: a photographable subject","caption":"optional"}
+      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences (the dek).","detail":"2-3 paragraphs, 150-260 words, blank line between paragraphs","whyItMatters":"one sentence","quote":{"text":"a real quote from a source article","who":"Name, role"},"storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgCaption":"what the photo shows","imgQuery":"fallback only: a photographable subject"}
     ]},
     "... x6 in topic order: the 5th titled \"Random\", the 6th titled \"Sports\" with every item carrying a group field: {\"lead\":\"...\",\"body\":\"...\",\"group\":\"Favorites\"}"
   ],
@@ -152,8 +154,8 @@ The Games tab's three "Brain Food" cards (Fun Fact / History Tidbit / Word of th
 ```
 (`answer` is the zero-based index into `options`.) Check the last 7 published `close.case` topics/profiles (decrypt those calendar files) and pick something different.
 
-1. Pick a `funFact` (surprising world fact) and `historyTidbit` (general world history, not tied to today's date) — check them against MEMORY.md's used-lists if that file is available in this checkout; otherwise just use good judgment to avoid obvious repeats from recent editions. Pick a `word` at a middle-difficulty tier (a well-read adult would recognize it, but it's a step up from everyday words — think ubiquitous, precarious, esoteric, tenuous, discerning — not painfully obscure). Include ipa/respell/pos/definition/example. Write the `case` per the schema above.
-2. Decrypt today's already-published calendar file if it exists (from the separate `calendar-refresh.yml` workflow), merge in `close: {funFact, historyTidbit, word, case}` leaving every other field (`today`, `radar`, `weather`, `urgent`, `chill`) untouched, re-encrypt, and write to `data/calendar/$(date -u +%F).json.enc`. If today's calendar file doesn't exist yet, create a minimal one: `{"today":[],"radar":[],"weather":"","hourly":[],"urgent":[],"chill":[],"close":{...}}`.
+1. Pick a `funFact` (surprising world fact) and `historyTidbit` (general world history, not tied to today's date) — check them against MEMORY.md's used-lists if that file is available in this checkout; otherwise just use good judgment to avoid obvious repeats from recent editions. Both are shown as full-screen picture cards on the site, so choose facts with a concrete, photographable subject and set `funFactSubject` / `historySubject` to the exact English Wikipedia article title of that subject (a place, animal, object, person, event — e.g. "Octopus", "Eiffel Tower", "Battle of Hastings"). Then run `python3 scripts/og_image.py "https://en.wikipedia.org/wiki/<Title with underscores>"` for both and set `funFactImage` / `historyImage` to the image URLs it prints (skip when it prints `-`). Pick a `word` at a middle-difficulty tier (a well-read adult would recognize it, but it's a step up from everyday words — think ubiquitous, precarious, esoteric, tenuous, discerning — not painfully obscure). Include ipa/respell/pos/definition/example. Write the `case` per the schema above.
+2. Decrypt today's already-published calendar file if it exists (from the separate `calendar-refresh.yml` workflow), merge in `close: {funFact, funFactSubject, funFactImage, historyTidbit, historySubject, historyImage, word, case}` leaving every other field (`today`, `radar`, `weather`, `urgent`, `chill`) untouched, re-encrypt, and write to `data/calendar/$(date -u +%F).json.enc`. If today's calendar file doesn't exist yet, create a minimal one: `{"today":[],"radar":[],"weather":"","hourly":[],"urgent":[],"chill":[],"close":{...}}`.
 3. Run `CAL_PASS_FILE=/tmp/cal_pass.txt bash scripts/add_word.sh /tmp/word.json` (schema: `{"term":...,"ipa":...,"respell":...,"pos":...,"definition":...,"example":...,"date":"YYYY-MM-DD"}`) to append to the word bank. With no `GH_TOKEN_FILE` set it edits and commits `data/words.json.enc` in place in this checkout (no clone, no push of its own) — the push happens with everything else in Step 4.
 
 ## Step 4: finish

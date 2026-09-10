@@ -41,9 +41,14 @@ Write `/tmp/market.json` in this exact schema (field names must match — the si
   "outlook": [ {"date":"Jul 14","lead":"Bold lead.","body":"Detail."}, "x3" ],
   "holdingsNews": [ {"ticker":"NVDA","lead":"Bold lead.","body":"1-2 sentences on the news and why it matters to this position."} ],
   "bottomLine": "The synthesis paragraph.",
+  "talkingPoints": [ {"lead":"Bold, plain-English one-liner a client would understand.","body":"One sentence on what it means for a conservative, protection-minded investor and whether anything changes."}, "x3" ],
+  "ifAsked": {"q":"the question a client is most likely to call about today, in their words","a":"a 2-sentence answer Eli could say out loud"},
+  "rates": [ {"label":"10Y Treasury","value":"4.11%","note":"−3 bp"}, {"label":"2Y Treasury","value":"3.62%","note":""}, {"label":"Fed funds","value":"4.00–4.25%","note":"next FOMC Sep 17"}, {"label":"30y mortgage","value":"6.02%","note":"Freddie Mac"}, {"label":"3-mo T-bill","value":"4.18%","note":"cash-yield proxy"}, {"label":"1y Treasury","value":"3.95%","note":""} ],
   "sources": "Comma-separated source names · figures as reported near the close"
 }
 ```
+
+`talkingPoints` / `ifAsked` / `rates` feed the **Morning Desk** card on the site's Home tab (Eli is a financial advisor; these are what he says to clients that day). Talking points are NOT a restatement of the drivers: they are written for a client, not a trader — no jargon, one idea each, and explicit about whether the reader should do anything (usually not). `rates` is exactly 6 entries in the order shown; use the latest available prints from the searches you already ran (one extra search at most). If a value can't be confirmed, omit that entry rather than guess.
 
 `holdingsNews`: 0-4 items, ONLY real notable news on Eli's holdings today — empty array if nothing notable, never padded. `pct` fields are numbers, negative for declines. Validate: `python3 -c "import json;json.load(open('/tmp/market.json'))"`.
 
@@ -74,7 +79,8 @@ Topics, in this order (each its own section; skip a topic with a one-line "nothi
 2. Politics & Policy
 3. Tech & AI
 4. Major International Headlines (2-3 significant non-US stories)
-5. Sports — ONE section, two groups via a "group" field on each item:
+5. Random — 3-4 stories that fit none of the above and that a curious person would repeat at dinner: science, space, nature, a strange court case, a record broken, a piece of history that surfaced, food, travel, an obituary of someone remarkable. Global. Must still be dated inside the window. Each with a real photo (`img`) — this section lives or dies on the picture.
+6. Sports — ONE section, two groups via a "group" field on each item:
    - Favorites (min 2 items/day): Kentucky Wildcats Men's Basketball, New York Giants (NFL), USC Trojans Football — one targeted search per team; broaden to recruiting/roster/beat-writer notes before giving up on hitting the floor. Recruiting and transfer items MUST pass the current-status check above — a player's commitment status changes fast and a stale "deciding between" item is worse than no item.
    - General (min 2 items/day): NFL, Men's College Basketball, College Football, PGA, UFC, Men's Grand Slam Tennis, NBA — 1-2 searches covers this whole set.
    - Favorites items first, then General. A story fitting either goes to Favorites, never duplicated in both.
@@ -102,12 +108,12 @@ Write `/tmp/news.json`:
   "eyebrow": "Weekday Roundup (or Weekend Roundup on Mondays)",
   "headline": "Punchy two-line synthesized headline\nwith a literal \\n break",
   "subtitle": "2-3 sentence summary of the day's throughline.",
-  "glance": [ {"label":"Military & Conflict","teaser":"3-6 word chip"}, "x5, one per section incl. Sports" ],
+  "glance": [ {"label":"Military & Conflict","teaser":"3-6 word chip"}, "x6, one per section incl. Random and Sports" ],
   "sections": [
     {"title":"US Military & Foreign Conflict","items":[
       {"lead":"Bold lead sentence.","body":"1-2 punchy sentences.","detail":"optional 4-6 sentence expansion","storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgQuery":"fallback only: a photographable subject","caption":"optional"}
     ]},
-    "... x5 in topic order, the 5th titled \"Sports\" with every item carrying a group field: {\"lead\":\"...\",\"body\":\"...\",\"group\":\"Favorites\"}"
+    "... x6 in topic order: the 5th titled \"Random\", the 6th titled \"Sports\" with every item carrying a group field: {\"lead\":\"...\",\"body\":\"...\",\"group\":\"Favorites\"}"
   ],
   "sources": "Reuters, AP, ..."
 }
@@ -123,12 +129,31 @@ mkdir -p data/news
 cp /tmp/news.json.enc "data/news/$(date -u +%F).json.enc"
 ```
 
-## Step 3: Brain Food + Word Quiz (every day, regardless of how Step 2 went)
+## Step 3: Brain Food + The Daily Case + Word Quiz (every day, regardless of how Step 2 went)
 
-The Games tab's three "Brain Food" cards (Fun Fact / History Tidbit / Word of the Day) and the Word Quiz bank have no other source.
+The Games tab's three "Brain Food" cards (Fun Fact / History Tidbit / Word of the Day), The Daily Case, and the Word Quiz bank have no other source.
 
-1. Pick a `funFact` (surprising world fact) and `historyTidbit` (general world history, not tied to today's date) — check them against MEMORY.md's used-lists if that file is available in this checkout; otherwise just use good judgment to avoid obvious repeats from recent editions. Pick a `word` at a middle-difficulty tier (a well-read adult would recognize it, but it's a step up from everyday words — think ubiquitous, precarious, esoteric, tenuous, discerning — not painfully obscure). Include ipa/respell/pos/definition/example.
-2. Decrypt today's already-published calendar file if it exists (from the separate `calendar-refresh.yml` workflow), merge in `close: {funFact, historyTidbit, word}` leaving every other field (`today`, `radar`, `weather`, `urgent`, `chill`) untouched, re-encrypt, and write to `data/calendar/$(date -u +%F).json.enc`. If today's calendar file doesn't exist yet, create a minimal one: `{"today":[],"radar":[],"weather":"","hourly":[],"urgent":[],"chill":[],"close":{...}}`.
+**The Daily Case** (`close.case`): one realistic client scenario a financial advisor might meet, four possible moves, one best answer, and the reasoning. It must be **completely general across the profession** — never the same kind of client two days running. Rotate deliberately across: age (22 to 85), wealth (paycheck-to-paycheck to eight figures), life event (new job, equity comp, marriage, divorce, inheritance, layoff, business sale, retirement, widowhood, disability, a child's college, a parent's care), account type (401k/TSP, Roth, taxable, trust, 529, HSA, annuity, pension), risk profile (1/10 to 10/10), and topic (tax, insurance, estate, Social Security, Medicare, debt, cash flow, asset location, concentrated stock, RMDs, Roth conversions, small-business planning, behavioral mistakes). Military/veteran cases may appear roughly one day in ten, not more. The right answer must be defensible from a stated rule or well-known planning principle (cite it briefly in `rule`), and the wrong options must be plausible — the kind of thing a decent advisor might actually do. Keep the scenario under 120 words. Schema:
+
+```json
+"case": {
+  "title": "Six-word headline for the case",
+  "topic": "Roth conversions",
+  "difficulty": "easy | medium | hard",
+  "profile": "Who: one sentence — ages, household, income/assets, risk 1-10.",
+  "situation": "What just happened and what they are asking. Under 120 words.",
+  "question": "What is the best next move?",
+  "options": ["A …", "B …", "C …", "D …"],
+  "answer": 2,
+  "reasoning": "3-5 sentences on why the right option wins and why the others lose.",
+  "trap": "The mistake most advisors make here, in one sentence.",
+  "rule": "The rule or principle in one line, e.g. IRC §72(t), the 5-year Roth clock, the 60-day rollover rule."
+}
+```
+(`answer` is the zero-based index into `options`.) Check the last 7 published `close.case` topics/profiles (decrypt those calendar files) and pick something different.
+
+1. Pick a `funFact` (surprising world fact) and `historyTidbit` (general world history, not tied to today's date) — check them against MEMORY.md's used-lists if that file is available in this checkout; otherwise just use good judgment to avoid obvious repeats from recent editions. Pick a `word` at a middle-difficulty tier (a well-read adult would recognize it, but it's a step up from everyday words — think ubiquitous, precarious, esoteric, tenuous, discerning — not painfully obscure). Include ipa/respell/pos/definition/example. Write the `case` per the schema above.
+2. Decrypt today's already-published calendar file if it exists (from the separate `calendar-refresh.yml` workflow), merge in `close: {funFact, historyTidbit, word, case}` leaving every other field (`today`, `radar`, `weather`, `urgent`, `chill`) untouched, re-encrypt, and write to `data/calendar/$(date -u +%F).json.enc`. If today's calendar file doesn't exist yet, create a minimal one: `{"today":[],"radar":[],"weather":"","hourly":[],"urgent":[],"chill":[],"close":{...}}`.
 3. Run `CAL_PASS_FILE=/tmp/cal_pass.txt bash scripts/add_word.sh /tmp/word.json` (schema: `{"term":...,"ipa":...,"respell":...,"pos":...,"definition":...,"example":...,"date":"YYYY-MM-DD"}`) to append to the word bank. With no `GH_TOKEN_FILE` set it edits and commits `data/words.json.enc` in place in this checkout (no clone, no push of its own) — the push happens with everything else in Step 4.
 
 ## Step 4: finish

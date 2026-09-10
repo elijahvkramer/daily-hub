@@ -43,12 +43,24 @@ Write `/tmp/market.json` in this exact schema (field names must match — the si
   "bottomLine": "The synthesis paragraph.",
   "talkingPoints": [ {"lead":"Bold, plain-English one-liner a client would understand.","body":"One sentence on what it means for a conservative, protection-minded investor and whether anything changes."}, "x3" ],
   "ifAsked": {"q":"the question a client is most likely to call about today, in their words","a":"a 2-sentence answer Eli could say out loud"},
+  "outlook": [ {"topic":"Stocks","stance":"Constructive","tone":"up","headline":"One sentence on where stocks stand.","explain":"2-4 sentences you could say out loud to a client.","source":"Institution (Named strategist) · the key figure"}, "x7-9" ],
   "rates": [ {"label":"10Y Treasury","value":"4.11%","note":"−3 bp"}, {"label":"2Y Treasury","value":"3.62%","note":""}, {"label":"Fed funds","value":"4.00–4.25%","note":"next FOMC Sep 17"}, {"label":"30y mortgage","value":"6.02%","note":"Freddie Mac"}, {"label":"3-mo T-bill","value":"4.18%","note":"cash-yield proxy"}, {"label":"1y Treasury","value":"3.95%","note":""} ],
   "sources": "Comma-separated source names · figures as reported near the close"
 }
 ```
 
-`talkingPoints` / `ifAsked` / `rates` feed the **Morning Desk** card on the site's Home tab (Eli is a financial advisor; these are what he says to clients that day). Talking points are NOT a restatement of the drivers: they are written for a client, not a trader — no jargon, one idea each, and explicit about whether the reader should do anything (usually not). `rates` is exactly 6 entries in the order shown; use the latest available prints from the searches you already ran (one extra search at most). If a value can't be confirmed, omit that entry rather than guess.
+**`outlook` (required)** feeds the Home tab's **Running Outlook** — the card Eli looks at before a client call. 7-9 entries, each `{"topic","stance","tone","headline","explain","source"}`:
+
+- `topic`: rotate through these, always including Stocks, Bonds, Cash, The Fed and Mortgage rates, then 2-4 others: Crypto, Gold, The dollar, Housing, Inflation, International stocks, Corporate credit, Municipal bonds, Oil & energy, Small caps, Private credit, AI concentration, Labor market.
+- `stance`: 2-4 words, plain English, no ticker-speak ("Constructive", "Own it for income", "Still paid, but on a clock", "On hold").
+- `tone`: `up` | `flat` | `warn` | `down` — drives the dot color only.
+- `headline`: ONE sentence on where that asset class actually stands right now.
+- `explain`: 2-4 sentences written to be **said out loud to a client**, second person ("Tell them…", "The honest answer is…"). This is the point of the card: not what happened, but how to explain it and what, if anything, it changes for someone's plan. No jargon, no ticker symbols, no advice to trade.
+- `source`: the institution and the named strategist behind the view, plus the key figure — e.g. "Goldman Sachs Research (Ben Snider) · S&P 500 year-end target 8000". **Source this from the top of the industry** — Goldman Sachs Research, Morgan Stanley, J.P. Morgan Global Research, BlackRock, Vanguard, Schwab (Liz Ann Sonders, Kathy Jones), PIMCO, Fed speeches and the SEP, Freddie Mac PMMS, Treasury. Never an anonymous blog, a promotional site, or a price-prediction page. If a view can't be attributed to a named institution, leave that topic out.
+
+Carry a topic's view forward between days when nothing changed — this is a *running* outlook, not a daily reset — but re-check every figure you print and update the `source` date.
+
+`talkingPoints` / `ifAsked` / `rates` feed the **Morning Desk** card on the site's Home tab (Eli is a financial advisor; these are what he says to clients that day). Talking points are NOT a restatement of the drivers: they are written for a client, not a trader — no jargon, one idea each, and explicit about whether the reader should do anything (usually not). `rates` is only for what the server can't fetch itself — `scripts/refresh_rates.py` already publishes Treasury yields (3-mo through 30-yr) and Freddie Mac mortgage rates every half hour, and those win. Add ONLY the ones it can't: the Fed funds target range, a money-market/cash yield, and (when you have them) investment-grade and high-yield spreads or a 10-yr AAA muni yield. Mark each of those `"manual": true` so the live job carries them forward. use the latest available prints from the searches you already ran (one extra search at most). If a value can't be confirmed, omit that entry rather than guess.
 
 `holdingsNews`: 0-4 items, ONLY real notable news on Eli's holdings today — empty array if nothing notable, never padded. `pct` fields are numbers, negative for declines. Validate: `python3 -c "import json;json.load(open('/tmp/market.json'))"`.
 

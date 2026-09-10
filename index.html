@@ -58,7 +58,7 @@
 
 <!-- installable app (Add to Home Screen on iOS) -->
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#16181D">
+<meta name="theme-color" content="#F4F6FB">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Daily Hub">
@@ -374,7 +374,10 @@
   .wx-content{position:relative;z-index:1}
   .wx-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
   .wx-now{display:flex;align-items:center;gap:18px}
-  .wx-glyph{font-size:50px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+  .wx-glyph{line-height:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.22))}
+  .wx-glyph .wxi{display:block}
+  .wx-hours span i{display:block;font-style:normal;font-size:8.5px;font-weight:900;opacity:.9;margin-top:-3px;text-align:center}
+  .wx-hours span .wxi{display:block;margin:0 auto}
   .wx-temp{font-size:54px;font-weight:900;line-height:.92;letter-spacing:-.02em}
   .wx-cond{font-size:14.5px;font-weight:700;margin-top:3px}
   .wx-loc{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;margin-top:7px;opacity:.85}
@@ -386,7 +389,7 @@
   .wx-hero.hovering .wx-hour-badge{opacity:1}
   .wx-chart-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;margin:18px 0 2px;opacity:.75}
   .wx-chart{position:relative}
-  .wx-hours{position:relative;height:22px;margin-bottom:1px}
+  .wx-hours{position:relative;height:34px;margin-bottom:1px}
   .wx-hours span{position:absolute;transform:translateX(-50%);font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
   .wx-sunset-glyph{font-size:15px!important;cursor:default;z-index:2}
   .wx-sunset-ln{stroke:#F0B94E;stroke-width:1;stroke-dasharray:3 3;opacity:.7}
@@ -413,7 +416,11 @@
   /* to-dos beside today's schedule — the list gets the extra width because its
      rows carry controls (due chip, note, checklist, delete); the agenda is
      mostly short time+title lines and reads fine narrower */
-  .todo-today-row{display:grid;grid-template-columns:1.45fr 1fr;gap:20px;margin-top:14px;align-items:start}
+  .home-row{display:grid;gap:14px;margin-top:12px;align-items:start}
+  .home-row.snap-wx{grid-template-columns:1.75fr 1fr}
+  @media(max-width:900px){.home-row.snap-wx{grid-template-columns:1fr}}
+  #panel-calendar > .bento-card,#panel-calendar > .todo-today-row,#panel-calendar > #todayTriple,#panel-calendar > .home-row{margin-top:12px}
+  .todo-today-row{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-top:12px;align-items:start}
   .todo-today-row > div{min-width:0}
   @media(max-width:900px){.todo-today-row{grid-template-columns:1fr;gap:14px}}
 
@@ -583,7 +590,7 @@
      than separate rounded tiles), Sun–Sat headers, date number top-left with
      today in a filled disc, and compact one-line events. */
   .cal-card{position:relative}
-  .cal-full{margin-top:14px}
+  .cal-full{margin-top:0}
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .cal-head .cm{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .cal-head .cl{font-size:12px;color:var(--muted);font-weight:700}
@@ -1235,16 +1242,33 @@
   .wxp-hours{display:flex;gap:4px;overflow-x:auto;margin:22px -8px 0;padding:14px 8px 4px;border-top:1px solid rgba(255,255,255,.28);scrollbar-width:none}
   .wxp-hours::-webkit-scrollbar{display:none}
   .wxh{flex:0 0 58px;text-align:center;font-weight:700}
-  .wxh-t{font-size:12px;opacity:.8} .wxh-i{font-size:22px;margin:6px 0 2px} .wxh-p{font-size:11px;opacity:.9;height:14px} .wxh-v{font-size:17px;font-weight:800}
+  .wxp-hours .wxi{filter:drop-shadow(0 1px 2px rgba(20,35,60,.28))}
+  .wxh-t{font-size:12px;opacity:.85} .wxh-i{margin:5px 0 1px;line-height:0} .wxh-p{font-size:10.5px;font-weight:900;opacity:.95;height:14px} .wxh-v{font-size:17px;font-weight:800}
   .wxp-card{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:20px;padding:16px 18px;margin-top:14px;box-shadow:var(--shadow)}
   .wxp-k{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .wxd{display:grid;grid-template-columns:64px 64px 40px 1fr 40px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hairline);font-size:15px;font-weight:700}
+  .wxd{display:grid;grid-template-columns:62px 70px 38px 1fr 38px 16px;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid var(--hairline);font-size:15px;font-weight:700}
   .wxd:last-child{border-bottom:none}
-  .wxd-i{display:flex;align-items:center;gap:6px;font-size:20px} .wxd-i span{font-size:11px;color:var(--gold-dark);font-weight:900}
+  .wxd-i{display:flex;align-items:center;gap:5px} .wxd-i span{font-size:11px;color:var(--rain-ink,#2E86D8);font-weight:900}
   .wxd-lo{color:var(--muted);text-align:right} .wxd-hi{text-align:right}
   .wxd-bar{position:relative;height:6px;border-radius:999px;background:color-mix(in srgb, var(--ink) 10%, transparent)}
   .wxd-fill{position:absolute;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#5AA9FF,#F5C451,#FF7B4A)}
   .wxd-now{position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--ink);transform:translateX(-50%)}
+  .wxp-hint{float:right;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:none;opacity:.7}
+  .wxd{cursor:pointer;border-radius:10px;transition:background .15s}
+  .wxd:hover{background:color-mix(in srgb, var(--ink) 4%, transparent)}
+  .wxd.on{background:color-mix(in srgb, var(--accent, var(--gold)) 9%, transparent)}
+  .wxd-open{font-size:13px;color:var(--muted);transition:transform .2s;text-align:right}
+  .wxd.on .wxd-open{transform:rotate(180deg)}
+  .wxd-detail{display:none} .wxd-detail.on{display:block;padding:2px 0 12px;border-bottom:1px solid var(--hairline);animation:fadein .25s ease}
+  .wxd-hours{border-top:none !important;margin:0 -4px !important;padding:6px 4px 2px !important}
+  .wxd-hours .wxh-t,.wxd-hours .wxh-p{color:var(--muted)} .wxd-hours .wxh-v{color:var(--ink)}
+  .wxd-nohours{font-size:12.5px;color:var(--muted);padding:8px 2px}
+  .wxd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 12px;margin-top:10px}
+  .wxd-stats div{font-size:11px;color:var(--muted)} .wxd-stats b{display:block;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
+  @media(max-width:600px){.wxd-stats{grid-template-columns:repeat(2,1fr)}}
+  .wxh-p.dim{opacity:0}
+  .wxd-i span.off{visibility:hidden}
+  .wxi{display:inline-block;vertical-align:middle}
   .wxp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
   @media(max-width:720px){.wxp-grid{grid-template-columns:repeat(2,1fr)}.wxp-temp{font-size:72px}}
   .wxt{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 15px;box-shadow:var(--shadow);min-height:104px}
@@ -1345,6 +1369,127 @@
   .now-f span{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .now-f input{font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--hairline);border-radius:10px;background:var(--paper);color:var(--ink);width:100%}
   .now-save{background:var(--gold);border-color:var(--gold);color:#fff}
+  /* ---------- Running Outlook + Rate board (Home) ---------- */
+  #deskCard{position:relative;overflow:hidden}
+  #deskCard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--gold),color-mix(in srgb, var(--gold) 15%, transparent))}
+  #deskCard .bc-label{display:flex;align-items:center;gap:10px}
+  .desk-mood{font-size:10.5px;font-weight:900;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
+  .desk-mood.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)} .desk-mood.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
+  .desk-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:26px;margin-top:10px;align-items:start}
+  @media(max-width:900px){.desk-grid{grid-template-columns:1fr;gap:18px}}
+  /* outlook rows */
+  .ol-row{display:grid;grid-template-columns:8px auto auto 1fr 14px;align-items:baseline;gap:10px;width:100%;text-align:left;
+          appearance:none;background:none;border:none;border-bottom:1px solid var(--hairline);padding:10px 2px;font:inherit;cursor:pointer}
+  .ol-row:last-of-type{border-bottom:none}
+  .ol-row:hover .ol-head{color:var(--ink)}
+  .ol-dot{width:8px;height:8px;border-radius:50%;align-self:center}
+  .ol-topic{font-size:14px;font-weight:900;letter-spacing:-.01em;white-space:nowrap}
+  .ol-stance{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;
+             border:1px solid var(--hairline);border-radius:999px;padding:2px 7px;align-self:center}
+  .ol-head{font-size:13.5px;line-height:1.45;color:var(--muted);min-width:0}
+  .ol-chev{font-size:12px;color:var(--muted);align-self:center;transition:transform .2s}
+  .ol-row.on .ol-chev{transform:rotate(180deg)} .ol-row.on .ol-topic{color:var(--gold-dark)}
+  .ol-detail{display:none} .ol-detail.on{display:block;padding:2px 2px 14px 28px;animation:fadein .22s ease}
+  .ol-detail p{font-size:14px;line-height:1.6;margin:0}
+  .ol-ek{display:block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:4px}
+  .ol-src{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4}
+  @media(max-width:640px){
+    .ol-row{grid-template-columns:8px auto 1fr 14px;row-gap:2px}
+    .ol-stance{grid-column:2;grid-row:2} .ol-head{grid-column:3/5;grid-row:2}
+    .ol-detail.on{padding-left:18px}
+  }
+  /* rate board: one shared scale, dots line up so the curve reads vertically */
+  .rb{border-left:1px solid var(--hairline);padding-left:20px}
+  @media(max-width:900px){.rb{border-left:none;padding-left:0;border-top:1px solid var(--hairline);padding-top:14px}}
+  .rb-k{font-size:10.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .rb-k span{font-size:9.5px;letter-spacing:.04em;text-transform:none;opacity:.75;font-weight:700}
+  .rb-g{font-size:9.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin:12px 0 2px}
+  .rb-row{display:grid;grid-template-columns:94px 1fr 72px;align-items:center;gap:8px;padding:3px 0}
+  .rb-l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rb-track{position:relative;height:16px}
+  .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
+  .rb-dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);
+          box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent)}
+  .rb-v{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .rb-v i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rb-axisrow{padding-bottom:2px} .rb-axisrow .rb-track{height:13px}
+  .rb-tick{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+  .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
+  .desk-foot a{color:var(--gold-dark);font-weight:900;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer}
+  /* ---------- compact weather: the hourly chart is behind a tap ---------- */
+  .wx-hero.wx-compact{padding:18px 20px 16px;cursor:pointer;height:100%}
+  #wxSlot{height:100%} #wxSlot .wx-hero{margin-top:0}
+  .wx-hero.wx-compact .wx-chart-lbl,.wx-hero.wx-compact .wx-chart{display:none}
+  .wx-hero.wx-compact .wx-hint{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;opacity:.7;margin-top:12px}
+  .wx-hero:not(.wx-compact) .wx-hint{display:none}
+  /* =====================================================================
+     GLASS — the look Eli picked (Sep 2026). Frosted panels over a soft
+     color mesh, pill navigation, Inter, 20px radii. Gated on html.glass so
+     the classic newspaper look survives as a switch in the theme panel.
+     The four "themes" are four meshes + accents under this one look.
+     ===================================================================== */
+  /* Every Glass palette declares the COMPLETE token set. It has to: the classic
+     :root[data-theme="x"] blocks above declare the same tokens at (0,2,0), so any token a
+     glass theme block leaves out silently falls back to the classic newspaper value -- that
+     is exactly why Sunset came out with an opaque cream card and a dark-brown top bar under
+     a light-text layout (Eli, Sep 2026). Keep these blocks exhaustive. */
+  html.glass{
+    --accent:#0A84FF; --accent-dark:#0060C9; --accent-soft:#DCEBFF;
+    --gold:var(--accent); --gold-dark:var(--accent-dark); --gold-soft:var(--accent-soft);
+    --ink:#0F1B2D; --ink2:#1B2A3F; --cream:#F4F6FB; --muted:#5B6B80;
+    --paper:#F4F6FB; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.62);
+    --hairline:rgba(15,27,45,.14); --glass-edge:rgba(255,255,255,.95);
+    --up:#12855C; --down:#D2453C;
+    --shadow:0 1px 2px rgba(20,40,80,.04),0 10px 34px -10px rgba(20,40,80,.14);
+    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:#5B6B80;
+    --mesh:radial-gradient(55% 45% at 8% 0%,#CFE3FF 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#FFD9C7 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#E6DCFF 0,transparent 62%),#F4F6FB;
+    --glass-blur:blur(18px) saturate(1.35);
+  }
+  html.glass[data-theme="arctic"]{                                   /* Mint */
+    --accent:#0E9F6E; --accent-dark:#08704F; --accent-soft:#D6F5E8;
+    --ink:#0F2A22; --ink2:#173B30; --cream:#F2F8F5; --muted:#55736A;
+    --paper:#F2F8F5; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.64);
+    --hairline:rgba(15,42,34,.14); --glass-edge:rgba(255,255,255,.95);
+    --up:#0E8F62; --down:#CE4A3E;
+    --shadow:0 1px 2px rgba(10,50,38,.05),0 10px 34px -10px rgba(10,50,38,.16);
+    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:#55736A;
+    --mesh:radial-gradient(55% 45% at 10% 0%,#C9F2E3 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFF1BF 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#CFEBFF 0,transparent 62%),#F2F8F5;
+  }
+  html.glass[data-theme="sunset"]{                                   /* Sunset */
+    --accent:#E0532F; --accent-dark:#B23A18; --accent-soft:#FFE3D8;
+    --ink:#2E1A14; --ink2:#42251C; --cream:#FCF4F0; --muted:#7C6055;
+    --paper:#FCF4F0; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.64);
+    --hairline:rgba(46,26,20,.15); --glass-edge:rgba(255,255,255,.92);
+    --up:#2F8A62; --down:#C63A26;
+    --shadow:0 1px 2px rgba(60,30,20,.05),0 10px 34px -10px rgba(60,30,20,.18);
+    --topbar-bg:rgba(255,255,255,.52); --topbar-muted:#7C6055;
+    --mesh:radial-gradient(55% 45% at 10% 0%,#FFD5C2 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFC7E0 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#E9D8FF 0,transparent 62%),#FCF4F0;
+  }
+  html.glass[data-theme="night"]{                                    /* Midnight */
+    --accent:#5AA9FF; --accent-dark:#9CCBFF; --accent-soft:#1E3A5F;
+    --ink:#EEF2F8; --ink2:#161B26; --cream:#EEF2F8; --muted:#96A5BB;
+    --paper:#0E1118; --panel:rgba(28,32,44,.5); --card:rgba(30,35,48,.66);
+    --hairline:rgba(255,255,255,.17); --glass-edge:rgba(255,255,255,.13);
+    --up:#4ADE9A; --down:#FF7B72;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 36px -10px rgba(0,0,0,.6);
+    --topbar-bg:rgba(14,17,24,.62); --topbar-muted:#96A5BB;
+    --mesh:radial-gradient(55% 45% at 8% 0%,#1E3A6E 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#4A2A55 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#12384A 0,transparent 62%),#0E1118;
+  }
+  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif}
+  /* ---------- Now strip (Home): the handful of things that matter this week ---------- */
+  .now-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-top:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .now-strip::-webkit-scrollbar{display:none}
+  .now-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);white-space:nowrap;font-family:inherit}
+  .now-chip b{font-weight:900} .now-chip .nc-k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .now-chip.hot{background:var(--down);border-color:var(--down);color:#fff} .now-chip.hot .nc-k{color:rgba(255,255,255,.8)}
+  .now-chip.acc{border-color:color-mix(in srgb, var(--gold) 55%, transparent)} .now-chip.acc .nc-k{color:var(--gold-dark)}
+  html.glass .now-chip{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .now-chip .nc-x{margin-left:2px;font-size:15px;line-height:1;opacity:.45;padding:0 2px} .now-chip .nc-x:hover{opacity:1}
+  .now-chip.now-add{color:var(--gold-dark);border-style:dashed;font-weight:900}
+  .now-f{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;margin-top:10px;font-size:13px}
+  .now-f span{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .now-f input{font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--hairline);border-radius:10px;background:var(--paper);color:var(--ink);width:100%}
+  .now-save{background:var(--gold);border-color:var(--gold);color:#fff}
   /* ---------- Morning Desk (Home) ---------- */
   #deskCard{position:relative;overflow:hidden}
   #deskCard::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--gold),color-mix(in srgb, var(--gold) 20%, transparent));opacity:.9}
@@ -1375,7 +1520,8 @@
   .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
   .desk-foot a{color:var(--gold-dark);font-weight:900;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer}
   /* ---------- compact weather: the hourly chart is behind a tap ---------- */
-  .wx-hero.wx-compact{padding:18px 22px 16px;cursor:pointer}
+  .wx-hero.wx-compact{padding:18px 20px 16px;cursor:pointer;height:100%}
+  #wxSlot{height:100%} #wxSlot .wx-hero{margin-top:0}
   .wx-hero.wx-compact .wx-chart-lbl,.wx-hero.wx-compact .wx-chart{display:none}
   .wx-hero.wx-compact .wx-hint{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;opacity:.7;margin-top:12px}
   .wx-hero:not(.wx-compact) .wx-hint{display:none}
@@ -1410,7 +1556,7 @@
     --topbar-bg:rgba(14,17,24,.6); --topbar-muted:#95A3B8; --up:#4ADE9A; --down:#FF7B72;
     --mesh:radial-gradient(55% 45% at 8% 0%,#1E3A6E 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#4A2A55 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#12384A 0,transparent 62%),#0E1118;
   }
-  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--paper)}
+  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--paper);color:var(--ink)}
   html.glass body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--mesh);background-size:cover}
   html.glass ::selection{background:var(--accent);color:#fff}
   html.glass .card,html.glass .chart-card,html.glass .bento-card,html.glass .agenda-card,html.glass .todos,html.glass .event,html.glass .qcard,
@@ -1448,8 +1594,10 @@
   html.glass .tab:hover{color:var(--ink)}
   html.glass .tab.active{color:var(--ink);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   html.glass[data-theme="night"] .tab.active{background:rgba(255,255,255,.14)}
-  html.glass .date-select,html.glass .lock-btn{background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.85);color:var(--ink);border-radius:999px;letter-spacing:0;text-transform:none;font-weight:600}
-  html.glass[data-theme="night"] .date-select,html.glass[data-theme="night"] .lock-btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+  /* these were rgba(255,255,255,.85) borders on a near-white panel -- invisible (Eli, Sep 2026) */
+  html.glass .date-select,html.glass .lock-btn{background:rgba(255,255,255,.5);border:1px solid var(--hairline);color:var(--ink);border-radius:999px;letter-spacing:0;text-transform:none;font-weight:600}
+  html.glass .lock-btn:hover,html.glass .date-select:hover{border-color:var(--accent);color:var(--accent-dark)}
+  html.glass[data-theme="night"] .date-select,html.glass[data-theme="night"] .lock-btn{background:rgba(255,255,255,.07)}
   html.glass .theme-panel{background:var(--card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:16px;color:var(--ink)}
   html.glass .theme-swatch,html.glass .theme-shuffle-row,html.glass .theme-panel-title{color:var(--ink)} html.glass .theme-shuffle-note{color:var(--muted)}
   html.glass .theme-swatch.active{background:rgba(255,255,255,.7)} html.glass[data-theme="night"] .theme-swatch.active{background:rgba(255,255,255,.1)}
@@ -2345,6 +2493,36 @@ async function decryptEntry(payload, pass){
   return JSON.parse(new TextDecoder().decode(pt));
 }
 
+/* ---------- weather icons ----------
+   Hand-drawn SF-Symbols-style set: filled sun/moon, a soft cloud with a visible rim so it
+   reads on both a blue sky hero and a white list row, blue rain, pale snow, amber bolt.
+   Replaces the emoji glyphs, which rendered as flat black-and-white on most surfaces. */
+const WX_C = { sun:"#FFB300", sun2:"#FFD75E", moon:"#F3F7FD", moon2:"#8AA0BE", cloud:"#EAF0F7", rim:"#A9BACE", rain:"#3FA0F0", snow:"#CFE8FF", bolt:"#FFC400", fog:"#C4CFDC" };
+function wxSun(cx, cy, r){
+  let rays = "";
+  for(let i=0;i<8;i++){ const a = i*Math.PI/4, x1 = cx+Math.cos(a)*(r+2.4), y1 = cy+Math.sin(a)*(r+2.4), x2 = cx+Math.cos(a)*(r+5.4), y2 = cy+Math.sin(a)*(r+5.4);
+    rays += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${WX_C.sun}" stroke-width="2.1" stroke-linecap="round"/>`; }
+  return `${rays}<circle cx="${cx}" cy="${cy}" r="${r}" fill="${WX_C.sun2}" stroke="${WX_C.sun}" stroke-width="1.6"/>`;
+}
+const wxMoon = (cx, cy, r) => `<path d="M ${cx+r*.35} ${cy-r} a ${r} ${r} 0 1 0 ${r*.72} ${r*1.24} a ${r*.82} ${r*.82} 0 1 1 ${-r*.72} ${-r*1.24} z" fill="${WX_C.moon}" stroke="${WX_C.moon2}" stroke-width="1.7" stroke-linejoin="round"/>`;
+const wxCloud = (x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})"><path d="M7 20 a6 6 0 0 1 .9-11.9 A8.2 8.2 0 0 1 23.4 8.6 A5.8 5.8 0 0 1 24 20 z" fill="${WX_C.cloud}" stroke="${WX_C.rim}" stroke-width="1.5" stroke-linejoin="round"/></g>`;
+const wxDrops = (xs, y, col) => xs.map((x,i) => `<line x1="${x}" y1="${y+(i%2)*1.5}" x2="${x-1.8}" y2="${y+5.5+(i%2)*1.5}" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`).join("");
+const wxFlakes = xs => xs.map((x,i) => `<circle cx="${x}" cy="${26+(i%2)*3}" r="1.7" fill="${WX_C.snow}" stroke="${WX_C.rim}" stroke-width=".7"/>`).join("");
+function wxIcon(cond, day, size){
+  const c = (cond||"").toLowerCase(); const sz = size || 26;
+  const wrap = inner => `<svg class="wxi" viewBox="0 0 32 32" width="${sz}" height="${sz}" aria-hidden="true">${inner}</svg>`;
+  const night = day === false;
+  if(c.includes("thunder")) return wrap(wxCloud(2,1,1) + `<path d="M17 21 l-4 6 h3.2 l-1.6 5 6-7.4 h-3.4 l1.8-3.6 z" fill="${WX_C.bolt}" stroke="${WX_C.sun}" stroke-width=".8" stroke-linejoin="round"/>`);
+  if(c.includes("snow")) return wrap(wxCloud(2,0,1) + wxFlakes([10,16,22]));
+  if(c.includes("shower")) return wrap((night ? wxMoon(23,7,5.5) : wxSun(23,7,5)) + wxCloud(0,4,.92) + wxDrops([11,17], 26, WX_C.rain));
+  if(c.includes("rain")||c.includes("drizzle")) return wrap(wxCloud(2,0,1) + wxDrops([10,16,22], 24, WX_C.rain));
+  if(c.includes("fog")||c.includes("haze")) return wrap(wxCloud(2,-2,.95) + [0,1,2].map(i => `<line x1="${6+i*1.5}" y1="${23+i*3}" x2="${26-i*1.5}" y2="${23+i*3}" stroke="${WX_C.fog}" stroke-width="2.2" stroke-linecap="round"/>`).join(""));
+  if(c.includes("overcast")) return wrap(wxCloud(-1,3,.8) + wxCloud(4,0,1.05));
+  if(c.includes("partly")||c.includes("mostly cloud")) return wrap((night ? wxMoon(23,8,5.5) : wxSun(22,8,5)) + wxCloud(0,5,.95));
+  if(c.includes("cloud")) return wrap(wxCloud(2,2,1.05));
+  if(c.includes("mostly")) return wrap(night ? wxMoon(16,15,8) : wxSun(16,16,7));   // mostly sunny / mostly clear
+  return wrap(night ? wxMoon(16,15,8.5) : wxSun(16,16,7.5));                        // sunny / clear
+}
 function wxGlyph(cond){
   const c = (cond||"").toLowerCase();
   if(c.includes("thunder")) return "⛈";
@@ -2425,7 +2603,7 @@ async function fetchWeather(){
   const todayStr = todayCT();
   const nowHour = new Date().toLocaleString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit"}).slice(0,2);
   const nowH = parseInt(nowHour,10) % 24;
-  const hourly = [], hourly48 = [];
+  const hourly = [], hourly48 = [], hoursByDate = {};
   times.forEach((t,i) => {
     const date = t.slice(0,10), hh = parseInt(t.slice(11,13),10);
     if(date < todayStr || (date === todayStr && hh < nowH)) return;   // start at the current hour
@@ -2440,7 +2618,8 @@ async function fetchWeather(){
       wind,
       feels: j.hourly.apparent_temperature ? Math.round(j.hourly.apparent_temperature[i]) : feelsLike(temp, hum, wind) };
     if(date === todayStr) hourly.push(pt);          // the Home strip: the rest of today
-    if(hourly48.length < 48) hourly48.push(pt);     // the Weather page: next two days
+    if(hourly48.length < 48) hourly48.push(pt);     // the Weather page hero: next two days
+    (hoursByDate[date] = hoursByDate[date] || []).push(pt);   // every day's hourly detail
   });
   const cur = j.current || {};
   const d0 = j.daily || {};
@@ -2466,7 +2645,7 @@ async function fetchWeather(){
     rainMax: (d0.precipitation_probability_max||[])[0] ?? null,
     sunset: parseSunTime((d0.sunset||[])[0]),
     sunrise: parseSunTime((d0.sunrise||[])[0]),
-    hourly, hourly48, daily,
+    hourly, hourly48, daily, hoursByDate,
     feelsExact: cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : null,
     windDir: cur.wind_direction_10m, pressure: cur.pressure_msl != null ? Math.round(cur.pressure_msl) : null,
     uv: cur.uv_index != null ? Math.round(cur.uv_index) : null, cloud: cur.cloud_cover, precipNow: cur.precipitation
@@ -2488,12 +2667,18 @@ async function renderWeatherPanel(){
   const allLo = Math.min(...days.map(d => d.lo)), allHi = Math.max(...days.map(d => d.hi));
   const span = Math.max(1, allHi - allLo);
   const dayName = (d, i) => i === 0 ? "Today" : new Date(d + "T12:00:00").toLocaleDateString("en-US", {weekday:"short"});
-  const hourCard = (h, i) => `<div class="wxh"><div class="wxh-t">${i === 0 ? "Now" : fmtHour(h.t)}</div><div class="wxh-i">${wxGlyph(h.cond)}</div>${h.precip >= 20 ? `<div class="wxh-p">${h.precip}%</div>` : `<div class="wxh-p">&nbsp;</div>`}<div class="wxh-v">${h.temp}°</div></div>`;
+  const hourCard = (h, i, firstIsNow) => `<div class="wxh"><div class="wxh-t">${i === 0 && firstIsNow !== false ? "Now" : fmtHour(h.t)}</div><div class="wxh-i">${wxIcon(h.cond, h.day, 26)}</div><div class="wxh-p${(h.precip ?? 0) >= 10 ? "" : " dim"}">${(h.precip ?? 0) >= 10 ? h.precip + "%" : "&nbsp;"}</div><div class="wxh-v">${h.temp}°</div></div>`;
   const dayRow = (d, i) => {
     const l = (d.lo - allLo) / span * 100, r = (d.hi - allLo) / span * 100;
     const nowPos = i === 0 && wx.curTemp !== "—" ? Math.max(0, Math.min(100, (wx.curTemp - allLo) / span * 100)) : null;
-    return `<div class="wxd"><div class="wxd-n">${dayName(d.date, i)}</div><div class="wxd-i">${wxGlyph(d.cond)}${d.precip >= 20 ? `<span>${d.precip}%</span>` : ""}</div>
-      <div class="wxd-lo">${d.lo}°</div><div class="wxd-bar"><div class="wxd-fill" style="left:${l.toFixed(1)}%;width:${Math.max(4, r - l).toFixed(1)}%"></div>${nowPos != null ? `<div class="wxd-now" style="left:${nowPos.toFixed(1)}%"></div>` : ""}</div><div class="wxd-hi">${d.hi}°</div></div>`;
+    return `<div class="wxd" data-day="${d.date}" role="button" tabindex="0">
+      <div class="wxd-n">${dayName(d.date, i)}</div>
+      <div class="wxd-i">${wxIcon(d.cond, true, 26)}<span class="${(d.precip ?? 0) >= 10 ? "" : "off"}">${d.precip ?? 0}%</span></div>
+      <div class="wxd-lo">${d.lo}°</div>
+      <div class="wxd-bar"><div class="wxd-fill" style="left:${l.toFixed(1)}%;width:${Math.max(4, r - l).toFixed(1)}%"></div>${nowPos != null ? `<div class="wxd-now" style="left:${nowPos.toFixed(1)}%"></div>` : ""}</div>
+      <div class="wxd-hi">${d.hi}°</div>
+      <div class="wxd-open" aria-hidden="true">⌄</div>
+    </div><div class="wxd-detail" id="wxd-${d.date}"></div>`;
   };
   const tile = (k, v, sub) => `<div class="wxt"><div class="wxt-k">${k}</div><div class="wxt-v">${v}</div>${sub ? `<div class="wxt-s">${sub}</div>` : ""}</div>`;
   const today = days[0] || {};
@@ -2504,9 +2689,9 @@ async function renderWeatherPanel(){
       <div class="wxp-temp">${wx.curTemp}°</div>
       <div class="wxp-cond">${esc(wx.curCond)}</div>
       <div class="wxp-hl">H ${wx.hi}° &nbsp; L ${wx.lo}°</div>
-      <div class="wxp-hours">${(wx.hourly48 || []).slice(0, 26).map(hourCard).join("")}</div>
+      <div class="wxp-hours">${(wx.hourly48 || []).slice(0, 26).map((h,i) => hourCard(h,i)).join("")}</div>
     </div>
-    <div class="wxp-card"><div class="wxp-k">10-day forecast</div><div class="wxp-days">${days.map(dayRow).join("")}</div></div>
+    <div class="wxp-card"><div class="wxp-k">10-day forecast<span class="wxp-hint">tap a day for its hourly detail</span></div><div class="wxp-days">${days.map(dayRow).join("")}</div></div>
     <div class="wxp-grid">
       ${tile("Feels like", (wx.feelsExact ?? wx.feels) + "°", wx.feelsExact != null && wx.feelsExact !== wx.curTemp ? (wx.feelsExact > wx.curTemp ? "Humidity makes it feel warmer" : "Wind makes it feel cooler") : "Similar to the actual temperature")}
       ${tile("UV index", wx.uv ?? "—", uvLabel(wx.uv))}
@@ -2520,6 +2705,24 @@ async function renderWeatherPanel(){
     <p class="sources">Open-Meteo forecast for Franklin, TN · refreshed every 30 minutes.</p>
   </div>`;
   $("#wxBack").addEventListener("click", () => switchTab("calendar"));
+  // expandable day detail: that day's hours plus its own stat line
+  panel.querySelectorAll(".wxd[data-day]").forEach(row => {
+    const open = () => {
+      const date = row.dataset.day, box = $("#wxd-" + date), d0 = days.find(x => x.date === date);
+      if(!box) return;
+      const isOpen = box.classList.contains("on");
+      panel.querySelectorAll(".wxd-detail.on").forEach(b => { b.classList.remove("on"); b.innerHTML = ""; });
+      panel.querySelectorAll(".wxd.on").forEach(r => r.classList.remove("on"));
+      if(isOpen) return;
+      const hrs = (wx.hoursByDate && wx.hoursByDate[date]) || [];
+      const stat = (k, v) => v == null || v === "" ? "" : `<div><span>${k}</span><b>${v}</b></div>`;
+      box.innerHTML = `${hrs.length ? `<div class="wxp-hours wxd-hours">${hrs.map((h,i) => hourCard(h, i, date === todayCT())).join("")}</div>` : `<div class="wxd-nohours">Hour-by-hour detail isn't published this far out.</div>`}
+        <div class="wxd-stats">${stat("High", d0.hi + "°")}${stat("Low", d0.lo + "°")}${stat("Rain", (d0.precip ?? 0) + "%")}${stat("Total", d0.rain != null ? d0.rain.toFixed(2) + " in" : null)}${stat("UV", d0.uv != null ? d0.uv + " · " + uvLabel(d0.uv) : null)}${stat("Wind", d0.windMax != null ? d0.windMax + " mph" : null)}${stat("Sunrise", d0.sunrise ? d0.sunrise.label : null)}${stat("Sunset", d0.sunset ? d0.sunset.label : null)}</div>`;
+      box.classList.add("on"); row.classList.add("on");
+    };
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); open(); } });
+  });
 }
 /* condition → sky gradient + text tone, so the weather card actually looks like the sky.
    Returns {bg, text, sub, glyphShadow}. `day` toggles day/night palettes. */
@@ -2632,7 +2835,7 @@ function buildSparkline(hourly, lineColor, sunset){
   // per-hour weather thumbnails above the line
   const gstep = hourly.length > 12 ? 2 : 1;
   let glyphs = "";
-  hourly.forEach((x,i) => { if(i % gstep !== 0 && i !== hourly.length-1) return; glyphs += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${esc(wxGlyph(x.cond||x.c))}</span>`; });
+  hourly.forEach((x,i) => { if(i % gstep !== 0 && i !== hourly.length-1) return; glyphs += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${wxIcon(x.cond||x.c, x.day, 20)}${(x.precip ?? 0) >= 10 ? `<i>${x.precip}%</i>` : ""}</span>`; });
   // multi-tick time axis
   const nTicks = Math.min(6, hourly.length); let axis = "";
   for(let k=0;k<nTicks;k++){ const i = Math.round(k*(hourly.length-1)/(nTicks-1||1)); axis += `<span style="left:${(X(i)/W*100).toFixed(2)}%">${esc(fmtHour(hourly[i].t ?? hourly[i].h))}</span>`; }
@@ -3633,22 +3836,28 @@ async function fetchNowConfig(){
 function daysUntil(dateStr){
   return Math.round((new Date(dateStr + "T00:00:00") - new Date(todayCT() + "T00:00:00")) / 864e5);
 }
+let nowLastDay = null;
 async function renderNowStrip(d){
   const el = $("#nowStrip"); if(!el) return;
+  if(d) nowLastDay = d; else d = nowLastDay || { today: [] };
   const chips = [];
-  const today = todayCT();
-  // Countdowns live in Firestore (synced; Eli edits them from the + chip). The old
-  // data/now.json.enc list is imported once into an empty store, then ignored.
-  const api = window.__nowApi;
-  let list = api && api.isReady() ? api.getState().chips : null;
-  if(list && !api.getState().seeded){ const cfg = await fetchNowConfig(); if(cfg && cfg.chips && cfg.chips.length){ api.seed(cfg.chips); return; } }
-  if(!list){ const cfg = await fetchNowConfig(); list = (cfg && cfg.chips) || []; }
+  // Countdowns: Firestore when it is reachable (synced across devices), plus a local
+  // override layer that is ALWAYS writable. The override is what makes add/remove work no
+  // matter what -- the first version only offered the buttons when Firestore was ready, and
+  // if that listener never fired (rules, offline) the chips were stuck read-only, which is
+  // exactly what Eli hit: no way to delete the fingerprint deadline.
+  const api = window.__nowApi && window.__nowApi.isReady() ? window.__nowApi : null;
+  const ov = nowOverrides();
+  let base = api ? api.getState().chips : null;
+  if(api && !api.getState().seeded){ const cfg = await fetchNowConfig(); if(cfg && cfg.chips && cfg.chips.length){ api.seed(cfg.chips); return; } }
+  if(!base){ const cfg = await fetchNowConfig(); base = ((cfg && cfg.chips) || []).map(c => ({...c, id: c.id || "file:" + c.label})); }
+  const list = base.filter(c => !ov.hidden.includes(c.id)).concat(ov.added);
   list.slice().sort((a,b) => (a.date||"") < (b.date||"") ? -1 : 1).forEach(c => {
     if(!c.date) return;
     const n = daysUntil(c.date);
     if(n < -1 || n > 365) return;
     const when = n < 0 ? "yesterday" : n === 0 ? "today" : n === 1 ? "tomorrow" : n + "d";
-    chips.push({id: c.id, cls: c.kind === "deadline" ? (n <= 7 ? "hot" : "acc") : "", k: c.kind === "deadline" ? "Due" : "", label: `${esc(c.label)} · ${when}`, go: null, editable: !!(c.id && api)});
+    chips.push({id: c.id, cls: c.kind === "deadline" ? (n <= 7 ? "hot" : "acc") : "", k: c.kind === "deadline" ? "Due" : "", label: `${esc(c.label)} · ${when}`, go: null, editable: true, local: ov.added.some(a => a.id === c.id)});
   });
   // next timed event today (the lead looks like "3pm–4pm CT —")
   const nowMin = (() => { const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"}); return +t.slice(0,2)*60 + +t.slice(3,5); })();
@@ -3659,19 +3868,50 @@ async function renderNowStrip(d){
   if(feat) chips.push({cls:"", k:"Text", label: `${esc(feat.p.name)}${feat.days != null ? " · " + feat.days + "d" : ""}`, go: goFriends});
   else if((fstate.people||[]).length) chips.push({cls:"", k:"Friends", label:"All caught up", go: goFriends});
   el.style.display = "";
-  el.innerHTML = chips.map((c,i) => `<button type="button" class="now-chip ${c.cls}" data-i="${i}">${c.k ? `<span class="nc-k">${c.k}</span>` : ""}<span>${c.label}</span>${c.editable ? `<span class="nc-x" title="Remove">×</span>` : ""}</button>`).join("")
-    + (api ? `<button type="button" class="now-chip now-add" id="nowAdd" title="Add a countdown or deadline">＋ Add</button>` : "");
+  el.innerHTML = chips.map((c,i) => `<button type="button" class="now-chip ${c.cls}" data-i="${i}">${c.k ? `<span class="nc-k">${c.k}</span>` : ""}<span>${c.label}</span><span class="nc-x" title="Remove">×</span></button>`).join("")
+    + `<button type="button" class="now-chip now-add" id="nowAdd" title="Add a countdown or deadline">＋ Add</button>`;
   el.querySelectorAll(".now-chip[data-i]").forEach(b => {
     const c = chips[+b.dataset.i];
     b.addEventListener("click", e => {
-      if(e.target.classList.contains("nc-x")){ if(confirm(`Remove "${c.label.replace(/ · .*$/, "")}"?`)) api.remove(c.id); return; }
+      if(e.target.classList.contains("nc-x")){ nowRemove(c); return; }
       if(c.go) c.go();
     });
-    if(!c.go) b.style.cursor = c.editable ? "pointer" : "default";
+    if(!c.go) b.style.cursor = "pointer";
   });
   const addBtn = $("#nowAdd");
   if(addBtn) addBtn.addEventListener("click", openNowEditor);
 }
+/* Local override layer for the Now strip. Firestore is the shared store when it answers;
+   this is the always-writable one underneath it, so removing and adding chips never depends
+   on the network or on security rules. */
+const NOW_OV_KEY = "dh-now-ov";
+function nowOverrides(){
+  try{ const o = JSON.parse(localStorage.getItem(NOW_OV_KEY) || "null"); if(o && Array.isArray(o.added) && Array.isArray(o.hidden)) return o; }catch(e){}
+  return { added: [], hidden: [] };
+}
+function nowSaveOverrides(o){ try{ localStorage.setItem(NOW_OV_KEY, JSON.stringify(o)); }catch(e){} }
+function nowRemove(chip){
+  const name = chip.label.replace(/ · [^·]*$/, "");
+  if(!confirm(`Remove "${name}"?`)) return;
+  const o = nowOverrides();
+  if(chip.local) o.added = o.added.filter(a => a.id !== chip.id);
+  else{
+    if(!o.hidden.includes(chip.id)) o.hidden.push(chip.id);
+    const api = window.__nowApi;
+    if(api && api.isReady() && !String(chip.id).startsWith("file:")) api.remove(chip.id);   // best effort: also drop it from the shared store
+  }
+  nowSaveOverrides(o);
+  renderNowStrip(nowLastDay);
+}
+function nowAdd(label, date, kind){
+  const api = window.__nowApi;
+  if(api && api.isReady()){ api.add(label, date, kind); return; }
+  const o = nowOverrides();
+  o.added.push({ id: "loc:" + Date.now().toString(36), label, date, kind });
+  nowSaveOverrides(o);
+  renderNowStrip(nowLastDay);
+}
+
 /* little inline editor for a new countdown/deadline chip */
 function openNowEditor(){
   closeStockModal();
@@ -3695,7 +3935,7 @@ function openNowEditor(){
   $("#nowSave").addEventListener("click", () => {
     const label = $("#nowLabel").value.trim(), date = $("#nowDate").value;
     if(!label || !date){ $("#nowLabel").focus(); return; }
-    window.__nowApi.add(label, date, kind); close();
+    nowAdd(label, date, kind); close();
   });
   setTimeout(() => $("#nowLabel").focus(), 50);
 }
@@ -3705,37 +3945,144 @@ function eventStartMinutes(lead){
   return h*60 + (+(m[2]||0));
 }
 
-/* ---------- Morning Desk ----------
-   Reads the latest market brief. New editions carry `talkingPoints`, `ifAsked` and `rates`
-   (see .github/claude-daily-brief-prompt.md); older ones fall back to drivers/stats so the
-   card is never empty on a weekday. */
+/* ---------- Running Outlook + Rate Board ----------
+   The left column is a standing view of where the big asset classes are and, more to the
+   point, how to explain each one to a client in a sentence. It comes from the daily brief
+   (`outlook` on the market file); OUTLOOK_SEED below is the fallback that ships with the
+   page so the card is never empty, and it retires itself the moment a brief publishes its
+   own. The right column plots every rate on ONE shared scale -- the earlier per-row bars
+   scaled each rate against the maximum, which showed nothing; a dot on a common axis makes
+   "cash is here, the 10-year is there, your mortgage is way out there" readable at a glance. */
+const OUTLOOK_SEED = {
+  asOf: "2026-09-10",
+  items: [
+    { topic:"Stocks", stance:"Constructive", tone:"up",
+      headline:"Earnings are carrying this market, not valuation — and the gains are narrow.",
+      explain:"Tell them the market is expensive but for a reason: profits are growing ~24% this year, about half of that from AI infrastructure. The risk isn't the price tag, it's that so few names are doing the work — under a fifth of the index beat it last month. That's an argument for staying diversified, not for getting out.",
+      source:"Goldman Sachs Research (Ben Snider) · S&P 500 year-end target 8000, ~21x forward earnings; Schwab (Sonders/Gordon)" },
+    { topic:"Bonds", stance:"Own them for income", tone:"up",
+      headline:"The 10-year near 4.8% pays you to wait — the income is the part you can count on.",
+      explain:"Yields in the high 4s are doing the work, so nobody has to bet on a rally in bond prices to get a decent return. Short and intermediate maturities are the sweet spot: most of the yield, far less interest-rate risk. If the Street is right that the 10-year drifts toward 4.25% by year-end, price gains are a bonus on top — not the plan.",
+      source:"Morgan Stanley (Vishy Tirupattur, Martin Tobias) · 10-yr forecast ~4.25% year-end; J.P. Morgan (Jay Barry) 4.35% Q4" },
+    { topic:"Cash", stance:"Still paid, but on a clock", tone:"warn",
+      headline:"Cash now pays less than bonds — 3-month bills 3.95%, the 10-year 4.83%.",
+      explain:"This is the line that lands: the curve is upward sloping again, so sitting in cash means accepting the lowest yield on the board and repricing the day the Fed moves. Keep it for the emergency fund and anything needed inside two years, then ladder the rest so the yield is locked in for longer than a money-market statement cycle.",
+      source:"U.S. Treasury par yield curve, Sept 9 2026; Bankrate money-market survey (~4.00% APY); Morgan Stanley sees no 2026 cuts, two in 2027" },
+    { topic:"The Fed", stance:"On hold", tone:"flat",
+      headline:"A new chair, a market testing him, and no cuts priced until 2027.",
+      explain:"Kevin Warsh is new in the chair, and new chairs reliably get an early test of their inflation credibility. Morgan Stanley expects policy on hold through this year with two cuts in 2027, while the market flirts with pricing a hike. Practical translation: don't build a plan that requires rate cuts to work.",
+      source:"Schwab 2026 mid-year outlook; Morgan Stanley (Michael Gapen)" },
+    { topic:"Mortgage rates", stance:"Drifting up", tone:"warn",
+      headline:"30-year fixed at 6.76%, up from 6.35% a year ago.",
+      explain:"Rates are higher than this time last year, and the 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment. Nobody should wait on a refinance that pencils today — you refinance when the math works, not when rates hit a number you picked.",
+      source:"Freddie Mac Primary Mortgage Market Survey · Sept 10, 2026 (30-yr 6.76%, 15-yr 6.09%)" },
+    { topic:"Gold", stance:"Structural bid", tone:"up",
+      headline:"Central banks keep buying; the Street sees $5,000 an ounce.",
+      explain:"This isn't the usual fear trade — it's central banks diversifying reserves year after year, which is a steadier buyer than retail panic. It earns a place as a small diversifier, not a core holding, and it pays no income, so it never replaces bonds.",
+      source:"J.P. Morgan Commodities (Natasha Kaneva) · $5,000/oz Q4 2026 target, $4,753 average" },
+    { topic:"Crypto", stance:"Flow-driven", tone:"flat",
+      headline:"Spot-ETF flows now set the tone week to week.",
+      explain:"The honest answer is that it's an allocation decision, not a forecast: price is being set by fund flows and macro risk appetite, not by anything you can underwrite. If a client wants exposure, size it so a 50% drawdown doesn't change the plan.",
+      source:"IG market analysis (Axel Rudolph) on spot-ETF flows as the dominant driver" },
+    { topic:"The dollar", stance:"Softer", tone:"flat",
+      headline:"Bearish consensus, but solid U.S. growth caps how far it falls.",
+      explain:"A weaker dollar quietly helps anyone holding international funds — that's usually the whole client conversation. It's a reason to keep a real allocation abroad, not a reason to trade currencies.",
+      source:"J.P. Morgan FX (Meera Chandan)" }
+  ]
+};
+const OUTLOOK_TONE = { up:"var(--up)", warn:"#D08A2C", down:"var(--down)", flat:"var(--muted)" };
+/* Rate board groups. Each entry: [label, matcher] -- the matcher finds the published rate by
+   its label so the brief can name things slightly differently without breaking the grouping. */
+const RATE_GROUPS = [
+  { name:"Cash & short", match:/fed funds|t-?bill|money market|mmf|savings|1 ?mo|3 ?mo|6 ?mo|1 ?yr|1-year|cash/i },
+  { name:"Treasuries",   match:/treasury|2 ?yr|5 ?yr|10 ?yr|30 ?yr|2-year|5-year|10-year|30-year/i },
+  { name:"Borrowing & credit", match:/mortgage|corporate|investment grade|high yield|muni|prime|auto|card|heloc/i }
+];
+const rateNum = v => { const m = String(v).match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+function rateBoardHTML(rates){
+  const rows = rates.map(r => ({...r, n: rateNum(r.value)})).filter(r => r.n != null);
+  if(rows.length < 2) return "";
+  const lo = Math.floor(Math.min(...rows.map(r => r.n)) * 2) / 2 - 0.5;
+  const hi = Math.ceil(Math.max(...rows.map(r => r.n)) * 2) / 2 + 0.5;
+  const span = Math.max(0.5, hi - lo);
+  const pos = n => ((n - lo) / span * 100);
+  const ticks = []; for(let t = Math.ceil(lo); t <= hi; t++) ticks.push(t);
+  const grid = ticks.map(t => `<span class="rb-grid" style="left:${pos(t).toFixed(2)}%"></span>`).join("");
+  const used = new Set();
+  let body = "";
+  RATE_GROUPS.forEach(g => {
+    const mine = rows.filter(r => !used.has(r) && g.match.test(r.label));
+    mine.forEach(r => used.add(r));
+    if(!mine.length) return;
+    body += `<div class="rb-g">${esc(g.name)}</div>` + mine.map(r =>
+      `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
+        <div class="rb-track">${grid}<span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%" title="${esc(r.value)}"></span></div>
+        <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("");
+  });
+  const rest = rows.filter(r => !used.has(r));
+  if(rest.length) body += `<div class="rb-g">Other</div>` + rest.map(r =>
+    `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
+      <div class="rb-track">${grid}<span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%"></span></div>
+      <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("");
+  const axis = `<div class="rb-row rb-axisrow"><div class="rb-l"></div><div class="rb-track">${grid}${ticks.map(t => `<span class="rb-tick" style="left:${pos(t).toFixed(2)}%">${t}%</span>`).join("")}</div><div class="rb-v"></div></div>`;
+  return `<div class="rb"><div class="rb-k">Rate board<span>every rate on one scale</span></div>${axis}${body}</div>`;
+}
+/* Live rates published every half hour by scripts/refresh_rates.py; falls back to whatever
+   the morning brief wrote, then to the brief's older `stats` block. */
+async function fetchRates(){
+  if(S.rates !== undefined) return S.rates;
+  try{ S.rates = await decryptEntry(await fetchDataFile("data/rates.json.enc"), PASS); }catch(e){ S.rates = null; }
+  return S.rates;
+}
 async function renderDesk(){
   const card = $("#deskCard"); if(!card) return;
   const grid = card.querySelector(".desk-grid");
   const latest = (S.manifest && S.manifest.market || [])[0];
-  if(!latest){ card.style.display = "none"; return; }
   let md = S.marketBrief;
-  try{ if(!md){ md = await fetchDay("market", latest); S.marketBrief = md; } }catch(e){ card.style.display = "none"; return; }
+  try{ if(!md && latest){ md = await fetchDay("market", latest); S.marketBrief = md; } }catch(e){ md = null; }
   if(!$("#deskCard")) return;
-  const pts = (md.talkingPoints && md.talkingPoints.length ? md.talkingPoints : (md.drivers||[])).slice(0,3);
-  const rates = (md.rates && md.rates.length ? md.rates : (md.stats||[])).slice(0,6);
-  const ask = md.ifAsked;
-  const spx = (md.indices || []).find(i => /s&p/i.test(i.name || "")) || (md.indices || [])[0];
-  const mood = spx && typeof spx.pct === "number" ? `<span class="desk-mood ${cls(spx.pct)}">${esc((spx.name||"").replace(/ composite/i,""))} ${fmtPct(spx.pct)}</span>` : "";
-  const left = `<div class="desk-pts">` + pts.map((x,i) => `<div class="desk-pt"><span class="desk-n">${String(i+1).padStart(2,"0")}</span><div><b>${esc(x.lead)}</b><span>${esc(x.body||"")}</span></div></div>`).join("") + `</div>`
-    + (ask && ask.q ? `<div class="desk-ask"><div class="desk-q">“${esc(ask.q)}”</div><div class="desk-a">${esc(ask.a||"")}</div><div class="desk-ak">If a client asks · what to say</div></div>` : "")
-    + (!pts.length && md.bottomLine ? `<div class="desk-pt"><span class="desk-n">01</span><div><span>${esc(md.bottomLine)}</span></div></div>` : "");
-  // rate ladder: every rate on one 0-to-max scale so the shape of the curve reads at a glance
-  const nums = rates.map(r => parseFloat(String(r.value).replace(/[^\d.\-]/g, ""))).map(v => isNaN(v) ? null : v);
-  const scale = Math.max(6, ...nums.filter(v => v != null).map(v => v * 1.15));
-  const right = rates.length ? `<div class="ladder"><div class="ladder-k">Rate ladder</div>` + rates.map((r,i) => `<div class="rung"><div class="rung-l">${esc(r.label)}</div><div class="rung-bar"><div class="rung-fill" style="width:${nums[i] != null ? Math.max(3, Math.min(100, nums[i]/scale*100)).toFixed(1) : 0}%"></div></div><div class="rung-v">${esc(r.value)}</div>${r.note ? `<div class="rung-n">${esc(r.note)}</div>` : `<div class="rung-n"></div>`}</div>`).join("") + `</div>` : "";
+  md = md || {};
+  const live = await fetchRates();
+  if(!$("#deskCard")) return;
+
+  const ol = (md.outlook && md.outlook.length ? md.outlook : OUTLOOK_SEED.items);
+  const seeded = !(md.outlook && md.outlook.length);
+  const left = `<div class="ol">` + ol.map((x,i) => `
+    <button type="button" class="ol-row" data-i="${i}" aria-expanded="false">
+      <span class="ol-dot" style="background:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}"></span>
+      <span class="ol-topic">${esc(x.topic)}</span>
+      <span class="ol-stance">${esc(x.stance || "")}</span>
+      <span class="ol-head">${esc(x.headline || "")}</span>
+      <span class="ol-chev">⌄</span>
+    </button>
+    <div class="ol-detail" id="ol-${i}">
+      ${x.explain ? `<p><span class="ol-ek">How to explain it</span>${esc(x.explain)}</p>` : ""}
+      ${x.source ? `<div class="ol-src">${esc(x.source)}</div>` : ""}
+    </div>`).join("") + `</div>`;
+
+  const rates = (live && live.rates && live.rates.length) ? live.rates
+    : (md.rates && md.rates.length ? md.rates : (md.stats || []));
+  const right = rateBoardHTML(rates) || `<div class="rb"><div class="rb-k">Rate board</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Rates publish with the next refresh.</p></div>`;
   grid.innerHTML = `<div>${left}</div><div>${right}</div>`;
+
+  const spx = (md.indices || []).find(i => /s&p/i.test(i.name || "")) || (md.indices || [])[0];
   const label = card.querySelector(".bc-label");
-  if(label && !label.querySelector(".desk-mood")) label.insertAdjacentHTML("beforeend", ` ${mood}`);
+  if(label && !label.querySelector(".desk-mood") && spx && typeof spx.pct === "number")
+    label.insertAdjacentHTML("beforeend", ` <span class="desk-mood ${cls(spx.pct)}">${esc((spx.name||"").replace(/ composite/i,""))} ${fmtPct(spx.pct)}</span>`);
+
+  grid.querySelectorAll(".ol-row").forEach(b => b.addEventListener("click", () => {
+    const box = grid.querySelector("#ol-" + b.dataset.i);
+    const open = box.classList.contains("on");
+    grid.querySelectorAll(".ol-detail.on").forEach(x => x.classList.remove("on"));
+    grid.querySelectorAll(".ol-row.on").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-expanded","false"); });
+    if(!open){ box.classList.add("on"); b.classList.add("on"); b.setAttribute("aria-expanded","true"); }
+  }));
+
   let foot = card.querySelector(".desk-foot");
   if(!foot){ foot = document.createElement("div"); foot.className = "desk-foot"; card.appendChild(foot); }
-  foot.innerHTML = `<span>${esc(md.dateline || niceDate(md.date))} · prior session's close</span><a id="deskFull">Full market brief →</a>`;
-  foot.querySelector("#deskFull").addEventListener("click", () => { S.pendingNewsView = "markets"; switchTab("news"); });
+  const stamp = live && live.updated ? "Rates " + relTimeAgo(live.updated) : (md.dateline || (md.date ? niceDate(md.date) : ""));
+  foot.innerHTML = `<span>${esc(stamp)}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>${latest ? `<a id="deskFull">Full market brief →</a>` : ""}`;
+  foot.querySelector("#deskFull")?.addEventListener("click", () => { S.pendingNewsView = "markets"; switchTab("news"); });
 }
 
 function renderCalendarBody(p, d){
@@ -3744,22 +4091,23 @@ function renderCalendarBody(p, d){
   const radarList = d.radar || [];              // up to 14 days out
 
   /* ---- ticker wall (full-width strip, at the very top -- Eli: keep exactly as is) ---- */
-  h += `<div style="margin-top:14px">${buildTickerWallHTML()}</div>`;
+  h += `<div style="margin-top:12px">${buildTickerWallHTML()}</div>`;
 
   /* ---- Now strip: deadlines, countdowns, next event, friend nudge (Sep 2026) ---- */
   h += `<div class="now-strip" id="nowStrip"></div>`;
 
-  /* ---- portfolio snapshot (full-width) ---- */
-  h += `<div style="margin-top:14px">${buildPortfolioSnapshot()}</div>`;
-
-  /* ---- Morning Desk: what to say today + the rate ladder, from the latest market brief ---- */
-  h += `<div class="bento-card" id="deskCard" style="margin-top:14px"><div class="bc-label">Morning Desk</div><div class="desk-grid"><div class="spinner" style="margin:18px auto"></div></div></div>`;
+  /* ---- money + sky, one row: both are short cards and they read as one "right now" glance
+     (Sep 2026 compaction -- this removed a whole full-width row from the page) ---- */
+  h += `<div class="home-row snap-wx"><div>${buildPortfolioSnapshot()}</div><div id="wxSlot"></div></div>`;
 
   /* ---- Urgent To-Dos and Chill To-Dos now live entirely in Firestore (synced
      across devices) instead of the daily-reset localStorage/JSON fields — see
      the to-do sync module script near the end of <body>. Slots get filled in
      by refreshTodoCards() below, and again on every live snapshot update. ---- */
   h += `<div class="todo-today-row"><div id="todosCardSlot"></div><div id="todayCardSlot">${buildTodayScheduleHTML(todayList, d.date)}</div></div>`;
+
+  /* ---- Running Outlook: where the asset classes stand + how to explain them ---- */
+  h += `<div class="bento-card" id="deskCard"><div class="bc-label">Running Outlook</div><div class="desk-grid"><div class="spinner" style="margin:18px auto"></div></div></div>`;
 
   /* ---- Today / Two-Week View, side by side (Two-Week View now expanded to
      match Google Calendar's month-view detail). Data comes from the
@@ -3768,8 +4116,9 @@ function renderCalendarBody(p, d){
      15 min on GitHub's own servers via a service account — see MEMORY.md). ---- */
   h += `<div id="todayTriple"><div class="bento-card cal-card cal-full">${buildMiniCal(todayList, radarList, d.date)}</div></div>`;
 
-  /* ---- weather hero (live; filled in async), now at the bottom. Two stacked sky layers crossfade instead of snapping ---- */
-  h += `<div class="wx-hero wx-compact" id="wxHero" style="margin-top:14px">
+  /* ---- weather hero (live; filled in async). Two stacked sky layers crossfade instead of
+     snapping. It is rendered here and then moved into the snapshot row's second column. ---- */
+  h += `<div class="wx-hero wx-compact" id="wxHero">
     <div class="wx-sky" id="wxSky"></div>
     <div class="wx-sky wx-sky-ov" id="wxSkyOv"></div>
     <div class="wx-content">
@@ -3791,6 +4140,9 @@ function renderCalendarBody(p, d){
   /* The Close now lives on the Games tab — see renderGamesLauncher(). */
 
   p.innerHTML = h;
+  // pair the weather card next to the portfolio snapshot
+  const wxSlot = p.querySelector("#wxSlot"), wxCard = p.querySelector("#wxHero");
+  if(wxSlot && wxCard) wxSlot.appendChild(wxCard);
 
   /* first paint of the to-do cards, then keep them live: every Firestore snapshot
      (from this device or any other) updates only the card(s) whose data actually
@@ -3865,7 +4217,7 @@ async function loadTodayWeather(d){
   const paint = (wx) => {
     if(!$("#wxHero")) return;
     applyTheme(wx.curCond, wx.curDay, false);
-    $("#wxGlyph").textContent = wxGlyph(wx.curCond);
+    $("#wxGlyph").innerHTML = wxIcon(wx.curCond, wx.curDay, 54);
     $("#wxTemp").textContent = (wx.curTemp==null||wx.curTemp==="—") ? "—" : wx.curTemp + "°";
     $("#wxCond").textContent = wx.curCond + (wx.hi!=null && wx.lo!=null && !isNaN(wx.hi) ? ` · H ${wx.hi}° / L ${wx.lo}°` : "");
     $("#wxLoc").textContent = wx.label || "";
@@ -3877,7 +4229,7 @@ async function loadTodayWeather(d){
         hr => {   // onHover: re-skin (gradual) + swap the top-left temp/glyph/condition + readouts to this hour
           applyTheme(hr.cond, hr.day, true);
           hero.classList.add("hovering");
-          $("#wxGlyph").textContent = wxGlyph(hr.cond);
+          $("#wxGlyph").innerHTML = wxIcon(hr.cond, hr.day, 54);
           $("#wxTemp").textContent = (hr.temp ?? hr.tF) + "°";
           $("#wxCond").textContent = hr.cond || "";
           const b = $("#wxHourBadge"); if(b) b.textContent = fmtHour(hr.t ?? hr.h);
@@ -3886,7 +4238,7 @@ async function loadTodayWeather(d){
         () => {   // onLeave: back to current conditions
           applyTheme(wx.curCond, wx.curDay, true);
           hero.classList.remove("hovering");
-          $("#wxGlyph").textContent = wxGlyph(wx.curCond);
+          $("#wxGlyph").innerHTML = wxIcon(wx.curCond, wx.curDay, 54);
           $("#wxTemp").textContent = (wx.curTemp==null||wx.curTemp==="—") ? "—" : wx.curTemp + "°";
           $("#wxCond").textContent = wx.curCond + (wx.hi!=null && wx.lo!=null && !isNaN(wx.hi) ? ` · H ${wx.hi}° / L ${wx.lo}°` : "");
           setWxMeta(wx.feels, wx.rainMax, wx.humidity, wx.wind);

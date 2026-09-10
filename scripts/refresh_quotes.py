@@ -21,6 +21,7 @@ import json
 import os
 import sys
 import time
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -62,7 +63,63 @@ def fetch_chart(sym, session):
         except Exception as e:  # noqa: BLE001
             print(f"  ! {sym} via {host}: {e}", file=sys.stderr)
             continue
+        else:
+            print(f"  ! {sym} via {host}: HTTP {r.status_code}", file=sys.stderr)
     return None
+
+
+def stooq_symbol(sym):
+    if "-" in sym:            # crypto (BTC-USD): not on Stooq; the browser's live path covers it
+        return None
+    return sym.lower() + ".us"
+
+
+def fetch_stooq(syms, session):
+    """Fallback when Yahoo refuses the runner: Stooq's delayed quote + daily history (no key).
+    Gives price and previous close; no intraday series."""
+    out = {}
+    pairs = [(s, stooq_symbol(s)) for s in syms if stooq_symbol(s)]
+    if not pairs:
+        return out
+    try:
+        r = session.get("https://stooq.com/q/l/", params={"s": ",".join(p[1] for p in pairs), "f": "sd2t2ohlcv", "h": "", "e": "csv"}, timeout=15)
+        r.raise_for_status()
+        rows = [ln.split(",") for ln in r.text.strip().splitlines()[1:]]
+        quotes = {row[0].lower(): row for row in rows if len(row) >= 7}
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! stooq quote list: {e}", file=sys.stderr)
+        return out
+    for sym, st in pairs:
+        row = quotes.get(st)
+        if not row or row[6] in ("N/D", ""):
+            continue
+        try:
+            price = float(row[6])
+            qdate = row[1]  # YYYY-MM-DD
+            prev = None
+            try:
+                h = session.get("https://stooq.com/q/d/l/", params={"s": st, "i": "d"}, timeout=15)
+                lines = [ln.split(",") for ln in h.text.strip().splitlines()[1:] if ln.strip()]
+                closes = [(ln[0], float(ln[4])) for ln in lines[-3:] if len(ln) >= 5 and ln[4] not in ("", "N/D")]
+                if closes:
+                    prev = closes[-2][1] if closes[-1][0] == qdate and len(closes) > 1 else closes[-1][1]
+            except Exception:  # noqa: BLE001
+                prev = None
+            # stamp the quote at 4pm New York on its date so the site's "is this today's move" logic works
+            ts = int(datetime.datetime.strptime(qdate + " 16:00", "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("America/New_York")).timestamp())
+            out[sym] = {"price": price, "prev": prev if prev is not None else price, "time": ts, "src": "stooq"}
+        except Exception as e:  # noqa: BLE001
+            print(f"  ! stooq {sym}: {e}", file=sys.stderr)
+    return out
+
+
+def write_status(repo, **kv):
+    """Plaintext, symbol-free status so a run can be diagnosed from the repo alone."""
+    try:
+        with open(os.path.join(repo, "data", "quotes.status.json"), "w") as f:
+            json.dump({"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), **kv}, f, indent=1)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def main():
@@ -95,23 +152,34 @@ def main():
 
     session = requests.Session()
     session.headers.update({"User-Agent": UA, "Accept": "application/json"})
-    quotes, fresh = dict(previous), 0
+    quotes, fresh, errors = dict(previous), 0, []
     for s in syms:
         q = fetch_chart(s, session)
         if q:
             quotes[s] = q
             fresh += 1
         time.sleep(0.25)  # be polite; 12 symbols is well under any limit
+    source = "yahoo"
+    if not fresh:
+        # Yahoo refused every call (it rate-limits datacenter IPs on and off) -- Stooq fallback
+        st = fetch_stooq(syms, session)
+        for s, q in st.items():
+            quotes[s] = q
+            fresh += 1
+        source = "stooq"
 
     if not fresh:
-        print("Yahoo returned nothing for any symbol; leaving the previous quotes file untouched")
+        print("Yahoo and Stooq returned nothing for any symbol; leaving the previous quotes file untouched")
+        write_status(repo, ok=False, source=None, refreshed=0, symbols=len(syms), note="no source answered")
         return 0
 
     # Skip the commit when nothing actually moved (weekends, overnight): a re-encrypt with a
     # new IV would otherwise look like a change every single tick.
     if quotes == previous:
         print(f"quotes unchanged for all {len(syms)} symbols; not rewriting")
+        write_status(repo, ok=True, source=source, refreshed=fresh, symbols=len(syms), note="unchanged")
         return 0
+    write_status(repo, ok=True, source=source, refreshed=fresh, symbols=len(syms), note="written")
 
     payload = {
         "updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),

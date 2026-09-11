@@ -11,10 +11,11 @@ So this runs on the server instead, as a companion of the Calendar Refresh workf
 it only fills fields that are missing, never rewrites prose, and never touches an item that
 already has a photo.
 
-Resolution order per item:
-  1. a real published story about the same event, matched out of ~10 publisher RSS feeds
+Resolution order per item (Eli, Sep 2026: the photo should be the one on the article the
+site links to, whenever that article has one):
+  1. `url` already on the item        -> THAT article's own og:image ("Read at the source")
+  2. a real published story about the same event, matched out of ~10 publisher RSS feeds
      (BBC, Guardian, Al Jazeera, CBS, CNBC, Fox, Yahoo/CBS Sports) -> that story's own photo
-  2. `url` already on the item        -> that article's og:image
   3. Google News RSS search on the headline -> best-matching real article
                                        -> fills url + source, then that article's og:image
   4. Wikipedia page image for the item's `imgQuery` or the strongest proper noun in the lead
@@ -70,17 +71,28 @@ def attrs(tag):
     return out
 
 
+_PAGE_CACHE = {}
+VIDEO_OK = re.compile(r"^https?://(www\.|m\.)?(youtube(-nocookie)?\.com|youtu\.be|player\.vimeo\.com|vimeo\.com)/", re.I)
+
+
 def page_meta(url):
-    """Return (og_image, og_title, site_name) for an article URL."""
+    """Return (og_image, og_title, site_name, og_video) for an article URL.
+
+    Cached per run: the video pass asks the same pages the photo pass already fetched, and a
+    GitHub runner has no business downloading the same article twice."""
+    if url in _PAGE_CACHE:
+        return _PAGE_CACHE[url]
     try:
         status, headers, body, final = get(url)
         if status != 200 or "html" not in (headers.get("Content-Type") or "").lower():
-            return None, None, None
+            _PAGE_CACHE[url] = (None, None, None, None)
+            return _PAGE_CACHE[url]
         head = body.decode("utf-8", "replace")
     except Exception as e:  # noqa: BLE001
         print(f"    . page {url[:60]}: {e}", file=sys.stderr)
-        return None, None, None
-    img = title = site = None
+        _PAGE_CACHE[url] = (None, None, None, None)
+        return _PAGE_CACHE[url]
+    img = title = site = video = None
     for tag in META.findall(head):
         a = attrs(tag)
         key = (a.get("property") or a.get("name") or "").lower()
@@ -95,7 +107,20 @@ def page_meta(url):
             title = val
         elif key == "og:site_name" and not site:
             site = val
-    return img, title, site
+        elif key in ("og:video", "og:video:url", "og:video:secure_url", "twitter:player") and not video:
+            cand = urllib.parse.urljoin(final, val)
+            if VIDEO_OK.match(cand):
+                video = cand
+    # some publishers only put the player in an <iframe>, not in a meta tag
+    if not video:
+        for tag in re.findall(r"<iframe[^>]+>", head, re.I)[:40]:
+            src = attrs(tag).get("src") or ""
+            cand = urllib.parse.urljoin(final, src)
+            if VIDEO_OK.match(cand):
+                video = cand
+                break
+    _PAGE_CACHE[url] = (img, title, site, video)
+    return _PAGE_CACHE[url]
 
 
 def image_ok(url):
@@ -325,10 +350,30 @@ def lead_subject(item):
 
 
 def enrich(item, budget):
-    """Fill img/imgCaption (and url/source when we can find them). Returns a note string."""
+    """Fill img/imgCaption (and url/source when we can find them). Returns a note string.
+
+    Order matters, and Eli set it (Sep 2026): "I want the photos to be taken directly from
+    the 'Read at the source' photos if available." So the article the site actually links to
+    gets first refusal on its own lead image; only when that page has none (or has no link at
+    all) do we fall back to a wire feed covering the same event, then to a search, then to a
+    Wikipedia portrait of the subject."""
     if item.get("img"):
         return None
-    # 1. a real published story about the same event, from the feed index
+    # 1. THE article -- the one "Read at the source" opens
+    url = item.get("url")
+    if url and budget["page"] > 0:
+        budget["page"] -= 1
+        img, _, site, vid = page_meta(url)
+        if site and not item.get("source"):
+            item["source"] = site
+        if vid and not item.get("video"):
+            item["video"] = vid
+        if img and img not in _USED_IMGS and image_ok(img):
+            _USED_IMGS.add(img)
+            item["img"] = img
+            item.setdefault("imgCaption", (item.get("source") or "News photo"))
+            return "article"
+    # 2. a real published story about the same event, from the feed index
     hit = feed_match(item)
     if hit and hit["img"] not in _USED_IMGS and image_ok(hit["img"]):
         _USED_IMGS.add(hit["img"])
@@ -345,9 +390,7 @@ def enrich(item, budget):
         if host and not item.get("source"):
             item["source"] = host
         return "feed"
-    # 2. article already known
-    url = item.get("url")
-    # 3. find the article
+    # 3. no link yet: go find the article, then read its lead image
     if not url and budget["search"] > 0:
         budget["search"] -= 1
         url, source = resolve_article(item)
@@ -355,16 +398,18 @@ def enrich(item, budget):
             item["url"] = url
             if source and not item.get("source"):
                 item["source"] = source
-    if url and budget["page"] > 0:
-        budget["page"] -= 1
-        img, _, site = page_meta(url)
-        if site and not item.get("source"):
-            item["source"] = site
-        if img and image_ok(img):
-            item["img"] = img
-            item.setdefault("imgCaption", (item.get("source") or "News photo"))
-            return "article"
-    # 3. Wikipedia subject
+        if url and budget["page"] > 0:
+            budget["page"] -= 1
+            img, _, site, vid = page_meta(url)
+            if vid and not item.get("video"):
+                item["video"] = vid
+            if site and not item.get("source"):
+                item["source"] = site
+            if img and image_ok(img):
+                item["img"] = img
+                item.setdefault("imgCaption", (item.get("source") or "News photo"))
+                return "article"
+    # 4. Wikipedia subject
     subject = item.get("imgQuery") or lead_subject(item)
     if subject and budget["wiki"] > 0:
         budget["wiki"] -= 1
@@ -373,6 +418,26 @@ def enrich(item, budget):
             item["img"] = img
             item.setdefault("imgCaption", subject)
             return "wiki"
+    return None
+
+
+def video_pass(item, budget):
+    """Eli, Sep 2026: "connect relevant videos from online when applicable -- for instance a
+    video of someone interacting with the new iPhone." Publishers embed their own player in
+    og:video / twitter:player, and a good share of those are plain YouTube or Vimeo URLs,
+    which is the only kind the page is willing to frame. So: for stories that already have a
+    link, look once, take it if it is embeddable, and never let it cost a photo lookup."""
+    if item.get("video") or item.get("vchk") or not item.get("url") or budget.get("video", 0) <= 0:
+        return None
+    if item["url"] in _PAGE_CACHE:            # free: the photo pass already read this page
+        vid = _PAGE_CACHE[item["url"]][3]
+    else:
+        budget["video"] -= 1
+        vid = page_meta(item["url"])[3]
+    item["vchk"] = 1      # looked once; don't re-download this page every half hour
+    if vid:
+        item["video"] = vid
+        return "video"
     return None
 
 
@@ -407,13 +472,13 @@ def main():
 
     items = [it for sec in edition.get("sections", []) for it in sec.get("items", [])]
     missing = [it for it in items if not it.get("img")]
-    if not missing:
+    if not missing and all(it.get("video") or it.get("vchk") or not it.get("url") for it in items):
         print(f"news {date}: all {len(items)} items already have photos")
         return 0
 
     # Bounded work per run: the job repeats every ~30 minutes, so it converges over the day
     # instead of hammering anything in one burst.
-    budget = {"search": 10, "page": 14, "wiki": 12}
+    budget = {"search": 10, "page": 14, "wiki": 12, "video": 8}
     got = {"feed": 0, "article": 0, "wiki": 0}
     for it in missing:
         note = enrich(it, budget)
@@ -422,10 +487,18 @@ def main():
         if budget["page"] <= 0 and budget["wiki"] <= 0:
             break
 
+    # video is a separate pass over EVERY item: a story that already had a photo is exactly
+    # the kind that also has a player on the page, and enrich() returns early on those.
+    videos = 0
+    for it in items:
+        if video_pass(it, budget):
+            videos += 1
+
     filled = got["feed"] + got["article"] + got["wiki"]
     status = {"date": date, "items": len(items), "had_photos": len(items) - len(missing),
               "filled_this_run": filled, "from_feed": got["feed"], "from_article": got["article"],
               "from_wikipedia": got["wiki"], "feed_pool": len(feed_index()) if _FEED_INDEX is not None else 0,
+              "videos": videos, "with_video": sum(1 for it in items if it.get("video")),
               "still_missing": len(missing) - filled}
     try:
         with open(os.path.join(repo, "data", "news.status.json"), "w") as f:
@@ -433,7 +506,7 @@ def main():
     except Exception:  # noqa: BLE001
         pass
 
-    if not filled:
+    if not filled and not videos:
         print(f"news {date}: no new photos resolved ({len(missing)} still without)")
         return 0
     if dry:

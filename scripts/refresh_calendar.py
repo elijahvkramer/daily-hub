@@ -23,6 +23,7 @@ import base64
 import datetime
 import json
 import os
+import re
 import sys
 from zoneinfo import ZoneInfo
 
@@ -184,6 +185,139 @@ from dh_crypto import encrypt_bytes as encrypt_payload, decrypt_payload  # noqa:
 
 # ---------- main ----------
 
+# ---------------------------------------------------------------------------------------
+# Countdowns: Eli, Sep 2026 -- "always be looking at my calendar for things that need to be
+# added to the countdown at the top, and keep them there (upcoming bdays, drill, bach party,
+# southwest credits expiring, next big holidays, golf trips, registration for things, etc.).
+# Use discretion but always err on the side of adding it, because I can always delete it
+# myself after it's added."
+#
+# So this scans a whole year of calendar ahead (not the 15-day dashboard window), classifies
+# anything that reads like an occasion, and publishes it as `countdowns`. Ids are stable
+# (cal:<date>:<slug>), which is what lets the site remember the ones he deleted. Routine work
+# meetings are the only thing filtered out; everything else gets in.
+COUNTDOWN_HORIZON_DAYS = 400
+
+# (emoji, kind, pattern) -- first match wins, so the specific ones come first.
+COUNTDOWN_RULES = [
+    ("\U0001F382", "birthday",   r"\bb-?day\b|\bbirthday\b|\bturns \d+"),
+    ("\U0001F396",  "drill",      r"\bdrill\b|battle assembly|\bUTA\b|annual training|\bAT\b(?![a-z])|reserve weekend|\bmuster\b"),
+    ("\U0001F942", "party",      r"bachelor|bachelorette|\bstag\b|rehearsal dinner|\bengagement party\b"),
+    ("\U0001F48D", "wedding",    r"\bwedding\b|\belopement\b|\bceremony\b|\bofficiant\b"),
+    ("⏳",      "deadline",   r"\bexpir\w*|\bdeadline\b|\blast day\b|\bdue\b|\brenew\w*|\bfile by\b|\bcutoff\b|\bends\b"),
+    ("\U0001F4DD", "signup",     r"\bregistration\b|\bregister\b|\bsign ?up\b|\benroll\w*|\bapplication\b|\bapply by\b|\bdraft\b.*\bdeadline\b"),
+    ("⛳",      "golf",       r"\bgolf\b|\btee time\b|\btee off\b|\bscramble\b|\bmember-guest\b|\bcourse\b"),
+    ("✈",      "trip",       r"\bflight\b|\bflights\b|\btrip\b|\bvacation\b|\bgetaway\b|\bdepart\w*|\blanding\b|\bhoneymoon\b|\bcruise\b|\bairport\b"),
+    ("\U0001F3AB", "event",      r"\bconcert\b|\bgame\b|\btickets?\b|\bfestival\b|\bshow\b|\bmatch\b|\bkickoff\b|\bpremiere\b"),
+    ("\U0001F393", "exam",       r"\bexam\b|\btest\b|\bseries \d+|\bSIE\b|\blicens\w*|\bproctor\w*|\bcertification\b"),
+    ("\U0001F3E1", "home",       r"\bclosing\b|\binspection\b|\bappraisal\b|\bmove-?in\b|\bwalkthrough\b|\bclosing day\b"),
+    ("\U0001F3E5", "appt",       r"\bdentist\b|\bdoctor\b|\bappointment\b|\bphysical\b|\bvet\b|\bfingerprint\w*"),
+    ("\U0001F389", "holiday",    r"\banniversary\b|\bgraduation\b|\bbaby shower\b|\breunion\b|\bretirement\b"),
+]
+# Routine work noise. Deliberately short -- Eli would rather delete one chip than miss one.
+COUNTDOWN_SKIP = re.compile(
+    r"^\s*(1:1|one[- ]on[- ]one|stand ?up|daily sync|weekly sync|sync\b|check ?in\b|"
+    r"team meeting|staff meeting|office hours|focus( time)?|block\b|hold\b|busy\b|lunch\b|"
+    r"gym\b|workout\b|prospecting|cold calls?|admin\b|email\b|commute\b|drive\b)", re.I)
+
+# Fixed-date federal / cultural holidays worth a countdown, plus the movable ones we can
+# compute. Month/day pairs; the movable ones are handled below.
+FIXED_HOLIDAYS = [
+    ((1, 1),   "New Year's Day",   "\U0001F386"),
+    ((2, 14),  "Valentine's Day",  "❤"),
+    ((7, 4),   "Fourth of July",   "\U0001F386"),
+    ((10, 31), "Halloween",        "\U0001F383"),
+    ((12, 24), "Christmas Eve",    "\U0001F384"),
+    ((12, 25), "Christmas",        "\U0001F384"),
+    ((12, 31), "New Year's Eve",   "\U0001F942"),
+]
+
+
+def _nth_weekday(year, month, weekday, n):
+    """n-th (1-based) `weekday` of a month; n = -1 means the last one."""
+    d = datetime.date(year, month, 1)
+    offs = (weekday - d.weekday()) % 7
+    first = d + datetime.timedelta(days=offs)
+    if n > 0:
+        return first + datetime.timedelta(weeks=n - 1)
+    last = first
+    while (last + datetime.timedelta(weeks=1)).month == month:
+        last += datetime.timedelta(weeks=1)
+    return last
+
+
+def holiday_countdowns(today, horizon):
+    """The next occurrence of each big holiday inside the horizon."""
+    out = []
+    for year in (today.year, today.year + 1):
+        cands = [(datetime.date(year, m, d), name, emo) for (m, d), name, emo in FIXED_HOLIDAYS]
+        cands.append((_nth_weekday(year, 11, 3, 4), "Thanksgiving", "\U0001F983"))       # 4th Thursday
+        cands.append((_nth_weekday(year, 5, 0, -1), "Memorial Day", "\U0001F1FA\U0001F1F8"))   # last Monday
+        cands.append((_nth_weekday(year, 9, 0, 1), "Labor Day", "\U0001F1FA\U0001F1F8"))        # 1st Monday
+        for d, name, emo in cands:
+            if today < d <= horizon:
+                out.append({"id": f"hol:{d.isoformat()}", "label": name, "date": d.isoformat(),
+                            "kind": "holiday", "emoji": emo, "auto": True})
+    seen, uniq = set(), []
+    for c in sorted(out, key=lambda x: x["date"]):
+        if c["label"] in seen:
+            continue
+        seen.add(c["label"])
+        uniq.append(c)
+    return uniq
+
+
+def classify_countdown(title):
+    for emo, kind, pat in COUNTDOWN_RULES:
+        if re.search(pat, title, re.I):
+            return emo, kind
+    return None, None
+
+
+def slugify(s, n=28):
+    s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+    return s[:n] or "event"
+
+
+def build_countdowns(items, today):
+    """One countdown per occasion in the next ~13 months, most imminent first."""
+    horizon = today + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS)
+    out, seen = [], set()
+    for ev in items:
+        title = (ev.get("summary") or "").strip()
+        if not title or COUNTDOWN_SKIP.search(title):
+            continue
+        start = ev.get("start") or {}
+        raw = start.get("date") or (start.get("dateTime") or "")[:10]
+        if not raw:
+            continue
+        try:
+            d = datetime.date.fromisoformat(raw)
+        except ValueError:
+            continue
+        if d <= today or d > horizon:
+            continue
+        emo, kind = classify_countdown(title)
+        all_day = bool(start.get("date"))
+        if emo is None:
+            # Not a keyword match. An all-day event more than a few days out is still an
+            # occasion (that is how "Bach party" or "Southwest credits" get in when they are
+            # named something we did not anticipate); a timed weekday meeting is not.
+            if not all_day or (d - today).days < 4:
+                continue
+            emo, kind = "\U0001F4CC", "event"
+        key = (slugify(title), d.isoformat())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"id": f"cal:{d.isoformat()}:{slugify(title)}",
+                    "label": title[:48], "date": d.isoformat(),
+                    "kind": "deadline" if kind in ("deadline", "signup", "exam") else "countdown",
+                    "emoji": emo, "auto": True})
+    out.sort(key=lambda c: c["date"])
+    return out[:14]
+
+
 def main():
     if len(sys.argv) < 3:
         print("usage: refresh_calendar.py <service_account_json_path> <passphrase_file> [repo_dir]", file=sys.stderr)
@@ -210,6 +344,24 @@ def main():
 
     today_list, radar_list = bucket_events(all_items, today_str)
     print(f"  bucketed: today={len(today_list)} radar={len(radar_list)}")
+
+    # A second, much wider sweep purely for the countdown rail at the top of the Home tab.
+    # It is deliberately separate from the 15-day dashboard window: birthdays, drill
+    # weekends, a bachelor party and expiring travel credits all live months out.
+    countdowns = []
+    try:
+        far_max = time_min + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS)
+        far_items = []
+        for cal_id in CALENDAR_IDS:
+            far_items.extend(fetch_events(creds, cal_id, time_min, far_max))
+        countdowns = build_countdowns(far_items, today_ct)
+        holidays = holiday_countdowns(today_ct, today_ct + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS))
+        have = {c["label"].lower() for c in countdowns}
+        countdowns += [h for h in holidays if h["label"].lower() not in have][:4]
+        countdowns.sort(key=lambda c: c["date"])
+        print(f"  countdowns: {len(countdowns)} ({', '.join(c['label'] for c in countdowns[:6])})")
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! countdowns: {e}", file=sys.stderr)
 
     calendar_dir = os.path.join(repo_dir, "data", "calendar")
     os.makedirs(calendar_dir, exist_ok=True)
@@ -247,6 +399,8 @@ def main():
     merged["date"] = today_str
     merged["today"] = today_list
     merged["radar"] = radar_list
+    if countdowns:
+        merged["countdowns"] = countdowns
 
     plaintext = json.dumps(merged).encode()
     json.loads(plaintext)  # validate

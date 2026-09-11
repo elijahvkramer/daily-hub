@@ -137,6 +137,10 @@
   .card .chg{font-size:13px;font-weight:900;margin-top:5px}
   .card .pts{color:var(--muted);font-weight:700;font-size:12px;margin-left:6px}
   .up{color:var(--up)} .down{color:var(--down)} .neutral{color:var(--muted)}
+  /* pcls() hands out "pos"/"neg" (portfolio day-change, gain/loss, etc.) -- bare color rules so
+     every spot that uses it (ps-chg, hist-delta, gain/loss spans) actually goes green/red
+     instead of relying on a scoped .pchg.pos/.tw-chg.pos rule that isn't there for it. */
+  .pos{color:var(--up)} .neg{color:var(--down)}
 
   /* numbered items */
   .items{display:flex;flex-direction:column}
@@ -572,15 +576,22 @@
   @keyframes twScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){.tw-track{animation:none}}
   .psnap{cursor:pointer;position:relative;display:flex;flex-direction:column}
-  .psnap-hero{flex:1}
+  .psnap-hero{flex:1;display:flex;flex-direction:column}
   .psnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
   .psnap .ps-head{display:flex;align-items:center;justify-content:space-between}
   .psnap .ps-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);display:inline-flex;align-items:center;gap:4px}
-  .psnap-hero{display:grid;grid-template-columns:1fr 1.3fr;gap:24px;align-items:center}
-  .psnap-hero .ps-left{min-width:0}
-  .psnap .ps-val{font-size:38px;font-weight:900;letter-spacing:-.015em;color:var(--ink);margin-top:8px;line-height:1}
-  .psnap .ps-chg{font-size:15px;font-weight:900;margin-top:8px}
-  .psnap .ps-spark{width:100%;height:62px;display:block}
+  /* Eli, Sep 2026: make this card actually fill the same height as the weather card next to
+     it (top row: value + pill, bottom row: chart pinned to the floor) instead of leaving
+     white space, and make the day change read as a proper green/red pill, not plain text. */
+  .psnap-hero{display:grid;grid-template-columns:1fr 1.3fr;gap:24px;align-items:stretch;margin-top:6px}
+  .psnap-hero .ps-left{min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .psnap .ps-val{font-size:40px;font-weight:900;letter-spacing:-.015em;color:var(--ink);line-height:1}
+  .psnap .ps-chg{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:900;margin-top:12px;
+                 padding:4px 10px 4px 8px;border-radius:999px;background:color-mix(in srgb, var(--muted) 12%, transparent);width:fit-content}
+  .psnap .ps-chg.pos{background:color-mix(in srgb, var(--up) 14%, transparent)}
+  .psnap .ps-chg.neg{background:color-mix(in srgb, var(--down) 14%, transparent)}
+  #psSparkWrap{display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
+  .psnap .ps-spark{width:100%;height:100%;min-height:62px;flex:1;display:block}
   .psnap .ps-axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.02em}
   .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
   @media(max-width:640px){.psnap-hero{grid-template-columns:1fr;gap:14px}}
@@ -807,6 +818,11 @@
   .gt{position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;text-decoration:none;font:inherit;color:var(--ink);
       background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 15px 12px;cursor:pointer;
       box-shadow:var(--shadow);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s;min-height:132px}
+  /* Eli, Sep 2026: "the tabs at the top ... doesn't work" -- the category chips WERE wiring up
+     fine and setting el.hidden = true, but author CSS always beats the browser's own
+     [hidden]{display:none} at equal specificity, and .gt{display:flex} is author CSS, so a
+     "hidden" tile just kept rendering. This is the actual fix -- everything else already worked. */
+  .gt[hidden]{display:none!important}
   html.glass .gt{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .gt:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(20,40,80,.4),var(--shadow)}
   .gt-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
@@ -2188,107 +2204,6 @@ document.addEventListener("visibilitychange", () => { if(!document.hidden) refre
 window.addEventListener("focus", () => refreshManifestIfStale(false));
 setInterval(() => { if(!document.hidden) refreshManifestIfStale(false); }, 10*60*1000);
 
-/* ================= market ================= */
-/* Markets is no longer a standalone tab — buildMarketHTML(d) returns the full
-   markets section markup so it can be embedded inside the News front page. */
-function buildMarketHTML(d){
-  let h = "";
-
-  h += `<div class="kicker">Index Scoreboard</div><div class="grid cols-5">`;
-  (d.indices||[]).forEach(ix => {
-    const neutral = /vix/i.test(ix.name);
-    const c = neutral ? "neutral" : cls(ix.pct);
-    const arrow = ix.pct>0?"▲":ix.pct<0?"▼":"—";
-    h += `<div class="card"><div class="lbl">${esc(ix.name)}</div><div class="big">${esc(ix.level)}</div>
-      <div class="chg ${c}">${arrow} ${fmtPct(ix.pct)}<span class="pts">${esc(ix.pts||"")}</span></div></div>`;
-  });
-  h += `</div>`;
-
-  h += `<div class="kicker">What Moved Markets</div><div class="items">`;
-  (d.drivers||[]).forEach((it,i) => h += `<div class="item"><div class="num">${String(i+1).padStart(2,"0")}</div><p><b>${esc(it.lead)}</b> ${esc(it.body)}</p></div>`);
-  h += `</div>`;
-
-  h += `<div class="kicker">Index Performance · % Change</div><div class="chart-card"><div class="vchart" id="vchart"></div>`;
-  if(d.indexChartCaption) h += `<div class="chart-cap">${esc(d.indexChartCaption)}</div>`;
-  h += `</div>`;
-
-  h += `<div class="kicker">Biggest Movers</div><div class="grid cols-2">`;
-  h += `<div class="card mover-col"><h4 class="up">▲ Leaders</h4>`;
-  (d.winners||[]).forEach(m => h += `<div class="mover"><span class="tk">${esc(m.ticker)}</span><span class="nm">${esc(m.name)}</span><span class="pc up">${fmtPct(m.pct)}</span></div>`);
-  h += `</div><div class="card mover-col"><h4 class="down">▼ Laggards</h4>`;
-  (d.losers||[]).forEach(m => h += `<div class="mover"><span class="tk">${esc(m.ticker)}</span><span class="nm">${esc(m.name)}</span><span class="pc down">${fmtPct(m.pct)}</span></div>`);
-  h += `</div></div>`;
-  if(d.moversCaption) h += `<p class="chart-cap" style="border:none;padding-top:8px">${esc(d.moversCaption)}</p>`;
-
-  h += `<div class="kicker">Sector Performance · The Day</div><div class="chart-card"><div class="hchart" id="hchart"></div>`;
-  if(d.sectorCaption) h += `<div class="chart-cap">${esc(d.sectorCaption)}</div>`;
-  h += `</div>`;
-
-  h += `<div class="kicker">Rates, Commodities &amp; The Fed</div><div class="grid cols-4">`;
-  (d.stats||[]).forEach(st => h += `<div class="card"><div class="lbl">${esc(st.label)}</div><div class="big" style="font-size:20px">${esc(st.value)}</div><div class="chg neutral" style="font-weight:400;font-size:12.5px;line-height:1.5">${esc(st.note||"")}</div></div>`);
-  h += `</div>`;
-
-  h += `<div class="kicker">Outlook &amp; Catalysts</div><div>`;
-  /* week-ahead only: the Running Outlook board lives on `outlookBoard`, but guard anyway so a
-     brief that puts the wrong shape here can never render a wall of blank rows again. */
-  (d.outlook||[]).filter(o => o && o.date && o.lead).forEach(o => h += `<div class="outlook-row"><div class="od">${esc(o.date)}</div><p><b>${esc(o.lead)}</b> ${esc(o.body)}</p></div>`);
-  h += `</div>`;
-
-  if(d.bottomLine) h += `<div class="kicker">Bottom Line</div><div class="callout"><div class="lbl">Bottom Line</div><p>${esc(d.bottomLine)}</p></div>`;
-  return h;
-}
-function wireMarketCharts(d){
-  drawVChart(d.indices||[]); drawHChart(d.sectors||[]);
-}
-
-function drawVChart(indices){
-  const el = $("#vchart"); if(!el) return;
-  const data = indices.map(ix => ({name:ix.name.replace(/\s*composite/i,""), pct:ix.pct, neutral:/vix/i.test(ix.name)}));
-  const H = 176, LBL = 34;                                  // chart height, label strip
-  const posMax = Math.max(0, ...data.map(d=>d.pct));
-  const negMax = Math.max(0, ...data.map(d=>-d.pct));
-  const range = Math.max(.1, posMax + negMax);
-  const baseFromBottom = LBL + (negMax/range)*H;            // px position of the zero line
-  el.innerHTML = `<div class="baseline" style="bottom:${baseFromBottom}px"></div>`;
-  data.forEach((d,i) => {
-    const hgt = Math.max(4, Math.abs(d.pct)/range * H);
-    const color = d.neutral ? "var(--topbar-muted)" : d.pct>=0 ? "var(--up)" : "var(--down)";
-    const wrap = document.createElement("div");
-    wrap.className = "vbar-wrap";
-    wrap.style.left = (i*(100/data.length)) + "%"; wrap.style.width = (100/data.length)+"%";
-    if(d.pct>=0){
-      wrap.innerHTML = `<div class="vbar" style="background:${color};bottom:${baseFromBottom}px;height:0"></div>
-        <div class="vbar-pct ${d.neutral?"neutral":"up"}" style="bottom:${baseFromBottom+hgt+8}px">${fmtPct(d.pct)}</div>
-        <div class="vbar-name">${esc(d.name)}</div>`;
-    }else{
-      const inside = hgt >= 26;   // label inside the bar when it fits; else just below the baseline-adjacent top
-      wrap.innerHTML = `<div class="vbar" style="background:${color};bottom:${baseFromBottom-hgt}px;height:0"></div>
-        <div class="vbar-pct" style="bottom:${inside ? baseFromBottom-hgt+8 : baseFromBottom+8}px;color:${inside?"#fff":"inherit"};z-index:2">${fmtPct(d.pct)}</div>
-        <div class="vbar-name">${esc(d.name)}</div>`;
-    }
-    el.appendChild(wrap);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ wrap.querySelector(".vbar").style.height = hgt+"px"; }));
-  });
-}
-
-function drawHChart(sectors){
-  const el = $("#hchart"); if(!el) return;
-  const maxAbs = Math.max(.1, ...sectors.map(s=>Math.abs(s.pct)));
-  const negShare = 38; // % of track reserved left of midline
-  el.innerHTML = "";
-  sectors.forEach(s => {
-    const row = document.createElement("div"); row.className = "hrow";
-    const w = Math.abs(s.pct)/maxAbs * (s.pct>=0 ? (100-negShare) : negShare) * 0.96;
-    const pos = s.pct>=0;
-    row.innerHTML = `<div class="hname">${esc(s.name)}</div>
-      <div class="htrack"><div class="hmid"></div>
-      <div class="hbar" style="background:${pos?"var(--up)":"var(--down)"};${pos?`left:${negShare}%;justify-content:flex-end`:`right:${100-negShare}%;justify-content:flex-start`};width:0">
-      <span style="color:#fff">${fmtPct(s.pct)}</span></div></div>`;
-    el.appendChild(row);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ row.querySelector(".hbar").style.width = w+"%"; }));
-  });
-}
-
 /* ================= news (front-page) ================= */
 /* category → pill color, keyed off section title keywords */
 function secPill(title){
@@ -2613,40 +2528,13 @@ function showNewsView(view){
       </section>
       ${cards ? `<div class="nw-grid">${cards}</div>` : ""}
       ${more ? `<div class="nw-k">More in this edition</div><div class="nw-list">${more}</div>` : ""}
-      <div class="np-mkt" id="npMkt" style="margin-top:22px">
-        <div class="ms-head"><span class="ms-kick">Markets · At the Close</span><span class="ms-open">Full market brief →</span></div>
-        <div id="msBody"><div class="ms-foot">Loading the latest close…</div></div>
-      </div>${d.sources ? `<p class="sources" style="margin-top:20px">Sources: ${esc(d.sources)}</p>` : ""}`;
+      ${d.sources ? `<p class="sources" style="margin-top:20px">Sources: ${esc(d.sources)}</p>` : ""}`;
     openHandlers();
-    wireMarketsStrip();
     return;
   }
 
-  if(view === "markets"){
-    setNavActive("markets");
-    body.innerHTML = `<button class="np-back" id="npBack">← Back to Front Page</button><div id="mktMount"><div class="spinner" style="margin:30px auto"></div></div>`;
-    $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); });
-    const fill = (md) => {
-      const mount = $("#mktMount"); if(!mount) return;
-      let mh = `<div class="mkt-banner">
-        <div class="mb-l"><div class="mb-k">Markets · Day Close</div>
-          <div class="mb-t">${esc((md.headline||"").replace(/\n/g," "))}</div>
-          <div class="mb-s">${esc(md.subtitle||"")}</div></div>
-        <div class="mb-date">${esc(md.dateline || niceDate(md.date))} · U.S. Equities Close</div>
-      </div>` + buildMarketHTML(md);
-      if(md.sources) mh += `<p class="sources">Market sources: ${esc(md.sources)}</p>`;
-      mount.innerHTML = mh;
-      wireMarketCharts(md);
-    };
-    if(S.marketBrief) fill(S.marketBrief);
-    else {
-      const latest = (S.manifest?.market || [])[0];
-      if(!latest){ $("#mktMount").innerHTML = `<div class="empty">No market brief published yet.</div>`; return; }
-      fetchDay("market", latest).then(md => { S.marketBrief = md; if($("#mktMount")) fill(md); })
-        .catch(() => { if($("#mktMount")) $("#mktMount").innerHTML = `<div class="empty">The latest market brief couldn't be loaded.</div>`; });
-    }
-    return;
-  }
+  // Eli, Sep 2026: the full Markets brief (and its "At the Close" strip on the front page)
+  // is gone entirely -- the Running Outlook on Home covers markets now.
 
   if(typeof view === "string" && view.startsWith("article:")){
     const [, siS, iiS] = view.split(":"); const si = Number(siS), ii = Number(iiS);
@@ -2771,7 +2659,9 @@ function fmtHour(hh){ const h = Number(hh); if(isNaN(h)) return esc(String(hh));
    The scheduled task's hourly[] is empty on many days, so the site pulls its own
    forecast for Franklin, TN (ZIP 37064). WMO weather codes are mapped to the same
    condition strings wxGlyph() already understands. Cached on S.wx for the session. */
-const WX_LOC = { lat: 35.925, lon: -86.869, label: "Franklin, TN" };
+/* Eli, Sep 2026: pin this to the actual centroid of ZIP 37064 (Franklin, TN), not a rough
+   guess -- the old (35.925, -86.869) was noticeably off. */
+const WX_LOC = { lat: 35.923, lon: -86.888, label: "Franklin, TN 37064" };
 function wmoText(code, isDay){
   const c = Number(code);
   if(c === 0) return isDay ? "Sunny" : "Clear";
@@ -3604,48 +3494,6 @@ function wireTickerWall(){
   pAutoFetch();
 }
 
-/* markets strip for the News front page — index scoreboard + the day's biggest movers,
-   pulled from the latest published market brief. Clicking opens the full Markets view. */
-function wireMarketsStrip(){
-  const card = $("#npMkt"); if(!card) return;
-  card.addEventListener("click", () => { showNewsView("markets"); setNavActive("markets"); window.scrollTo({top:0,behavior:"smooth"}); });
-
-  const fill = md => {
-    const mount = $("#msBody"); if(!mount) return;
-    const idx = (md.indices||[]).slice(0,5);
-    const maxAbs = Math.max(.15, ...idx.map(i => Math.abs(i.pct||0)));
-    let tiles = "";
-    idx.forEach(ix => {
-      const neutral = /vix/i.test(ix.name||"");
-      const c = neutral ? "neutral" : cls(ix.pct);
-      const arrow = ix.pct>0 ? "▲" : ix.pct<0 ? "▼" : "—";
-      const col = neutral ? "var(--topbar-muted)" : ix.pct>=0 ? "var(--up)" : "var(--down)";
-      const w = Math.max(8, Math.abs(ix.pct||0)/maxAbs*100);
-      tiles += `<div class="ms-tile"><div class="mt-n">${esc((ix.name||"").replace(/\s*composite/i,""))}</div>
-        <div class="mt-v">${esc(ix.level||"")}</div>
-        <div class="mt-c ${c}">${arrow} ${fmtPct(ix.pct||0)}</div>
-        <div class="mt-bar" style="background:${col}" data-w="${w.toFixed(1)}"></div></div>`;
-    });
-    const mv = [].concat((md.winners||[]).slice(0,2).map(m => ({...m, up:true})),
-                         (md.losers||[]).slice(0,2).map(m => ({...m, up:false})));
-    const movers = mv.length ? `<div class="ms-movers">` + mv.map(m =>
-        `<span class="ms-mv ${m.up?"up":"down"}">${esc(m.ticker)} ${fmtPct(m.pct)}<span>${esc((m.name||"").split(/[ ,]/)[0])}</span></span>`).join("") + `</div>` : "";
-    mount.innerHTML = `<div class="ms-head-line">${esc((md.headline||"").replace(/\n/g," "))}</div>
-      <div class="ms-grid">${tiles}</div>${movers}
-      <div class="ms-foot">${esc(md.dateline || niceDate(md.date))} · U.S. equities close · tap for the full brief</div>`;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      mount.querySelectorAll(".mt-bar").forEach(b => { b.style.width = b.dataset.w + "%"; });
-    }));
-  };
-
-  if(S.marketBrief){ fill(S.marketBrief); return; }
-  const latest = (S.manifest && S.manifest.market || [])[0];
-  if(!latest){ const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">No market brief published yet.</div>`; return; }
-  fetchDay("market", latest)
-    .then(md => { S.marketBrief = md; if($("#msBody")) fill(md); })
-    .catch(() => { const m = $("#msBody"); if(m) m.innerHTML = `<div class="ms-foot">The latest market brief couldn't be loaded.</div>`; });
-}
-
 function renderEventsList(arr, fallbackDate, opts){
   if(!(arr||[]).length) return "";
   let x = `<div class="events">`;
@@ -4414,6 +4262,7 @@ async function renderNowStrip(d){
     const unit = n < 0 ? "yesterday" : n === 0 ? "\u{1F389}" : n === 1 ? "day — tomorrow" : "days";
     const heat = n <= 2 ? "hot" : n <= 14 ? "warm" : "";
     tiles.push({ id: c.id, cls: heat, icon: c.emoji || nowIcon(c.label, c.kind), label: c.label,
+                 date: c.date, kind: c.kind || "countdown",
                  big, unit, pct: nowProgress(n), editable: true,
                  local: ov.added.some(a => a.id === c.id) });
   });
@@ -4445,7 +4294,11 @@ async function renderNowStrip(d){
     const t = tiles[+b.dataset.i];
     b.addEventListener("click", e => {
       if(e.target.classList.contains("nt-x")){ nowRemove(t); return; }
-      if(t.go) t.go();
+      if(t.go){ t.go(); return; }
+      // Eli, Sep 2026: "I can't edit ones that are already there, I can just delete them --
+      // allow me to edit them too." Tapping anywhere on a countdown/deadline tile (that isn't
+      // the × or a navigational tile) now reopens the same editor, pre-filled, in edit mode.
+      if(t.editable){ openNowEditor(t); return; }
     });
   });
   const addBtn = $("#nowAdd");
@@ -4498,31 +4351,61 @@ function nowAdd(label, date, kind){
   nowSaveOverrides(o);
   renderNowStrip(nowLastDay);
 }
+/* Edit an existing chip in place. A locally-added chip is just updated by id. A chip that came
+   from the calendar refresh, Firestore, or the seed file can't be mutated at its source, so
+   editing it hides the original (same mechanism as delete) and adds the edited version as a
+   new local chip -- from then on it behaves exactly like any other local, fully-editable chip. */
+function nowEdit(chip, label, date, kind){
+  const o = nowOverrides();
+  if(chip.local){
+    const item = o.added.find(a => a.id === chip.id);
+    if(item){ item.label = label; item.date = date; item.kind = kind; }
+    else o.added.push({ id: chip.id, label, date, kind });
+  } else {
+    if(!o.hidden.includes(chip.id)) o.hidden.push(chip.id);
+    o.added.push({ id: "loc:" + Date.now().toString(36), label, date, kind });
+    const api = window.__nowApi;
+    if(api && api.isReady() && !String(chip.id).startsWith("file:")) api.remove(chip.id);
+  }
+  nowSaveOverrides(o);
+  renderNowStrip(nowLastDay);
+}
 
-/* little inline editor for a new countdown/deadline chip */
-function openNowEditor(){
+/* inline editor for a countdown/deadline chip -- pass an existing tile to edit it in place,
+   or call with no argument to add a new one */
+function openNowEditor(existing){
   closeStockModal();
+  const isEdit = !!existing;
   const ov = document.createElement("div"); ov.className = "modal-overlay"; ov.id = "stockModalOverlay";
   const today = todayCT();
+  const startLabel = isEdit ? (existing.label || "").replace(/ · [^·]*$/, "") : "";
+  const startDate = isEdit ? (existing.date || "") : "";
+  const startKind = isEdit ? (existing.kind || "countdown") : "countdown";
   ov.innerHTML = `<div class="modal-card" style="max-width:420px">
     <button class="modal-close" id="nowClose">✕</button>
     <div class="eyebrow">Now strip</div>
-    <h2 style="font-size:20px;font-weight:900;margin:2px 0 14px">Add a countdown</h2>
-    <label class="now-f"><span>What</span><input type="text" id="nowLabel" maxlength="60" placeholder="e.g. Wedding, Taxes due, Trip to Phuket"></label>
-    <label class="now-f"><span>Date</span><input type="date" id="nowDate" min="${today}"></label>
-    <div class="now-f"><span>Type</span><div class="seg" id="nowKind"><button type="button" data-k="countdown" class="on">Countdown</button><button type="button" data-k="deadline">Deadline</button></div></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="pbtn" id="nowCancel">Cancel</button><button class="pbtn now-save" id="nowSave">Add</button></div>
+    <h2 style="font-size:20px;font-weight:900;margin:2px 0 14px">${isEdit ? "Edit" : "Add"} a countdown</h2>
+    <label class="now-f"><span>What</span><input type="text" id="nowLabel" maxlength="60" placeholder="e.g. Wedding, Taxes due, Trip to Phuket" value="${esc(startLabel)}"></label>
+    <label class="now-f"><span>Date</span><input type="date" id="nowDate" ${isEdit ? "" : `min="${today}"`} value="${esc(startDate)}"></label>
+    <div class="now-f"><span>Type</span><div class="seg" id="nowKind"><button type="button" data-k="countdown" class="${startKind === "countdown" ? "on" : ""}">Countdown</button><button type="button" data-k="deadline" class="${startKind === "deadline" ? "on" : ""}">Deadline</button></div></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      ${isEdit ? `<button class="pbtn" id="nowDelete" style="margin-right:auto">Delete</button>` : ""}
+      <button class="pbtn" id="nowCancel">Cancel</button><button class="pbtn now-save" id="nowSave">${isEdit ? "Save" : "Add"}</button>
+    </div>
   </div>`;
   document.body.appendChild(ov);
-  let kind = "countdown";
+  let kind = startKind;
   ov.querySelectorAll("#nowKind button").forEach(b => b.addEventListener("click", () => { kind = b.dataset.k; ov.querySelectorAll("#nowKind button").forEach(x => x.classList.toggle("on", x === b)); }));
   const close = () => ov.remove();
   ov.addEventListener("click", e => { if(e.target === ov) close(); });
   $("#nowClose").addEventListener("click", close); $("#nowCancel").addEventListener("click", close);
+  const delBtn = $("#nowDelete");
+  if(delBtn) delBtn.addEventListener("click", () => { close(); nowRemove(existing); });
   $("#nowSave").addEventListener("click", () => {
     const label = $("#nowLabel").value.trim(), date = $("#nowDate").value;
     if(!label || !date){ $("#nowLabel").focus(); return; }
-    nowAdd(label, date, kind); close();
+    if(isEdit) nowEdit(existing, label, date, kind); else nowAdd(label, date, kind);
+    close();
   });
   setTimeout(() => $("#nowLabel").focus(), 50);
 }
@@ -4798,8 +4681,7 @@ async function renderDesk(){
   let foot = card.querySelector(".desk-foot");
   if(!foot){ foot = document.createElement("div"); foot.className = "desk-foot"; card.appendChild(foot); }
   const stamp = live && live.updated ? "Board " + relTimeAgo(live.updated) : (md.dateline || (md.date ? niceDate(md.date) : ""));
-  foot.innerHTML = `<span>${esc(stamp)}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>${latest ? `<a id="deskFull">Full market brief →</a>` : ""}`;
-  foot.querySelector("#deskFull")?.addEventListener("click", () => { S.pendingNewsView = "markets"; switchTab("news"); });
+  foot.innerHTML = `<span>${esc(stamp)}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>`;
 }
 
 function renderCalendarBody(p, d){

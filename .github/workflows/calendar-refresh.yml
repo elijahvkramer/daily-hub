@@ -40,6 +40,14 @@ jobs:
       - name: Refresh calendar data
         run: python3 scripts/refresh_calendar.py "$RUNNER_TEMP/sa.json" "$RUNNER_TEMP/passphrase.txt" .
 
+      # Eli, Sep 2026: this script existed but was never actually wired into a workflow, which
+      # is why the rate board (and the S&P/Nasdaq/Dow prices added the same day) never updated
+      # after the first manual run. Calendar Refresh is the one schedule GitHub reliably honors
+      # (see the note atop daily-brief.yml), so the rate board rides along with it. The script
+      # never fails the job on a bad fetch -- it leaves the previous file in place.
+      - name: Refresh rate board
+        run: python3 scripts/refresh_rates.py "$RUNNER_TEMP/passphrase.txt" .
+
       - name: Commit and push
         run: |
           git config user.email "elijahvkramer@gmail.com"

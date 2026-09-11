@@ -186,19 +186,28 @@ from dh_crypto import encrypt_bytes as encrypt_payload, decrypt_payload  # noqa:
 # ---------- main ----------
 
 # ---------------------------------------------------------------------------------------
-# Countdowns: Eli, Sep 2026 -- "always be looking at my calendar for things that need to be
-# added to the countdown at the top, and keep them there (upcoming bdays, drill, bach party,
-# southwest credits expiring, next big holidays, golf trips, registration for things, etc.).
-# Use discretion but always err on the side of adding it, because I can always delete it
-# myself after it's added."
+# Countdowns.
 #
-# So this scans a whole year of calendar ahead (not the 15-day dashboard window), classifies
-# anything that reads like an occasion, and publishes it as `countdowns`. Ids are stable
-# (cal:<date>:<slug>), which is what lets the site remember the ones he deleted. Routine work
-# meetings are the only thing filtered out; everything else gets in.
+# Round 1 (Eli, Sep 2026) was "always be looking at my calendar ... err on the side of
+# adding it, because I can always delete it myself." That produced a strip cluttered with
+# a dozen individual birthdays, work-conference duplicates, and the same person's birthday
+# showing up twice from two calendars.
+#
+# Round 2 (Eli, Sep 2026): "only ever include the NEXT upcoming birthday, the NEXT upcoming
+# major holiday, and the NEXT drill weekend." So the automatic feed is now capped at exactly
+# those three -- one of each, the single soonest instance, never a list of every birthday on
+# the calendar. That structurally fixes the duplicate problem too: taking the single nearest
+# birthday (across everyone, across every calendar it's synced to) means there is only ever
+# one birthday chip, so "Mom's birthday twice" and "Empower Conference twice" can't recur --
+# a work conference isn't a birthday/holiday/drill, so it no longer qualifies for the
+# automatic feed at all. Anything else Eli wants tracked (a wedding, a deadline, a trip) he
+# adds himself with the site's own "+ Add a countdown" editor, which persists independently
+# of this script and isn't touched by it.
+#
+# For a multi-day occasion logged as one event per day (a two-day drill weekend as two
+# all-day "Drill" entries), taking the single earliest date across all matches is what
+# "count down to the first day only" reduces to -- no separate de-duplication pass needed.
 COUNTDOWN_HORIZON_DAYS = 400
-# Eli, Sep 2026: be liberal about anything inside the next 3 months -- see build_countdowns().
-COUNTDOWN_LIBERAL_DAYS = 90
 
 # (emoji, kind, pattern) -- first match wins, so the specific ones come first.
 COUNTDOWN_RULES = [
@@ -281,13 +290,21 @@ def slugify(s, n=28):
     return s[:n] or "event"
 
 
-def build_countdowns(items, today):
-    """One countdown per occasion in the next ~13 months, most imminent first."""
-    horizon = today + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS)
-    out, seen = [], set()
+def next_occurrence_by_kind(items, today, kind, horizon_days=COUNTDOWN_HORIZON_DAYS):
+    """The single nearest upcoming event classified as `kind` (birthday/drill/etc). Sorting
+    every candidate ascending and taking the first is what gives "one occasion, next
+    instance only" AND "first day of a multi-day run" AND "no duplicate across calendars"
+    all at once: a two-day drill logged as two entries, or the same birthday synced from two
+    calendars, both just become two candidates with the same (or adjacent) date -- picking
+    the minimum is correct regardless of which case it is."""
+    horizon = today + datetime.timedelta(days=horizon_days)
+    candidates = []
     for ev in items:
         title = (ev.get("summary") or "").strip()
-        if not title or COUNTDOWN_SKIP.search(title):
+        if not title:
+            continue
+        emo, k = classify_countdown(title)
+        if k != kind:
             continue
         start = ev.get("start") or {}
         raw = start.get("date") or (start.get("dateTime") or "")[:10]
@@ -299,33 +316,13 @@ def build_countdowns(items, today):
             continue
         if d <= today or d > horizon:
             continue
-        emo, kind = classify_countdown(title)
-        all_day = bool(start.get("date"))
-        days_out = (d - today).days
-        if emo is None:
-            # Not a keyword match. Eli, Sep 2026: "add things to the countdown that are
-            # anything in the next three months ... be more liberal than conservative,
-            # because I can always delete it, but it's harder for me to add it myself."
-            # So inside 90 days, anything not caught by COUNTDOWN_SKIP gets in, timed or
-            # all-day. Past 90 days we fall back to the old, narrower rule (an all-day
-            # occasion only) so the far-out list doesn't fill up with routine meetings.
-            if days_out <= COUNTDOWN_LIBERAL_DAYS:
-                pass
-            elif all_day:
-                pass
-            else:
-                continue
-            emo, kind = "\U0001F4CC", "event"
-        key = (slugify(title), d.isoformat())
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append({"id": f"cal:{d.isoformat()}:{slugify(title)}",
-                    "label": title[:48], "date": d.isoformat(),
-                    "kind": "deadline" if kind in ("deadline", "signup", "exam") else "countdown",
-                    "emoji": emo, "auto": True})
-    out.sort(key=lambda c: c["date"])
-    return out[:30]
+        candidates.append((d, title, emo))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda c: (c[0], c[1]))
+    d, title, emo = candidates[0]
+    return {"id": f"cal:{d.isoformat()}:{slugify(title)}", "label": title[:48],
+            "date": d.isoformat(), "kind": "countdown", "emoji": emo, "auto": True}
 
 
 def main():
@@ -356,20 +353,29 @@ def main():
     print(f"  bucketed: today={len(today_list)} radar={len(radar_list)}")
 
     # A second, much wider sweep purely for the countdown rail at the top of the Home tab.
-    # It is deliberately separate from the 15-day dashboard window: birthdays, drill
-    # weekends, a bachelor party and expiring travel credits all live months out.
+    # Eli, Sep 2026 (round 2): "only ever include the NEXT upcoming birthday, the NEXT
+    # upcoming major holiday, and the NEXT drill weekend" -- so this is capped at exactly
+    # those three, one of each, never a running list. See the notes above
+    # next_occurrence_by_kind() for how that also kills the duplicate-birthday /
+    # duplicate-conference problem structurally. Anything else Eli wants tracked (a wedding,
+    # a deadline, a trip) he adds himself with the site's own countdown editor.
     countdowns = []
     try:
         far_max = time_min + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS)
         far_items = []
         for cal_id in CALENDAR_IDS:
             far_items.extend(fetch_events(creds, cal_id, time_min, far_max))
-        countdowns = build_countdowns(far_items, today_ct)
+        bday = next_occurrence_by_kind(far_items, today_ct, "birthday")
+        if bday:
+            countdowns.append(bday)
+        drill = next_occurrence_by_kind(far_items, today_ct, "drill")
+        if drill:
+            countdowns.append(drill)
         holidays = holiday_countdowns(today_ct, today_ct + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS))
-        have = {c["label"].lower() for c in countdowns}
-        countdowns += [h for h in holidays if h["label"].lower() not in have][:4]
+        if holidays:
+            countdowns.append(holidays[0])
         countdowns.sort(key=lambda c: c["date"])
-        print(f"  countdowns: {len(countdowns)} ({', '.join(c['label'] for c in countdowns[:6])})")
+        print(f"  countdowns: {len(countdowns)} ({', '.join(c['label'] for c in countdowns)})")
     except Exception as e:  # noqa: BLE001
         print(f"  ! countdowns: {e}", file=sys.stderr)
 

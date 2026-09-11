@@ -148,9 +148,12 @@ def market_prices():
     CoinGecko answers from datacenter IPs when almost nothing else in commodities does."""
     prices, got = [], []
 
-    # --- FRED: WTI crude and the broad dollar index -------------------------------------
+    # --- FRED: WTI crude, the broad dollar index, and the three headline equity indexes.
+    # Eli, Sep 2026: wanted "a couple more prices, maybe broad indexes" on the Running
+    # Outlook board -- FRED publishes daily closes for all three (a day behind live, same
+    # as the rest of this board), so no separate market-data key is needed. -------------
     try:
-        f = fred_series(["DCOILWTICO", "DTWEXBGS"])
+        f = fred_series(["DCOILWTICO", "DTWEXBGS", "SP500", "NASDAQCOM", "DJIA"])
         if "DCOILWTICO" in f:
             cur, prev = f["DCOILWTICO"]
             prices.append({"label": "Crude", "value": f"${cur:,.2f}", "pct": pct_note(cur, prev),
@@ -161,6 +164,21 @@ def market_prices():
             prices.append({"label": "Dollar", "value": f"{cur:,.1f}", "pct": pct_note(cur, prev),
                            "note": "broad index"})
             got.append("dxy")
+        if "SP500" in f:
+            cur, prev = f["SP500"]
+            prices.append({"label": "S&P 500", "value": f"{cur:,.0f}", "pct": pct_note(cur, prev),
+                           "note": "prior close"})
+            got.append("spx")
+        if "NASDAQCOM" in f:
+            cur, prev = f["NASDAQCOM"]
+            prices.append({"label": "Nasdaq", "value": f"{cur:,.0f}", "pct": pct_note(cur, prev),
+                           "note": "prior close"})
+            got.append("nasdaq")
+        if "DJIA" in f:
+            cur, prev = f["DJIA"]
+            prices.append({"label": "Dow", "value": f"{cur:,.0f}", "pct": pct_note(cur, prev),
+                           "note": "prior close"})
+            got.append("dow")
     except Exception as e:  # noqa: BLE001
         print(f"  ! fred: {e}", file=sys.stderr)
 

@@ -197,6 +197,8 @@ from dh_crypto import encrypt_bytes as encrypt_payload, decrypt_payload  # noqa:
 # (cal:<date>:<slug>), which is what lets the site remember the ones he deleted. Routine work
 # meetings are the only thing filtered out; everything else gets in.
 COUNTDOWN_HORIZON_DAYS = 400
+# Eli, Sep 2026: be liberal about anything inside the next 3 months -- see build_countdowns().
+COUNTDOWN_LIBERAL_DAYS = 90
 
 # (emoji, kind, pattern) -- first match wins, so the specific ones come first.
 COUNTDOWN_RULES = [
@@ -299,11 +301,19 @@ def build_countdowns(items, today):
             continue
         emo, kind = classify_countdown(title)
         all_day = bool(start.get("date"))
+        days_out = (d - today).days
         if emo is None:
-            # Not a keyword match. An all-day event more than a few days out is still an
-            # occasion (that is how "Bach party" or "Southwest credits" get in when they are
-            # named something we did not anticipate); a timed weekday meeting is not.
-            if not all_day or (d - today).days < 4:
+            # Not a keyword match. Eli, Sep 2026: "add things to the countdown that are
+            # anything in the next three months ... be more liberal than conservative,
+            # because I can always delete it, but it's harder for me to add it myself."
+            # So inside 90 days, anything not caught by COUNTDOWN_SKIP gets in, timed or
+            # all-day. Past 90 days we fall back to the old, narrower rule (an all-day
+            # occasion only) so the far-out list doesn't fill up with routine meetings.
+            if days_out <= COUNTDOWN_LIBERAL_DAYS:
+                pass
+            elif all_day:
+                pass
+            else:
                 continue
             emo, kind = "\U0001F4CC", "event"
         key = (slugify(title), d.isoformat())
@@ -315,7 +325,7 @@ def build_countdowns(items, today):
                     "kind": "deadline" if kind in ("deadline", "signup", "exam") else "countdown",
                     "emoji": emo, "auto": True})
     out.sort(key=lambda c: c["date"])
-    return out[:14]
+    return out[:30]
 
 
 def main():

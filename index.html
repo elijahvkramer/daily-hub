@@ -590,8 +590,19 @@
                  padding:4px 10px 4px 8px;border-radius:999px;background:color-mix(in srgb, var(--muted) 12%, transparent);width:fit-content}
   .psnap .ps-chg.pos{background:color-mix(in srgb, var(--up) 14%, transparent)}
   .psnap .ps-chg.neg{background:color-mix(in srgb, var(--down) 14%, transparent)}
+  /* Eli, Sep 2026 (round 2): "the graph now looks stretched -- rework it." Root cause: the
+     wrapper stretches to match the left column's height (that's the "fill the box" fix from
+     before), and the old CSS made the <svg> itself grow to fill 100% of that stretched height
+     with preserveAspectRatio="none" -- so a tall left column made the line chart tall and
+     spiky-looking instead of a normal short, wide sparkline. Now the chart keeps a fixed,
+     sane height and just sits at the bottom of whatever space it's given. */
   #psSparkWrap{display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
-  .psnap .ps-spark{width:100%;height:100%;min-height:62px;flex:1;display:block}
+  .ps-spark-wrap{position:relative;flex:0 0 auto}
+  .psnap .ps-spark{width:100%;height:72px;display:block}
+  .ps-yaxis{position:absolute;left:0;font-size:10px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;
+            letter-spacing:.01em;pointer-events:none;background:color-mix(in srgb, var(--card) 82%, transparent);
+            padding:1px 4px 1px 0}
+  .ps-yaxis-top{top:-2px} .ps-yaxis-bot{bottom:-2px}
   .psnap .ps-axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.02em}
   .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
   @media(max-width:640px){.psnap-hero{grid-template-columns:1fr;gap:14px}}
@@ -1597,29 +1608,34 @@
   .desk-mood.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)} .desk-mood.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
   .desk-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:26px;margin-top:10px;align-items:start}
   @media(max-width:900px){.desk-grid{grid-template-columns:1fr;gap:18px}}
-  /* outlook rows -- Eli, Sep 2026: "each bullet should be more of a tab I can drop down,
-     like an app" -- so each topic is its own rounded, tappable tile (row + its detail pane
-     form one visual card via the shared radius/background), not a flat bordered list. */
-  .ol{display:flex;flex-direction:column;gap:6px}
-  .ol-row{display:grid;grid-template-columns:9px auto auto 1fr 16px;align-items:baseline;gap:10px;width:100%;text-align:left;
-          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:13px;
-          padding:12px 14px;font:inherit;cursor:pointer;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease}
-  .ol-row:hover{border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline));box-shadow:0 1px 2px rgba(22,24,29,.05)}
-  .ol-row:hover .ol-head{color:var(--ink)}
-  .ol-dot{width:9px;height:9px;border-radius:50%;align-self:center}
-  .ol-topic{font-size:14px;font-weight:900;letter-spacing:-.01em;white-space:nowrap}
-  .ol-stance{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;
-             border:1px solid var(--hairline);border-radius:999px;padding:2px 7px;align-self:center;background:var(--card)}
-  .ol-head{font-size:13.5px;line-height:1.45;color:var(--muted);min-width:0}
-  .ol-chev{font-size:13px;color:var(--muted);align-self:center;transition:transform .2s;width:16px;height:16px;border-radius:50%;
-           display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--ink) 6%, transparent)}
-  .ol-row.on{background:var(--card);border-color:color-mix(in srgb, var(--gold) 55%, var(--hairline));border-bottom-left-radius:0;border-bottom-right-radius:0;
-             box-shadow:0 1px 3px rgba(22,24,29,.06)}
-  .ol-row.on .ol-chev{transform:rotate(180deg);background:color-mix(in srgb, var(--gold) 22%, transparent);color:var(--gold-dark)}
-  .ol-row.on .ol-topic{color:var(--gold-dark)}
-  .ol-detail{display:none}
-  .ol-detail.on{display:block;padding:14px 16px 18px;margin-top:-6px;background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 55%, var(--hairline));
-                border-top:none;border-bottom-left-radius:13px;border-bottom-right-radius:13px;animation:fadein .22s ease}
+  /* outlook boxes -- Eli, Sep 2026 (round 2): "basically boxes for stocks, bonds, cash, etc,
+     each showing just the quick summary, with a logo, that look nice -- doesn't need to be
+     straight up and down, can be left/right and up/down from each other." So this is a real
+     grid of app-icon-style tiles now (not a stacked list of drop-down rows): tap a box and its
+     full take renders in ONE shared panel below the grid, rather than each row growing in
+     place, which is what let the grid stay a grid instead of collapsing into a list. */
+  .ol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px}
+  .ol-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;
+          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:16px;
+          padding:14px 8px 12px;font:inherit;cursor:pointer;box-shadow:var(--shadow);
+          transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,border-color .16s ease}
+  .ol-box:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline))}
+  .ol-box-ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;
+             background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent)}
+  .ol-box-top{font-size:12.5px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
+  .ol-box-stance{font-size:10px;font-weight:800;letter-spacing:.02em;color:var(--muted);line-height:1.3;min-height:2.4em}
+  .ol-box-dot{position:absolute;top:9px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--oc, var(--muted))}
+  .ol-box.on{background:var(--card);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
+  .ol-box.on .ol-box-top{color:var(--gold-dark)}
+  .ol-panel{margin-top:12px}
+  .ol-panel-empty{font-size:12.5px;color:var(--muted);padding:2px 2px 0}
+  .ol-panel-card{background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 45%, var(--hairline));
+                 border-radius:16px;padding:15px 16px 18px;animation:fadein .2s ease}
+  .ol-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .ol-panel-ic{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;
+               background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent);flex-shrink:0}
+  .ol-panel-tt{font-size:15px;font-weight:900;letter-spacing:-.01em}
+  .ol-panel-hd{font-size:13px;color:var(--muted);line-height:1.4;margin-top:1px}
   .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:14px}}
   .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:12px}
@@ -1635,11 +1651,7 @@
   .ol-col:last-child li::before{background:color-mix(in srgb, var(--muted) 15%, transparent);color:var(--muted)}
   .ol-legacy{font-size:14px;line-height:1.6;margin:0}
   .ol-src{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.4;padding-top:8px;border-top:1px solid var(--hairline)}
-  @media(max-width:640px){
-    .ol-row{grid-template-columns:8px auto 1fr 14px;row-gap:2px}
-    .ol-stance{grid-column:2;grid-row:2} .ol-head{grid-column:3/5;grid-row:2}
-    .ol-detail.on{padding-left:18px}
-  }
+  @media(max-width:560px){.ol-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
   /* board: two short blocks. YIELDS share one % axis (the comparison is the point);
      PRICES are just a number and the day's move -- an axis across $4,000 gold and $60
      crude would say nothing. */
@@ -1660,7 +1672,8 @@
   .rb-chip.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
   .rb-fill{position:absolute;left:0;top:50%;height:3px;border-radius:999px;transform:translateY(-50%);
            background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 18%, transparent),color-mix(in srgb, var(--gold) 62%, transparent))}
-  .rb-l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rb-l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+  .rb-ic{font-size:12px;flex-shrink:0}
   .rb-track{position:relative;height:16px}
   .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
   .rb-dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);
@@ -4531,6 +4544,16 @@ const OUTLOOK_SEED = {
   ]
 };
 const OUTLOOK_TONE = { up:"var(--up)", warn:"#D08A2C", down:"var(--down)", flat:"var(--muted)" };
+/* "a couple word summary before it drops down ... with a logo" -- an emoji badge per topic so
+   each box reads at a glance, matched loosely by name so a brief-sourced topic that isn't in
+   this exact list (or gets renamed) still gets something sensible instead of a blank icon. */
+const OUTLOOK_ICONS = [
+  [/stock|equit|s&p|nasdaq/i, "\u{1F4C8}"], [/bond|treasury|yield/i, "\u{1F4DC}"],
+  [/cash|money.?market/i, "\u{1F4B0}"], [/fed\b|federal reserve/i, "\u{1F3E6}"],
+  [/inflation|cpi/i, "\u{1F4CA}"], [/mortgage|housing/i, "\u{1F3E0}"],
+  [/gold/i, "\u{1F947}"], [/crypto|bitcoin|btc/i, "\u{1FA99}"], [/dollar|currency|fx/i, "\u{1F4B5}"]
+];
+const outlookIcon = topic => (OUTLOOK_ICONS.find(([re]) => re.test(topic || "")) || [])[1] || "\u{1F4CC}";
 /* An outlook entry off the brief is only trusted if it actually looks like one. */
 const outlookOK = a => Array.isArray(a) && a.length > 0 &&
   a.every(x => x && typeof x === "object" && x.topic && x.headline);
@@ -4556,13 +4579,13 @@ const BOARD_YIELDS = [
   { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
 ];
 const BOARD_PRICES = [
-  { label:"S&P 500", match:/^s&p ?500$|^spx$/i,      fmt:v => v },
-  { label:"Nasdaq",  match:/^nasdaq/i,                fmt:v => v },
-  { label:"Dow",     match:/^dow/i,                   fmt:v => v },
-  { label:"Gold",    match:/^gold|xau/i,             fmt:v => v },
-  { label:"Crude",   match:/crude|wti|oil|^brent/i,  fmt:v => v },
-  { label:"Bitcoin", match:/bitcoin|^btc/i,          fmt:v => v },
-  { label:"Dollar",  match:/dollar index|^dxy|^u\.?s\.? dollar/i, fmt:v => v }
+  { label:"S&P 500", match:/^s&p ?500$|^spx$/i,      icon:"\u{1F4C8}" },
+  { label:"Nasdaq",  match:/^nasdaq/i,                icon:"\u{1F4BB}" },
+  { label:"Dow",     match:/^dow/i,                   icon:"\u{1F3ED}" },
+  { label:"Gold",    match:/^gold|xau/i,             icon:"\u{1F947}" },
+  { label:"Crude",   match:/crude|wti|oil|^brent/i,  icon:"\u{1F6E2}️" },
+  { label:"Bitcoin", match:/bitcoin|^btc/i,          icon:"\u{1FA99}" },
+  { label:"Dollar",  match:/dollar index|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}" }
 ];
 const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
@@ -4581,7 +4604,7 @@ function boardHTML(rates, prices){
   const psrc = (prices || []).filter(p => p && p.label);
   BOARD_PRICES.forEach(spec => {
     const p = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
-    if(p){ usedP.add(p); ps.push({ label: spec.label, value: p.value, note: p.note || "", pct: p.pct }); }
+    if(p){ usedP.add(p); ps.push({ label: spec.label, value: p.value, note: p.note || "", pct: p.pct, icon: spec.icon }); }
   });
   if(!ys.length && !ps.length) return "";
 
@@ -4608,7 +4631,7 @@ function boardHTML(rates, prices){
   const priceBlock = ps.length ? `<div class="rb-h">Prices</div>` + ps.map(p => {
     const move = typeof p.pct === "number" ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
                : (p.note ? `<span class="rb-chip flat">${esc(p.note)}</span>` : "");
-    return `<div class="rb-prow"><div class="rb-l">${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${move}</div></div>`;
+    return `<div class="rb-prow"><div class="rb-l"><span class="rb-ic">${p.icon || ""}</span>${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${move}</div></div>`;
   }).join("") : "";
   return `<div class="rb">${yieldBlock}${priceBlock}</div>`;
 }
@@ -4635,27 +4658,19 @@ async function renderDesk(){
   const fromBrief = outlookOK(md.outlookBoard) ? md.outlookBoard : (outlookOK(md.outlook) ? md.outlook : null);
   const ol = fromBrief || OUTLOOK_SEED.items;
   const seeded = !fromBrief;
-  const left = `<div class="ol">` + ol.map((x,i) => {
-    const short = asList(x.short || x.shortTerm), long = asList(x.long || x.longTerm);
-    const legacy = !short.length && !long.length && x.explain;
-    const col = (kicker, when, arr) => `<div class="ol-col"><div class="ol-ck">${kicker}<span>${when}</span></div><ol>${
-      arr.map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>`;
-    return `
-    <button type="button" class="ol-row" data-i="${i}" aria-expanded="false" aria-controls="ol-${i}">
-      <span class="ol-dot" style="background:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}"></span>
-      <span class="ol-topic">${esc(x.topic)}</span>
-      <span class="ol-stance">${esc(x.stance || "")}</span>
-      <span class="ol-head">${esc(x.headline || "")}</span>
-      <span class="ol-chev">⌄</span>
-    </button>
-    <div class="ol-detail" id="ol-${i}">
-      ${legacy ? `<p class="ol-legacy">${esc(x.explain)}</p>` : `<div class="ol-cols">
-        ${short.length ? col("Short term", "next 6–12 months", short) : ""}
-        ${long.length ? col("Long term", "3–5 years", long) : ""}
-      </div>`}
-      ${x.source ? `<div class="ol-src">${esc(x.source)}</div>` : ""}
-    </div>`;
-  }).join("") + `</div>`;
+  // Eli, Sep 2026 (round 2): "boxes for stocks, bonds, cash etc, just the quick summary, with
+  // a logo -- doesn't need to be straight up and down, can be left/right and up/down from each
+  // other" -- so this is a wrapping grid of icon tiles, and tapping one renders its full take
+  // into a single shared panel underneath (rather than each tile growing in place, which is
+  // what turns a grid back into a list).
+  const left = `<div class="ol-grid">` + ol.map((x,i) => `
+    <button type="button" class="ol-box" data-i="${i}" aria-pressed="false" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
+      <span class="ol-box-dot"></span>
+      <span class="ol-box-ic">${x.icon || outlookIcon(x.topic)}</span>
+      <span class="ol-box-top">${esc(x.topic)}</span>
+      <span class="ol-box-stance">${esc(x.stance || "")}</span>
+    </button>`).join("") + `</div>
+    <div class="ol-panel" id="olPanel"><div class="ol-panel-empty">Tap a topic above for the full take.</div></div>`;
 
   const rates = (live && live.rates && live.rates.length) ? live.rates
     : (md.rates && md.rates.length ? md.rates : (md.stats || []));
@@ -4670,12 +4685,30 @@ async function renderDesk(){
   if(label && !label.querySelector(".desk-mood") && spx && typeof spx.pct === "number")
     label.insertAdjacentHTML("beforeend", ` <span class="desk-mood ${cls(spx.pct)}">${esc((spx.name||"").replace(/ composite/i,""))} ${fmtPct(spx.pct)}</span>`);
 
-  grid.querySelectorAll(".ol-row").forEach(b => b.addEventListener("click", () => {
-    const box = grid.querySelector("#ol-" + b.dataset.i);
-    const open = box.classList.contains("on");
-    grid.querySelectorAll(".ol-detail.on").forEach(x => x.classList.remove("on"));
-    grid.querySelectorAll(".ol-row.on").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-expanded","false"); });
-    if(!open){ box.classList.add("on"); b.classList.add("on"); b.setAttribute("aria-expanded","true"); }
+  const panel = grid.querySelector("#olPanel");
+  const paintOutlook = x => {
+    const short = asList(x.short || x.shortTerm), long = asList(x.long || x.longTerm);
+    const legacy = !short.length && !long.length && x.explain;
+    const col = (kicker, when, arr) => `<div class="ol-col"><div class="ol-ck">${kicker}<span>${when}</span></div><ol>${
+      arr.map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>`;
+    panel.innerHTML = `<div class="ol-panel-card">
+      <div class="ol-panel-head">
+        <span class="ol-panel-ic" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">${x.icon || outlookIcon(x.topic)}</span>
+        <div><div class="ol-panel-tt">${esc(x.topic)}</div><div class="ol-panel-hd">${esc(x.headline || "")}</div></div>
+      </div>
+      ${legacy ? `<p class="ol-legacy">${esc(x.explain)}</p>` : `<div class="ol-cols">
+        ${short.length ? col("Short term", "next 6–12 months", short) : ""}
+        ${long.length ? col("Long term", "3–5 years", long) : ""}
+      </div>`}
+      ${x.source ? `<div class="ol-src">${esc(x.source)}</div>` : ""}
+    </div>`;
+  };
+  grid.querySelectorAll(".ol-box").forEach(b => b.addEventListener("click", () => {
+    const already = b.classList.contains("on");
+    grid.querySelectorAll(".ol-box.on").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-pressed","false"); });
+    if(already){ panel.innerHTML = `<div class="ol-panel-empty">Tap a topic above for the full take.</div>`; return; }
+    b.classList.add("on"); b.setAttribute("aria-pressed","true");
+    paintOutlook(ol[+b.dataset.i]);
   }));
 
   let foot = card.querySelector(".desk-foot");
@@ -5680,12 +5713,20 @@ function buildIntradayChart(ser, dayChange, axisNote){
   area += ` L ${fx(pts[pts.length-1].ts).toFixed(1)} ${(H-PB).toFixed(1)} Z`;
   const lx = fx(pts[pts.length-1].ts), ly = fy(last);
   const fmt = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
-  return `<svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
-    <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${area}" fill="url(#psGrad)"/>
-    <path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${col}"/>
-  </svg>
+  // "it'd be nice to see the y-axis numbers kinda like you have on the x-axis" -- the high/low
+  // of the visible line, rendered as plain HTML overlays (not inside the SVG) so they never
+  // get warped by preserveAspectRatio="none", which is what stretches the line to fill the box.
+  const fmtUsd = v => "$" + Math.round(v).toLocaleString("en-US");
+  return `<div class="ps-spark-wrap">
+    <svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
+      <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+      <path d="${area}" fill="url(#psGrad)"/>
+      <path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${col}"/>
+    </svg>
+    <span class="ps-yaxis ps-yaxis-top">${esc(fmtUsd(mx))}</span>
+    <span class="ps-yaxis ps-yaxis-bot">${esc(fmtUsd(mn))}</span>
+  </div>
   <div class="ps-axis"><span>Open</span><span>${esc(axisNote || fmt(start + span/2))}</span><span>Close</span></div>`;
 }
 /* Memoized: this used to be recomputed from scratch -- ~15k toLocaleDateString() calls, each

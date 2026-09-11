@@ -5,47 +5,19 @@
 <script>
 (function(){
   try{
-    /* Keep THEME_IDS and dhShuffleIdFor() identical to THEMES / dhThemeShuffleId() in the
-       main script below -- this copy exists only so the right theme paints before first
-       paint (no color flash). Shuffle scheme: the calendar is cut into blocks of
-       THEME_IDS.length days; each block is a seeded permutation of every theme, so every
-       theme shows up once per block, consecutive days never repeat (a block boundary that
-       would repeat swaps the first two), and every device agrees on the day's theme. */
-    var THEME_IDS = ["classic","night","sunset","arctic"];
-    function dhShuffleIdFor(dateStr){
-      var K = THEME_IDS.length;
-      var n = Math.round(Date.UTC(+dateStr.slice(0,4), +dateStr.slice(5,7)-1, +dateStr.slice(8,10)) / 864e5);
-      var perm = function(block){
-        var x = ((block + 1) * 747796405) >>> 0 || 1;
-        var rnd = function(){ x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
-        var a = []; for(var i=0;i<K;i++) a.push(i);
-        for(var i=K-1;i>0;i--){ var j = Math.floor(rnd()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
-        return a;
-      };
-      var b = Math.floor(n / K), pos = n - b*K;
-      var p = perm(b);
-      if(b > 0 && p[0] === perm(b-1)[K-1]){ var t2 = p[0]; p[0] = p[1]; p[1] = t2; }
-      return THEME_IDS[p[pos]];
-    }
-    var today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-    var shuffleOn = localStorage.getItem("dh-theme-shuffle") === "1";
-    var id;
-    if(shuffleOn){
-      var lastDate = localStorage.getItem("dh-theme-shuffle-date");
-      if(lastDate === today){
-        id = localStorage.getItem("dh-theme") || "classic";
-      } else {
-        id = dhShuffleIdFor(today);
-        localStorage.setItem("dh-theme", id);
-        localStorage.setItem("dh-theme-shuffle-date", today);
-      }
-    } else {
-      id = localStorage.getItem("dh-theme") || "classic";
-    }
-    if(id && id !== "classic") document.documentElement.setAttribute("data-theme", id);
-    // Glass is the default look; "classic" (the original newspaper chrome) stays available
-    if(localStorage.getItem("dh-look") !== "classic") document.documentElement.classList.add("glass");
-  }catch(e){}
+    /* Paint the saved theme before first paint, so there is no color flash.
+       There is exactly ONE look now, and its whole palette is derived in CSS from two
+       numbers: --h (the hue of the color Eli picked) and --sat (how colorful it is).
+       Night is a mode on the same hue, not a separate palette. Keep the defaults here in
+       sync with THEME_DEFAULT in the main script. */
+    var r = document.documentElement;
+    r.classList.add("glass");
+    var h = parseFloat(localStorage.getItem("dh-hue"));
+    var sat = parseFloat(localStorage.getItem("dh-sat"));
+    r.style.setProperty("--h", isFinite(h) ? h : 212);
+    r.style.setProperty("--sat", isFinite(sat) ? sat : 1);
+    if(localStorage.getItem("dh-night") === "1") r.setAttribute("data-mode", "dark");
+  }catch(e){ document.documentElement.classList.add("glass"); }
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -417,7 +389,12 @@
      rows carry controls (due chip, note, checklist, delete); the agenda is
      mostly short time+title lines and reads fine narrower */
   .home-row{display:grid;gap:14px;margin-top:12px;align-items:start}
-  .home-row.snap-wx{grid-template-columns:1.75fr 1fr}
+  /* Eli, Sep 2026: "make the height of the portfolio the same as the weather." Stretch the
+     row and let both children fill it, so the two cards always end on the same line no
+     matter which one has more to say. */
+  .home-row.snap-wx{grid-template-columns:1.75fr 1fr;align-items:stretch}
+  .home-row.snap-wx > div{display:flex;min-height:0}
+  .home-row.snap-wx > div > *{flex:1;min-height:0}
   @media(max-width:900px){.home-row.snap-wx{grid-template-columns:1fr}}
   #panel-calendar > .bento-card,#panel-calendar > .todo-today-row,#panel-calendar > #todayTriple,#panel-calendar > .home-row{margin-top:12px}
   .todo-today-row{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-top:12px;align-items:start}
@@ -460,12 +437,22 @@
   .friend-dot.ok{background:var(--up)}
   .friend-dot.soon{background:var(--gold)}
   .friend-dot.overdue{background:var(--down)}
-  .friend-name{font-weight:800;font-size:14.5px}
-  .friend-meta{font-size:12px;color:var(--muted);white-space:nowrap}
+  .friend-name{font-weight:800;font-size:14.5px;white-space:nowrap}
+  .friend-meta{font-size:12px;color:var(--muted)}
+  .friend-meta b{color:var(--ink);font-weight:900}
+  /* one chip per channel: how long since a text / a call / actually seeing them */
+  .friend-chips{display:inline-flex;gap:5px;flex-shrink:0}
+  .fch{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:999px;
+       background:color-mix(in srgb, var(--ink) 6%, transparent);color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.2}
+  .fch b{font-weight:900}
+  .fch.ok{background:color-mix(in srgb, var(--up) 13%, transparent);color:var(--up)}
+  .fch.soon{background:color-mix(in srgb, var(--gold) 16%, transparent);color:var(--gold-dark)}
+  .fch.over{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
+  @media(max-width:720px){.friend-row-main{flex-wrap:wrap}.friend-meta{width:100%}}
   .friend-row-actions{display:flex;align-items:center;gap:6px}
   .friend-freq-select{font:inherit;font-size:12px;border:1px solid var(--hairline);border-radius:7px;padding:6px;background:var(--paper);color:var(--ink)}
   .friend-log-btn{appearance:none;background:none;border:1px solid var(--hairline);border-radius:7px;font-size:13px;padding:5px 8px;cursor:pointer;transition:all .15s;line-height:1}
-  .friend-log-btn:hover{border-color:var(--gold);background:#FBF6EA}
+  .friend-log-btn:hover{border-color:var(--gold);background:color-mix(in srgb, var(--gold) 12%, transparent)}
   .friend-remove{appearance:none;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px 7px;border-radius:6px;transition:all .15s}
   .friend-remove:hover{color:var(--down);background:rgba(220,75,67,.08)}
   .tc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -497,6 +484,17 @@
   /* click-to-complete: clicking the row plays a quick fade/shrink, then the
      item is removed (the X stays an instant, no-animation delete) */
   .todo-item{border-bottom:1px solid var(--hairline);transition:opacity .35s ease,transform .35s ease}
+  /* urgent <-> chill: the row closes where it was and opens where it lands, so the list
+     reflows instead of snapping (Eli, Sep 2026) */
+  .todo-item.ti-leaving{transition:height .24s cubic-bezier(.4,0,.2,1),opacity .2s ease,transform .24s ease,margin .24s ease;pointer-events:none;border-bottom-color:transparent}
+  .todo-item.ti-leaving.ti-down{transform:translateY(10px)}
+  .todo-item.ti-leaving.ti-up{transform:translateY(-10px)}
+  .todo-item.ti-arriving{animation:tiSlideIn .46s cubic-bezier(.16,1,.3,1) both}
+  .todo-item.ti-arriving::after{content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;
+    background:color-mix(in srgb, var(--accent, var(--gold)) 18%, transparent);animation:tiFlash .9s ease-out forwards}
+  @keyframes tiSlideIn{from{opacity:0;transform:translateY(-14px);max-height:0}40%{opacity:1}to{opacity:1;transform:none;max-height:400px}}
+  @keyframes tiFlash{from{opacity:1}to{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.todo-item.ti-arriving,.todo-item.ti-arriving::after{animation:none}}
   .todo-item:last-child{border-bottom:none}
   .todo-item.ti-completing{opacity:0;transform:scale(.97) translateX(8px)}
   /* checked-but-undoable: a 3s grace window after clicking a row, before it
@@ -663,6 +661,31 @@
   .cal-tip .ct-row{margin-top:5px}
   .cal-tip .ct-time{color:var(--gold-soft);font-weight:900;font-size:11px}
 
+  /* ---------- Today as a day view (Google Calendar day mode) ---------- */
+  .dv-allday{display:flex;align-items:flex-start;gap:9px;padding:8px 2px 10px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
+  .dv-ak{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:4px;flex-shrink:0}
+  .dv-allday > div{display:flex;flex-wrap:wrap;gap:5px}
+  .dv-chip{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:color-mix(in srgb, var(--accent, var(--gold)) 14%, transparent);
+           color:var(--accent-dark, var(--gold-dark));border:1px solid color-mix(in srgb, var(--accent, var(--gold)) 28%, transparent)}
+  .dv-scroll{position:relative;height:392px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;margin:0 -4px}
+  .dv-scroll::-webkit-scrollbar{width:6px} .dv-scroll::-webkit-scrollbar-thumb{background:var(--hairline);border-radius:3px}
+  .dv-grid{position:relative;padding-left:46px}
+  .dv-hr{position:absolute;left:0;right:0;height:0;border-top:1px solid var(--hairline)}
+  .dv-hr span{position:absolute;left:0;top:-7px;width:42px;text-align:right;font-size:10px;font-weight:800;color:var(--muted);
+              font-variant-numeric:tabular-nums;background:transparent}
+  .dv-body{position:absolute;left:46px;right:2px;top:0;bottom:0}
+  .dv-ev{position:absolute;border-radius:8px;padding:4px 8px;overflow:hidden;font-size:12.5px;line-height:1.3;
+         background:color-mix(in srgb, var(--accent, var(--gold)) 15%, transparent);
+         border-left:3px solid var(--accent, var(--gold));color:var(--ink);
+         box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .15s}
+  .dv-ev:hover{transform:translateX(1px);background:color-mix(in srgb, var(--accent, var(--gold)) 24%, transparent)}
+  .dv-ev b{display:block;font-weight:800;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dv-ev i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .dv-ev.tiny{padding:2px 8px;display:flex;align-items:center;gap:6px}
+  .dv-ev.tiny b{font-size:11.5px} .dv-ev.tiny i{margin-top:0;font-size:10px}
+  .dv-now{position:absolute;left:-4px;right:0;height:0;border-top:2px solid var(--down);z-index:3;pointer-events:none}
+  .dv-now span{position:absolute;left:-4px;top:-5px;width:9px;height:9px;border-radius:50%;background:var(--down)}
+  @media(max-width:600px){.dv-scroll{height:340px}}
   .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
   .agenda-card .agenda-panel{padding-top:2px}
   .today-bottom .agenda-card{margin-top:0}
@@ -705,6 +728,19 @@
   .theme-toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
   .theme-toggle.on .theme-toggle-knob{left:16px}
   .theme-shuffle-note{font-size:10.5px;color:var(--topbar-muted);padding:3px 8px 0;line-height:1.4}
+  /* color palette (Sep 2026: swatches + a real color input, no more fixed themes) */
+  .theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:0 2px 4px}
+  .theme-chip{appearance:none;border:none;background:none;padding:0;cursor:pointer;aspect-ratio:1;border-radius:10px;
+              display:flex;align-items:center;justify-content:center;transition:transform .15s}
+  .theme-chip span{width:100%;height:100%;border-radius:9px;border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 -6px 10px -6px rgba(0,0,0,.4)}
+  .theme-chip:hover{transform:translateY(-2px)}
+  .theme-chip.active{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent, var(--gold))}
+  .theme-custom{display:flex;align-items:center;gap:9px;margin-top:8px;padding:8px;border-radius:9px;cursor:pointer;
+                border:1px dashed var(--hairline);font-size:12.5px;font-weight:700;color:var(--ink)}
+  .theme-custom:hover{border-style:solid;border-color:var(--accent, var(--gold))}
+  .theme-custom-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.3)}
+  .theme-custom-l{flex:1}
+  .theme-custom input[type=color]{width:26px;height:26px;padding:0;border:none;background:none;cursor:pointer}
 
   /* ---------- quiz ---------- */
   .qwrap{max-width:640px;margin:0 auto}
@@ -743,6 +779,54 @@
   /* ---------- games: newspaper "Puzzles & Diversions" (game-y) ---------- */
   .game-back{margin-bottom:20px}
   .games-wrap{max-width:900px;margin:0 auto}
+  /* ---------- arcade: one grid, one tile shape, filters instead of stacked sections ---------- */
+  .ga-head{display:flex;align-items:center;gap:16px;padding:4px 2px 16px}
+  .ga-ring{position:relative;width:56px;height:56px;flex-shrink:0}
+  .ga-ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+  .ga-trk{fill:none;stroke:color-mix(in srgb, var(--ink) 10%, transparent);stroke-width:5}
+  .ga-fil{fill:none;stroke:var(--accent, var(--gold));stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+  .ga-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+  .ga-ht{flex:1;min-width:0}
+  .ga-t{font-family:Georgia,serif;font-size:clamp(24px,4vw,32px);font-weight:900;letter-spacing:-.01em;line-height:1.05}
+  .ga-s{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:3px}
+  .ga-next{appearance:none;font:inherit;font-size:12.5px;font-weight:800;padding:11px 16px;border-radius:999px;cursor:pointer;
+           background:var(--accent, var(--gold));border:1px solid var(--accent, var(--gold));color:#fff;white-space:nowrap;
+           box-shadow:0 6px 18px -8px color-mix(in srgb, var(--accent, var(--gold)) 80%, transparent)}
+  .ga-next b{font-weight:900}
+  .ga-next.ga-done{background:transparent;border-color:var(--hairline);color:var(--muted);cursor:default;box-shadow:none}
+  .ga-cats{display:flex;gap:7px;overflow-x:auto;padding:0 2px 14px;scrollbar-width:none}
+  .ga-cats::-webkit-scrollbar{display:none}
+  .ga-cat{appearance:none;font:inherit;font-size:12px;font-weight:800;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;
+          background:transparent;border:1px solid var(--hairline);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .ga-cat i{font-style:normal;font-size:10px;font-weight:900;opacity:.6}
+  .ga-cat:hover{color:var(--ink);border-color:var(--accent, var(--gold))}
+  .ga-cat.on{background:var(--ink);border-color:var(--ink);color:var(--paper)} .ga-cat.on i{opacity:.7}
+  .gt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:12px}
+  .gt{position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;text-decoration:none;font:inherit;color:var(--ink);
+      background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 15px 12px;cursor:pointer;
+      box-shadow:var(--shadow);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s;min-height:132px}
+  html.glass .gt{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .gt:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(20,40,80,.4),var(--shadow)}
+  .gt-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+  .gt-ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;
+         background:color-mix(in srgb, var(--gcol, var(--accent)) 16%, transparent)}
+  .gt-fav{width:26px;height:26px;border-radius:7px;background:#fff;padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .gt-badge{font-size:8.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:999px;
+            background:color-mix(in srgb, var(--gcol, var(--accent)) 16%, transparent);color:var(--gcol, var(--accent-dark))}
+  .gt-ext-m{font-size:13px;color:var(--muted)}
+  .gt-nm{font-size:15px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
+  .gt-tg{font-size:12px;line-height:1.42;color:var(--muted);flex:1}
+  .gt-ft{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:6px;padding-top:8px;border-top:1px solid var(--hairline)}
+  .gt-st{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gt-go{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-dark, var(--gold-dark));white-space:nowrap}
+  .gt-built{border-color:color-mix(in srgb, var(--gcol) 42%, transparent)}
+  .gt-built .gt-go{color:var(--gcol)}
+  .gt-check{position:absolute;top:11px;right:12px;width:19px;height:19px;border-radius:50%;background:var(--up);color:#fff;
+            font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center}
+  .gt.played .gt-check{display:flex} .gt.played .gt-top{opacity:.55} .gt.played{opacity:.82}
+  .gt.played .gt-badge,.gt.played .gt-ext-m{visibility:hidden}
+  @media(max-width:560px){.gt-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    .ga-next{padding:9px 12px;font-size:11.5px}.gt{min-height:120px;padding:12px 13px 10px}}
   .game-cat{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;margin:26px 0 14px;display:flex;align-items:center;gap:12px}
   .game-cat::after{content:"";flex:1;height:2px;background:var(--ink2);opacity:.12}
 
@@ -1215,13 +1299,13 @@
   @media(min-width:900px){
     html.glass body{padding-left:232px}
     html.glass .topbar{position:fixed;left:0;top:0;bottom:0;width:232px;border-bottom:none;border-right:1px solid rgba(255,255,255,.65);z-index:50}
-    html.glass[data-theme="night"] .topbar{border-right-color:rgba(255,255,255,.08)}
+    html.glass[data-mode="dark"] .topbar{border-right-color:rgba(255,255,255,.08)}
     html.glass .topbar-in{flex-direction:column;align-items:stretch;height:100%;padding:22px 14px 18px;gap:14px;max-width:none}
     html.glass .wordmark{padding:2px 10px 8px}
     html.glass .topbar-in .tabs{display:flex;flex-direction:column;background:transparent;border:none;border-radius:0;padding:0;gap:3px;margin:6px 0 0}
     html.glass .topbar-in .tab{text-align:left;padding:10px 14px;border-radius:12px;font-size:14.5px}
     html.glass .topbar-in .tab.active{background:rgba(255,255,255,.9)}
-    html.glass[data-theme="night"] .topbar-in .tab.active{background:rgba(255,255,255,.12)}
+    html.glass[data-mode="dark"] .topbar-in .tab.active{background:rgba(255,255,255,.12)}
     html.glass .topbar-in .theme-picker,html.glass .topbar-in #themeBtn{width:100%;display:block}
     html.glass .tab-rule{display:block;height:1px;background:var(--hairline);margin:8px 10px}
     html.glass .tab-sub{display:block;font-size:13.5px;font-weight:600;color:var(--muted)}
@@ -1230,6 +1314,36 @@
     html.glass .theme-picker{position:relative} html.glass .theme-panel{top:auto;bottom:calc(100% + 8px);left:0;right:auto}
     html.glass .netpill{justify-content:center}
     html.glass .hero-in,html.glass main,html.glass .foot-in{max-width:1180px}
+  }
+  /* ---------- app-style left rail (Eli, Sep 2026: "app-like looking things on the left
+     ... instead of just the boring word tab"). Each item gets a rounded icon tile whose
+     hue is offset from the theme hue, so the rail looks like a row of app icons and still
+     belongs to whatever color he picked. ---------- */
+  .tab-ic{display:none}
+  .tab-sub-v{display:none}
+  @media(min-width:900px){
+    html.glass .topbar-in .tab{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:11px;padding:8px 11px;border-radius:14px}
+    html.glass .tab-ic{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;flex-shrink:0;
+      background:hsl(var(--ic) calc(72% * var(--sat)) 91%);color:hsl(var(--ic) calc(78% * var(--sat)) 33%);
+      box-shadow:inset 0 0 0 1px hsl(var(--ic) calc(60% * var(--sat)) 78% / .8);transition:transform .18s,background .18s}
+    html.glass .tab-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    html.glass .tab:hover .tab-ic{transform:translateY(-1px) scale(1.04)}
+    html.glass .tab.active .tab-ic{background:hsl(var(--ic) calc(80% * var(--sat)) 48%);color:#fff;
+      box-shadow:0 5px 14px -4px hsl(var(--ic) calc(80% * var(--sat)) 48% / .6)}
+    html.glass[data-mode="dark"] .tab-ic{background:hsl(var(--ic) calc(48% * var(--sat)) 22%);color:hsl(var(--ic) calc(85% * var(--sat)) 72%);
+      box-shadow:inset 0 0 0 1px hsl(var(--ic) calc(40% * var(--sat)) 34% / .7)}
+    html.glass[data-mode="dark"] .tab.active .tab-ic{background:hsl(var(--ic) calc(82% * var(--sat)) 52%);color:#fff}
+    html.glass .tab-ic[data-ic="home"]{--ic:var(--h)}
+    html.glass .tab-ic[data-ic="news"]{--ic:calc(var(--h) + 152)}
+    html.glass .tab-ic[data-ic="games"]{--ic:calc(var(--h) + 96)}
+    html.glass .tab-ic[data-ic="folio"]{--ic:calc(var(--h) + 196)}
+    html.glass .tab-ic[data-ic="wx"]{--ic:calc(var(--h) + 42)}
+    html.glass .tab-ic[data-ic="friends"]{--ic:calc(var(--h) + 264)}
+    html.glass .tab-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    html.glass .tab-sub{font-size:14px;font-weight:700;color:var(--ink)}
+    html.glass .tab-sub-v{display:block;font-size:10.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em}
+    html.glass .tab-sub-v:empty{display:none}
+    html.glass .tab-sub-v.hot{color:var(--down)}
   }
 
   /* ---------- Weather page ---------- */
@@ -1276,16 +1390,58 @@
   .wxt-v{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
   .wxt-s{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}
   html.glass .wxp-card,html.glass .wxt{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  /* clickable stat tiles + the hourly curve they open */
+  .wxt-live{appearance:none;font:inherit;text-align:left;width:100%;cursor:pointer;color:inherit;transition:border-color .15s,transform .15s}
+  .wxt-live:hover{transform:translateY(-1px);border-color:color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent)}
+  .wxt-live .wxt-k{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .wxt-live .wxt-k i{font-style:normal;font-size:12px;opacity:.5;transition:transform .2s}
+  .wxt-live.on{border-color:var(--accent, var(--gold));box-shadow:0 0 0 2px color-mix(in srgb, var(--accent, var(--gold)) 18%, transparent),var(--shadow)}
+  .wxt-live.on .wxt-k i{transform:rotate(180deg);opacity:1}
+  .wxm-slot{display:none} .wxm-slot.on{display:block;animation:fadein .22s ease}
+  .wxm{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 16px 10px;margin-top:12px;box-shadow:var(--shadow)}
+  html.glass .wxm{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .wxd-mslot .wxm{margin-top:10px;box-shadow:none;background:color-mix(in srgb, var(--ink) 3%, transparent)}
+  .wxm-k{font-size:10.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .wxm-k span{font-size:12px;letter-spacing:0;text-transform:none;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+  .wxm-c{position:relative;margin-top:10px}
+  .wxm-c svg{display:block;width:100%;height:84px;overflow:visible}
+  .wxm-area{fill:color-mix(in srgb, var(--accent, var(--gold)) 14%, transparent)}
+  .wxm-line{fill:none;stroke:var(--accent, var(--gold));stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .wxm-pt{fill:var(--accent, var(--gold));stroke:var(--card);stroke-width:2;vector-effect:non-scaling-stroke}
+  .wxm-bar{fill:color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent)}
+  .wxm-hi{position:absolute;top:-6px;transform:translateX(-50%);font-size:10.5px;font-weight:900;color:var(--accent-dark, var(--gold-dark));white-space:nowrap;pointer-events:none}
+  .wxm-x{position:relative;height:14px;margin-top:4px}
+  .wxm-x span{position:absolute;transform:translateX(-50%);font-size:9.5px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .wxm-none{font-size:12.5px;color:var(--muted);padding:8px 0 4px}
+  .wxd-stat{appearance:none;background:none;border:none;font:inherit;padding:0;text-align:left;cursor:pointer;color:inherit}
+  .wxd-stats .wxd-stat span{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+  .wxd-stats .wxd-stat span i{font-style:normal;font-size:10px;opacity:.55;transition:transform .2s}
+  .wxd-stat.on span{color:var(--accent-dark, var(--gold-dark))} .wxd-stat.on span i{transform:rotate(180deg);opacity:1}
+  .wxd-stat:hover span{color:var(--ink)}
 
   /* ---------- Brain Food deck ---------- */
   .bf-stage{max-width:720px;margin:10px auto 0}
   .bf-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .bf-back{margin:0}
   .bf-card{position:relative;border-radius:28px;overflow:hidden;min-height:440px;display:flex;align-items:flex-end;color:#fff;box-shadow:0 30px 60px -20px rgba(0,0,0,.45);cursor:pointer;isolation:isolate}
-  .bf-card.in{animation:bfin .5s cubic-bezier(.2,.8,.2,1)} .bf-card.in-r{animation:bfr .45s cubic-bezier(.2,.8,.2,1)} .bf-card.in-l{animation:bfl .45s cubic-bezier(.2,.8,.2,1)}
-  @keyframes bfin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-  @keyframes bfr{from{opacity:0;transform:translateX(40px) rotate(1.5deg)}to{opacity:1;transform:none}}
-  @keyframes bfl{from{opacity:0;transform:translateX(-40px) rotate(-1.5deg)}to{opacity:1;transform:none}}
+  /* Eli, Sep 2026: "I want the animation to be better / slower." The card now settles in
+     over ~0.9s -- it arrives, unblurs and comes to rest -- and the text inside rises after
+     it, one line at a time, so a new card reads like a page turning rather than a snap. */
+  .bf-card.in{animation:bfin .9s cubic-bezier(.16,1,.3,1) both} .bf-card.in-r{animation:bfr .9s cubic-bezier(.16,1,.3,1) both} .bf-card.in-l{animation:bfl .9s cubic-bezier(.16,1,.3,1) both}
+  @keyframes bfin{from{opacity:0;transform:scale(.94);filter:blur(10px)}60%{opacity:1}to{opacity:1;transform:none;filter:none}}
+  @keyframes bfr{from{opacity:0;transform:translateX(58px) scale(.95) rotate(2deg);filter:blur(9px)}to{opacity:1;transform:none;filter:none}}
+  @keyframes bfl{from{opacity:0;transform:translateX(-58px) scale(.95) rotate(-2deg);filter:blur(9px)}to{opacity:1;transform:none;filter:none}}
+  .bf-card .bf-kick,.bf-card .bf-text,.bf-card .bf-sub,.bf-card .bf-word,.bf-card .bf-say,.bf-card .bf-def,.bf-card .bf-ex,.bf-card .bf-cta{animation:bfrise .75s cubic-bezier(.16,1,.3,1) both}
+  .bf-card .bf-kick{animation-delay:.18s} .bf-card .bf-text,.bf-card .bf-word{animation-delay:.28s}
+  .bf-card .bf-say,.bf-card .bf-sub{animation-delay:.36s} .bf-card .bf-def{animation-delay:.44s}
+  .bf-card .bf-ex{animation-delay:.52s} .bf-card .bf-cta{animation-delay:.6s}
+  .bf-card .bf-year{animation:bfyear 1.5s cubic-bezier(.16,1,.3,1) both}
+  @keyframes bfrise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes bfyear{from{opacity:0;transform:translateY(-14px) scale(1.08)}to{opacity:1;transform:none}}
+  .bf-photo img{animation-duration:34s}
+  @media(prefers-reduced-motion:reduce){
+    .bf-card,.bf-card *{animation:none !important}
+  }
   .bf-aurora{position:absolute;inset:0;width:100%;height:100%;z-index:0;filter:saturate(1.2)}
   .bf-photo{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .8s ease}
   .bf-photo.on{opacity:1}
@@ -1314,6 +1470,15 @@
   .nw-ph.on{display:block} .nw-ph.off{display:none}
   .nw-ph img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .35s ease} .nw-ph img.in{opacity:1}
   .nw-row-ph .nw-cap,.nw-card-ph .nw-cap{display:none}
+  /* letterbox instead of a bad crop: the photo sits whole over a blurred copy of itself */
+  .nw-ph.fit::before{content:"";position:absolute;inset:0;background-image:var(--nwbg);background-size:cover;background-position:center;filter:blur(22px) saturate(1.25) brightness(.86);transform:scale(1.18)}
+  .nw-ph.fit img{position:relative;object-fit:contain}
+  .nw-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:44px;height:44px;border-radius:50%;
+           display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;padding-left:3px;
+           background:rgba(12,18,28,.55);border:1.5px solid rgba(255,255,255,.85);backdrop-filter:blur(6px);box-shadow:0 4px 18px rgba(0,0,0,.3)}
+  .nw-row-ph .nw-play{width:26px;height:26px;font-size:9px}
+  .nw-vid{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:18px;background:#000}
+  .nw-vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   .nw-cap{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;font-weight:700;color:#fff;padding:18px 12px 8px;background:linear-gradient(transparent,rgba(0,0,0,.6));line-height:1.35}
   .nw-hero{display:grid;grid-template-columns:1.25fr 1fr;gap:0;border-radius:16px;overflow:hidden;background:color-mix(in srgb, var(--ink) 4%, transparent);cursor:pointer;margin-bottom:18px}
   .nw-hero-ph{aspect-ratio:16/10;min-height:220px} .nw-hero-ph.on{display:block}
@@ -1357,6 +1522,36 @@
   html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif}
   /* ---------- Now strip (Home): the handful of things that matter this week ---------- */
   .now-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-top:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  /* Countdown rail (Sep 2026): Eli asked for the countdowns to be "fun / visual", so each
+     one is a little tile -- an emoji badge, the thing, the number of days at a glance, and a
+     fill bar that creeps toward full as the date arrives. */
+  .now-tile{flex:0 0 auto;display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;position:relative;
+            background:var(--card);border:1px solid var(--hairline);border-radius:16px;padding:9px 13px 11px;min-width:186px;
+            box-shadow:var(--shadow);cursor:pointer;font:inherit;color:var(--ink);text-align:left;overflow:hidden;
+            transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+  html.glass .now-tile{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .now-tile:hover{transform:translateY(-2px)}
+  .nt-ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;
+         background:color-mix(in srgb, var(--accent, var(--gold)) 13%, transparent)}
+  .nt-b{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .nt-l{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:16ch}
+  .nt-d{font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .nt-d b{font-size:17px;font-weight:900;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:3px}
+  .nt-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:color-mix(in srgb, var(--ink) 8%, transparent)}
+  .nt-bar i{display:block;height:100%;background:linear-gradient(90deg,color-mix(in srgb, var(--accent, var(--gold)) 40%, transparent),var(--accent, var(--gold)));
+            border-radius:0 3px 3px 0;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .nt-x{position:absolute;top:4px;right:7px;font-size:14px;line-height:1;color:var(--muted);opacity:0;transition:opacity .15s;padding:2px 3px}
+  .now-tile:hover .nt-x{opacity:.55} .nt-x:hover{opacity:1 !important;color:var(--down)}
+  .now-tile.warm .nt-ic{background:color-mix(in srgb, var(--gold) 20%, transparent)}
+  .now-tile.hot{border-color:color-mix(in srgb, var(--down) 45%, transparent)}
+  .now-tile.hot .nt-ic{background:color-mix(in srgb, var(--down) 16%, transparent);animation:ntPulse 2.4s ease-in-out infinite}
+  .now-tile.hot .nt-d b{color:var(--down)}
+  .now-tile.hot .nt-bar i{background:var(--down)}
+  @keyframes ntPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+  .now-tile.info .nt-d b{font-size:14px}
+  .now-tile.now-add{min-width:0;border-style:dashed;box-shadow:none;background:transparent}
+  .now-tile.now-add .nt-ic{background:color-mix(in srgb, var(--accent, var(--gold)) 10%, transparent);color:var(--accent-dark, var(--gold-dark));font-weight:900}
+  @media(prefers-reduced-motion:reduce){.now-tile.hot .nt-ic{animation:none}}
   .now-strip::-webkit-scrollbar{display:none}
   .now-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);white-space:nowrap;font-family:inherit}
   .now-chip b{font-weight:900} .now-chip .nc-k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -1389,22 +1584,47 @@
   .ol-head{font-size:13.5px;line-height:1.45;color:var(--muted);min-width:0}
   .ol-chev{font-size:12px;color:var(--muted);align-self:center;transition:transform .2s}
   .ol-row.on .ol-chev{transform:rotate(180deg)} .ol-row.on .ol-topic{color:var(--gold-dark)}
-  .ol-detail{display:none} .ol-detail.on{display:block;padding:2px 2px 14px 28px;animation:fadein .22s ease}
-  .ol-detail p{font-size:14px;line-height:1.6;margin:0}
-  .ol-ek{display:block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:4px}
-  .ol-src{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4}
+  .ol-detail{display:none} .ol-detail.on{display:block;padding:4px 2px 16px 28px;animation:fadein .22s ease}
+  .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:14px}}
+  .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:12px}
+  .ol-col:last-child{border-left-color:color-mix(in srgb, var(--muted) 34%, transparent)}
+  .ol-ck{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+  .ol-col:last-child .ol-ck{color:var(--muted)}
+  .ol-ck span{font-size:9.5px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.8}
+  .ol-col ol{margin:0;padding:0;list-style:none;counter-reset:olp}
+  .ol-col li{counter-increment:olp;position:relative;padding-left:20px;font-size:13px;line-height:1.55;margin-bottom:8px;color:var(--ink)}
+  .ol-col li:last-child{margin-bottom:0}
+  .ol-col li::before{content:counter(olp);position:absolute;left:0;top:1px;width:14px;height:14px;border-radius:50%;font-size:9px;font-weight:900;
+                     display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--gold) 16%, transparent);color:var(--gold-dark)}
+  .ol-col:last-child li::before{background:color-mix(in srgb, var(--muted) 15%, transparent);color:var(--muted)}
+  .ol-legacy{font-size:14px;line-height:1.6;margin:0}
+  .ol-src{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.4;padding-top:8px;border-top:1px solid var(--hairline)}
   @media(max-width:640px){
     .ol-row{grid-template-columns:8px auto 1fr 14px;row-gap:2px}
     .ol-stance{grid-column:2;grid-row:2} .ol-head{grid-column:3/5;grid-row:2}
     .ol-detail.on{padding-left:18px}
   }
-  /* rate board: one shared scale, dots line up so the curve reads vertically */
+  /* board: two short blocks. YIELDS share one % axis (the comparison is the point);
+     PRICES are just a number and the day's move -- an axis across $4,000 gold and $60
+     crude would say nothing. */
   .rb{border-left:1px solid var(--hairline);padding-left:20px}
   @media(max-width:900px){.rb{border-left:none;padding-left:0;border-top:1px solid var(--hairline);padding-top:14px}}
-  .rb-k{font-size:10.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-  .rb-k span{font-size:9.5px;letter-spacing:.04em;text-transform:none;opacity:.75;font-weight:700}
-  .rb-g{font-size:9.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin:12px 0 2px}
-  .rb-row{display:grid;grid-template-columns:94px 1fr 72px;align-items:center;gap:8px;padding:3px 0}
+  .rb-h{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);display:flex;justify-content:space-between;
+        align-items:baseline;gap:8px;margin:0 0 6px;padding-bottom:5px;border-bottom:1px solid var(--hairline)}
+  .rb-h:not(:first-child){margin-top:18px}
+  .rb-h span{font-size:9.5px;letter-spacing:.03em;text-transform:none;opacity:.7;font-weight:700;color:var(--muted)}
+  .rb-row{display:grid;grid-template-columns:86px 1fr 74px;align-items:center;gap:8px;padding:3px 0}
+  .rb-prow{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--hairline)}
+  .rb-prow:last-child{border-bottom:none}
+  .rb-pv{font-size:14px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rb-pn{font-size:11px;color:var(--muted);text-align:right;min-width:52px}
+  .rb-chip{font-size:10.5px;font-weight:900;font-variant-numeric:tabular-nums;padding:2px 6px;border-radius:999px;
+           background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
+  .rb-chip.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)}
+  .rb-chip.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
+  .rb-fill{position:absolute;left:0;top:50%;height:3px;border-radius:999px;transform:translateY(-50%);
+           background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 18%, transparent),color-mix(in srgb, var(--gold) 62%, transparent))}
   .rb-l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rb-track{position:relative;height:16px}
   .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
@@ -1433,129 +1653,63 @@
      glass theme block leaves out silently falls back to the classic newspaper value -- that
      is exactly why Sunset came out with an opaque cream card and a dark-brown top bar under
      a light-text layout (Eli, Sep 2026). Keep these blocks exhaustive. */
+  /* ---- the palette, derived ----
+     Eli, Sep 2026: "I'd like the ability to choose whatever color I want as the theme
+     background (like a palette), and then the night mode toggle would just be the
+     respective night mode for that color." So the four hand-written palettes are gone.
+     Every token below comes from --h (hue) and --sat (saturation multiplier), which the
+     <head> script writes onto <html> from whatever color he picked. One look, any color,
+     and a night mode that is the SAME color after dark. --sat near 0 gives a true graphite.
+     Keep BOTH blocks exhaustive: every token one block sets, the other must set too, or
+     switching to night leaves a daylight value behind. */
   html.glass{
-    --accent:#0A84FF; --accent-dark:#0060C9; --accent-soft:#DCEBFF;
+    --h:212; --sat:1;
+    --accent:hsl(var(--h) calc(88% * var(--sat)) 45%);
+    --accent-dark:hsl(var(--h) calc(92% * var(--sat)) 33%);
+    --accent-soft:hsl(var(--h) calc(85% * var(--sat)) 91%);
     --gold:var(--accent); --gold-dark:var(--accent-dark); --gold-soft:var(--accent-soft);
-    --ink:#0F1B2D; --ink2:#1B2A3F; --cream:#F4F6FB; --muted:#5B6B80;
-    --paper:#F4F6FB; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.62);
-    --hairline:rgba(15,27,45,.14); --glass-edge:rgba(255,255,255,.95);
+    --ink:hsl(var(--h) calc(38% * var(--sat)) 12%);
+    --ink2:hsl(var(--h) calc(34% * var(--sat)) 18%);
+    --cream:hsl(var(--h) calc(30% * var(--sat)) 97%);
+    --paper:hsl(var(--h) calc(34% * var(--sat)) 97%);
+    --muted:hsl(var(--h) calc(17% * var(--sat)) 41%);
+    --panel:rgba(255,255,255,.55);
+    --card:rgba(255,255,255,.62);
+    --hairline:hsl(var(--h) calc(30% * var(--sat)) 14% / .15);
+    --glass-edge:rgba(255,255,255,.95);
     --up:#12855C; --down:#D2453C;
-    --shadow:0 1px 2px rgba(20,40,80,.04),0 10px 34px -10px rgba(20,40,80,.14);
-    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:#5B6B80;
-    --mesh:radial-gradient(55% 45% at 8% 0%,#CFE3FF 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#FFD9C7 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#E6DCFF 0,transparent 62%),#F4F6FB;
+    --rain-ink:hsl(var(--h) calc(70% * var(--sat)) 42%);
+    --shadow:0 1px 2px hsl(var(--h) calc(40% * var(--sat)) 30% / .05),0 10px 34px -10px hsl(var(--h) calc(45% * var(--sat)) 28% / .17);
+    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:var(--muted);
+    --mesh:radial-gradient(55% 45% at 8% 0%,hsl(var(--h) calc(90% * var(--sat)) 87%) 0,transparent 62%),
+           radial-gradient(45% 40% at 96% 8%,hsl(calc(var(--h) + 46) calc(88% * var(--sat)) 89%) 0,transparent 60%),
+           radial-gradient(60% 55% at 55% 110%,hsl(calc(var(--h) - 44) calc(82% * var(--sat)) 89%) 0,transparent 62%),
+           var(--paper);
     --glass-blur:blur(18px) saturate(1.35);
   }
-  html.glass[data-theme="arctic"]{                                   /* Mint */
-    --accent:#0E9F6E; --accent-dark:#08704F; --accent-soft:#D6F5E8;
-    --ink:#0F2A22; --ink2:#173B30; --cream:#F2F8F5; --muted:#55736A;
-    --paper:#F2F8F5; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.64);
-    --hairline:rgba(15,42,34,.14); --glass-edge:rgba(255,255,255,.95);
-    --up:#0E8F62; --down:#CE4A3E;
-    --shadow:0 1px 2px rgba(10,50,38,.05),0 10px 34px -10px rgba(10,50,38,.16);
-    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:#55736A;
-    --mesh:radial-gradient(55% 45% at 10% 0%,#C9F2E3 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFF1BF 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#CFEBFF 0,transparent 62%),#F2F8F5;
-  }
-  html.glass[data-theme="sunset"]{                                   /* Sunset */
-    --accent:#E0532F; --accent-dark:#B23A18; --accent-soft:#FFE3D8;
-    --ink:#2E1A14; --ink2:#42251C; --cream:#FCF4F0; --muted:#7C6055;
-    --paper:#FCF4F0; --panel:rgba(255,255,255,.55); --card:rgba(255,255,255,.64);
-    --hairline:rgba(46,26,20,.15); --glass-edge:rgba(255,255,255,.92);
-    --up:#2F8A62; --down:#C63A26;
-    --shadow:0 1px 2px rgba(60,30,20,.05),0 10px 34px -10px rgba(60,30,20,.18);
-    --topbar-bg:rgba(255,255,255,.52); --topbar-muted:#7C6055;
-    --mesh:radial-gradient(55% 45% at 10% 0%,#FFD5C2 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFC7E0 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#E9D8FF 0,transparent 62%),#FCF4F0;
-  }
-  html.glass[data-theme="night"]{                                    /* Midnight */
-    --accent:#5AA9FF; --accent-dark:#9CCBFF; --accent-soft:#1E3A5F;
-    --ink:#EEF2F8; --ink2:#161B26; --cream:#EEF2F8; --muted:#96A5BB;
-    --paper:#0E1118; --panel:rgba(28,32,44,.5); --card:rgba(30,35,48,.66);
-    --hairline:rgba(255,255,255,.17); --glass-edge:rgba(255,255,255,.13);
+  html.glass[data-mode="dark"]{
+    --accent:hsl(var(--h) calc(92% * var(--sat)) 68%);
+    --accent-dark:hsl(var(--h) calc(90% * var(--sat)) 79%);
+    --accent-soft:hsl(var(--h) calc(55% * var(--sat)) 25%);
+    --ink:hsl(var(--h) calc(28% * var(--sat)) 94%);
+    --ink2:hsl(var(--h) calc(24% * var(--sat)) 12%);
+    --cream:hsl(var(--h) calc(28% * var(--sat)) 94%);
+    --paper:hsl(var(--h) calc(28% * var(--sat)) 7%);
+    --muted:hsl(var(--h) calc(17% * var(--sat)) 66%);
+    --panel:hsl(var(--h) calc(22% * var(--sat)) 14% / .5);
+    --card:hsl(var(--h) calc(22% * var(--sat)) 16% / .66);
+    --hairline:rgba(255,255,255,.17);
+    --glass-edge:rgba(255,255,255,.13);
     --up:#4ADE9A; --down:#FF7B72;
+    --rain-ink:hsl(var(--h) calc(80% * var(--sat)) 72%);
     --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 36px -10px rgba(0,0,0,.6);
-    --topbar-bg:rgba(14,17,24,.62); --topbar-muted:#96A5BB;
-    --mesh:radial-gradient(55% 45% at 8% 0%,#1E3A6E 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#4A2A55 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#12384A 0,transparent 62%),#0E1118;
+    --topbar-bg:hsl(var(--h) calc(26% * var(--sat)) 8% / .62); --topbar-muted:var(--muted);
+    --mesh:radial-gradient(55% 45% at 8% 0%,hsl(var(--h) calc(60% * var(--sat)) 26%) 0,transparent 62%),
+           radial-gradient(45% 40% at 96% 8%,hsl(calc(var(--h) + 50) calc(45% * var(--sat)) 24%) 0,transparent 60%),
+           radial-gradient(60% 55% at 55% 110%,hsl(calc(var(--h) - 46) calc(48% * var(--sat)) 22%) 0,transparent 62%),
+           var(--paper);
   }
   html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif}
-  /* ---------- Now strip (Home): the handful of things that matter this week ---------- */
-  .now-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-top:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .now-strip::-webkit-scrollbar{display:none}
-  .now-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);white-space:nowrap;font-family:inherit}
-  .now-chip b{font-weight:900} .now-chip .nc-k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .now-chip.hot{background:var(--down);border-color:var(--down);color:#fff} .now-chip.hot .nc-k{color:rgba(255,255,255,.8)}
-  .now-chip.acc{border-color:color-mix(in srgb, var(--gold) 55%, transparent)} .now-chip.acc .nc-k{color:var(--gold-dark)}
-  html.glass .now-chip{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
-  .now-chip .nc-x{margin-left:2px;font-size:15px;line-height:1;opacity:.45;padding:0 2px} .now-chip .nc-x:hover{opacity:1}
-  .now-chip.now-add{color:var(--gold-dark);border-style:dashed;font-weight:900}
-  .now-f{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;margin-top:10px;font-size:13px}
-  .now-f span{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .now-f input{font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--hairline);border-radius:10px;background:var(--paper);color:var(--ink);width:100%}
-  .now-save{background:var(--gold);border-color:var(--gold);color:#fff}
-  /* ---------- Morning Desk (Home) ---------- */
-  #deskCard{position:relative;overflow:hidden}
-  #deskCard::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--gold),color-mix(in srgb, var(--gold) 20%, transparent));opacity:.9}
-  #deskCard .bc-label{display:flex;align-items:center;gap:10px}
-  .desk-mood{font-size:10.5px;font-weight:900;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
-  .desk-mood.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)} .desk-mood.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
-  .desk-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:26px;margin-top:12px}
-  @media(max-width:820px){.desk-grid{grid-template-columns:1fr;gap:18px}}
-  .desk-pts{display:flex;flex-direction:column}
-  .desk-pt{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--hairline);font-size:14px;line-height:1.55}
-  .desk-pt:first-child{padding-top:2px} .desk-pt:last-child{border-bottom:none}
-  .desk-pt b{display:block;font-weight:900;font-size:15px;letter-spacing:-.01em;line-height:1.3;margin-bottom:2px} .desk-pt span{color:var(--muted)}
-  .desk-n{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--gold-dark);font-variant-numeric:tabular-nums;padding-top:4px;width:22px}
-  .desk-ask{margin-top:12px;padding:14px 16px 12px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb, var(--gold) 16%, transparent),color-mix(in srgb, var(--gold) 6%, transparent));border:1px solid color-mix(in srgb, var(--gold) 30%, transparent);position:relative}
-  .desk-q{font-family:Georgia,serif;font-style:italic;font-size:16px;font-weight:700;line-height:1.35;letter-spacing:-.01em}
-  .desk-a{font-size:13.5px;line-height:1.55;margin-top:6px}
-  .desk-ak{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);margin-top:8px}
-  .ladder{display:flex;flex-direction:column;gap:2px}
-  .ladder-k{font-size:10.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .rung{display:grid;grid-template-columns:92px 1fr 92px;grid-template-rows:auto auto;align-items:center;column-gap:10px;padding:6px 0;border-bottom:1px solid var(--hairline)}
-  .rung:last-child{border-bottom:none}
-  .rung-l{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .rung-bar{height:8px;border-radius:999px;background:color-mix(in srgb, var(--ink) 8%, transparent);overflow:hidden}
-  .rung-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 55%, transparent),var(--gold));transition:width .6s cubic-bezier(.4,0,.2,1)}
-  .rung-v{font-size:14px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-  .rung-n{grid-column:2/4;font-size:11px;color:var(--muted);line-height:1.3;min-height:0}
-  .rung-n:empty{display:none}
-  .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
-  .desk-foot a{color:var(--gold-dark);font-weight:900;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer}
-  /* ---------- compact weather: the hourly chart is behind a tap ---------- */
-  .wx-hero.wx-compact{padding:18px 20px 16px;cursor:pointer;height:100%}
-  #wxSlot{height:100%} #wxSlot .wx-hero{margin-top:0}
-  .wx-hero.wx-compact .wx-chart-lbl,.wx-hero.wx-compact .wx-chart{display:none}
-  .wx-hero.wx-compact .wx-hint{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;opacity:.7;margin-top:12px}
-  .wx-hero:not(.wx-compact) .wx-hint{display:none}
-  /* =====================================================================
-     GLASS — the look Eli picked (Sep 2026). Frosted panels over a soft
-     color mesh, pill navigation, Inter, 20px radii. Gated on html.glass so
-     the classic newspaper look survives as a switch in the theme panel.
-     The four "themes" are four meshes + accents under this one look.
-     ===================================================================== */
-  html.glass{
-    --accent:#0A84FF; --accent-dark:#0060C9; --accent-soft:#DCEBFF;
-    --gold:var(--accent); --gold-dark:var(--accent-dark); --gold-soft:var(--accent-soft);
-    --ink:#0F1B2D; --ink2:#1B2A3F; --cream:#F4F6FB; --paper:#F4F6FB; --panel:rgba(255,255,255,.55);
-    --card:rgba(255,255,255,.62); --hairline:rgba(15,27,45,.13); --glass-edge:rgba(255,255,255,.95); --muted:#5B6B80;
-    --shadow:0 1px 2px rgba(20,40,80,.04),0 10px 34px -10px rgba(20,40,80,.14);
-    --topbar-bg:rgba(255,255,255,.55); --topbar-muted:#5B6B80;
-    --mesh:radial-gradient(55% 45% at 8% 0%,#CFE3FF 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#FFD9C7 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#E6DCFF 0,transparent 62%),#F4F6FB;
-    --glass-blur:blur(18px) saturate(1.35);
-  }
-  html.glass[data-theme="arctic"]{  /* Mint */
-    --accent:#0E9F6E; --accent-dark:#087150; --accent-soft:#D6F5E8; --ink:#0F2A22; --ink2:#173B30; --cream:#F2F8F5; --muted:#587468; --paper:#F2F8F5;
-    --mesh:radial-gradient(55% 45% at 10% 0%,#C9F2E3 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFF1BF 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#CFEBFF 0,transparent 62%),#F2F8F5;
-  }
-  html.glass[data-theme="sunset"]{  /* Sunset */
-    --accent:#FF5E3A; --accent-dark:#C63A1C; --accent-soft:#FFE1D8; --ink:#2D1A16; --ink2:#3F2620; --cream:#FBF4F0; --muted:#7D6459; --paper:#FBF4F0;
-    --mesh:radial-gradient(55% 45% at 10% 0%,#FFD5C2 0,transparent 62%),radial-gradient(45% 40% at 95% 10%,#FFC7E0 0,transparent 60%),radial-gradient(60% 55% at 50% 110%,#E9D8FF 0,transparent 62%),#FBF4F0;
-  }
-  html.glass[data-theme="night"]{   /* Midnight */
-    --accent:#5AA9FF; --accent-dark:#9CCBFF; --accent-soft:#1B3050; --ink:#EEF2F8; --ink2:#161B26; --cream:#EEF2F8; --muted:#95A3B8; --paper:#0E1118;
-    --card:rgba(28,32,44,.62); --hairline:rgba(255,255,255,.16); --glass-edge:rgba(255,255,255,.12); --panel:rgba(28,32,44,.5);
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 36px -10px rgba(0,0,0,.6);
-    --topbar-bg:rgba(14,17,24,.6); --topbar-muted:#95A3B8; --up:#4ADE9A; --down:#FF7B72;
-    --mesh:radial-gradient(55% 45% at 8% 0%,#1E3A6E 0,transparent 62%),radial-gradient(45% 40% at 96% 8%,#4A2A55 0,transparent 60%),radial-gradient(60% 55% at 55% 110%,#12384A 0,transparent 62%),#0E1118;
-  }
   html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--paper);color:var(--ink)}
   html.glass body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--mesh);background-size:cover}
   html.glass ::selection{background:var(--accent);color:#fff}
@@ -1566,7 +1720,7 @@
   }
   /* inner controls need a line you can actually see (Eli: to-do boxes, "Back to Today" were nearly invisible) */
   html.glass .pbtn,html.glass .seg,html.glass .psearch input,html.glass .now-chip,html.glass .tc-list-toggle,html.glass .tc-hist-restore,html.glass .ti-icon-btn,html.glass .friends-add select,html.glass .now-f input{border-color:var(--hairline)}
-  html.glass .pbtn{background:rgba(255,255,255,.55)} html.glass[data-theme="night"] .pbtn{background:rgba(255,255,255,.06)}
+  html.glass .pbtn{background:rgba(255,255,255,.55)} html.glass[data-mode="dark"] .pbtn{background:rgba(255,255,255,.06)}
   html.glass .pbtn:hover{border-color:var(--accent);color:var(--accent-dark)}
   html.glass .np-masthead{border-radius:20px 20px 0 0;border-bottom:3px double var(--ink)}
   html.glass .np-body{border-radius:0 0 20px 20px;border-top:none}
@@ -1574,10 +1728,10 @@
   html.glass .brainfood{border:1px solid var(--glass-edge)}
   html.glass .pz-box{border-top:4px solid var(--pcol)}
   html.glass .ticker-wall{background:var(--ink2);border-color:transparent}
-  html.glass[data-theme="night"] .ticker-wall{background:rgba(0,0,0,.35)}
+  html.glass[data-mode="dark"] .ticker-wall{background:rgba(0,0,0,.35)}
   html.glass .wx-hero{border-radius:20px}
   html.glass .event .tile{background:var(--accent-soft);border-radius:14px} html.glass .event .tile .tw{color:var(--accent-dark)} html.glass .event .tile .td{color:var(--ink)}
-  html.glass[data-theme="night"] .event .tile .td{color:#fff}
+  html.glass[data-mode="dark"] .event .tile .td{color:#fff}
   html.glass .cal-cell.today{background:color-mix(in srgb, var(--accent) 7%, transparent)}
   html.glass .event{border-radius:16px}
   html.glass .hero{background:transparent}
@@ -1586,25 +1740,25 @@
   html.glass .kicker{color:var(--muted)}
   /* top bar: frosted light, dark type, pill tabs */
   html.glass .topbar{background:var(--topbar-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid rgba(255,255,255,.6)}
-  html.glass[data-theme="night"] .topbar{border-bottom-color:rgba(255,255,255,.08)}
+  html.glass[data-mode="dark"] .topbar{border-bottom-color:rgba(255,255,255,.08)}
   html.glass .wordmark{color:var(--ink)} html.glass .wordmark .name{letter-spacing:-.02em;text-transform:none;font-size:17px;font-weight:800} html.glass .wordmark .diamond{color:var(--accent)}
   html.glass .tabs{background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.85);border-radius:999px;padding:3px;gap:0}
-  html.glass[data-theme="night"] .tabs{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+  html.glass[data-mode="dark"] .tabs{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
   html.glass .tab{color:var(--muted);letter-spacing:0;text-transform:none;font-size:13.5px;font-weight:600;padding:6px 14px;border-radius:999px}
   html.glass .tab:hover{color:var(--ink)}
   html.glass .tab.active{color:var(--ink);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  html.glass[data-theme="night"] .tab.active{background:rgba(255,255,255,.14)}
+  html.glass[data-mode="dark"] .tab.active{background:rgba(255,255,255,.14)}
   /* these were rgba(255,255,255,.85) borders on a near-white panel -- invisible (Eli, Sep 2026) */
   html.glass .date-select,html.glass .lock-btn{background:rgba(255,255,255,.5);border:1px solid var(--hairline);color:var(--ink);border-radius:999px;letter-spacing:0;text-transform:none;font-weight:600}
   html.glass .lock-btn:hover,html.glass .date-select:hover{border-color:var(--accent);color:var(--accent-dark)}
-  html.glass[data-theme="night"] .date-select,html.glass[data-theme="night"] .lock-btn{background:rgba(255,255,255,.07)}
-  html.glass .theme-panel{background:var(--card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:16px;color:var(--ink)}
+  html.glass[data-mode="dark"] .date-select,html.glass[data-mode="dark"] .lock-btn{background:rgba(255,255,255,.07)}
+  html.glass .theme-panel{background:color-mix(in srgb, var(--paper) 90%, transparent);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:16px;color:var(--ink)}
   html.glass .theme-swatch,html.glass .theme-shuffle-row,html.glass .theme-panel-title{color:var(--ink)} html.glass .theme-shuffle-note{color:var(--muted)}
-  html.glass .theme-swatch.active{background:rgba(255,255,255,.7)} html.glass[data-theme="night"] .theme-swatch.active{background:rgba(255,255,255,.1)}
+  html.glass .theme-swatch.active{background:rgba(255,255,255,.7)} html.glass[data-mode="dark"] .theme-swatch.active{background:rgba(255,255,255,.1)}
   /* phone bottom bar */
   @media(max-width:820px){
     html.glass .tabbar{background:var(--topbar-bg);border-top:1px solid rgba(255,255,255,.6)}
-    html.glass[data-theme="night"] .tabbar{border-top-color:rgba(255,255,255,.08)}
+    html.glass[data-mode="dark"] .tabbar{border-top-color:rgba(255,255,255,.08)}
     html.glass .tabbar button{letter-spacing:0;text-transform:none;font-size:10.5px;font-weight:700}
     html.glass .tabbar button.active{color:var(--accent)}
   }
@@ -1613,12 +1767,12 @@
   html.glass .go,html.glass .bb-yes{border-radius:999px}
   html.glass .np-src,html.glass .np-more{letter-spacing:.04em}
   html.glass footer{border-top-color:rgba(255,255,255,.7)}
-  html.glass[data-theme="night"] footer{border-top-color:rgba(255,255,255,.08)}
+  html.glass[data-mode="dark"] footer{border-top-color:rgba(255,255,255,.08)}
   /* gate */
   html.glass #gate{background:var(--mesh)} html.glass .gate-box{background:var(--card);border:1px solid var(--glass-edge);border-radius:24px;padding:28px 26px;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   html.glass .gate-box .gw,html.glass .gate-box p{color:var(--ink)} html.glass .gate-box .gd{color:var(--accent)}
   html.glass .gate-box input[type=password]{background:rgba(255,255,255,.7);color:var(--ink);border:1px solid var(--hairline);border-radius:999px}
-  html.glass[data-theme="night"] .gate-box input[type=password]{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+  html.glass[data-mode="dark"] .gate-box input[type=password]{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
   html.glass .gate-box input::placeholder{color:var(--muted)}
   html.glass .gate-bio{border-radius:999px}
   @media (prefers-reduced-transparency: reduce){ html.glass .card,html.glass .bento-card,html.glass .chart-card,html.glass .todos{background:rgba(255,255,255,.92)} }
@@ -1654,12 +1808,13 @@
   <div class="topbar-in">
     <a class="wordmark" href="#"><span class="diamond">◆</span><span class="name">Daily Hub</span></a>
     <div class="tabs" role="tablist">
-      <button class="tab active" data-tab="calendar" role="tab">Home</button>
-      <button class="tab" data-tab="news" role="tab">News</button>
-      <button class="tab" data-tab="quiz" role="tab">Games</button>
+      <button class="tab active" data-tab="calendar" role="tab"><span class="tab-ic" data-ic="home"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></span><span class="tab-l">Home</span></button>
+      <button class="tab" data-tab="news" role="tab"><span class="tab-ic" data-ic="news"><svg viewBox="0 0 24 24"><path d="M4 5h13a1 1 0 0 1 1 1v12a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><path d="M18 8h2a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 12.5h7M7 16h4"/></svg></span><span class="tab-l">News</span></button>
+      <button class="tab" data-tab="quiz" role="tab"><span class="tab-ic" data-ic="games"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.2"/><rect x="13" y="13" width="8" height="8" rx="2.2"/><path d="M13.5 7h7M17 3.5v7M3.5 17h7M7 13.5v7"/></svg></span><span class="tab-l">Games</span></button>
       <span class="tab-rule" aria-hidden="true"></span>
-      <button class="tab tab-sub" data-go="portfolio">Portfolio</button>
-      <button class="tab tab-sub" data-go="weather">Weather</button>
+      <button class="tab tab-sub" data-go="portfolio"><span class="tab-ic" data-ic="folio"><svg viewBox="0 0 24 24"><path d="M3 17.5l5.2-5.6 3.6 3 4-4.8L21 6.5"/><path d="M16.4 6.3H21v4.6"/><path d="M3 20.8h18"/></svg></span><span class="tab-l">Portfolio</span><span class="tab-sub-v" id="navFolio"></span></button>
+      <button class="tab tab-sub" data-go="weather"><span class="tab-ic" data-ic="wx"><svg viewBox="0 0 24 24"><circle cx="8.4" cy="8.2" r="3.1"/><path d="M8.4 2.6v1.6M8.4 12.2v1M2.8 8.2h1.6M12.4 8.2h1M4.5 4.3l1.1 1.1M11.2 11l.7.7M12.3 4.3l-1.1 1.1"/><path d="M8 20.4h9.1a3.4 3.4 0 0 0 .3-6.8 4.7 4.7 0 0 0-9-1.1A3.5 3.5 0 0 0 8 20.4z"/></svg></span><span class="tab-l">Weather</span><span class="tab-sub-v" id="navWx"></span></button>
+      <button class="tab tab-sub" data-go="friends"><span class="tab-ic" data-ic="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.3"/><path d="M2.8 20.2c0-3.4 2.8-5.7 6.2-5.7s6.2 2.3 6.2 5.7"/><circle cx="17.4" cy="9.3" r="2.5"/><path d="M17 14.7c2.4.2 4.2 2.1 4.2 4.6"/></svg></span><span class="tab-l">Friends</span><span class="tab-sub-v" id="navFriends"></span></button>
     </div>
     <div class="top-right">
       <span class="netpill" id="netPill"><i></i>Offline</span>
@@ -1846,7 +2001,11 @@ function switchTab(name, opts){
 document.querySelectorAll(".tab[data-tab], .tabbar button").forEach(b =>
   b.addEventListener("click", () => switchTab(b.dataset.tab)));
 document.querySelectorAll(".tab[data-go]").forEach(b =>
-  b.addEventListener("click", () => { if(b.dataset.go === "portfolio") goPortfolio(); else if(b.dataset.go === "weather") goWeather(); }));
+  b.addEventListener("click", () => {
+    if(b.dataset.go === "portfolio") goPortfolio();
+    else if(b.dataset.go === "weather") goWeather();
+    else if(b.dataset.go === "friends") switchTab("friends");
+  }));
 $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.target.value; await show(); });
 
 /* Portfolio is no longer a top-level tab — it's reached from the Today snapshot card.
@@ -2051,7 +2210,9 @@ function buildMarketHTML(d){
   h += `</div>`;
 
   h += `<div class="kicker">Outlook &amp; Catalysts</div><div>`;
-  (d.outlook||[]).forEach(o => h += `<div class="outlook-row"><div class="od">${esc(o.date)}</div><p><b>${esc(o.lead)}</b> ${esc(o.body)}</p></div>`);
+  /* week-ahead only: the Running Outlook board lives on `outlookBoard`, but guard anyway so a
+     brief that puts the wrong shape here can never render a wall of blank rows again. */
+  (d.outlook||[]).filter(o => o && o.date && o.lead).forEach(o => h += `<div class="outlook-row"><div class="od">${esc(o.date)}</div><p><b>${esc(o.lead)}</b> ${esc(o.body)}</p></div>`);
   h += `</div>`;
 
   if(d.bottomLine) h += `<div class="kicker">Bottom Line</div><div class="callout"><div class="lbl">Bottom Line</div><p>${esc(d.bottomLine)}</p></div>`;
@@ -2323,17 +2484,66 @@ function setNavActive(v){
    "markets": the market brief. Every photo is loaded lazily and hidden if it fails. */
 function newsPhoto(item, cls){
   if(!item || !item.img) return "";
-  return `<div class="nw-ph ${cls||""}" data-src="${esc(item.img)}">${item.imgCaption ? `<div class="nw-cap">${esc(item.imgCaption)}</div>` : ""}</div>`;
+  const play = item.video && videoEmbed(item.video) ? `<span class="nw-play" aria-hidden="true">▶</span>` : "";
+  return `<div class="nw-ph ${cls||""}" data-src="${esc(item.img)}">${play}${item.imgCaption ? `<div class="nw-cap">${esc(item.imgCaption)}</div>` : ""}</div>`;
 }
 function wireNewsPhotos(root){
   root.querySelectorAll(".nw-ph[data-src]").forEach(box => {
     // no loading="lazy" here: a detached, not-yet-displayed image never counts as "near the
     // viewport", so lazy ones simply never loaded and every photo box stayed hidden
     const img = new Image(); img.alt = ""; img.referrerPolicy = "no-referrer"; img.decoding = "async";
-    img.onload = () => { if(img.naturalWidth < 240 || img.naturalHeight < 120){ box.classList.add("off"); return; } box.prepend(img); box.classList.add("on"); requestAnimationFrame(() => img.classList.add("in")); };
+    img.onload = () => {
+      if(img.naturalWidth < 240 || img.naturalHeight < 120){ box.classList.add("off"); return; }
+      box.prepend(img); box.classList.add("on");
+      requestAnimationFrame(() => {
+        img.classList.add("in");
+        /* Eli, Sep 2026: "the crop / zoom of some images are issues." object-fit:cover in a
+           fixed 16:10 box beheads anyone in a tall photo and slices a panorama to a sliver.
+           So: compare the photo's shape to the box's. A wild mismatch is letterboxed over a
+           blurred copy of itself (the way Apple News does it) instead of being cropped; a
+           mild one is just biased upward, because in news photography the subject is almost
+           always above the centre line. */
+        const bw = box.clientWidth, bh = box.clientHeight;
+        if(!bw || !bh) return;
+        const ratio = (img.naturalWidth / img.naturalHeight) / (bw / bh);
+        if(ratio > 1.85 || ratio < 0.62){
+          box.style.setProperty("--nwbg", `url("${box.dataset.src.replace(/["\\]/g, encodeURIComponent)}")`);
+          box.classList.add("fit");
+        } else {
+          img.style.objectPosition = ratio < 0.98 ? "center 30%" : "center 42%";
+        }
+      });
+    };
     img.onerror = () => box.classList.add("off");
     img.src = box.dataset.src;
   });
+}
+/* Video: only ever embed from players we know are embeddable and safe to frame. Anything
+   else the brief or the enricher hands us is ignored rather than rendered as a broken box. */
+function videoEmbed(url){
+  if(!url) return null;
+  let u; try{ u = new URL(url, location.href); }catch(e){ return null; }
+  const host = u.hostname.replace(/^www\./, "");
+  if(/^(youtube\.com|youtube-nocookie\.com|m\.youtube\.com)$/.test(host)){
+    const id = u.pathname.startsWith("/embed/") ? u.pathname.slice(7) : u.searchParams.get("v");
+    return /^[\w-]{6,20}$/.test(id || "") ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+  }
+  if(host === "youtu.be"){
+    const id = u.pathname.slice(1);
+    return /^[\w-]{6,20}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+  }
+  if(host === "player.vimeo.com" && u.pathname.startsWith("/video/")) return u.href;
+  if(host === "vimeo.com"){
+    const id = u.pathname.slice(1).split("/")[0];
+    return /^\d{6,12}$/.test(id) ? `https://player.vimeo.com/video/${id}` : null;
+  }
+  return null;
+}
+function newsVideoHTML(item){
+  const src = videoEmbed(item && item.video);
+  if(!src) return "";
+  return `<div class="nw-vid"><iframe src="${esc(src)}" title="${esc(headline(item.lead || "Video"))}" loading="lazy"
+    allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen referrerpolicy="no-referrer"></iframe></div>`;
 }
 function newsByline(item, d){
   const bits = [];
@@ -2430,7 +2640,7 @@ function showNewsView(view){
         <h1 class="nw-art-t">${esc(headline(it.lead))}</h1>
         ${it.body ? `<p class="nw-art-dek">${esc(it.body)}</p>` : ""}
         <div class="nw-art-by">${newsByline(it, d)}${it.url ? ` · <a href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Read at the source ↗</a>` : ""}</div>
-        ${newsPhoto(it, "nw-art-ph")}
+        ${videoEmbed(it.video) ? newsVideoHTML(it) : newsPhoto(it, "nw-art-ph")}
         <div class="nw-art-body">
           ${bodyHtml}
           ${it.quote && it.quote.text ? `<blockquote class="nw-quote">“${esc(it.quote.text)}”${it.quote.who ? `<cite>— ${esc(it.quote.who)}</cite>` : ""}</blockquote>` : ""}
@@ -2589,10 +2799,35 @@ function parseSunTime(iso){
   const ap = h>=12?"pm":"am", v = h%12===0?12:h%12;
   return { h, m, dec: h + m/60, label: v+":"+String(m).padStart(2,"0")+ap };
 }
+/* A day's headline condition, the way a person would describe it: what it looks like while
+   you're awake and outside, with rain winning only if it is actually likely for a couple of
+   hours. Falls back to null when there is no hourly detail for that date (day 8-10). */
+function dayCondition(hours){
+  if(!hours || !hours.length) return null;
+  const daylight = hours.filter(h => h.day);
+  const use = daylight.length >= 3 ? daylight : hours;
+  const wet = use.filter(h => h.code >= 51 && (h.precip ?? 0) >= 30);
+  if(wet.length >= 2){
+    const worst = wet.reduce((a, b) => (b.code > a.code ? b : a));   // thunder > snow > rain > drizzle
+    return wmoText(worst.code, true);
+  }
+  const counts = new Map();
+  use.forEach(h => { const c = h.code > 48 ? 3 : h.code; counts.set(c, (counts.get(c) || 0) + 1); });
+  let bestCode = null, bestN = -1;
+  counts.forEach((n, c) => { if(n > bestN || (n === bestN && c < bestCode)){ bestN = n; bestCode = c; } });
+  return bestCode == null ? null : wmoText(bestCode, true);
+}
+/* Rain chance while it matters -- the daily max often peaks at 3am and reads as a lie. */
+function dayPrecipMax(hours){
+  if(!hours || !hours.length) return null;
+  const daylight = hours.filter(h => h.day);
+  const use = daylight.length >= 3 ? daylight : hours;
+  return use.reduce((m, h) => Math.max(m, h.precip ?? 0), 0);
+}
 async function fetchWeather(){
   if(S.wx && Date.now() - (S.wxAt||0) < 30*60*1000) return S.wx;   // was cached for the whole session -- stale by evening on a page left open
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LOC.lat}&longitude=${WX_LOC.lon}`
-    + `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,is_day,wind_speed_10m,apparent_temperature`
+    + `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,is_day,wind_speed_10m,apparent_temperature,uv_index,cloud_cover,pressure_msl,precipitation`
     + `&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,apparent_temperature,pressure_msl,uv_index,precipitation,cloud_cover`
     + `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,precipitation_sum,sunrise,sunset,uv_index_max,wind_speed_10m_max`
     + `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=10`;
@@ -2610,12 +2845,18 @@ async function fetchWeather(){
     const temp = Math.round(j.hourly.temperature_2m[i]);
     const hum = j.hourly.relative_humidity_2m ? j.hourly.relative_humidity_2m[i] : null;
     const wind = j.hourly.wind_speed_10m ? Math.round(j.hourly.wind_speed_10m[i]) : null;
+    const at = k => j.hourly[k] ? j.hourly[k][i] : null;
     const pt = { t: hh, date, temp,
+      code: j.hourly.weather_code[i],
       cond: wmoText(j.hourly.weather_code[i], j.hourly.is_day[i]===1),
       day: j.hourly.is_day[i]===1,
       precip: j.hourly.precipitation_probability[i] ?? 0,
       humidity: hum!=null ? Math.round(hum) : null,
       wind,
+      uv: at("uv_index") != null ? Math.round(at("uv_index") * 10) / 10 : null,
+      cloud: at("cloud_cover") != null ? Math.round(at("cloud_cover")) : null,
+      pressure: at("pressure_msl"),
+      rain: at("precipitation"),
       feels: j.hourly.apparent_temperature ? Math.round(j.hourly.apparent_temperature[i]) : feelsLike(temp, hum, wind) };
     if(date === todayStr) hourly.push(pt);          // the Home strip: the rest of today
     if(hourly48.length < 48) hourly48.push(pt);     // the Weather page hero: next two days
@@ -2625,7 +2866,14 @@ async function fetchWeather(){
   const d0 = j.daily || {};
   const daily = (d0.time || []).map((date, i) => ({
     date, hi: Math.round(d0.temperature_2m_max[i]), lo: Math.round(d0.temperature_2m_min[i]),
-    cond: wmoText(d0.weather_code[i], true), precip: d0.precipitation_probability_max ? (d0.precipitation_probability_max[i] ?? 0) : 0,
+    /* Eli, Sep 2026: "the 10-day emojis don't match the actual forecast -- I'm seeing cloud
+       and then when I open it up it's sunny all day." Open-Meteo's DAILY weather_code is the
+       most significant code of the whole 24 hours, so one drizzly hour at 4am renders the
+       entire day as rain. Derive the row's icon from the day's own daylight hours instead,
+       and keep the raw code only as the fallback for days we have no hourly detail for. */
+    cond: dayCondition(hoursByDate[date]) || wmoText(d0.weather_code[i], true),
+    precipDay: dayPrecipMax(hoursByDate[date]),
+    precip: d0.precipitation_probability_max ? (d0.precipitation_probability_max[i] ?? 0) : 0,
     rain: d0.precipitation_sum ? d0.precipitation_sum[i] : null, uv: d0.uv_index_max ? Math.round(d0.uv_index_max[i]) : null,
     windMax: d0.wind_speed_10m_max ? Math.round(d0.wind_speed_10m_max[i]) : null,
     sunrise: parseSunTime((d0.sunrise||[])[i]), sunset: parseSunTime((d0.sunset||[])[i])
@@ -2656,6 +2904,56 @@ async function fetchWeather(){
 /* ================= Weather page (Apple-Weather style) ================= */
 function compass(deg){ if(deg == null) return ""; return ["N","NE","E","SE","S","SW","W","NW"][Math.round(deg/45) % 8]; }
 function uvLabel(u){ return u == null ? "" : u <= 2 ? "Low" : u <= 5 ? "Moderate" : u <= 7 ? "High" : u <= 10 ? "Very high" : "Extreme"; }
+/* ---------- hourly drill-down for any stat ----------
+   Eli, Sep 2026: "I should be able to click on things like the feels like, UV, wind,
+   humidity, rain, etc to see what the hourly stats for those will be (for today and future
+   days on the 10-day forecast)." Every tile on the weather page and every stat inside an
+   expanded day is a button that opens the same chart, drawn from that date's own hours. */
+const WX_METRICS = {
+  temp:     { label:"Temperature",    pick:h => h.temp,     fmt:v => Math.round(v) + "°" },
+  feels:    { label:"Feels like",     pick:h => h.feels,    fmt:v => Math.round(v) + "°" },
+  uv:       { label:"UV index",       pick:h => h.uv,       fmt:v => (Math.round(v*10)/10), zero:true, note:v => uvLabel(Math.round(v)) },
+  wind:     { label:"Wind",           pick:h => h.wind,     fmt:v => Math.round(v) + " mph", zero:true },
+  humidity: { label:"Humidity",       pick:h => h.humidity, fmt:v => Math.round(v) + "%", zero:true },
+  precip:   { label:"Chance of rain", pick:h => h.precip,   fmt:v => Math.round(v) + "%", zero:true, bars:true, max:100 },
+  cloud:    { label:"Cloud cover",    pick:h => h.cloud,    fmt:v => Math.round(v) + "%", zero:true, bars:true, max:100 },
+  pressure: { label:"Pressure",       pick:h => h.pressure != null ? h.pressure * 0.02953 : null, fmt:v => v.toFixed(2) + " inHg" }
+};
+function wxMetricHTML(hrs, key){
+  const m = WX_METRICS[key];
+  if(!m) return "";
+  const pts = (hrs || []).map(h => ({ t: h.t, v: m.pick(h) })).filter(p => p.v != null && !isNaN(p.v));
+  if(pts.length < 2) return `<div class="wxm"><div class="wxm-k">${m.label}</div><div class="wxm-none">No hour-by-hour detail is published for this day.</div></div>`;
+  const vals = pts.map(p => p.v);
+  let lo = Math.min(...vals), hi = m.max != null ? m.max : Math.max(...vals);
+  if(m.zero) lo = 0;
+  if(hi - lo < 1e-6){ hi = lo + 1; }
+  const pad = (hi - lo) * 0.12; const LO = m.zero ? lo : lo - pad, HI = hi + pad;
+  const W = 600, H = 84;
+  const X = i => (pts.length === 1 ? W/2 : i / (pts.length - 1) * W);
+  const Y = v => H - ((v - LO) / (HI - LO)) * H;
+  const minP = pts.reduce((a,b) => b.v < a.v ? b : a), maxP = pts.reduce((a,b) => b.v > a.v ? b : a);
+  let body;
+  if(m.bars){
+    const bw = Math.max(2, W / pts.length - 3);
+    body = pts.map((p,i) => { const y = Y(p.v); return `<rect x="${(X(i) - bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, H - y).toFixed(1)}" rx="2" class="wxm-bar"></rect>`; }).join("");
+  } else {
+    const line = pts.map((p,i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(" ");
+    body = `<path d="${line} L${W},${H} L0,${H} Z" class="wxm-area"></path><path d="${line}" class="wxm-line"></path>`
+         + [minP, maxP].map(p => `<circle cx="${X(pts.indexOf(p)).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3.5" class="wxm-pt"></circle>`).join("");
+  }
+  const step = pts.length > 14 ? 3 : 2;
+  const ticks = pts.map((p,i) => (i % step === 0 || i === pts.length - 1)
+    ? `<span style="left:${(X(i)/W*100).toFixed(2)}%">${fmtHour(p.t)}</span>` : "").join("");
+  const note = m.note ? m.note(maxP.v) : "";
+  return `<div class="wxm">
+    <div class="wxm-k">${m.label}<span>${m.fmt(minP.v)} → ${m.fmt(maxP.v)}${note ? " · " + esc(note) : ""}</span></div>
+    <div class="wxm-c"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${body}</svg>${
+      minP.v === maxP.v ? "" : `<b class="wxm-hi" style="left:${Math.min(92, Math.max(8, X(pts.indexOf(maxP))/W*100)).toFixed(2)}%">${m.fmt(maxP.v)}</b>`}</div>
+    <div class="wxm-x">${ticks}</div>
+  </div>`;
+}
+
 async function renderWeatherPanel(){
   const panel = $("#panel-weather");
   panel.innerHTML = `<div class="spinner"></div>`;
@@ -2673,14 +2971,16 @@ async function renderWeatherPanel(){
     const nowPos = i === 0 && wx.curTemp !== "—" ? Math.max(0, Math.min(100, (wx.curTemp - allLo) / span * 100)) : null;
     return `<div class="wxd" data-day="${d.date}" role="button" tabindex="0">
       <div class="wxd-n">${dayName(d.date, i)}</div>
-      <div class="wxd-i">${wxIcon(d.cond, true, 26)}<span class="${(d.precip ?? 0) >= 10 ? "" : "off"}">${d.precip ?? 0}%</span></div>
+      <div class="wxd-i">${wxIcon(d.cond, true, 26)}<span class="${(d.precipDay ?? d.precip ?? 0) >= 10 ? "" : "off"}">${d.precipDay ?? d.precip ?? 0}%</span></div>
       <div class="wxd-lo">${d.lo}°</div>
       <div class="wxd-bar"><div class="wxd-fill" style="left:${l.toFixed(1)}%;width:${Math.max(4, r - l).toFixed(1)}%"></div>${nowPos != null ? `<div class="wxd-now" style="left:${nowPos.toFixed(1)}%"></div>` : ""}</div>
       <div class="wxd-hi">${d.hi}°</div>
       <div class="wxd-open" aria-hidden="true">⌄</div>
     </div><div class="wxd-detail" id="wxd-${d.date}"></div>`;
   };
-  const tile = (k, v, sub) => `<div class="wxt"><div class="wxt-k">${k}</div><div class="wxt-v">${v}</div>${sub ? `<div class="wxt-s">${sub}</div>` : ""}</div>`;
+  const tile = (k, v, sub, metric) => metric
+    ? `<button type="button" class="wxt wxt-live" data-metric="${metric}" aria-expanded="false"><div class="wxt-k">${k}<i>⌄</i></div><div class="wxt-v">${v}</div>${sub ? `<div class="wxt-s">${sub}</div>` : ""}</button>`
+    : `<div class="wxt"><div class="wxt-k">${k}</div><div class="wxt-v">${v}</div>${sub ? `<div class="wxt-s">${sub}</div>` : ""}</div>`;
   const today = days[0] || {};
   panel.innerHTML = `<div class="wxp" style="--wx-text:${th.text};--wx-sub:${th.sub}">
     <button class="pbtn game-back" id="wxBack">← Back to Today</button>
@@ -2693,18 +2993,32 @@ async function renderWeatherPanel(){
     </div>
     <div class="wxp-card"><div class="wxp-k">10-day forecast<span class="wxp-hint">tap a day for its hourly detail</span></div><div class="wxp-days">${days.map(dayRow).join("")}</div></div>
     <div class="wxp-grid">
-      ${tile("Feels like", (wx.feelsExact ?? wx.feels) + "°", wx.feelsExact != null && wx.feelsExact !== wx.curTemp ? (wx.feelsExact > wx.curTemp ? "Humidity makes it feel warmer" : "Wind makes it feel cooler") : "Similar to the actual temperature")}
-      ${tile("UV index", wx.uv ?? "—", uvLabel(wx.uv))}
-      ${tile("Wind", (wx.wind ?? "—") + " mph", wx.windDir != null ? "From the " + compass(wx.windDir) + (today.windMax ? " · gusts to " + today.windMax : "") : "")}
-      ${tile("Humidity", (wx.humidity ?? "—") + "%", wx.cloud != null ? "Cloud cover " + Math.round(wx.cloud) + "%" : "")}
+      ${tile("Feels like", (wx.feelsExact ?? wx.feels) + "°", wx.feelsExact != null && wx.feelsExact !== wx.curTemp ? (wx.feelsExact > wx.curTemp ? "Humidity makes it feel warmer" : "Wind makes it feel cooler") : "Similar to the actual temperature", "feels")}
+      ${tile("UV index", wx.uv ?? "—", uvLabel(wx.uv), "uv")}
+      ${tile("Wind", (wx.wind ?? "—") + " mph", wx.windDir != null ? "From the " + compass(wx.windDir) + (today.windMax ? " · gusts to " + today.windMax : "") : "", "wind")}
+      ${tile("Humidity", (wx.humidity ?? "—") + "%", wx.cloud != null ? "Cloud cover " + Math.round(wx.cloud) + "%" : "", "humidity")}
       ${tile("Sunrise", wx.sunrise ? wx.sunrise.label : "—", wx.sunset ? "Sunset " + wx.sunset.label : "")}
-      ${tile("Rain", today.rain != null ? today.rain.toFixed(2) + " in" : "—", (wx.rainMax != null ? wx.rainMax + "% chance today" : ""))}
-      ${tile("Pressure", wx.pressure != null ? (wx.pressure * 0.02953).toFixed(2) + " inHg" : "—", wx.pressure != null ? wx.pressure + " hPa" : "")}
+      ${tile("Rain", today.rain != null ? today.rain.toFixed(2) + " in" : "—", ((today.precipDay ?? wx.rainMax) != null ? (today.precipDay ?? wx.rainMax) + "% chance today" : ""), "precip")}
+      ${tile("Pressure", wx.pressure != null ? (wx.pressure * 0.02953).toFixed(2) + " inHg" : "—", wx.pressure != null ? wx.pressure + " hPa" : "", "pressure")}
       ${tile("Tomorrow", days[1] ? `${days[1].hi}° / ${days[1].lo}°` : "—", days[1] ? esc(days[1].cond) + (days[1].precip >= 20 ? " · " + days[1].precip + "% rain" : "") : "")}
     </div>
+    <div class="wxm-slot" id="wxMetricSlot"></div>
     <p class="sources">Open-Meteo forecast for Franklin, TN · refreshed every 30 minutes.</p>
   </div>`;
   $("#wxBack").addEventListener("click", () => switchTab("calendar"));
+
+  /* tiles -> today's hourly curve for that stat, in a slot under the grid */
+  const mslot = panel.querySelector("#wxMetricSlot");
+  const todayHrs = (wx.hoursByDate && wx.hoursByDate[todayCT()]) || wx.hourly || [];
+  panel.querySelectorAll(".wxt-live").forEach(btn => btn.addEventListener("click", () => {
+    const key = btn.dataset.metric, was = btn.classList.contains("on");
+    panel.querySelectorAll(".wxt-live.on").forEach(b => { b.classList.remove("on"); b.setAttribute("aria-expanded","false"); });
+    if(was){ mslot.innerHTML = ""; mslot.classList.remove("on"); return; }
+    btn.classList.add("on"); btn.setAttribute("aria-expanded","true");
+    mslot.innerHTML = wxMetricHTML(todayHrs, key);
+    mslot.classList.add("on");
+  }));
+
   // expandable day detail: that day's hours plus its own stat line
   panel.querySelectorAll(".wxd[data-day]").forEach(row => {
     const open = () => {
@@ -2715,10 +3029,24 @@ async function renderWeatherPanel(){
       panel.querySelectorAll(".wxd.on").forEach(r => r.classList.remove("on"));
       if(isOpen) return;
       const hrs = (wx.hoursByDate && wx.hoursByDate[date]) || [];
-      const stat = (k, v) => v == null || v === "" ? "" : `<div><span>${k}</span><b>${v}</b></div>`;
+      /* a stat with a `metric` is clickable: it opens that stat's hourly curve for THIS day */
+      const stat = (k, v, metric) => v == null || v === "" ? ""
+        : metric ? `<button type="button" class="wxd-stat" data-metric="${metric}"><span>${k}<i>⌄</i></span><b>${v}</b></button>`
+                 : `<div><span>${k}</span><b>${v}</b></div>`;
       box.innerHTML = `${hrs.length ? `<div class="wxp-hours wxd-hours">${hrs.map((h,i) => hourCard(h, i, date === todayCT())).join("")}</div>` : `<div class="wxd-nohours">Hour-by-hour detail isn't published this far out.</div>`}
-        <div class="wxd-stats">${stat("High", d0.hi + "°")}${stat("Low", d0.lo + "°")}${stat("Rain", (d0.precip ?? 0) + "%")}${stat("Total", d0.rain != null ? d0.rain.toFixed(2) + " in" : null)}${stat("UV", d0.uv != null ? d0.uv + " · " + uvLabel(d0.uv) : null)}${stat("Wind", d0.windMax != null ? d0.windMax + " mph" : null)}${stat("Sunrise", d0.sunrise ? d0.sunrise.label : null)}${stat("Sunset", d0.sunset ? d0.sunset.label : null)}</div>`;
+        <div class="wxd-stats">${stat("High", d0.hi + "°", hrs.length ? "temp" : null)}${stat("Low", d0.lo + "°", hrs.length ? "feels" : null)}${stat("Rain", (d0.precipDay ?? d0.precip ?? 0) + "%", hrs.length ? "precip" : null)}${stat("Total", d0.rain != null ? d0.rain.toFixed(2) + " in" : null)}${stat("UV", d0.uv != null ? d0.uv + " · " + uvLabel(d0.uv) : null, hrs.length ? "uv" : null)}${stat("Wind", d0.windMax != null ? d0.windMax + " mph" : null, hrs.length ? "wind" : null)}${stat("Humidity", hrs.length ? Math.round(hrs.reduce((a,h)=>a+(h.humidity||0),0)/hrs.length) + "% avg" : null, hrs.length ? "humidity" : null)}${stat("Sunrise", d0.sunrise ? d0.sunrise.label : null)}${stat("Sunset", d0.sunset ? d0.sunset.label : null)}</div>
+        <div class="wxm-slot wxd-mslot"></div>`;
       box.classList.add("on"); row.classList.add("on");
+      const dslot = box.querySelector(".wxd-mslot");
+      box.querySelectorAll(".wxd-stat").forEach(b => b.addEventListener("click", ev => {
+        ev.stopPropagation();                        // the whole row is a toggle; don't collapse it
+        const was = b.classList.contains("on");
+        box.querySelectorAll(".wxd-stat.on").forEach(x => x.classList.remove("on"));
+        if(was){ dslot.innerHTML = ""; dslot.classList.remove("on"); return; }
+        b.classList.add("on");
+        dslot.innerHTML = wxMetricHTML(hrs, b.dataset.metric);
+        dslot.classList.add("on");
+      }));
     };
     row.addEventListener("click", open);
     row.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); open(); } });
@@ -3256,14 +3584,114 @@ function renderEventsList(arr, fallbackDate, opts){
 }
 
 /* today's schedule — the right-hand column beside the to-do list */
+/* ---------- Today, as a day view ----------
+   Eli, Sep 2026: "make the today tab more like what google calendar looks like when you
+   select day mode. It should fill a pre-determined height and show when it is happening
+   pegged to that hour. If it's an all day event, have that be annotated another way."
+
+   So: a fixed-height hour grid, events absolutely positioned by their start and end minute
+   and sized by duration, overlapping events packed into side-by-side columns, a live "now"
+   line, and all-day items in their own band above the grid where they belong. */
+const DAY_HOUR_PX = 46;                 // one hour of grid
+function dayViewLayout(events){
+  /* Cluster overlapping events, then give each cluster as many columns as it needs -- the
+     same thing Google does, and the reason two 9am meetings sit beside each other rather
+     than on top of each other. */
+  const sorted = events.slice().sort((a,b) => a.start - b.start || b.end - a.end);
+  const out = [];
+  let cluster = [], clusterEnd = -1;
+  const flush = () => {
+    if(!cluster.length) return;
+    const cols = [];
+    cluster.forEach(ev => {
+      let ci = cols.findIndex(c => c <= ev.start);
+      if(ci === -1){ cols.push(ev.end); ci = cols.length - 1; } else cols[ci] = ev.end;
+      ev.col = ci;
+    });
+    cluster.forEach(ev => { ev.cols = cols.length; out.push(ev); });
+    cluster = []; clusterEnd = -1;
+  };
+  sorted.forEach(ev => {
+    if(cluster.length && ev.start >= clusterEnd) flush();
+    cluster.push(ev);
+    clusterEnd = Math.max(clusterEnd, ev.end);
+  });
+  flush();
+  return out;
+}
 function buildTodayScheduleHTML(todayList, todayDate){
   const list = todayList || [];
+  const timed = [], allDay = [];
+  list.forEach((ev, i) => {
+    const p = parseEventLead(ev.lead, ev.body, todayDate);
+    const title = (p.title || (ev.body || "").split(" · ")[0] || ev.lead || "Event").replace(/\s*—\s*$/, "");
+    const where = (ev.body || "").split(" · ").slice(1).join(" · ");
+    if(p.startMin == null){ allDay.push({ i, title, where }); return; }
+    const start = p.startMin;
+    const end = Math.max(start + 25, p.endMin != null && p.endMin > start ? p.endMin : start + 50);
+    timed.push({ i, title, where, start, end, label: p.timeLine || fmtMinLabel(start) });
+  });
+
+  const nowMin = (() => {
+    const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
+    return +t.slice(0,2)*60 + +t.slice(3,5);
+  })();
+  const isToday = !todayDate || todayDate === todayCT();
+
+  // Window the grid on the actual day rather than always 12am-12am: an hour before the
+  // first thing, an hour after the last, clamped to a sane 7am-10pm default.
+  let lo = 8*60, hi = 18*60;
+  if(timed.length){
+    lo = Math.min(...timed.map(e => e.start)) - 60;
+    hi = Math.max(...timed.map(e => e.end)) + 60;
+  }
+  if(isToday){ lo = Math.min(lo, nowMin - 30); hi = Math.max(hi, nowMin + 60); }
+  lo = Math.max(0, Math.floor(lo / 60) * 60);
+  hi = Math.min(24*60, Math.ceil(hi / 60) * 60);
+  if(hi - lo < 6*60) hi = Math.min(24*60, lo + 6*60);
+  const span = hi - lo;
+  const y = m => (m - lo) / 60 * DAY_HOUR_PX;
+
+  let hours = "";
+  for(let m = lo; m <= hi; m += 60){
+    const h = Math.floor(m / 60) % 24;
+    hours += `<div class="dv-hr" style="top:${y(m)}px"><span>${m === hi ? "" : (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "am" : "pm")}</span></div>`;
+  }
+  const blocks = dayViewLayout(timed).map(ev => {
+    const top = y(ev.start), h = Math.max(22, y(ev.end) - y(ev.start) - 2);
+    const w = 100 / ev.cols, left = ev.col * w;
+    return `<div class="dv-ev${h < 34 ? " tiny" : ""}" style="top:${top}px;height:${h}px;left:calc(${left}% + 2px);width:calc(${w}% - 5px)"
+      title="${esc(ev.label)} · ${esc(ev.title)}">
+      <b>${esc(ev.title)}</b><i>${esc(ev.label)}${ev.where ? " · " + esc(ev.where) : ""}</i></div>`;
+  }).join("");
+  const nowLine = isToday && nowMin >= lo && nowMin <= hi
+    ? `<div class="dv-now" style="top:${y(nowMin)}px"><span></span></div>` : "";
+
+  const allDayBand = allDay.length
+    ? `<div class="dv-allday"><span class="dv-ak">All day</span><div>${allDay.map(a =>
+        `<span class="dv-chip" title="${esc(a.where || a.title)}">${esc(a.title)}</span>`).join("")}</div></div>`
+    : "";
+
   return `<div class="bento-card agenda-card">
     <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub">${list.length ? `${list.length} ${list.length===1?"item":"items"}` : ""}</span></span></div>
-    <div class="agenda-panel">${list.length
-      ? renderEventsList(list, todayDate, {countdown:true})
-      : `<div class="tc-empty"><span class="tc-empty-check">✓</span>Nothing on the calendar today.</div>`}</div>
+    ${list.length ? `${allDayBand}
+      <div class="dv-scroll" id="dvScroll"><div class="dv-grid" style="height:${span/60*DAY_HOUR_PX}px">
+        ${hours}<div class="dv-body">${blocks}${nowLine}</div>
+      </div></div>`
+    : `<div class="tc-empty"><span class="tc-empty-check">✓</span>Nothing on the calendar today.</div>`}
   </div>`;
+}
+function fmtMinLabel(m){
+  const h = Math.floor(m/60) % 24, mm = m % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}${mm ? ":" + String(mm).padStart(2,"0") : ""}${h < 12 ? "am" : "pm"}`;
+}
+/* Open the day where the day actually is: on the now line, or on the first event. */
+function wireDayView(root){
+  const sc = (root || document).querySelector("#dvScroll");
+  if(!sc || sc.dataset.scrolled) return;
+  sc.dataset.scrolled = "1";
+  const mark = sc.querySelector(".dv-now") || sc.querySelector(".dv-ev");
+  if(mark) sc.scrollTop = Math.max(0, mark.offsetTop - sc.clientHeight * 0.35);
 }
 
 /* ---- to-do item extras: expand/collapse state is a pure client-side UI
@@ -3331,6 +3759,8 @@ function subChecklistHTML(subitems){
   return `<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
 }
 
+/* id -> the list it is moving into, set for the length of one urgent/chill transition */
+const todoMoving = new Map();
 function todoRowsHTML(items){
   const list = items || [];
   const ready = !!(window.__todosApi && window.__todosApi.isReady());
@@ -3358,7 +3788,9 @@ function todoRowsHTML(items){
           : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
     const checkedPending = pendingComplete.has(t.id);
     const divider = (i === firstChillIdx && firstChillIdx > 0) ? `<div class="ti-divider"></div>` : "";
-    return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}" data-id="${esc(t.id)}" data-kind="${kind}">
+    const arriving = todoMoving.get(t.id) === kind;
+    if(arriving) setTimeout(() => todoMoving.delete(t.id), 900);
+    return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}${arriving?" ti-arriving":""}" data-id="${esc(t.id)}" data-kind="${kind}">
       <div class="ti-main">
         <span class="ti-drag" title="Drag to reorder">⠿</span>
         <span class="ti-check">✓</span>
@@ -3459,8 +3891,22 @@ function wireTodoRows(root){
       if(pendingComplete.has(id)){ clearTimeout(pendingComplete.get(id)); pendingComplete.delete(id); }
       if(window.__todosApi) window.__todosApi.remove(id);
     } else if(action === "kind-toggle"){
+      /* Eli, Sep 2026: "I would like toggling from urgent to chill on the to dos to have a
+         better animation where it like slides down / up, instead of snapping." The write
+         triggers a full re-render of the list, so the move is in two halves: collapse the
+         row where it is (height animated to zero, so everything below closes the gap), then
+         write; todoRowsHTML tags the row on the way back in and it slides open in its new
+         group. */
       const now = item.dataset.kind === "chill" ? "chill" : "urgent";
-      if(window.__todosApi) window.__todosApi.setKind(id, now === "chill" ? "urgent" : "chill");
+      const to = now === "chill" ? "urgent" : "chill";
+      todoMoving.set(id, to);
+      const h = item.getBoundingClientRect().height;
+      item.style.height = h + "px"; item.style.overflow = "hidden";
+      item.classList.add("ti-leaving", to === "chill" ? "ti-down" : "ti-up");
+      requestAnimationFrame(() => { item.style.height = "0px"; item.style.opacity = "0"; item.style.marginTop = "0"; });
+      const commit = () => { if(window.__todosApi) window.__todosApi.setKind(id, to); };
+      if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) commit();
+      else setTimeout(commit, 240);
     } else if(action === "note-toggle"){
       if(expandedNotes.has(id)) expandedNotes.delete(id); else expandedNotes.add(id);
       rerenderTodoWrap(root);
@@ -3837,49 +4283,110 @@ function daysUntil(dateStr){
   return Math.round((new Date(dateStr + "T00:00:00") - new Date(todayCT() + "T00:00:00")) / 864e5);
 }
 let nowLastDay = null;
+/* Emoji for a countdown, guessed the same way the server guesses it, so a chip Eli types in
+   by hand looks like the ones the calendar produced. */
+const NOW_ICONS = [
+  ["\u{1F382}", /b-?day|birthday|turns \d+/i],
+  ["\u{1F396}", /drill|battle assembly|\buta\b|annual training|muster|reserve/i],
+  ["\u{1F942}", /bachelor|bachelorette|stag|rehearsal/i],
+  ["\u{1F48D}", /wedding|ceremony|engagement/i],
+  ["⏳",    /expir|deadline|last day|due|renew|cutoff|file by/i],
+  ["\u{1F4DD}", /registration|register|sign ?up|enroll|application|apply/i],
+  ["⛳",    /golf|tee time|scramble|member-guest/i],
+  ["✈",    /flight|trip|vacation|depart|honeymoon|cruise|airport|getaway/i],
+  ["\u{1F3AB}", /concert|game|ticket|festival|show|match|kickoff/i],
+  ["\u{1F393}", /exam|series \d+|\bsie\b|licens|certification|test\b/i],
+  ["\u{1F3E1}", /closing|inspection|appraisal|move-?in|walkthrough/i],
+  ["\u{1F3E5}", /dentist|doctor|appointment|physical|\bvet\b|fingerprint/i],
+  ["\u{1F384}", /christmas|thanksgiving|halloween|new year|easter|july/i]
+];
+const nowIcon = (label, kind) => (NOW_ICONS.find(([, re]) => re.test(label || "")) || [])[0]
+  || (kind === "deadline" ? "⏳" : "\u{1F4CC}");
+/* how full the ring is: 90 days out reads as "just started", the day itself as full */
+const nowProgress = n => Math.max(4, Math.min(100, Math.round((1 - Math.max(0, n) / 90) * 100)));
+
 async function renderNowStrip(d){
   const el = $("#nowStrip"); if(!el) return;
   if(d) nowLastDay = d; else d = nowLastDay || { today: [] };
-  const chips = [];
-  // Countdowns: Firestore when it is reachable (synced across devices), plus a local
-  // override layer that is ALWAYS writable. The override is what makes add/remove work no
-  // matter what -- the first version only offered the buttons when Firestore was ready, and
-  // if that listener never fired (rules, offline) the chips were stuck read-only, which is
-  // exactly what Eli hit: no way to delete the fingerprint deadline.
+  const tiles = [];
+  // Countdowns come from three places, merged: what the calendar refresh found on its own
+  // (`countdowns` on the day file -- Eli: "always be looking at my calendar ... err on the
+  // side of adding it"), what is synced in Firestore, and a local override layer that is
+  // ALWAYS writable. The override is what makes add/remove work no matter what -- the first
+  // version only offered the buttons when Firestore was ready, and if that listener never
+  // fired (rules, offline) the chips were stuck read-only, which is exactly what Eli hit:
+  // no way to delete the fingerprint deadline. Deleting an auto one hides it for good,
+  // because the hidden list is keyed on the server's stable cal:<date>:<slug> id.
   const api = window.__nowApi && window.__nowApi.isReady() ? window.__nowApi : null;
   const ov = nowOverrides();
   let base = api ? api.getState().chips : null;
   if(api && !api.getState().seeded){ const cfg = await fetchNowConfig(); if(cfg && cfg.chips && cfg.chips.length){ api.seed(cfg.chips); return; } }
   if(!base){ const cfg = await fetchNowConfig(); base = ((cfg && cfg.chips) || []).map(c => ({...c, id: c.id || "file:" + c.label})); }
-  const list = base.filter(c => !ov.hidden.includes(c.id)).concat(ov.added);
-  list.slice().sort((a,b) => (a.date||"") < (b.date||"") ? -1 : 1).forEach(c => {
+  const auto = (d.countdowns || []).map(c => ({...c, id: c.id || "cal:" + c.date + ":" + c.label}));
+  const byId = new Map();
+  base.concat(auto, ov.added).forEach(c => { if(c && c.id && !ov.hidden.includes(c.id)) byId.set(c.id, c); });
+  const list = [...byId.values()];
+  list.sort((a,b) => (a.date||"") < (b.date||"") ? -1 : 1).forEach(c => {
     if(!c.date) return;
     const n = daysUntil(c.date);
-    if(n < -1 || n > 365) return;
-    const when = n < 0 ? "yesterday" : n === 0 ? "today" : n === 1 ? "tomorrow" : n + "d";
-    chips.push({id: c.id, cls: c.kind === "deadline" ? (n <= 7 ? "hot" : "acc") : "", k: c.kind === "deadline" ? "Due" : "", label: `${esc(c.label)} · ${when}`, go: null, editable: true, local: ov.added.some(a => a.id === c.id)});
+    if(n < -1 || n > 400) return;
+    const big = n < 0 ? "Was" : n === 0 ? "Today" : n === 1 ? "1" : String(n);
+    const unit = n < 0 ? "yesterday" : n === 0 ? "\u{1F389}" : n === 1 ? "day — tomorrow" : "days";
+    const heat = n <= 2 ? "hot" : n <= 14 ? "warm" : "";
+    tiles.push({ id: c.id, cls: heat, icon: c.emoji || nowIcon(c.label, c.kind), label: c.label,
+                 big, unit, pct: nowProgress(n), editable: true,
+                 local: ov.added.some(a => a.id === c.id) });
   });
-  // next timed event today (the lead looks like "3pm–4pm CT —")
+  // next timed event today (the lead looks like "3pm-4pm CT ---")
   const nowMin = (() => { const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"}); return +t.slice(0,2)*60 + +t.slice(3,5); })();
   const next = (d.today || []).map(ev => ({ev, m: eventStartMinutes(ev.lead)})).filter(x => x.m != null && x.m >= nowMin - 5).sort((a,b) => a.m - b.m)[0];
-  if(next) chips.push({cls:"", k:"Next", label: `${esc(eventStartTimeText(next.ev.lead))} ${esc((next.ev.body||"").split(" · ")[0])}`, go: () => { const c = $("#todayCardSlot"); if(c) c.scrollIntoView({behavior:"smooth", block:"center"}); }});
+  if(next) tiles.push({ cls:"info", icon:"⏰", label: (next.ev.body||"").split(" · ")[0] || "Next up",
+                        big: eventStartTimeText(next.ev.lead), unit:"next up", pct:0,
+                        go: () => { const c = $("#todayCardSlot"); if(c) c.scrollIntoView({behavior:"smooth", block:"center"}); } });
   const fstate = window.__friendsApi ? window.__friendsApi.getState() : {people:[]};
   const feat = (fstate.people||[]).length ? pickFeaturedFriend(fstate.people) : null;
-  if(feat) chips.push({cls:"", k:"Text", label: `${esc(feat.p.name)}${feat.days != null ? " · " + feat.days + "d" : ""}`, go: goFriends});
-  else if((fstate.people||[]).length) chips.push({cls:"", k:"Friends", label:"All caught up", go: goFriends});
+  if(feat){
+    const st = friendStatus(feat.p);
+    tiles.push({ cls:"info", icon: (FRIEND_CH[st.worst.key] || {}).icon || "\u{1F465}", label: st.because,
+                 big: st.suggestion, unit:"reach out", pct:0, go: goFriends });
+  } else if((fstate.people||[]).length){
+    tiles.push({ cls:"info", icon:"\u{1F465}", label:"Everyone's heard from you", big:"All caught up", unit:"friends", pct:0, go: goFriends });
+  }
   el.style.display = "";
-  el.innerHTML = chips.map((c,i) => `<button type="button" class="now-chip ${c.cls}" data-i="${i}">${c.k ? `<span class="nc-k">${c.k}</span>` : ""}<span>${c.label}</span><span class="nc-x" title="Remove">×</span></button>`).join("")
-    + `<button type="button" class="now-chip now-add" id="nowAdd" title="Add a countdown or deadline">＋ Add</button>`;
-  el.querySelectorAll(".now-chip[data-i]").forEach(b => {
-    const c = chips[+b.dataset.i];
+  el.innerHTML = tiles.map((t,i) => `<button type="button" class="now-tile ${t.cls}" data-i="${i}">
+      <span class="nt-ic">${t.icon}</span>
+      <span class="nt-b"><span class="nt-l">${esc(t.label)}</span>
+        <span class="nt-d"><b>${esc(t.big)}</b>${t.unit ? ` ${esc(t.unit)}` : ""}</span></span>
+      ${t.pct ? `<span class="nt-bar"><i style="width:${t.pct}%"></i></span>` : ""}
+      ${t.editable ? `<span class="nt-x" title="Remove">×</span>` : ""}
+    </button>`).join("")
+    + `<button type="button" class="now-tile now-add" id="nowAdd" title="Add a countdown or deadline"><span class="nt-ic">＋</span><span class="nt-b"><span class="nt-l">Add</span><span class="nt-d">a countdown</span></span></button>`;
+  el.querySelectorAll(".now-tile[data-i]").forEach(b => {
+    const t = tiles[+b.dataset.i];
     b.addEventListener("click", e => {
-      if(e.target.classList.contains("nc-x")){ nowRemove(c); return; }
-      if(c.go) c.go();
+      if(e.target.classList.contains("nt-x")){ nowRemove(t); return; }
+      if(t.go) t.go();
     });
-    if(!c.go) b.style.cursor = "pointer";
   });
   const addBtn = $("#nowAdd");
   if(addBtn) addBtn.addEventListener("click", openNowEditor);
+  updateNavBadges();
+}
+/* The left rail carries live subtitles so it reads like an app's home screen rather than a
+   list of links: the weather item shows the temperature, Friends shows who is next. */
+function updateNavBadges(){
+  const wx = $("#navWx");
+  if(wx && S.wx && S.wx.curTemp != null && S.wx.curTemp !== "—") wx.textContent = S.wx.curTemp + "°";
+  const fr = $("#navFriends");
+  if(fr){
+    const st = window.__friendsApi ? window.__friendsApi.getState() : {people:[]};
+    const feat = (st.people||[]).length ? pickFeaturedFriend(st.people) : null;
+    if(feat){ fr.textContent = friendStatus(feat.p).suggestion; fr.classList.add("hot"); }
+    else { fr.textContent = (st.people||[]).length ? "all caught up" : ""; fr.classList.remove("hot"); }
+  }
+  const pf = $("#navFolio");
+  if(pf && typeof P !== "undefined" && P && typeof P.dayPct === "number")
+    pf.textContent = fmtPct(P.dayPct);
 }
 /* Local override layer for the Now strip. Firestore is the shared store when it answers;
    this is the always-writable one underneath it, so removing and adding chips never depends
@@ -3945,87 +4452,199 @@ function eventStartMinutes(lead){
   return h*60 + (+(m[2]||0));
 }
 
-/* ---------- Running Outlook + Rate Board ----------
+/* ---------- Running Outlook + Board ----------
    The left column is a standing view of where the big asset classes are and, more to the
-   point, how to explain each one to a client in a sentence. It comes from the daily brief
-   (`outlook` on the market file); OUTLOOK_SEED below is the fallback that ships with the
-   page so the card is never empty, and it retires itself the moment a brief publishes its
-   own. The right column plots every rate on ONE shared scale -- the earlier per-row bars
-   scaled each rate against the maximum, which showed nothing; a dot on a common axis makes
-   "cash is here, the 10-year is there, your mortgage is way out there" readable at a glance. */
+   point, how to explain each one to a client: a one-line stance, then three short-term
+   talking points and three long-term ones, each attributable to a named house.
+
+   Sep 2026 bug, worth remembering: the brief has ALWAYS published an `outlook` array -- the
+   old "week ahead" calendar of {date, lead, body}. When this card started reading `outlook`
+   it found those three entries, decided a brief had published, and rendered three rows with
+   no topic, no stance and no headline. The card looked empty. Anything read off the brief
+   now has to pass shapeOK() before it is trusted, and the new field is `outlookBoard` so the
+   two can never collide again. */
 const OUTLOOK_SEED = {
   asOf: "2026-09-10",
   items: [
     { topic:"Stocks", stance:"Constructive", tone:"up",
       headline:"Earnings are carrying this market, not valuation — and the gains are narrow.",
-      explain:"Tell them the market is expensive but for a reason: profits are growing ~24% this year, about half of that from AI infrastructure. The risk isn't the price tag, it's that so few names are doing the work — under a fifth of the index beat it last month. That's an argument for staying diversified, not for getting out.",
-      source:"Goldman Sachs Research (Ben Snider) · S&P 500 year-end target 8000, ~21x forward earnings; Schwab (Sonders/Gordon)" },
+      short:[
+        "Profits are growing about 24% this year and roughly half of that is AI infrastructure spend, so the index is expensive for a reason (Goldman Sachs Research, Ben Snider).",
+        "Breadth is the real risk: fewer than a fifth of S&P names beat the index last month, so a wobble in a handful of megacaps is a wobble in the whole account.",
+        "Goldman's year-end target of 8,000 is about 21x forward earnings — priced for the earnings to actually show up, with little cushion if they don't."],
+      long:[
+        "Schwab's Liz Ann Sonders' framing is the one to borrow: over a decade, returns track earnings growth, and starting valuations mostly decide the first few years, not the last.",
+        "Vanguard and others have run 10-year U.S. equity return expectations in the mid single digits for a while — lower than the last decade, still ahead of cash.",
+        "The practical conclusion is diversification, not an exit: the cure for a narrow market is owning the parts that haven't run, including international."],
+      source:"Goldman Sachs Research (Ben Snider) · Charles Schwab (Liz Ann Sonders, Kevin Gordon)" },
     { topic:"Bonds", stance:"Own them for income", tone:"up",
       headline:"The 10-year near 4.8% pays you to wait — the income is the part you can count on.",
-      explain:"Yields in the high 4s are doing the work, so nobody has to bet on a rally in bond prices to get a decent return. Short and intermediate maturities are the sweet spot: most of the yield, far less interest-rate risk. If the Street is right that the 10-year drifts toward 4.25% by year-end, price gains are a bonus on top — not the plan.",
-      source:"Morgan Stanley (Vishy Tirupattur, Martin Tobias) · 10-yr forecast ~4.25% year-end; J.P. Morgan (Jay Barry) 4.35% Q4" },
+      short:[
+        "Yields in the high 4s do the work on their own: no one has to bet on a price rally to earn a decent return this year.",
+        "Morgan Stanley's Vishy Tirupattur sees the 10-year drifting toward ~4.25% by year-end; J.P. Morgan's Jay Barry says ~4.35%. Price gains are a bonus, not the plan.",
+        "Short and intermediate maturities are the sweet spot right now — most of the yield, a fraction of the interest-rate risk."],
+      long:[
+        "The single best predictor of a bond fund's next-decade return is the yield you buy it at, which is why starting near 5% matters more than any forecast.",
+        "Bigger deficits argue for a steeper curve over time — that's an argument for owning the middle of the curve rather than reaching for 30-year paper.",
+        "Bonds earn their keep as the ballast that lets someone stay invested in stocks; that job doesn't change with the level of rates."],
+      source:"Morgan Stanley (Vishy Tirupattur, Martin Tobias) · J.P. Morgan (Jay Barry)" },
     { topic:"Cash", stance:"Still paid, but on a clock", tone:"warn",
-      headline:"Cash now pays less than bonds — 3-month bills 3.95%, the 10-year 4.83%.",
-      explain:"This is the line that lands: the curve is upward sloping again, so sitting in cash means accepting the lowest yield on the board and repricing the day the Fed moves. Keep it for the emergency fund and anything needed inside two years, then ladder the rest so the yield is locked in for longer than a money-market statement cycle.",
-      source:"U.S. Treasury par yield curve, Sept 9 2026; Bankrate money-market survey (~4.00% APY); Morgan Stanley sees no 2026 cuts, two in 2027" },
+      headline:"Cash now yields less than bonds — 3-month bills 3.95%, the 10-year 4.83%.",
+      short:[
+        "The curve is upward-sloping again, so cash is the lowest yield on the board — and it reprices the day the Fed moves.",
+        "Money-market funds are still near 4% (Bankrate survey), which is why nobody feels the cost. The cost is the reinvestment, not the coupon.",
+        "Keep the emergency fund and anything needed inside two years; ladder the rest so the yield is locked past one statement cycle."],
+      long:[
+        "Every easing cycle in the last forty years ended with cash yields far below where they started, and the money that stayed in cash never got the bond rally.",
+        "After inflation, cash has historically returned close to zero over long stretches — it protects the number, not the purchasing power.",
+        "The right long-run role for cash is a defined liquidity bucket sized in months of spending, not a market view."],
+      source:"U.S. Treasury par yield curve · Bankrate money-market survey · Morgan Stanley (no 2026 cuts, two in 2027)" },
     { topic:"The Fed", stance:"On hold", tone:"flat",
       headline:"A new chair, a market testing him, and no cuts priced until 2027.",
-      explain:"Kevin Warsh is new in the chair, and new chairs reliably get an early test of their inflation credibility. Morgan Stanley expects policy on hold through this year with two cuts in 2027, while the market flirts with pricing a hike. Practical translation: don't build a plan that requires rate cuts to work.",
-      source:"Schwab 2026 mid-year outlook; Morgan Stanley (Michael Gapen)" },
+      short:[
+        "Kevin Warsh is new in the chair, and new chairs reliably get an early test of their inflation credibility.",
+        "Morgan Stanley's Michael Gapen expects policy on hold through this year, with two cuts in 2027; the market has at times flirted with pricing a hike instead.",
+        "Practical translation: don't build a plan that needs rate cuts to work."],
+      long:[
+        "Most FOMC participants have put the longer-run neutral rate near 3%, so the destination is lower than today even if the path is slow.",
+        "Fed independence is the live structural question; the bond market prices doubt about it in the term premium, not in the funds rate.",
+        "Over a full cycle the Fed sets the price of cash, and almost nothing else in a client's plan — that's the sentence that ends most of these conversations."],
+      source:"Charles Schwab 2026 mid-year outlook · Morgan Stanley (Michael Gapen)" },
+    { topic:"Inflation", stance:"Sticky, not spiraling", tone:"warn",
+      headline:"The last mile is the slow one — services and shelter are doing the sticking.",
+      short:[
+        "Goods disinflation has mostly played out; what's left is services, where wages set the pace.",
+        "Tariffs show up as a one-time level shift in prices rather than an ongoing inflation rate — worth saying out loud when a client sees a scary headline.",
+        "Watch the CPI print before each meeting: it's the number that decides whether 'on hold' holds."],
+      long:[
+        "BlackRock and others have argued the structural forces — deglobalization, energy transition, demographics — leave inflation averaging above the pre-2020 norm.",
+        "That's the case for owning real assets in small size and for not treating 2% as a permanent gravity.",
+        "For a household, the durable defense is income that grows: equities and TIPS, not cash."],
+      source:"BlackRock Investment Institute · Bureau of Labor Statistics CPI releases" },
     { topic:"Mortgage rates", stance:"Drifting up", tone:"warn",
       headline:"30-year fixed at 6.76%, up from 6.35% a year ago.",
-      explain:"Rates are higher than this time last year, and the 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment. Nobody should wait on a refinance that pencils today — you refinance when the math works, not when rates hit a number you picked.",
-      source:"Freddie Mac Primary Mortgage Market Survey · Sept 10, 2026 (30-yr 6.76%, 15-yr 6.09%)" },
+      short:[
+        "Rates are higher than this time last year; the 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment.",
+        "The spread between mortgages and the 10-year Treasury is still wide by history — that spread, not the Fed, is where the next relief comes from.",
+        "You refinance when the math works, not when rates hit a number someone picked."],
+      long:[
+        "Freddie Mac and the MBA have both pointed at a structural housing shortage: affordability improves through income and supply far more slowly than through rates.",
+        "A 30-year fixed is a free option to refinance — the loan someone takes today is a ceiling, not a life sentence.",
+        "Over a decade the purchase-price decision matters more to net worth than the starting rate does."],
+      source:"Freddie Mac Primary Mortgage Market Survey · Mortgage Bankers Association" },
     { topic:"Gold", stance:"Structural bid", tone:"up",
       headline:"Central banks keep buying; the Street sees $5,000 an ounce.",
-      explain:"This isn't the usual fear trade — it's central banks diversifying reserves year after year, which is a steadier buyer than retail panic. It earns a place as a small diversifier, not a core holding, and it pays no income, so it never replaces bonds.",
-      source:"J.P. Morgan Commodities (Natasha Kaneva) · $5,000/oz Q4 2026 target, $4,753 average" },
+      short:[
+        "J.P. Morgan's Natasha Kaneva has a $5,000/oz Q4 2026 target and a ~$4,753 average — driven by official-sector buying, not retail fear.",
+        "Central banks have been net buyers for years running, which is a steadier bid than any panic trade.",
+        "It pays no income, so it never replaces bonds in a plan."],
+      long:[
+        "The World Gold Council's long-run case is reserve diversification away from a single currency — a decade-long trend, not a trade.",
+        "Sized at a few percent it's a diversifier; sized larger it's a bet on a specific monetary outcome.",
+        "Real yields are still the main long-run driver: if bonds pay well after inflation, gold has to work harder."],
+      source:"J.P. Morgan Commodities (Natasha Kaneva) · World Gold Council" },
     { topic:"Crypto", stance:"Flow-driven", tone:"flat",
       headline:"Spot-ETF flows now set the tone week to week.",
-      explain:"The honest answer is that it's an allocation decision, not a forecast: price is being set by fund flows and macro risk appetite, not by anything you can underwrite. If a client wants exposure, size it so a 50% drawdown doesn't change the plan.",
-      source:"IG market analysis (Axel Rudolph) on spot-ETF flows as the dominant driver" },
+      short:[
+        "Price is being set by fund flows and macro risk appetite, not by anything you can underwrite from fundamentals (IG's Axel Rudolph).",
+        "It trades like the highest-beta thing in the account — it falls with tech, only more.",
+        "If a client wants exposure, size it so a 50% drawdown doesn't change the plan."],
+      long:[
+        "Regulated wrappers made it an allocation decision rather than an access problem; that's the real change of the last two years.",
+        "Fidelity and BlackRock research both frame it as a small satellite sleeve, rebalanced on a schedule — the discipline matters more than the thesis.",
+        "There is still no consensus valuation model, so honesty about that is the professional answer."],
+      source:"IG market analysis (Axel Rudolph) · BlackRock and Fidelity digital-asset research" },
     { topic:"The dollar", stance:"Softer", tone:"flat",
       headline:"Bearish consensus, but solid U.S. growth caps how far it falls.",
-      explain:"A weaker dollar quietly helps anyone holding international funds — that's usually the whole client conversation. It's a reason to keep a real allocation abroad, not a reason to trade currencies.",
+      short:[
+        "J.P. Morgan's Meera Chandan has been on the soft-dollar side; a weaker dollar quietly boosts returns on international funds.",
+        "That currency tailwind is usually the whole explanation when a client asks why their foreign fund suddenly looks good.",
+        "It is a reason to hold a real international allocation, not a reason to trade currencies."],
+      long:[
+        "Reserve-currency status erodes slowly if at all; the sensible long-run view is a smaller share, not a replacement.",
+        "Valuation measures have had the dollar rich for years — mean reversion is a decade-scale story.",
+        "Unhedged international equity is how most households should express it, because the hedge costs the tailwind."],
       source:"J.P. Morgan FX (Meera Chandan)" }
   ]
 };
 const OUTLOOK_TONE = { up:"var(--up)", warn:"#D08A2C", down:"var(--down)", flat:"var(--muted)" };
-/* Rate board groups. Each entry: [label, matcher] -- the matcher finds the published rate by
-   its label so the brief can name things slightly differently without breaking the grouping. */
-const RATE_GROUPS = [
-  { name:"Cash & short", match:/fed funds|t-?bill|money market|mmf|savings|1 ?mo|3 ?mo|6 ?mo|1 ?yr|1-year|cash/i },
-  { name:"Treasuries",   match:/treasury|2 ?yr|5 ?yr|10 ?yr|30 ?yr|2-year|5-year|10-year|30-year/i },
-  { name:"Borrowing & credit", match:/mortgage|corporate|investment grade|high yield|muni|prime|auto|card|heloc/i }
+/* An outlook entry off the brief is only trusted if it actually looks like one. */
+const outlookOK = a => Array.isArray(a) && a.length > 0 &&
+  a.every(x => x && typeof x === "object" && x.topic && x.headline);
+const asList = v => Array.isArray(v) ? v.filter(Boolean).map(String)
+                  : (typeof v === "string" && v.trim() ? [v.trim()] : []);
+
+/* ---- Board -------------------------------------------------------------------
+   Eli, Sep 2026: "the rate board has too much irrelevant things. Shrink it to only the
+   main rates / prices I should care about (to also include crude / gold / etc.)."
+   So it is now two short, curated blocks instead of every row the brief happened to send:
+
+     YIELDS  -- six rows, every one on ONE shared % axis. This is the only chart on the
+                page where the comparison IS the point: cash here, the 10-year there,
+                a mortgage way out there. Anything not on this list is dropped.
+     PRICES  -- gold, crude, bitcoin, the dollar. No axis: an axis across $4,000 gold and
+                $60 crude is meaningless. Value plus the day's move, nothing else. */
+const BOARD_YIELDS = [
+  { label:"Fed funds",   match:/fed funds|federal funds|target rate/i },
+  { label:"3-mo T-bill", match:/3[ -]?mo|3[ -]month|13[ -]week/i },
+  { label:"2-yr",        match:/^2[ -]?(yr|year)|2[ -]?yr treasury/i },
+  { label:"10-yr",       match:/^10[ -]?(yr|year)|10[ -]?yr treasury/i },
+  { label:"30-yr",       match:/^30[ -]?(yr|year)|30[ -]?yr treasury/i },
+  { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
 ];
-const rateNum = v => { const m = String(v).match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
-function rateBoardHTML(rates){
-  const rows = rates.map(r => ({...r, n: rateNum(r.value)})).filter(r => r.n != null);
-  if(rows.length < 2) return "";
-  const lo = Math.floor(Math.min(...rows.map(r => r.n)) * 2) / 2 - 0.5;
-  const hi = Math.ceil(Math.max(...rows.map(r => r.n)) * 2) / 2 + 0.5;
-  const span = Math.max(0.5, hi - lo);
-  const pos = n => ((n - lo) / span * 100);
-  const ticks = []; for(let t = Math.ceil(lo); t <= hi; t++) ticks.push(t);
-  const grid = ticks.map(t => `<span class="rb-grid" style="left:${pos(t).toFixed(2)}%"></span>`).join("");
-  const used = new Set();
-  let body = "";
-  RATE_GROUPS.forEach(g => {
-    const mine = rows.filter(r => !used.has(r) && g.match.test(r.label));
-    mine.forEach(r => used.add(r));
-    if(!mine.length) return;
-    body += `<div class="rb-g">${esc(g.name)}</div>` + mine.map(r =>
-      `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
-        <div class="rb-track">${grid}<span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%" title="${esc(r.value)}"></span></div>
-        <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("");
+const BOARD_PRICES = [
+  { label:"Gold",    match:/^gold|xau/i,             fmt:v => v },
+  { label:"Crude",   match:/crude|wti|oil|^brent/i,  fmt:v => v },
+  { label:"Bitcoin", match:/bitcoin|^btc/i,          fmt:v => v },
+  { label:"Dollar",  match:/dollar index|^dxy|^u\.?s\.? dollar/i, fmt:v => v }
+];
+const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
+
+function boardHTML(rates, prices){
+  const src = (rates || []).filter(r => r && r.label);
+  const ys = [], usedY = new Set();
+  BOARD_YIELDS.forEach(spec => {
+    const r = pickRow(src, spec, usedY);
+    const n = r ? rateNum(r.value) : null;
+    /* `used` matters: "30-yr mortgage" also satisfies the plain "30-yr" matcher, so without
+       it a missing 30-year Treasury would print the mortgage twice. */
+    if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n }); }
   });
-  const rest = rows.filter(r => !used.has(r));
-  if(rest.length) body += `<div class="rb-g">Other</div>` + rest.map(r =>
-    `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
-      <div class="rb-track">${grid}<span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%"></span></div>
-      <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("");
-  const axis = `<div class="rb-row rb-axisrow"><div class="rb-l"></div><div class="rb-track">${grid}${ticks.map(t => `<span class="rb-tick" style="left:${pos(t).toFixed(2)}%">${t}%</span>`).join("")}</div><div class="rb-v"></div></div>`;
-  return `<div class="rb"><div class="rb-k">Rate board<span>every rate on one scale</span></div>${axis}${body}</div>`;
+  const ps = [], usedP = new Set();
+  const psrc = (prices || []).filter(p => p && p.label);
+  BOARD_PRICES.forEach(spec => {
+    const p = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
+    if(p){ usedP.add(p); ps.push({ label: spec.label, value: p.value, note: p.note || "", pct: p.pct }); }
+  });
+  if(!ys.length && !ps.length) return "";
+
+  let yieldBlock = "";
+  if(ys.length >= 2){
+    const lo = Math.floor(Math.min(...ys.map(r => r.n)) * 2) / 2 - 0.25;
+    const hi = Math.ceil(Math.max(...ys.map(r => r.n)) * 2) / 2 + 0.25;
+    const span = Math.max(0.5, hi - lo);
+    const pos = n => ((n - lo) / span * 100);
+    const ticks = []; for(let t = Math.ceil(lo); t <= hi; t++) ticks.push(t);
+    const grid = ticks.map(t => `<span class="rb-grid" style="left:${pos(t).toFixed(2)}%"></span>`).join("");
+    yieldBlock =
+      `<div class="rb-h">Yields<span>one shared scale</span></div>` +
+      ys.map(r => `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
+        <div class="rb-track">${grid}<span class="rb-fill" style="width:${pos(r.n).toFixed(2)}%"></span><span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%"></span></div>
+        <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("") +
+      `<div class="rb-row rb-axisrow"><div class="rb-l"></div><div class="rb-track">${grid}${
+        ticks.map(t => `<span class="rb-tick" style="left:${pos(t).toFixed(2)}%">${t}%</span>`).join("")}</div><div class="rb-v"></div></div>`;
+  } else if(ys.length === 1){
+    yieldBlock = `<div class="rb-h">Yields</div>` + ys.map(r =>
+      `<div class="rb-prow"><div class="rb-l">${esc(r.label)}</div><div class="rb-pv">${esc(r.value)}</div>
+       <div class="rb-pn">${esc(r.note || "")}</div></div>`).join("");
+  }
+  const priceBlock = ps.length ? `<div class="rb-h">Prices</div>` + ps.map(p => {
+    const move = typeof p.pct === "number" ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
+               : (p.note ? `<span class="rb-chip flat">${esc(p.note)}</span>` : "");
+    return `<div class="rb-prow"><div class="rb-l">${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${move}</div></div>`;
+  }).join("") : "";
+  return `<div class="rb">${yieldBlock}${priceBlock}</div>`;
 }
 /* Live rates published every half hour by scripts/refresh_rates.py; falls back to whatever
    the morning brief wrote, then to the brief's older `stats` block. */
@@ -4035,20 +4654,28 @@ async function fetchRates(){
   return S.rates;
 }
 async function renderDesk(){
-  const card = $("#deskCard"); if(!card) return;
-  const grid = card.querySelector(".desk-grid");
+  const card0 = $("#deskCard"); if(!card0) return;
   const latest = (S.manifest && S.manifest.market || [])[0];
   let md = S.marketBrief;
   try{ if(!md && latest){ md = await fetchDay("market", latest); S.marketBrief = md; } }catch(e){ md = null; }
-  if(!$("#deskCard")) return;
   md = md || {};
   const live = await fetchRates();
-  if(!$("#deskCard")) return;
+  /* Re-query AFTER every await: a to-do or Firestore snapshot can re-render the whole
+     calendar body while we are waiting, which used to leave this function writing into a
+     detached node -- i.e. a spinner that never resolves. */
+  const card = $("#deskCard"); if(!card) return;
+  const grid = card.querySelector(".desk-grid"); if(!grid) return;
 
-  const ol = (md.outlook && md.outlook.length ? md.outlook : OUTLOOK_SEED.items);
-  const seeded = !(md.outlook && md.outlook.length);
-  const left = `<div class="ol">` + ol.map((x,i) => `
-    <button type="button" class="ol-row" data-i="${i}" aria-expanded="false">
+  const fromBrief = outlookOK(md.outlookBoard) ? md.outlookBoard : (outlookOK(md.outlook) ? md.outlook : null);
+  const ol = fromBrief || OUTLOOK_SEED.items;
+  const seeded = !fromBrief;
+  const left = `<div class="ol">` + ol.map((x,i) => {
+    const short = asList(x.short || x.shortTerm), long = asList(x.long || x.longTerm);
+    const legacy = !short.length && !long.length && x.explain;
+    const col = (kicker, when, arr) => `<div class="ol-col"><div class="ol-ck">${kicker}<span>${when}</span></div><ol>${
+      arr.map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>`;
+    return `
+    <button type="button" class="ol-row" data-i="${i}" aria-expanded="false" aria-controls="ol-${i}">
       <span class="ol-dot" style="background:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}"></span>
       <span class="ol-topic">${esc(x.topic)}</span>
       <span class="ol-stance">${esc(x.stance || "")}</span>
@@ -4056,13 +4683,20 @@ async function renderDesk(){
       <span class="ol-chev">⌄</span>
     </button>
     <div class="ol-detail" id="ol-${i}">
-      ${x.explain ? `<p><span class="ol-ek">How to explain it</span>${esc(x.explain)}</p>` : ""}
+      ${legacy ? `<p class="ol-legacy">${esc(x.explain)}</p>` : `<div class="ol-cols">
+        ${short.length ? col("Short term", "next 6–12 months", short) : ""}
+        ${long.length ? col("Long term", "3–5 years", long) : ""}
+      </div>`}
       ${x.source ? `<div class="ol-src">${esc(x.source)}</div>` : ""}
-    </div>`).join("") + `</div>`;
+    </div>`;
+  }).join("") + `</div>`;
 
   const rates = (live && live.rates && live.rates.length) ? live.rates
     : (md.rates && md.rates.length ? md.rates : (md.stats || []));
-  const right = rateBoardHTML(rates) || `<div class="rb"><div class="rb-k">Rate board</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Rates publish with the next refresh.</p></div>`;
+  const prices = (live && live.prices && live.prices.length) ? live.prices
+    : (md.prices && md.prices.length ? md.prices : (md.stats || []));
+  const right = boardHTML(rates, prices) ||
+    `<div class="rb"><div class="rb-h">Board</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Rates publish with the next refresh.</p></div>`;
   grid.innerHTML = `<div>${left}</div><div>${right}</div>`;
 
   const spx = (md.indices || []).find(i => /s&p/i.test(i.name || "")) || (md.indices || [])[0];
@@ -4080,7 +4714,7 @@ async function renderDesk(){
 
   let foot = card.querySelector(".desk-foot");
   if(!foot){ foot = document.createElement("div"); foot.className = "desk-foot"; card.appendChild(foot); }
-  const stamp = live && live.updated ? "Rates " + relTimeAgo(live.updated) : (md.dateline || (md.date ? niceDate(md.date) : ""));
+  const stamp = live && live.updated ? "Board " + relTimeAgo(live.updated) : (md.dateline || (md.date ? niceDate(md.date) : ""));
   foot.innerHTML = `<span>${esc(stamp)}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>${latest ? `<a id="deskFull">Full market brief →</a>` : ""}`;
   foot.querySelector("#deskFull")?.addEventListener("click", () => { S.pendingNewsView = "markets"; switchTab("news"); });
 }
@@ -4176,6 +4810,7 @@ function renderCalendarBody(p, d){
     const calCard = p.querySelector(".cal-card");
     if(calCard) wireMiniCal(calCard);
   }
+  wireDayView(p);
   wireTickerWall();
   wirePortfolioSnapshot();
   loadTodayWeather(d);
@@ -4282,14 +4917,67 @@ function daysSince(iso){
 }
 // 21 mirrors DEFAULT_FRIEND_FREQ in the friends sync module (a separate JS
 // module scope, so the constant can't be shared directly — keep in sync).
-function friendStatus(f){
-  const days = daysSince(f.lastContact);
+/* ---------- who am I actually out of touch with? ----------
+   Eli, Sep 2026: "I'd rather it be less strictly like 'due to reach out to this person in
+   three days'. If I texted someone a month ago but haven't called them in 6 months, suggest
+   that. Each should be tracked individually, and it should matter in terms of which people
+   I owe communications to."
+
+   So a contact is no longer one timestamp. Each person has three channels -- text, call,
+   hang out -- each with its own cadence derived from that person's overall frequency (a
+   text is the cheap, frequent one; seeing someone is the rare, expensive one). A person's
+   urgency is the WORST of their three ratios (days since / that channel's cadence), and the
+   nudge names the channel: "Call Adam — last call 6 months ago", not "reach out to Adam".
+   Nothing new is stored: the per-channel history was already being written by logContact. */
+const FRIEND_CHANNELS = [
+  { key:"text",    label:"text",     verb:"Text",     icon:"💬", mult:1 },
+  { key:"call",    label:"call",     verb:"Call",     icon:"📞", mult:2.5 },
+  { key:"hangout", label:"hangout",  verb:"See",      icon:"☕", mult:5 }
+];
+const FRIEND_CH = Object.fromEntries(FRIEND_CHANNELS.map(c => [c.key, c]));
+/* history entries carry free-text methods ("Hung out", "Call", "", …) written by older
+   versions of the buttons, so classify rather than assume. */
+function friendChannelOf(method){
+  const s = String(method || "").toLowerCase();
+  if(!s) return null;
+  if(/hang|coffee|lunch|dinner|drinks|saw |visit|met |in person|golf/.test(s)) return "hangout";
+  if(/call|phone|facetime|zoom|voice/.test(s)) return "call";
+  if(/text|message|dm|imessage|wrote|email/.test(s)) return "text";
+  return null;
+}
+function friendChannels(f){
   const freq = Number(f.freqDays) || 21;
-  if(days == null) return { days:null, overdueBy:Infinity, state:"never" };
-  const overdueBy = days - freq;
-  if(overdueBy >= 0) return { days, overdueBy, state:"overdue" };
-  if(overdueBy >= -3) return { days, overdueBy, state:"soon" };
-  return { days, overdueBy, state:"ok" };
+  const hist = f.history || [];
+  const everContacted = !!f.lastContact;
+  return FRIEND_CHANNELS.map(c => {
+    const last = hist.find(h => friendChannelOf(h.method) === c.key);
+    const cadence = Math.max(3, Math.round(freq * c.mult));
+    const days = last ? daysSince(last.date) : null;
+    /* Never logged on this channel isn't a five-alarm fire on its own -- it usually just
+       means the channel is new. It ranks as mildly due, unless this person has never been
+       contacted at all, which is. */
+    const ratio = days == null ? (everContacted ? 1.1 : 2) : days / cadence;
+    return { ...c, cadence, days, last: last ? last.date : null, ratio, over: days != null && days >= cadence };
+  });
+}
+function friendStatus(f){
+  const chans = friendChannels(f);
+  const worst = chans.reduce((a, b) => (b.ratio > a.ratio ? b : a));
+  const days = daysSince(f.lastContact);
+  const state = !f.lastContact ? "never" : worst.ratio >= 1 ? "overdue" : worst.ratio >= 0.8 ? "soon" : "ok";
+  const first = String(f.name || "").trim().split(/\s+/)[0] || f.name;
+  return {
+    days, chans, worst, ratio: worst.ratio, state,
+    overdueBy: worst.days != null ? worst.days - worst.cadence : 900,
+    suggestion: `${worst.verb} ${first}`,
+    because: worst.days == null ? `no ${worst.label} logged yet` : `last ${worst.label} ${relTimeAgo(worst.last)}`
+  };
+}
+function friendChannelChip(c){
+  const cls = c.days == null ? "none" : c.ratio >= 1 ? "over" : c.ratio >= 0.8 ? "soon" : "ok";
+  const age = c.days == null ? "—" : c.days === 0 ? "today" : c.days < 7 ? c.days + "d"
+            : c.days < 60 ? Math.round(c.days/7) + "w" : Math.round(c.days/30) + "mo";
+  return `<span class="fch ${cls}" title="${esc(c.verb)} · every ${c.cadence} days">${c.icon}<b>${age}</b></span>`;
 }
 function freqLabel(days){
   const d = Number(days) || 21;
@@ -4398,20 +5086,18 @@ function refreshFriendsCard(root, state){
 function friendRowHTML(f){
   const st = friendStatus(f);
   const dotClass = st.state === "overdue" ? "overdue" : st.state === "soon" ? "soon" : st.state === "never" ? "never" : "ok";
-  const lastTxt = f.lastContact ? relTimeAgo(f.lastContact) : "Never logged";
   const freqOptions = [7,14,21,30,90,180].map(d => `<option value="${d}"${Number(f.freqDays)===d?" selected":""}>${esc(freqLabel(d))}</option>`).join("");
+  const nudge = st.state === "ok" ? `All caught up · ${esc(st.because)}` : `<b>${esc(st.suggestion)}</b> — ${esc(st.because)}`;
   return `<div class="friend-row" data-id="${f.id}">
     <div class="friend-row-main">
       <span class="friend-dot ${dotClass}" title="${esc(st.state)}"></span>
       <span class="friend-name">${esc(f.name)}</span>
-      <span class="friend-meta">${esc(lastTxt)} · ${esc(freqLabel(f.freqDays))}</span>
+      <span class="friend-chips">${st.chans.map(friendChannelChip).join("")}</span>
+      <span class="friend-meta">${nudge}</span>
     </div>
     <div class="friend-row-actions">
-      <select class="friend-freq-select" data-id="${f.id}" title="How often">${freqOptions}</select>
-      <button type="button" class="friend-log-btn" data-id="${f.id}" data-method="Text" title="Log: Text">💬</button>
-      <button type="button" class="friend-log-btn" data-id="${f.id}" data-method="Call" title="Log: Call">📞</button>
-      <button type="button" class="friend-log-btn" data-id="${f.id}" data-method="Hung out" title="Log: Hung out">☕</button>
-      <button type="button" class="friend-log-btn" data-id="${f.id}" data-method="" title="Log contact">✓</button>
+      <select class="friend-freq-select" data-id="${f.id}" title="Base rhythm — calls and hangouts are spaced off this">${freqOptions}</select>
+      ${FRIEND_CHANNELS.map(c => `<button type="button" class="friend-log-btn" data-id="${f.id}" data-method="${c.key}" title="Log a ${c.label}">${c.icon}</button>`).join("")}
       <button type="button" class="friend-remove" data-id="${f.id}" title="Remove">✕</button>
     </div>
   </div>`;
@@ -5938,27 +6624,41 @@ async function renderBrainFoodGate(){ return renderBrainFoodDeck(true); }
    history tidbit when there is one. Swipe, tap Next, or use the arrow keys. */
 let bfAnim = null;
 function bfStopAnim(){ if(bfAnim){ cancelAnimationFrame(bfAnim.raf); bfAnim = null; } }
-function bfStartAurora(canvas, palette){
-  bfStopAnim();
-  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const ctx = canvas.getContext("2d"); const W = canvas.width = 320, H = canvas.height = 240;
-  const blobs = palette.map((c, i) => ({ c, x: (0.2 + 0.6*((i*0.37)%1)), y: (0.2 + 0.6*((i*0.61)%1)), r: 0.55 + 0.25*((i*0.29)%1), dx: 0.00035*(i%2?1:-1)*(1+i*0.3), dy: 0.00028*(i%3?1:-1)*(1+i*0.2), ph: i*1.7 }));
-  let t = 0;
-  const draw = () => {
-    ctx.fillStyle = palette[palette.length-1]; ctx.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation = "lighter";
-    blobs.forEach(b => {
-      const x = (b.x + Math.sin(t*0.0007 + b.ph)*0.18) * W, y = (b.y + Math.cos(t*0.0005 + b.ph)*0.16) * H, r = b.r * W * (0.85 + 0.15*Math.sin(t*0.0009 + b.ph));
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, b.c); g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    });
-    ctx.globalCompositeOperation = "source-over";
-  };
-  draw();
-  if(reduce) return;
-  const tick = now => { t = now; draw(); bfAnim.raf = requestAnimationFrame(tick); };
-  bfAnim = { raf: requestAnimationFrame(tick) };
-}
+
+/* ---------- the scene a card is wearing ----------
+   Eli, Sep 2026: "it would be cool for the flash card design / animation to be representative
+   of what it is describing." So each card reads its own text, matches a motif, and gets that
+   motif's palette AND its motion: a starfield for anything about space, drifting snow for the
+   Arctic, embers for a volcano, a sonar sweep for the ocean. Nothing matches -> the original
+   aurora, which is still what the deck falls back to. Everything is drawn on the one canvas
+   in one requestAnimationFrame loop, and the whole thing is skipped under
+   prefers-reduced-motion. */
+const BF_MOTIFS = [
+  { key:"space",  re:/\b(space|galax|planet|astronaut|nasa|cosmic|universe|orbit(?:al|s|ing)?|solar system|comet|asteroid|telescope|nebula|black hole|meteor|satellite|moon landing|mars|jupiter|saturn)\b/i,
+    palette:["rgba(76,29,149,.7)","rgba(30,58,138,.8)","rgba(147,51,234,.4)","rgba(14,116,144,.4)","#05060F"] },
+  { key:"ocean",  re:/\b(ocean|sea|marine|whale|shark|coral|tide|underwater|abyss|submarine|octopus|jellyfish|dolphin|reef|mariana|deep[- ]sea)\b/i,
+    palette:["rgba(6,148,162,.65)","rgba(12,74,110,.85)","rgba(45,212,191,.35)","rgba(30,58,138,.6)","#031C29"] },
+  { key:"snow",   re:/\b(snow|ice|glacier|arctic|antarctic|winter|frost|blizzard|penguin|permafrost|iceberg|avalanche|tundra)\b/i,
+    palette:["rgba(191,219,254,.55)","rgba(56,120,189,.7)","rgba(226,240,255,.4)","rgba(30,64,122,.75)","#0A1B30"] },
+  { key:"rain",   re:/\b(rain|storm|monsoon|hurricane|typhoon|thunder|lightning|flood|downpour|cyclone)\b/i,
+    palette:["rgba(71,105,140,.7)","rgba(30,41,59,.9)","rgba(148,180,210,.35)","rgba(15,23,42,.8)","#0B1220"] },
+  { key:"fire",   re:/\b(volcan\w*|lava|magma|fire|flame|ember|wildfire|eruption|furnace|forge|inferno|desert|sahara|drought)\b/i,
+    palette:["rgba(234,88,12,.8)","rgba(127,29,29,.9)","rgba(250,204,21,.45)","rgba(190,24,93,.4)","#1A0805"] },
+  { key:"forest", re:/\b(forest|tree|jungle|leaf|leaves|plant|flower|bamboo|moss|fungus|fungi|mushroom|redwood|amazon|rainforest|seed|pollen|orchid|photosynth\w*)\b/i,
+    palette:["rgba(21,128,61,.7)","rgba(6,78,59,.9)","rgba(163,230,53,.4)","rgba(20,83,45,.7)","#04160E"] },
+  { key:"science",re:/\b(atom|molecul\w*|chemi\w*|physic\w*|quantum|electron|proton|dna|genome|gene|cell|bacteri\w*|virus|enzyme|neuron|brain|laborator\w*|element|isotope|particle)\b/i,
+    palette:["rgba(56,189,248,.65)","rgba(30,64,175,.8)","rgba(232,121,249,.4)","rgba(13,148,136,.5)","#060E1E"] },
+  { key:"tech",   re:/\b(computer|internet|software|robot|algorithm|silicon|circuit|transistor|microchip|processor|programming|encryption|machine learning|artificial intelligence|network|server|binary|pixel)\b/i,
+    palette:["rgba(34,211,238,.55)","rgba(15,23,42,.9)","rgba(59,130,246,.5)","rgba(16,185,129,.35)","#050B14"] },
+  { key:"music",  re:/\b(music|song|symphony|jazz|piano|guitar|orchestra|compos\w+|melody|opera|violin|drum|album|concert|band)\b/i,
+    palette:["rgba(219,39,119,.65)","rgba(88,28,135,.85)","rgba(251,146,60,.4)","rgba(37,99,235,.4)","#170625"] },
+  { key:"ancient",re:/\b(ancient|rome|roman|egypt\w*|pyramid|greek|greece|medieval|castle|empire|dynast\w+|pharaoh|maya|aztec|viking|samurai|knight|colonial|renaissance|b\.?c\.?)\b/i,
+    palette:["rgba(180,140,80,.65)","rgba(92,64,38,.9)","rgba(226,197,140,.4)","rgba(120,80,45,.7)","#1A1108" ] },
+  { key:"war",    re:/\b(war|battle|army|soldier|navy|regiment|siege|revolution|treaty|invasion|troops|artillery|d-day|infantry)\b/i,
+    palette:["rgba(120,113,108,.7)","rgba(41,37,36,.9)","rgba(180,83,9,.35)","rgba(68,64,60,.8)","#0F0D0B"] },
+  { key:"money",  re:/\b(money|dollar|bank|econom\w+|market|stock|trade|currenc\w+|inflation|gold rush|coin|mint|wealth|tax)\b/i,
+    palette:["rgba(20,184,120,.6)","rgba(6,78,59,.85)","rgba(250,204,21,.35)","rgba(15,118,110,.55)","#05170F"] }
+];
 const BF_PALETTES = {
   fact:    ["rgba(20,184,166,.85)","rgba(99,102,241,.8)","rgba(236,72,153,.55)","rgba(14,165,233,.7)","#0B1220"],
   history: ["rgba(217,119,6,.85)","rgba(120,53,15,.9)","rgba(251,191,36,.55)","rgba(154,52,18,.7)","#1A0F08"],
@@ -5966,6 +6666,148 @@ const BF_PALETTES = {
   case:    ["rgba(124,58,237,.85)","rgba(76,29,149,.9)","rgba(192,132,252,.5)","rgba(219,39,119,.55)","#150A2A"],
   done:    ["rgba(16,185,129,.85)","rgba(6,95,70,.9)","rgba(110,231,183,.5)","rgba(14,165,233,.5)","#06221A"]
 };
+function bfScene(kind, text){
+  const m = BF_MOTIFS.find(x => x.re.test(text || ""));
+  return { motif: m ? m.key : null, palette: (m && m.palette) || BF_PALETTES[kind] || BF_PALETTES.fact };
+}
+/* deterministic pseudo-random so a card looks the same each time you swipe back to it */
+function bfRand(seed){ let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
+
+function bfParticles(motif, W, H){
+  const r = bfRand(motif ? motif.length * 7919 : 104729);
+  const n = { space:70, snow:60, rain:70, fire:44, forest:26, science:22, tech:48, music:26, ancient:40, war:34, money:26, ocean:0 }[motif] || 0;
+  const p = [];
+  for(let i = 0; i < n; i++)
+    p.push({ x: r()*W, y: r()*H, z: 0.35 + r()*0.65, ph: r()*Math.PI*2, sp: 0.4 + r()*0.9, w: r() });
+  return p;
+}
+/* Each motif is a slow, quiet layer -- it should read as atmosphere behind the sentence, not
+   as a screensaver competing with it. Speeds are deliberately about half of what looks right
+   in isolation, which is the "slower" Eli asked for. */
+function bfDrawMotif(ctx, motif, P, W, H, t){
+  const T = t / 1000;
+  ctx.save();
+  if(motif === "space"){
+    ctx.globalCompositeOperation = "lighter";
+    P.forEach(s => {
+      const tw = 0.45 + 0.55 * Math.sin(T * 0.7 * s.sp + s.ph);
+      const y = (s.y + T * 1.6 * s.z) % H;
+      ctx.globalAlpha = 0.25 + 0.6 * tw * s.z;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(s.x, y, 0.5 + s.z * 1.2, 0, 7); ctx.fill();
+    });
+  } else if(motif === "snow"){
+    ctx.globalAlpha = 1; ctx.fillStyle = "rgba(255,255,255,.85)";
+    P.forEach(s => {
+      const y = (s.y + T * 10 * s.z) % (H + 8);
+      const x = s.x + Math.sin(T * 0.5 * s.sp + s.ph) * 12 * s.z;
+      ctx.globalAlpha = 0.25 + 0.5 * s.z;
+      ctx.beginPath(); ctx.arc(x, y, 0.8 + s.z * 1.6, 0, 7); ctx.fill();
+    });
+  } else if(motif === "rain"){
+    ctx.strokeStyle = "rgba(200,220,240,.5)"; ctx.lineWidth = 1;
+    P.forEach(s => {
+      const y = (s.y + T * 130 * s.z) % (H + 20);
+      ctx.globalAlpha = 0.18 + 0.35 * s.z;
+      ctx.beginPath(); ctx.moveTo(s.x, y); ctx.lineTo(s.x - 2, y + 9 + 8 * s.z); ctx.stroke();
+    });
+  } else if(motif === "fire"){
+    ctx.globalCompositeOperation = "lighter";
+    P.forEach(s => {
+      const life = (T * 0.16 * s.sp + s.ph) % 1;
+      const y = H - life * H * (0.6 + 0.4 * s.z);
+      const x = s.x + Math.sin(T * 0.6 * s.sp + s.ph) * 16;
+      ctx.globalAlpha = (1 - life) * 0.55 * s.z;
+      ctx.fillStyle = life < 0.4 ? "#FFD08A" : "#FF7A3C";
+      ctx.beginPath(); ctx.arc(x, y, 0.9 + s.z * 1.8, 0, 7); ctx.fill();
+    });
+  } else if(motif === "forest"){
+    P.forEach(s => {
+      const y = (s.y + T * 7 * s.z) % (H + 14);
+      const x = s.x + Math.sin(T * 0.35 * s.sp + s.ph) * 22;
+      ctx.globalAlpha = 0.16 + 0.28 * s.z;
+      ctx.fillStyle = s.w > 0.5 ? "#BBF7D0" : "#FDE68A";
+      ctx.save(); ctx.translate(x, y); ctx.rotate(T * 0.35 * s.sp + s.ph);
+      ctx.beginPath(); ctx.ellipse(0, 0, 3 + s.z * 4, 1.2 + s.z * 1.6, 0, 0, 7); ctx.fill(); ctx.restore();
+    });
+  } else if(motif === "ocean"){
+    ctx.globalCompositeOperation = "lighter"; ctx.lineWidth = 1.2;
+    for(let i = 0; i < 6; i++){
+      const yb = H * (0.28 + i * 0.12), amp = 6 + i * 2.5, ph = T * 0.32 + i * 0.9;
+      ctx.globalAlpha = 0.1 + 0.05 * (6 - i);
+      ctx.strokeStyle = "rgba(160,240,255,.55)";
+      ctx.beginPath();
+      for(let x = 0; x <= W; x += 6) ctx.lineTo(x, yb + Math.sin(x / 42 + ph) * amp + Math.sin(x / 17 - ph * 0.7) * amp * 0.35);
+      ctx.stroke();
+    }
+  } else if(motif === "science"){
+    ctx.globalCompositeOperation = "lighter";
+    const cx = W * 0.72, cy = H * 0.34;
+    for(let i = 0; i < 3; i++){
+      const a = T * 0.22 + i * 2.1, rx = W * (0.16 + i * 0.05), ry = H * 0.08;
+      ctx.globalAlpha = 0.16; ctx.strokeStyle = "rgba(180,225,255,.8)"; ctx.lineWidth = 1;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(i * 1.05 + T * 0.05);
+      ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, 7); ctx.stroke();
+      ctx.globalAlpha = 0.75; ctx.fillStyle = "#DFF3FF";
+      ctx.beginPath(); ctx.arc(Math.cos(a) * rx, Math.sin(a) * ry, 2.2, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+  } else if(motif === "tech"){
+    ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = "#7DF9FF";
+    P.forEach(s => {
+      const col = Math.floor(s.x / 14) * 14, y = (s.y + T * 16 * s.z) % H;
+      ctx.globalAlpha = 0.1 + 0.35 * s.z * (0.5 + 0.5 * Math.sin(T * 1.1 + s.ph));
+      ctx.fillRect(col, y, 1.4, 5 + s.z * 7);
+    });
+  } else if(motif === "music"){
+    ctx.globalCompositeOperation = "lighter";
+    const bw = W / P.length;
+    P.forEach((s, i) => {
+      const h = (0.12 + 0.34 * (0.5 + 0.5 * Math.sin(T * 1.15 * s.sp + s.ph))) * H;
+      ctx.globalAlpha = 0.13 + 0.12 * s.z;
+      ctx.fillStyle = "#FFD3EC";
+      ctx.fillRect(i * bw + 1.5, H - h, Math.max(1.5, bw - 3), h);
+    });
+  } else if(motif === "ancient" || motif === "war" || motif === "money"){
+    ctx.globalCompositeOperation = "lighter";
+    const tint = motif === "money" ? "#D7F5C8" : motif === "war" ? "#E7DCCB" : "#F4E3BE";
+    P.forEach(s => {
+      const x = (s.x + T * 3.2 * s.z) % W, y = s.y + Math.sin(T * 0.28 * s.sp + s.ph) * 10;
+      ctx.globalAlpha = 0.12 + 0.3 * s.z; ctx.fillStyle = tint;
+      ctx.beginPath(); ctx.arc(x, y, 0.7 + s.z * 1.5, 0, 7); ctx.fill();
+    });
+  }
+  ctx.restore();
+}
+function bfStartAurora(canvas, palette, motif){
+  bfStopAnim();
+  if(!canvas) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rect = canvas.getBoundingClientRect();
+  const W = canvas.width = Math.max(320, Math.min(900, Math.round(rect.width || 640)));
+  const H = canvas.height = Math.max(240, Math.min(700, Math.round(rect.height || 460)));
+  const ctx = canvas.getContext("2d");
+  const blobs = palette.map((c, i) => ({ c, x: (0.2 + 0.6*((i*0.37)%1)), y: (0.2 + 0.6*((i*0.61)%1)), r: 0.55 + 0.25*((i*0.29)%1), ph: i*1.7 }));
+  const P = bfParticles(motif, W, H);
+  let t = 0;
+  const draw = () => {
+    ctx.fillStyle = palette[palette.length-1]; ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = "lighter";
+    blobs.forEach(b => {
+      /* half the old speed: the aurora used to visibly churn, which is the "slower" note */
+      const x = (b.x + Math.sin(t*0.00035 + b.ph)*0.18) * W, y = (b.y + Math.cos(t*0.00025 + b.ph)*0.16) * H,
+            r = b.r * W * (0.85 + 0.15*Math.sin(t*0.00045 + b.ph));
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, b.c); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    });
+    ctx.globalCompositeOperation = "source-over";
+    if(motif) bfDrawMotif(ctx, motif, P, W, H, t);
+  };
+  draw();
+  if(reduce) return;
+  const tick = now => { t = now; draw(); bfAnim.raf = requestAnimationFrame(tick); };
+  bfAnim = { raf: requestAnimationFrame(tick) };
+}
 async function renderBrainFoodDeck(gate){
   const panel = $("#panel-quiz");
   panel.innerHTML = `<div class="spinner"></div>`;
@@ -6010,7 +6852,10 @@ async function renderBrainFoodDeck(gate){
       </div>
       <div class="bf-hint">${i < cards.length-1 ? "Swipe or tap the card for the next one" : ""}</div>
     </div>`;
-    bfStartAurora($("#bfAurora"), BF_PALETTES[c.kind] || BF_PALETTES.fact);
+    /* the card reads its own words and dresses itself: palette + motion motif */
+    const scene = bfScene(c.kind, [c.text, c.subject, c.kicker, c.sub, c.word && c.word.definition, c.word && c.word.term].filter(Boolean).join(" "));
+    $("#bfCard").dataset.motif = scene.motif || "";
+    bfStartAurora($("#bfAurora"), scene.palette, scene.motif);
     // subject photo (brief-supplied URL, else Wikipedia exact-title lookup) -- Ken Burns behind the text
     const ph = $("#bfPhoto");
     (async () => {
@@ -6037,6 +6882,16 @@ async function renderBrainFoodDeck(gate){
   document.onkeydown = e => { if(!$("#bfCard")) { document.onkeydown = null; return; } if(e.key === "ArrowRight") $("#bfNext")?.click(); if(e.key === "ArrowLeft") $("#bfPrev")?.click(); };
   paint();
 }
+/* ---------- the arcade ----------
+   Eli, Sep 2026: "completely re-organize the games tab so it looks cleaner / nicer / more
+   congruent. Don't get rid of any games though."
+
+   The old page was three different visual languages stacked up: big colored boxes for the
+   built-ins, then list rows for the links, split into four headed sections you had to scroll
+   past. Now every game -- built-in or link -- is the SAME tile, in ONE grid, and the sections
+   became filter chips. The built-ins are still obviously the main event (accent ring, a
+   PLAY HERE badge, and their own live stat line); the links carry their favicon and an ↗.
+   A header ring shows how much of today is done and hands you the next unplayed one. */
 function renderGamesLauncher(){
   if(!bfSeenToday()){ renderBrainFoodGate(); return; }
   const panel = $("#panel-quiz");
@@ -6050,62 +6905,90 @@ function renderGamesLauncher(){
 
   /* Mini and Freehand were retired Sep 2026 (Eli's call); The Case File became The Daily Case. */
   const built = [
-    { id:"brainfood", name:"Brain Food", tag:"Today's fun fact, history tidbit, word of the day — as cards", icon:"🧠", col:"#0E9F6E", stat: bfSeenToday() ? "Read today" : "Not read yet" },
-    { id:"case", name:"The Daily Case", tag:"A real client scenario, four moves, one right call — new every day", icon:"🗂️", col:"#7A4E8C", stat: dcStatLabel() },
-    { id:"crossword", name:"Crossword", tag:"Challenging 12×12 grid — fully checked, symmetric, new daily", icon:"✏️", col:"#378ADD", stat: cwStatLabel() }
+    { id:"brainfood", name:"Brain Food", tag:"Today's fun fact, history tidbit and word of the day, as cards", icon:"🧠", col:"#0E9F6E", stat: bfSeenToday() ? "Read today" : "Not read yet" },
+    { id:"case", name:"The Daily Case", tag:"A real client scenario, four moves, one right call", icon:"🗂️", col:"#7A4E8C", stat: dcStatLabel() },
+    { id:"crossword", name:"Crossword", tag:"Challenging 12×12 grid, fully checked, new daily", icon:"✏️", col:"#378ADD", stat: cwStatLabel() },
+    { id:"quiz", name:"Word Quiz", tag:"Five questions on today's word and its cousins", icon:"📖", col:"#C2703B", stat: qBestLabel() }
   ];
-  const words = [
-    { name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
-    { name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
-    { name:"Strands", tag:"Word search with a twist", url:"https://www.nytimes.com/games/strands", domain:"nytimes.com" },
-    { name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
-    { name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" },
-    { name:"Queens", tag:"One queen per row, column & region", url:"https://www.linkedin.com/games/queens", domain:"linkedin.com" }
+  const links = [
+    { cat:"word", name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
+    { cat:"word", name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
+    { cat:"word", name:"Strands", tag:"Word search with a twist", url:"https://www.nytimes.com/games/strands", domain:"nytimes.com" },
+    { cat:"word", name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
+    { cat:"word", name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" },
+    { cat:"logic", name:"Queens", tag:"One queen per row, column and region", url:"https://www.linkedin.com/games/queens", domain:"linkedin.com" },
+    { cat:"geo",  name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
+    { cat:"geo",  name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
+    { cat:"geo",  name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" },
+    { cat:"geo",  name:"Flagle", tag:"Country by flag", url:"https://www.flagle.io/", domain:"flagle.io" },
+    { cat:"geo",  name:"TimeGuessr", tag:"Guess the photo's time and place", url:"https://timeguessr.com/", domain:"timeguessr.com" },
+    { cat:"geo",  name:"MapTap", tag:"Today's five history spots on a 3D globe", url:"https://maptap.gg/", domain:"maptap.gg" },
+    { cat:"visual", name:"Size It Up", tag:"Resize five objects against a reference", url:"https://magnitudle.com/size-it-up", domain:"magnitudle.com" }
   ];
-  const geo = [
-    { name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
-    { name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
-    { name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" },
-    { name:"Flagle", tag:"Country by flag", url:"https://www.flagle.io/", domain:"flagle.io" },
-    { name:"TimeGuessr", tag:"Guess the photo's time & place", url:"https://timeguessr.com/", domain:"timeguessr.com" },
-    { name:"MapTap", tag:"Tap today's 5 history spots on a 3D globe", url:"https://maptap.gg/", domain:"maptap.gg" }
-  ];
-  const estimate = [
-    { name:"Size It Up", tag:"Resize five objects against a reference — score up to 500", url:"https://magnitudle.com/size-it-up", domain:"magnitudle.com" }
-  ];
-  const linkBtn = g => `<a class="pz-link${played.has(g.name)?" played":""}" href="${g.url}" target="_blank" rel="noopener noreferrer" data-game="${esc(g.name)}">
-      <img src="${favicon(g.domain)}" alt="" loading="lazy">
-      <div><div class="pl-nm">${esc(g.name)}</div><div class="pl-tg">${esc(g.tag)}</div></div>
-      <span class="pl-done">✓ Played</span>
-      <span class="pl-ext">↗</span></a>`;
-  const box = g => `<button class="pz-box${played.has(g.id)?" played":""}" data-game="${g.id}" style="--pcol:${g.col}">
-      <div class="pz-done-badge">✓</div>
-      <div class="pz-ic">${g.icon}</div>
-      <div class="pz-nm">${esc(g.name)}</div>
-      <div class="pz-tg">${esc(g.tag)}</div>
-      <div class="pz-st">${esc(g.stat)}</div>
-      <div class="pz-play">PLAY ▶</div>
+
+  const doneBuilt = built.filter(g => played.has(g.id)).length;
+  const doneLinks = links.filter(g => played.has(g.name)).length;
+  const total = built.length + links.length, done = doneBuilt + doneLinks;
+  const nextUp = built.find(g => !played.has(g.id)) || null;
+  const pct = total ? done / total : 0;
+  const R = 22, C = 2 * Math.PI * R;
+
+  const builtTile = g => `<button class="gt gt-built${played.has(g.id) ? " played" : ""}" data-game="${g.id}" data-cat="here" style="--gcol:${g.col}">
+      <span class="gt-top"><span class="gt-ic">${g.icon}</span><span class="gt-badge">Play here</span></span>
+      <span class="gt-nm">${esc(g.name)}</span>
+      <span class="gt-tg">${esc(g.tag)}</span>
+      <span class="gt-ft"><span class="gt-st">${esc(g.stat)}</span><span class="gt-go">Play ▶</span></span>
+      <span class="gt-check">✓</span>
     </button>`;
+  const linkTile = g => `<a class="gt gt-ext${played.has(g.name) ? " played" : ""}" data-game="${esc(g.name)}" data-cat="${g.cat}"
+      href="${g.url}" target="_blank" rel="noopener noreferrer">
+      <span class="gt-top"><img class="gt-fav" src="${favicon(g.domain)}" alt="" loading="lazy"><span class="gt-ext-m">↗</span></span>
+      <span class="gt-nm">${esc(g.name)}</span>
+      <span class="gt-tg">${esc(g.tag)}</span>
+      <span class="gt-ft"><span class="gt-st">${esc(g.domain)}</span><span class="gt-go">Open ↗</span></span>
+      <span class="gt-check">✓</span>
+    </a>`;
+
+  const cats = [
+    { k:"all",    n:"Everything", c: total },
+    { k:"here",   n:"Play here",  c: built.length },
+    { k:"word",   n:"Word & number", c: links.filter(l => l.cat === "word").length },
+    { k:"geo",    n:"Geography",  c: links.filter(l => l.cat === "geo").length },
+    { k:"logic",  n:"Logic",      c: links.filter(l => l.cat === "logic").length },
+    { k:"visual", n:"Visual",     c: links.filter(l => l.cat === "visual").length }
+  ].filter(c => c.c > 0);
 
   panel.innerHTML = `<div class="games-wrap">
-    <div class="pz-masthead"><div class="pz-name">Puzzles &amp; Diversions</div><div class="pz-sub">The Daily Hub · Play Here</div></div>
-    <div class="game-cat">Featured Puzzles</div>
-    <div class="pz-boxes">${built.map(box).join("")}</div>
+    <div class="ga-head">
+      <div class="ga-ring" aria-hidden="true">
+        <svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="${R}" class="ga-trk"></circle>
+          <circle cx="28" cy="28" r="${R}" class="ga-fil" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(C * (1 - pct)).toFixed(1)}"></circle></svg>
+        <b>${done}</b>
+      </div>
+      <div class="ga-ht">
+        <div class="ga-t">Arcade</div>
+        <div class="ga-s">${done} of ${total} played today${doneBuilt === built.length ? " · all four dailies done" : ""}</div>
+      </div>
+      ${nextUp ? `<button class="ga-next" data-game="${nextUp.id}">Next: <b>${esc(nextUp.name)}</b> ▶</button>`
+               : `<span class="ga-next ga-done">All dailies done 🎉</span>`}
+    </div>
+    <div class="ga-cats" role="tablist">${cats.map((c,i) =>
+      `<button class="ga-cat${i===0?" on":""}" data-cat="${c.k}">${esc(c.n)}<i>${c.c}</i></button>`).join("")}</div>
+    <div class="gt-grid">${built.map(builtTile).join("")}${links.map(linkTile).join("")}</div>
     <div id="gamesClose"></div>
-    <div class="game-cat">Word &amp; Number</div>
-    <div class="pz-links">${words.map(linkBtn).join("")}</div>
-    <div class="game-cat">Around the World</div>
-    <div class="pz-links">${geo.map(linkBtn).join("")}</div>
-    <div class="game-cat">Estimation &amp; Visual</div>
-    <div class="pz-links">${estimate.map(linkBtn).join("")}</div>
   </div>`;
 
   const open = id => { if(id === "brainfood"){ renderBrainFoodDeck(false); return; } markGamePlayed(id); gamesView = id; renderGamesTab(); };
-  panel.querySelectorAll(".pz-box[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
-  panel.querySelectorAll(".pz-link[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
-
-  // Brain Food now lives in its own card deck (the Brain Food box above); nothing inline.
+  panel.querySelectorAll(".gt-built[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+  panel.querySelectorAll(".ga-next[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+  panel.querySelectorAll(".gt-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
+  panel.querySelectorAll(".ga-cat").forEach(btn => btn.addEventListener("click", () => {
+    const k = btn.dataset.cat;
+    panel.querySelectorAll(".ga-cat").forEach(b => b.classList.toggle("on", b === btn));
+    panel.querySelectorAll(".gt").forEach(t => { t.hidden = !(k === "all" || t.dataset.cat === k); });
+  }));
 }
+
 function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }
 
 /* ================= built-in: The Case File (logic-grid mystery) =================
@@ -8319,143 +9202,126 @@ $("#siteLock").addEventListener("click", () => {
   location.reload();
 });
 
-/* ---------- theme picker ----------
-   Same layout, fonts, and structure everywhere -- these just swap the CSS
-   variables set on <html data-theme="...">. An inline script in <head> applies
-   the saved (or shuffled) theme before first paint so there's no color flash. */
-/* Under the Glass look the same four ids are four color meshes (names/swatches below);
-   under the Classic look they are the original palettes. Ids never change, so a saved
-   choice keeps working when the look is switched. */
-const THEMES_CLASSIC = [
-  { id:"classic", name:"Classic", bg:"#16181D", accent:"#C8A24B" },
-  { id:"night", name:"Night", bg:"#0A0B0D", accent:"#D8B564" },
-  { id:"sunset", name:"Sunset terracotta", bg:"#3A1F18", accent:"#D2603C" },
-  { id:"arctic", name:"Arctic blue", bg:"#0F1F33", accent:"#3D7DC4" }
+/* ---------- theme ----------
+   Eli, Sep 2026: "I don't need the toggle anymore for the old theme, I also don't need the
+   shuffle daily. Instead, I would like the ability to choose whatever color I want as the
+   theme background (like a palette), and then the night mode toggle would just be the
+   respective night mode for that color."
+
+   So there are no longer four hand-written palettes and no daily rotation. There is ONE
+   look, and every color token in it is derived in CSS from two numbers on <html>:
+     --h    the hue, 0-360, straight off whatever color he picks
+     --sat  a saturation multiplier, 0 (graphite) to ~1.2 (vivid)
+   Night is a mode on the same hue -- html[data-mode="dark"] re-derives the same tokens dark
+   -- which is exactly the "respective night mode for that color" he asked for. An inline
+   script in <head> writes both numbers before first paint, so there is no color flash. */
+const THEME_SWATCHES = [
+  { name:"Sky",      hex:"#0A84FF" },
+  { name:"Ocean",    hex:"#0891B2" },
+  { name:"Mint",     hex:"#0E9F6E" },
+  { name:"Forest",   hex:"#3F8F35" },
+  { name:"Amber",    hex:"#E08A0A" },
+  { name:"Sunset",   hex:"#FF5E3A" },
+  { name:"Rose",     hex:"#E11D74" },
+  { name:"Plum",     hex:"#8B5CF6" },
+  { name:"Indigo",   hex:"#4F46E5" },
+  { name:"Graphite", hex:"#64748B" }
 ];
-const THEMES_GLASS = [
-  { id:"classic", name:"Sky", bg:"#CFE3FF", accent:"#0A84FF" },
-  { id:"night", name:"Midnight", bg:"#0E1118", accent:"#5AA9FF" },
-  { id:"sunset", name:"Sunset", bg:"#FFD5C2", accent:"#FF5E3A" },
-  { id:"arctic", name:"Mint", bg:"#C9F2E3", accent:"#0E9F6E" }
-];
-const dhLookIsGlass = () => localStorage.getItem("dh-look") !== "classic";
-const THEMES = THEMES_CLASSIC;   // ids only (shuffle math); names/swatches come from dhThemeList()
-function dhThemeList(){ return dhLookIsGlass() ? THEMES_GLASS : THEMES_CLASSIC; }
-function dhApplyLook(){
-  document.documentElement.classList.toggle("glass", dhLookIsGlass());
+const THEME_DEFAULT = { h: 212, sat: 1, hex: "#0A84FF" };
+
+function hexToHsl(hex){
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(hex||"").trim());
+  if(!m) return null;
+  let x = m[1];
+  if(x.length === 3) x = x[0]+x[0]+x[1]+x[1]+x[2]+x[2];
+  const r = parseInt(x.slice(0,2),16)/255, g = parseInt(x.slice(2,4),16)/255, b = parseInt(x.slice(4,6),16)/255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn, l = (mx+mn)/2;
+  let h = 0, s = 0;
+  if(d){
+    s = d / (1 - Math.abs(2*l - 1));
+    h = mx === r ? ((g-b)/d) % 6 : mx === g ? (b-r)/d + 2 : (r-g)/d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return { h, s: s*100, l: l*100 };
+}
+/* A picked color becomes a hue plus a "how colorful" multiplier. Near-grey picks collapse to
+   a true graphite rather than a muddy tint, which is the only way a slate swatch reads right. */
+function themeFromHex(hex){
+  const hsl = hexToHsl(hex);
+  if(!hsl) return { ...THEME_DEFAULT };
+  const sat = hsl.s < 12 ? 0.06 : Math.max(0.3, Math.min(1.2, hsl.s / 72));
+  return { h: Math.round(hsl.h), sat: Math.round(sat * 100) / 100, hex };
+}
+function themeSaved(){
+  let hex = null, h = parseFloat(localStorage.getItem("dh-hue")), sat = parseFloat(localStorage.getItem("dh-sat"));
+  try{ hex = localStorage.getItem("dh-color"); }catch(e){}
+  if(!isFinite(h)) h = THEME_DEFAULT.h;
+  if(!isFinite(sat)) sat = THEME_DEFAULT.sat;
+  return { h, sat, hex: hex || THEME_DEFAULT.hex };
+}
+const themeIsNight = () => { try{ return localStorage.getItem("dh-night") === "1"; }catch(e){ return false; } };
+function themeApply(t, night){
+  const r = document.documentElement;
+  r.classList.add("glass");
+  r.style.setProperty("--h", t.h);
+  r.style.setProperty("--sat", t.sat);
+  if(night) r.setAttribute("data-mode", "dark"); else r.removeAttribute("data-mode");
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute("content", dhLookIsGlass() ? (document.documentElement.getAttribute("data-theme") === "night" ? "#0E1118" : "#F4F6FB") : "#16181D");
+  if(meta){
+    // read the value the CSS actually computed rather than guessing a hex per palette
+    const paper = getComputedStyle(r).getPropertyValue("--paper").trim();
+    if(paper) meta.setAttribute("content", paper);
+  }
 }
-function dhThemeToday(){
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-}
-/* Shuffle scheme (mirrors dhShuffleIdFor() in the <head> script -- keep the two identical):
-   the calendar is cut into blocks of THEMES.length days and each block is a seeded
-   permutation of every theme. So every theme appears once per block, two consecutive
-   days never share a theme (a block boundary that would repeat swaps the first two), and
-   every device computes the same answer for the same date. The previous version hashed
-   the date string, which did rotate -- but only ever ran at page load, so an installed
-   app or a tab left open overnight never changed (see dhThemeTick below). */
-function dhThemeShuffleId(dateStr){
-  const K = THEMES.length;
-  const n = Math.round(Date.UTC(+dateStr.slice(0,4), +dateStr.slice(5,7)-1, +dateStr.slice(8,10)) / 864e5);
-  const perm = block => {
-    let x = ((block + 1) * 747796405) >>> 0 || 1;
-    const rnd = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
-    const a = []; for(let i=0;i<K;i++) a.push(i);
-    for(let i=K-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
-    return a;
-  };
-  const b = Math.floor(n / K), pos = n - b*K;
-  const p = perm(b);
-  if(b > 0 && p[0] === perm(b-1)[K-1]){ const t2 = p[0]; p[0] = p[1]; p[1] = t2; }
-  return THEMES[p[pos]].id;
-}
-function dhThemeApply(id){
-  if(id && id !== "classic") document.documentElement.setAttribute("data-theme", id);
-  else document.documentElement.removeAttribute("data-theme");
-  dhApplyLook();
-}
-const dhThemeName = id => (dhThemeList().find(t => t.id === id) || dhThemeList()[0]).name;
-function dhThemeTomorrow(){
-  const d = new Date(dhThemeToday() + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + 1);
-  return dhThemeShuffleId(d.toISOString().slice(0,10));
-}
-let themePickerRender = null;
-/* Re-evaluate the daily shuffle whenever the day may have rolled over while the page stayed
-   alive: the installed (home-screen) app and a desktop tab left open both keep running
-   for days without ever re-running the <head> script, which is why "shuffle daily" looked
-   broken -- it only ever fired on a cold load. Runs on resume, focus, and once a minute. */
-function dhThemeTick(){
+function themeSet(hex, night){
+  const t = themeFromHex(hex);
   try{
-    if(localStorage.getItem("dh-theme-shuffle") !== "1") return;
-    const today = dhThemeToday();
-    if(localStorage.getItem("dh-theme-shuffle-date") === today) return;
-    const id = dhThemeShuffleId(today);
-    localStorage.setItem("dh-theme", id);
-    localStorage.setItem("dh-theme-shuffle-date", today);
-    dhThemeApply(id);
-    if(themePickerRender) themePickerRender();
+    localStorage.setItem("dh-hue", String(t.h));
+    localStorage.setItem("dh-sat", String(t.sat));
+    localStorage.setItem("dh-color", t.hex);
+    localStorage.setItem("dh-night", night ? "1" : "0");
   }catch(e){}
+  themeApply(t, night);
+  return t;
 }
-document.addEventListener("visibilitychange", () => { if(!document.hidden) dhThemeTick(); });
-window.addEventListener("focus", dhThemeTick);
-window.addEventListener("pageshow", dhThemeTick);
-setInterval(dhThemeTick, 60000);
 function themePickerInit(){
   const btn = $("#themeBtn"), panel = $("#themePanel"), picker = $("#themePicker");
   if(!btn || !panel || !picker) return;
 
   function render(){
-    const active = localStorage.getItem("dh-theme") || "classic";
-    const shuffleOn = localStorage.getItem("dh-theme-shuffle") === "1";
-    const note = shuffleOn
-      ? `Shuffling daily — tomorrow is <b>${esc(dhThemeName(dhThemeTomorrow()))}</b>. Picking a swatch overrides today only.`
-      : "Off — your pick stays put.";
-    const glass = dhLookIsGlass();
-    panel.innerHTML = `<div class="theme-panel-title">Theme</div>` +
-      dhThemeList().map(t => `<button class="theme-swatch${t.id===active?" active":""}" data-theme-id="${t.id}">
-        <span class="theme-dot" style="background:linear-gradient(135deg,${t.bg} 50%,${t.accent} 50%)"></span>${t.name}
-      </button>`).join("") +
-      `<div class="theme-shuffle-row"><span>Shuffle daily</span>
-        <button class="theme-toggle${shuffleOn?" on":""}" id="themeShuffleToggle" role="switch" aria-checked="${shuffleOn}"><span class="theme-toggle-knob"></span></button>
+    const saved = themeSaved(), night = themeIsNight();
+    const activeH = Math.round(saved.h);
+    panel.innerHTML = `<div class="theme-panel-title">Color</div>
+      <div class="theme-grid">${THEME_SWATCHES.map(sw => {
+        const t = themeFromHex(sw.hex);
+        const on = Math.abs(t.h - activeH) < 6 && Math.abs(t.sat - saved.sat) < 0.08;
+        return `<button class="theme-chip${on ? " active" : ""}" data-hex="${sw.hex}" title="${sw.name}" aria-label="${sw.name}">
+          <span style="background:${sw.hex}"></span></button>`;
+      }).join("")}</div>
+      <label class="theme-custom">
+        <span class="theme-custom-dot" id="themeCustomDot"></span>
+        <span class="theme-custom-l">Any color…</span>
+        <input type="color" id="themeColor" value="${esc(saved.hex)}">
+      </label>
+      <div class="theme-shuffle-row"><span>Night mode</span>
+        <button class="theme-toggle${night ? " on" : ""}" id="themeNightToggle" role="switch" aria-checked="${night}"><span class="theme-toggle-knob"></span></button>
       </div>
-      <div class="theme-shuffle-note">${note}</div>
-      <div class="theme-shuffle-row"><span>Glass look</span>
-        <button class="theme-toggle${glass?" on":""}" id="themeLookToggle" role="switch" aria-checked="${glass}"><span class="theme-toggle-knob"></span></button>
-      </div>
-      <div class="theme-shuffle-note">${glass ? "Frosted panels over a color mesh." : "Off — the original newspaper chrome."}</div>`;
-    $("#themeLookToggle").addEventListener("click", () => {
-      localStorage.setItem("dh-look", dhLookIsGlass() ? "classic" : "glass");
-      dhApplyLook(); render();
-    });
+      <div class="theme-shuffle-note">${night ? "The night version of the color you picked." : "Daylight version. Everything follows the color."}</div>`;
+    const dot = $("#themeCustomDot"); if(dot) dot.style.background = saved.hex;
 
-    panel.querySelectorAll(".theme-swatch").forEach(el => {
-      el.addEventListener("click", () => {
-        const id = el.getAttribute("data-theme-id");
-        localStorage.setItem("dh-theme", id);
-        // A manual pick used to silently switch shuffle OFF -- the likeliest reason it
-        // "never shuffled": one tap on a swatch and the daily rotation was gone for good.
-        // Now a pick while shuffling is a today-only override; tomorrow still rotates.
-        if(localStorage.getItem("dh-theme-shuffle") === "1") localStorage.setItem("dh-theme-shuffle-date", dhThemeToday());
-        dhThemeApply(id);
-        render();
-      });
-    });
-    $("#themeShuffleToggle").addEventListener("click", () => {
-      const nowOn = !(localStorage.getItem("dh-theme-shuffle") === "1");
-      localStorage.setItem("dh-theme-shuffle", nowOn ? "1" : "0");
-      if(nowOn){
-        const today = dhThemeToday();
-        const id = dhThemeShuffleId(today);
-        localStorage.setItem("dh-theme", id);
-        localStorage.setItem("dh-theme-shuffle-date", today);
-        dhThemeApply(id);
-      }
-      render();
+    panel.querySelectorAll(".theme-chip").forEach(el => el.addEventListener("click", () => {
+      themeSet(el.dataset.hex, themeIsNight()); render();
+    }));
+    const inp = $("#themeColor");
+    if(inp){
+      // live preview while dragging, committed on change
+      inp.addEventListener("input", () => themeApply(themeFromHex(inp.value), themeIsNight()));
+      inp.addEventListener("change", () => { themeSet(inp.value, themeIsNight()); render(); });
+    }
+    $("#themeNightToggle").addEventListener("click", () => {
+      themeSet(themeSaved().hex, !themeIsNight()); render();
     });
   }
-  themePickerRender = render;
   render();
 
   btn.addEventListener("click", (e) => {
@@ -8464,10 +9330,13 @@ function themePickerInit(){
     btn.setAttribute("aria-expanded", open ? "true" : "false");
   });
   document.addEventListener("click", (e) => {
-    if(!picker.contains(e.target)){ panel.classList.remove("open"); btn.setAttribute("aria-expanded","false"); }
+    /* isConnected: picking a color re-renders the panel, which detaches the very button that
+       was clicked -- without this check `picker.contains()` says false and the panel snaps
+       shut after every single choice. */
+    if(e.target.isConnected && !picker.contains(e.target)){ panel.classList.remove("open"); btn.setAttribute("aria-expanded","false"); }
   });
 }
-dhApplyLook();
+themeApply(themeSaved(), themeIsNight());
 themePickerInit();
 
 gateInit();

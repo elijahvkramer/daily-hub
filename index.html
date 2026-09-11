@@ -596,13 +596,19 @@
      with preserveAspectRatio="none" -- so a tall left column made the line chart tall and
      spiky-looking instead of a normal short, wide sparkline. Now the chart keeps a fixed,
      sane height and just sits at the bottom of whatever space it's given. */
-  #psSparkWrap{display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
+  /* Eli, Sep 2026 (round 3): "the chart still looks bad -- spend time making it look
+     perfect." Centering (not bottom-pinning) reads far better when the row is taller than
+     the chart needs -- bottom-pinning left a big dead gap above it that looked like a
+     mistake. The curve itself is now Catmull-Rom smoothed (see buildIntradayChart) with
+     headroom baked into its own y-domain, plus a dashed reference line at the open so the
+     day's move reads at a glance without doing math against the axis labels. */
+  #psSparkWrap{display:flex;flex-direction:column;justify-content:center;min-height:0}
   .ps-spark-wrap{position:relative;flex:0 0 auto}
-  .psnap .ps-spark{width:100%;height:72px;display:block}
-  .ps-yaxis{position:absolute;left:0;font-size:10px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;
-            letter-spacing:.01em;pointer-events:none;background:color-mix(in srgb, var(--card) 82%, transparent);
-            padding:1px 4px 1px 0}
-  .ps-yaxis-top{top:-2px} .ps-yaxis-bot{bottom:-2px}
+  .psnap .ps-spark{width:100%;height:94px;display:block}
+  .ps-refline{stroke:var(--muted);stroke-opacity:.32;stroke-width:1;stroke-dasharray:2.5 3}
+  .ps-yaxis{position:absolute;left:2px;font-size:10px;font-weight:800;color:var(--muted);
+            font-variant-numeric:tabular-nums;letter-spacing:.01em;pointer-events:none}
+  .ps-yaxis-top{top:2px} .ps-yaxis-bot{bottom:2px}
   .psnap .ps-axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.02em}
   .psnap .ps-foot{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
   @media(max-width:640px){.psnap-hero{grid-template-columns:1fr;gap:14px}}
@@ -3727,7 +3733,18 @@ function todoRowsHTML(items){
       : (t.due
           ? `<span class="ti-chip${overdue?" overdue":""}" data-action="due-edit">${esc(dueChipLabel(t.due))}<span class="ti-chip-x" data-action="due-clear" title="Clear due date">×</span></span>`
           : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
-    const checkedPending = pendingComplete.has(t.id);
+    const pending = pendingComplete.get(t.id);
+    const checkedPending = !!pending;
+    // Eli, Sep 2026: "the green bar starts to go right to left, but it gets removed from the
+    // list before it completely finishes." Root cause: a re-render mid-countdown (someone else
+    // edits a to-do, the list re-sorts, etc.) rebuilds this row from scratch, which used to
+    // reinsert the bar with a fresh 3s animation -- restarting it from full width -- while the
+    // ORIGINAL 3000ms completion timer kept running on its own original schedule underneath.
+    // The bar would still be mid-shrink, sometimes barely started, when the real timer fired
+    // and pulled the row out from under it. A negative animation-delay resumes the bar at the
+    // correct visual position (already-elapsed time) no matter how many times the row gets
+    // rebuilt, so it always finishes exactly when the row actually disappears.
+    const undoElapsedMs = pending ? Math.max(0, Date.now() - pending.startedAt) : 0;
     const divider = (i === firstChillIdx && firstChillIdx > 0) ? `<div class="ti-divider"></div>` : "";
     const arriving = todoMoving.get(t.id) === kind;
     if(arriving) setTimeout(() => todoMoving.delete(t.id), 900);
@@ -3745,7 +3762,7 @@ function todoRowsHTML(items){
         <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">☰${subitems.length?` ${subDone}/${subitems.length}`:""}</button>
         <span class="ti-del" data-action="remove" title="Remove">✕</span>
       </div>
-      ${checkedPending ? `<div class="ti-undo-bar"><span></span></div>` : ""}
+      ${checkedPending ? `<div class="ti-undo-bar"><span style="animation-delay:-${undoElapsedMs}ms"></span></div>` : ""}
       <div class="ti-note-wrap" style="display:${noteOn?"block":"none"}"><div class="ti-note"><textarea placeholder="Add a note…">${esc(t.note||"")}</textarea></div></div>
       <div class="ti-sub-wrap" style="display:${subOn?"block":"none"}">${subChecklistHTML(subitems)}</div>
     </div>`;
@@ -3806,7 +3823,7 @@ function wireTodoRows(root){
       // Aug 2026.
       if(!e.target.closest(".ti-check")) return;
       if(pendingComplete.has(id)){
-        clearTimeout(pendingComplete.get(id));
+        clearTimeout(pendingComplete.get(id).timer);
         pendingComplete.delete(id);
         item.classList.remove("ti-checked");
         const bar = item.querySelector(".ti-undo-bar");
@@ -3823,13 +3840,13 @@ function wireTodoRows(root){
         item.classList.add("ti-completing");
         setTimeout(() => { if(window.__todosApi) window.__todosApi.remove(id); }, 360);
       }, 3000);
-      pendingComplete.set(id, timer);
+      pendingComplete.set(id, { timer, startedAt: Date.now() });
       return;
     }
 
     e.stopPropagation();
     if(action === "remove"){
-      if(pendingComplete.has(id)){ clearTimeout(pendingComplete.get(id)); pendingComplete.delete(id); }
+      if(pendingComplete.has(id)){ clearTimeout(pendingComplete.get(id).timer); pendingComplete.delete(id); }
       if(window.__todosApi) window.__todosApi.remove(id);
     } else if(action === "kind-toggle"){
       /* Eli, Sep 2026: "I would like toggling from urgent to chill on the to dos to have a
@@ -5694,13 +5711,42 @@ function intradaySeries(positions){
 }
 /* draws the intraday value line on a fixed open→close axis; the line only reaches "now",
    leaving the rest of the session's width empty to fill as the day goes on. */
+// Catmull-Rom -> cubic Bezier: turns the raw tick-by-tick polyline into a gentle flowing
+// curve. Eli, Sep 2026 (round 3): "the chart still looks bad" -- straight-line segments
+// through every 5-minute tick is what read as jagged/spiky; every finance app smooths this.
+function smoothPath(pts){
+  if(pts.length < 3) return pts.map((p,i) => `${i?"L":"M"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)} `;
+  for(let i=0;i<pts.length-1;i++){
+    const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
+    const c1x = p1.x + (p2.x - p0.x)/6, c1y = p1.y + (p2.y - p0.y)/6;
+    const c2x = p2.x - (p3.x - p1.x)/6, c2y = p2.y - (p3.y - p1.y)/6;
+    d += `C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)} `;
+  }
+  return d;
+}
+// Light centered moving average purely for the drawn curve -- the headline $ and % above
+// the chart, and the high/low axis labels, always come from the real unsmoothed ticks.
+function smoothVals(vals, win){
+  const h = Math.floor(win/2), out = [];
+  for(let i=0;i<vals.length;i++){
+    let s=0, n=0;
+    for(let j=Math.max(0,i-h); j<=Math.min(vals.length-1,i+h); j++){ s+=vals[j]; n++; }
+    out.push(s/n);
+  }
+  return out;
+}
 function buildIntradayChart(ser, dayChange, axisNote){
   const {pts, start, end} = ser;
   if(!pts || pts.length < 2) return "";
-  const W=380, H=62, PT=6, PB=6, PR=5;
+  const W=380, H=104, PT=20, PB=20, PR=4, PL=4;
   const span = (end - start) || 1;
-  const fx = ts => Math.max(0, Math.min(1, (ts - start)/span)) * (W - PR);
-  const vals = pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); if(mn===mx){ mn-=1; mx+=1; }
+  const fx = ts => PL + Math.max(0, Math.min(1, (ts - start)/span)) * (W - PR - PL);
+  const rawVals = pts.map(p=>p.v);
+  const smoothedVals = smoothVals(rawVals, 5);
+  let mn=Math.min(...smoothedVals), mx=Math.max(...smoothedVals); if(mn===mx){ mn-=1; mx+=1; }
+  const pad = (mx-mn) * 0.14;   // headroom so the curve's peak/trough never sits under the axis label
+  mn -= pad; mx += pad;
   const fy = v => PT + (H-PT-PB) - ((v-mn)/(mx-mn))*(H-PT-PB);
   const last = pts[pts.length-1].v;
   // Color follows today's actual total $ change (the same number shown above the
@@ -5708,24 +5754,28 @@ function buildIntradayChart(ser, dayChange, axisNote){
   // portfolio dipped off a higher open but is still up vs. yesterday's close), and
   // the headline number is what should decide red vs. green here.
   const col = (dayChange != null ? dayChange >= 0 : last >= pts[0].v) ? "var(--up)" : "var(--down)";
-  let line = "", area = `M ${fx(pts[0].ts).toFixed(1)} ${(H-PB).toFixed(1)}`;
-  pts.forEach((p,i) => { const X=fx(p.ts).toFixed(1), Y=fy(p.v).toFixed(1); line += `${i?"L":"M"} ${X} ${Y} `; area += ` L ${X} ${Y}`; });
-  area += ` L ${fx(pts[pts.length-1].ts).toFixed(1)} ${(H-PB).toFixed(1)} Z`;
-  const lx = fx(pts[pts.length-1].ts), ly = fy(last);
+  const xy = pts.map((p,i) => ({x: fx(p.ts), y: fy(smoothedVals[i])}));
+  const linePath = smoothPath(xy);
+  const areaPath = `${linePath} L ${xy[xy.length-1].x.toFixed(1)} ${(H-PB).toFixed(1)} L ${xy[0].x.toFixed(1)} ${(H-PB).toFixed(1)} Z`;
+  const openY = fy(smoothedVals[0]);
+  const endPt = xy[xy.length-1];
   const fmt = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
-  // "it'd be nice to see the y-axis numbers kinda like you have on the x-axis" -- the high/low
-  // of the visible line, rendered as plain HTML overlays (not inside the SVG) so they never
-  // get warped by preserveAspectRatio="none", which is what stretches the line to fill the box.
+  // "it'd be nice to see the y-axis numbers kinda like you have on the x-axis" -- the REAL
+  // (unsmoothed) high/low, as plain HTML overlays (not inside the SVG) so they never get
+  // warped by preserveAspectRatio="none", which is what stretches the line to fill the box.
   const fmtUsd = v => "$" + Math.round(v).toLocaleString("en-US");
+  const realMn = Math.min(...rawVals), realMx = Math.max(...rawVals);
   return `<div class="ps-spark-wrap">
     <svg viewBox="0 0 ${W} ${H}" class="ps-spark" preserveAspectRatio="none">
-      <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-      <path d="${area}" fill="url(#psGrad)"/>
-      <path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-      <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${col}"/>
+      <defs><linearGradient id="psGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".16"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+      <line x1="${PL}" y1="${openY.toFixed(1)}" x2="${(W-PR).toFixed(1)}" y2="${openY.toFixed(1)}" class="ps-refline"/>
+      <path d="${areaPath}" fill="url(#psGrad)"/>
+      <path d="${linePath}" fill="none" stroke="${col}" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${endPt.x.toFixed(1)}" cy="${endPt.y.toFixed(1)}" r="5" fill="var(--card)"/>
+      <circle cx="${endPt.x.toFixed(1)}" cy="${endPt.y.toFixed(1)}" r="3" fill="${col}"/>
     </svg>
-    <span class="ps-yaxis ps-yaxis-top">${esc(fmtUsd(mx))}</span>
-    <span class="ps-yaxis ps-yaxis-bot">${esc(fmtUsd(mn))}</span>
+    <span class="ps-yaxis ps-yaxis-top">${esc(fmtUsd(realMx))}</span>
+    <span class="ps-yaxis ps-yaxis-bot">${esc(fmtUsd(realMn))}</span>
   </div>
   <div class="ps-axis"><span>Open</span><span>${esc(axisNote || fmt(start + span/2))}</span><span>Close</span></div>`;
 }

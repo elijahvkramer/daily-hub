@@ -481,6 +481,7 @@
   .tc-hist-empty{color:var(--muted);font-size:13px;padding:6px 2px;font-style:italic}
   .tc-empty{color:var(--muted);font-size:14px;padding:8px 2px;display:flex;align-items:center;gap:9px}
   .tc-empty .tc-empty-check{width:20px;height:20px;border-radius:50%;background:var(--up);color:#fff;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tc-empty-inline{padding:4px 2px 10px;font-size:13px}
   /* click-to-complete: clicking the row plays a quick fade/shrink, then the
      item is removed (the X stays an instant, no-animation delete) */
   .todo-item{border-bottom:1px solid var(--hairline);transition:opacity .35s ease,transform .35s ease}
@@ -570,7 +571,8 @@
   .tw-item .tw-chg.neg{color:var(--down)}
   @keyframes twScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){.tw-track{animation:none}}
-  .psnap{cursor:pointer;position:relative}
+  .psnap{cursor:pointer;position:relative;display:flex;flex-direction:column}
+  .psnap-hero{flex:1}
   .psnap:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
   .psnap .ps-head{display:flex;align-items:center;justify-content:space-between}
   .psnap .ps-open{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);display:inline-flex;align-items:center;gap:4px}
@@ -1410,6 +1412,13 @@
   .wxm-pt{fill:var(--accent, var(--gold));stroke:var(--card);stroke-width:2;vector-effect:non-scaling-stroke}
   .wxm-bar{fill:color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent)}
   .wxm-hi{position:absolute;top:-6px;transform:translateX(-50%);font-size:10.5px;font-weight:900;color:var(--accent-dark, var(--gold-dark));white-space:nowrap;pointer-events:none}
+  #wxmHit{cursor:crosshair}
+  .wxm-hair{stroke:color-mix(in srgb, var(--ink) 35%, transparent);stroke-width:1;vector-effect:non-scaling-stroke}
+  .wxm-hoverpt{fill:var(--card);stroke:var(--accent, var(--gold));stroke-width:2.4;vector-effect:non-scaling-stroke}
+  .wxm-tip{position:absolute;top:0;transform:translate(-50%,-100%);background:var(--ink);color:var(--card);font-size:11px;font-weight:800;
+    padding:4px 8px;border-radius:7px;white-space:nowrap;display:none;pointer-events:none;z-index:2;line-height:1.3}
+  .wxm-tip b{display:block;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:1px}
+  .wxm-tip.right{transform:translate(-88%,-100%)}
   .wxm-x{position:relative;height:14px;margin-top:4px}
   .wxm-x span{position:absolute;transform:translateX(-50%);font-size:9.5px;font-weight:800;color:var(--muted);white-space:nowrap}
   .wxm-none{font-size:12.5px;color:var(--muted);padding:8px 0 4px}
@@ -1572,19 +1581,29 @@
   .desk-mood.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)} .desk-mood.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
   .desk-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:26px;margin-top:10px;align-items:start}
   @media(max-width:900px){.desk-grid{grid-template-columns:1fr;gap:18px}}
-  /* outlook rows */
-  .ol-row{display:grid;grid-template-columns:8px auto auto 1fr 14px;align-items:baseline;gap:10px;width:100%;text-align:left;
-          appearance:none;background:none;border:none;border-bottom:1px solid var(--hairline);padding:10px 2px;font:inherit;cursor:pointer}
-  .ol-row:last-of-type{border-bottom:none}
+  /* outlook rows -- Eli, Sep 2026: "each bullet should be more of a tab I can drop down,
+     like an app" -- so each topic is its own rounded, tappable tile (row + its detail pane
+     form one visual card via the shared radius/background), not a flat bordered list. */
+  .ol{display:flex;flex-direction:column;gap:6px}
+  .ol-row{display:grid;grid-template-columns:9px auto auto 1fr 16px;align-items:baseline;gap:10px;width:100%;text-align:left;
+          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:13px;
+          padding:12px 14px;font:inherit;cursor:pointer;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease}
+  .ol-row:hover{border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline));box-shadow:0 1px 2px rgba(22,24,29,.05)}
   .ol-row:hover .ol-head{color:var(--ink)}
-  .ol-dot{width:8px;height:8px;border-radius:50%;align-self:center}
+  .ol-dot{width:9px;height:9px;border-radius:50%;align-self:center}
   .ol-topic{font-size:14px;font-weight:900;letter-spacing:-.01em;white-space:nowrap}
   .ol-stance{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;
-             border:1px solid var(--hairline);border-radius:999px;padding:2px 7px;align-self:center}
+             border:1px solid var(--hairline);border-radius:999px;padding:2px 7px;align-self:center;background:var(--card)}
   .ol-head{font-size:13.5px;line-height:1.45;color:var(--muted);min-width:0}
-  .ol-chev{font-size:12px;color:var(--muted);align-self:center;transition:transform .2s}
-  .ol-row.on .ol-chev{transform:rotate(180deg)} .ol-row.on .ol-topic{color:var(--gold-dark)}
-  .ol-detail{display:none} .ol-detail.on{display:block;padding:4px 2px 16px 28px;animation:fadein .22s ease}
+  .ol-chev{font-size:13px;color:var(--muted);align-self:center;transition:transform .2s;width:16px;height:16px;border-radius:50%;
+           display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--ink) 6%, transparent)}
+  .ol-row.on{background:var(--card);border-color:color-mix(in srgb, var(--gold) 55%, var(--hairline));border-bottom-left-radius:0;border-bottom-right-radius:0;
+             box-shadow:0 1px 3px rgba(22,24,29,.06)}
+  .ol-row.on .ol-chev{transform:rotate(180deg);background:color-mix(in srgb, var(--gold) 22%, transparent);color:var(--gold-dark)}
+  .ol-row.on .ol-topic{color:var(--gold-dark)}
+  .ol-detail{display:none}
+  .ol-detail.on{display:block;padding:14px 16px 18px;margin-top:-6px;background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 55%, var(--hairline));
+                border-top:none;border-bottom-left-radius:13px;border-bottom-right-radius:13px;animation:fadein .22s ease}
   .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:14px}}
   .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:12px}
@@ -2446,9 +2465,11 @@ async function renderNews(d){
   const sections = (d.sections||[]).filter(s => (s.items||[]).length);
 
   /* masthead + section nav + body container */
+  // Eli, Sep 2026: dropped the Markets sub-view from News -- the Running Outlook on Home
+  // covers markets now, so this nav no longer offers it (showNewsView("markets") stays
+  // reachable in code only for old bookmarked links / S.pendingNewsView, harmlessly unused).
   let nav = `<button data-nv="front" class="on">Front Page</button>`;
   sections.forEach((s,si) => nav += `<button data-nv="${si}">${esc(secShort(s.title))}</button>`);
-  nav += `<button data-nv="markets">Markets</button>`;
 
   p.innerHTML = `<div class="np-masthead">
       <div class="np-tagline"><span>${esc(dateLabel)}</span><span>Private Edition</span></div>
@@ -2946,12 +2967,63 @@ function wxMetricHTML(hrs, key){
   const ticks = pts.map((p,i) => (i % step === 0 || i === pts.length - 1)
     ? `<span style="left:${(X(i)/W*100).toFixed(2)}%">${fmtHour(p.t)}</span>` : "").join("");
   const note = m.note ? m.note(maxP.v) : "";
-  return `<div class="wxm">
-    <div class="wxm-k">${m.label}<span>${m.fmt(minP.v)} → ${m.fmt(maxP.v)}${note ? " · " + esc(note) : ""}</span></div>
-    <div class="wxm-c"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${body}</svg>${
-      minP.v === maxP.v ? "" : `<b class="wxm-hi" style="left:${Math.min(92, Math.max(8, X(pts.indexOf(maxP))/W*100)).toFixed(2)}%">${m.fmt(maxP.v)}</b>`}</div>
+  return `<div class="wxm" data-w="${W}" data-h="${H}">
+    <div class="wxm-k">${m.label}<span id="wxmReadout">${m.fmt(minP.v)} → ${m.fmt(maxP.v)}${note ? " · " + esc(note) : ""}</span></div>
+    <div class="wxm-c"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${body}
+      <line id="wxmHair" x1="0" x2="0" y1="0" y2="${H}" class="wxm-hair" style="display:none"/>
+      <circle id="wxmDot" r="4" class="wxm-hoverpt" style="display:none"/>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="wxmHit"/>
+    </svg>${
+      minP.v === maxP.v ? "" : `<b class="wxm-hi" style="left:${Math.min(92, Math.max(8, X(pts.indexOf(maxP))/W*100)).toFixed(2)}%">${m.fmt(maxP.v)}</b>`}
+      <div class="wxm-tip" id="wxmTip"></div></div>
     <div class="wxm-x">${ticks}</div>
   </div>`;
+}
+/* Hover-to-scrub for a metric chart built by wxMetricHTML: move across the hours and see the
+   real number for each one, same idea as the home-card sparkline. Eli, Sep 2026: "I should be
+   able to hover over each hour of the day to see the real numbers", not just the min/max. */
+function wireWxMetric(host, pts, m){
+  const wrap = host.querySelector(".wxm-c"), svg = host.querySelector("svg"), hit = host.querySelector("#wxmHit");
+  const hair = host.querySelector("#wxmHair"), dot = host.querySelector("#wxmDot"), tip = host.querySelector("#wxmTip");
+  const readout = host.querySelector("#wxmReadout");
+  if(!wrap || !svg || !hit || pts.length < 2) return;
+  const defaultReadout = readout ? readout.innerHTML : "";
+  const W = +host.querySelector(".wxm").dataset.w, H = +host.querySelector(".wxm").dataset.h;
+  const vals = pts.map(p => p.v);
+  let lo = Math.min(...vals), hi = m.max != null ? m.max : Math.max(...vals);
+  if(m.zero) lo = 0;
+  if(hi - lo < 1e-6) hi = lo + 1;
+  const pad = (hi - lo) * 0.12; const LO = m.zero ? lo : lo - pad, HI = hi + pad;
+  const X = i => (pts.length === 1 ? W/2 : i / (pts.length - 1) * W);
+  const Y = v => H - ((v - LO) / (HI - LO)) * H;
+  const move = clientX => {
+    const r = svg.getBoundingClientRect();
+    const px = Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * W;
+    let idx = 0, best = Infinity;
+    pts.forEach((p,i) => { const d = Math.abs(X(i) - px); if(d < best){ best = d; idx = i; } });
+    const p = pts[idx];
+    hair.setAttribute("x1", X(idx)); hair.setAttribute("x2", X(idx)); hair.style.display = "";
+    dot.setAttribute("cx", X(idx)); dot.setAttribute("cy", Y(p.v)); dot.style.display = "";
+    if(readout) readout.innerHTML = `${fmtHour(p.t)} · ${m.fmt(p.v)}`;
+    if(tip){
+      tip.innerHTML = `<b>${fmtHour(p.t)}</b>${m.fmt(p.v)}`;
+      tip.style.display = "block";
+      const wr = wrap.getBoundingClientRect();
+      let left = (X(idx)/W) * wr.width;
+      left = Math.max(4, Math.min(wr.width - 4, left));
+      tip.style.left = left + "px";
+      tip.classList.toggle("right", left > wr.width * 0.72);
+    }
+  };
+  const leave = () => {
+    hair.style.display = "none"; dot.style.display = "none";
+    if(tip) tip.style.display = "none";
+    if(readout) readout.innerHTML = defaultReadout;
+  };
+  hit.addEventListener("mousemove", e => move(e.clientX));
+  hit.addEventListener("mouseleave", leave);
+  hit.addEventListener("touchmove", e => { if(e.touches[0]) move(e.touches[0].clientX); }, {passive:true});
+  hit.addEventListener("touchend", leave);
 }
 
 async function renderWeatherPanel(){
@@ -3017,6 +3089,8 @@ async function renderWeatherPanel(){
     btn.classList.add("on"); btn.setAttribute("aria-expanded","true");
     mslot.innerHTML = wxMetricHTML(todayHrs, key);
     mslot.classList.add("on");
+    const m0 = WX_METRICS[key];
+    if(m0){ const pts0 = (todayHrs||[]).map(h => ({t:h.t, v:m0.pick(h)})).filter(p => p.v!=null && !isNaN(p.v)); wireWxMetric(mslot, pts0, m0); }
   }));
 
   // expandable day detail: that day's hours plus its own stat line
@@ -3046,6 +3120,8 @@ async function renderWeatherPanel(){
         b.classList.add("on");
         dslot.innerHTML = wxMetricHTML(hrs, b.dataset.metric);
         dslot.classList.add("on");
+        const m1 = WX_METRICS[b.dataset.metric];
+        if(m1){ const pts1 = (hrs||[]).map(h => ({t:h.t, v:m1.pick(h)})).filter(p => p.v!=null && !isNaN(p.v)); wireWxMetric(dslot, pts1, m1); }
       }));
     };
     row.addEventListener("click", open);
@@ -3672,13 +3748,17 @@ function buildTodayScheduleHTML(todayList, todayDate){
         `<span class="dv-chip" title="${esc(a.where || a.title)}">${esc(a.title)}</span>`).join("")}</div></div>`
     : "";
 
+  // Eli, Sep 2026: "the Today tab should always show a timeline, like the day view of Google
+  // Calendar -- if there's nothing on the calendar you can still show the green check, but it
+  // should still show the timing throughout the day." So the hour grid always renders; an
+  // empty day just gets the check banner above it instead of replacing it.
   return `<div class="bento-card agenda-card">
     <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub">${list.length ? `${list.length} ${list.length===1?"item":"items"}` : ""}</span></span></div>
-    ${list.length ? `${allDayBand}
-      <div class="dv-scroll" id="dvScroll"><div class="dv-grid" style="height:${span/60*DAY_HOUR_PX}px">
-        ${hours}<div class="dv-body">${blocks}${nowLine}</div>
-      </div></div>`
-    : `<div class="tc-empty"><span class="tc-empty-check">✓</span>Nothing on the calendar today.</div>`}
+    ${!list.length ? `<div class="tc-empty tc-empty-inline"><span class="tc-empty-check">✓</span>Nothing on the calendar today.</div>` : ""}
+    ${allDayBand}
+    <div class="dv-scroll" id="dvScroll"><div class="dv-grid" style="height:${span/60*DAY_HOUR_PX}px">
+      ${hours}<div class="dv-body">${blocks}${nowLine}</div>
+    </div></div>
   </div>`;
 }
 function fmtMinLabel(m){
@@ -4466,7 +4546,7 @@ function eventStartMinutes(lead){
 const OUTLOOK_SEED = {
   asOf: "2026-09-10",
   items: [
-    { topic:"Stocks", stance:"Constructive", tone:"up",
+    { topic:"Stocks", stance:"Constructive, but stretched", tone:"up",
       headline:"Earnings are carrying this market, not valuation — and the gains are narrow.",
       short:[
         "Profits are growing about 24% this year and roughly half of that is AI infrastructure spend, so the index is expensive for a reason (Goldman Sachs Research, Ben Snider).",
@@ -4477,7 +4557,7 @@ const OUTLOOK_SEED = {
         "Vanguard and others have run 10-year U.S. equity return expectations in the mid single digits for a while — lower than the last decade, still ahead of cash.",
         "The practical conclusion is diversification, not an exit: the cure for a narrow market is owning the parts that haven't run, including international."],
       source:"Goldman Sachs Research (Ben Snider) · Charles Schwab (Liz Ann Sonders, Kevin Gordon)" },
-    { topic:"Bonds", stance:"Own them for income", tone:"up",
+    { topic:"Bonds", stance:"Higher for longer", tone:"up",
       headline:"The 10-year near 4.8% pays you to wait — the income is the part you can count on.",
       short:[
         "Yields in the high 4s do the work on their own: no one has to bet on a price rally to earn a decent return this year.",
@@ -4488,7 +4568,7 @@ const OUTLOOK_SEED = {
         "Bigger deficits argue for a steeper curve over time — that's an argument for owning the middle of the curve rather than reaching for 30-year paper.",
         "Bonds earn their keep as the ballast that lets someone stay invested in stocks; that job doesn't change with the level of rates."],
       source:"Morgan Stanley (Vishy Tirupattur, Martin Tobias) · J.P. Morgan (Jay Barry)" },
-    { topic:"Cash", stance:"Still paid, but on a clock", tone:"warn",
+    { topic:"Cash", stance:"Good yield, on a clock", tone:"warn",
       headline:"Cash now yields less than bonds — 3-month bills 3.95%, the 10-year 4.83%.",
       short:[
         "The curve is upward-sloping again, so cash is the lowest yield on the board — and it reprices the day the Fed moves.",
@@ -4499,7 +4579,7 @@ const OUTLOOK_SEED = {
         "After inflation, cash has historically returned close to zero over long stretches — it protects the number, not the purchasing power.",
         "The right long-run role for cash is a defined liquidity bucket sized in months of spending, not a market view."],
       source:"U.S. Treasury par yield curve · Bankrate money-market survey · Morgan Stanley (no 2026 cuts, two in 2027)" },
-    { topic:"The Fed", stance:"On hold", tone:"flat",
+    { topic:"The Fed", stance:"On hold, being tested", tone:"flat",
       headline:"A new chair, a market testing him, and no cuts priced until 2027.",
       short:[
         "Kevin Warsh is new in the chair, and new chairs reliably get an early test of their inflation credibility.",
@@ -4521,7 +4601,7 @@ const OUTLOOK_SEED = {
         "That's the case for owning real assets in small size and for not treating 2% as a permanent gravity.",
         "For a household, the durable defense is income that grows: equities and TIPS, not cash."],
       source:"BlackRock Investment Institute · Bureau of Labor Statistics CPI releases" },
-    { topic:"Mortgage rates", stance:"Drifting up", tone:"warn",
+    { topic:"Mortgage rates", stance:"Drifting higher", tone:"warn",
       headline:"30-year fixed at 6.76%, up from 6.35% a year ago.",
       short:[
         "Rates are higher than this time last year; the 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment.",
@@ -4543,7 +4623,7 @@ const OUTLOOK_SEED = {
         "Sized at a few percent it's a diversifier; sized larger it's a bet on a specific monetary outcome.",
         "Real yields are still the main long-run driver: if bonds pay well after inflation, gold has to work harder."],
       source:"J.P. Morgan Commodities (Natasha Kaneva) · World Gold Council" },
-    { topic:"Crypto", stance:"Flow-driven", tone:"flat",
+    { topic:"Crypto", stance:"Flow-driven, high beta", tone:"flat",
       headline:"Spot-ETF flows now set the tone week to week.",
       short:[
         "Price is being set by fund flows and macro risk appetite, not by anything you can underwrite from fundamentals (IG's Axel Rudolph).",
@@ -4554,7 +4634,7 @@ const OUTLOOK_SEED = {
         "Fidelity and BlackRock research both frame it as a small satellite sleeve, rebalanced on a schedule — the discipline matters more than the thesis.",
         "There is still no consensus valuation model, so honesty about that is the professional answer."],
       source:"IG market analysis (Axel Rudolph) · BlackRock and Fidelity digital-asset research" },
-    { topic:"The dollar", stance:"Softer", tone:"flat",
+    { topic:"The dollar", stance:"Softer, but capped", tone:"flat",
       headline:"Bearish consensus, but solid U.S. growth caps how far it falls.",
       short:[
         "J.P. Morgan's Meera Chandan has been on the soft-dollar side; a weaker dollar quietly boosts returns on international funds.",
@@ -4593,6 +4673,9 @@ const BOARD_YIELDS = [
   { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
 ];
 const BOARD_PRICES = [
+  { label:"S&P 500", match:/^s&p ?500$|^spx$/i,      fmt:v => v },
+  { label:"Nasdaq",  match:/^nasdaq/i,                fmt:v => v },
+  { label:"Dow",     match:/^dow/i,                   fmt:v => v },
   { label:"Gold",    match:/^gold|xau/i,             fmt:v => v },
   { label:"Crude",   match:/crude|wti|oil|^brent/i,  fmt:v => v },
   { label:"Bitcoin", match:/bitcoin|^btc/i,          fmt:v => v },
@@ -4740,15 +4823,15 @@ function renderCalendarBody(p, d){
      by refreshTodoCards() below, and again on every live snapshot update. ---- */
   h += `<div class="todo-today-row"><div id="todosCardSlot"></div><div id="todayCardSlot">${buildTodayScheduleHTML(todayList, d.date)}</div></div>`;
 
+  /* ---- Two-Week View (matches Google Calendar's month-view detail). Data comes from the
+     today/radar fields published by the daily-calendar-report scheduled task and kept fresh
+     by the calendar-refresh GitHub Actions workflow (runs every 15 min on GitHub's own
+     servers via a service account — see MEMORY.md). Eli, Sep 2026: moved above the Running
+     Outlook -- swapped their order on Home. ---- */
+  h += `<div id="todayTriple"><div class="bento-card cal-card cal-full">${buildMiniCal(todayList, radarList, d.date)}</div></div>`;
+
   /* ---- Running Outlook: where the asset classes stand + how to explain them ---- */
   h += `<div class="bento-card" id="deskCard"><div class="bc-label">Running Outlook</div><div class="desk-grid"><div class="spinner" style="margin:18px auto"></div></div></div>`;
-
-  /* ---- Today / Two-Week View, side by side (Two-Week View now expanded to
-     match Google Calendar's month-view detail). Data comes from the
-     today/radar fields published by the daily-calendar-report scheduled task
-     and kept fresh by the calendar-refresh GitHub Actions workflow (runs every
-     15 min on GitHub's own servers via a service account — see MEMORY.md). ---- */
-  h += `<div id="todayTriple"><div class="bento-card cal-card cal-full">${buildMiniCal(todayList, radarList, d.date)}</div></div>`;
 
   /* ---- weather hero (live; filled in async). Two stacked sky layers crossfade instead of
      snapping. It is rendered here and then moved into the snapshot row's second column. ---- */

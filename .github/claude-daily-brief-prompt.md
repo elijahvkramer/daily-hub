@@ -43,20 +43,27 @@ Write `/tmp/market.json` in this exact schema (field names must match — the si
   "bottomLine": "The synthesis paragraph.",
   "talkingPoints": [ {"lead":"Bold, plain-English one-liner a client would understand.","body":"One sentence on what it means for a conservative, protection-minded investor and whether anything changes."}, "x3" ],
   "ifAsked": {"q":"the question a client is most likely to call about today, in their words","a":"a 2-sentence answer Eli could say out loud"},
-  "outlook": [ {"topic":"Stocks","stance":"Constructive","tone":"up","headline":"One sentence on where stocks stand.","explain":"2-4 sentences you could say out loud to a client.","source":"Institution (Named strategist) · the key figure"}, "x7-9" ],
+  "outlookBoard": [ {"topic":"Stocks","stance":"Constructive","tone":"up","headline":"One sentence on where stocks stand.","short":["3 talking points on the next 6-12 months, each attributable"],"long":["3 talking points on the next 3-5 years, each attributable"],"source":"Institution (Named strategist) · the key figure"}, "x7-9" ],
+  "prices": [ {"label":"Gold","value":"$4,180","note":"spot / oz","pct":0.4}, {"label":"Crude","value":"$61.20","note":"WTI","pct":-1.1}, {"label":"Bitcoin","value":"$96,400","note":"24h","pct":2.3}, {"label":"Dollar","value":"119.4","note":"broad index","pct":-0.2} ],
   "rates": [ {"label":"10Y Treasury","value":"4.11%","note":"−3 bp"}, {"label":"2Y Treasury","value":"3.62%","note":""}, {"label":"Fed funds","value":"4.00–4.25%","note":"next FOMC Sep 17"}, {"label":"30y mortgage","value":"6.02%","note":"Freddie Mac"}, {"label":"3-mo T-bill","value":"4.18%","note":"cash-yield proxy"}, {"label":"1y Treasury","value":"3.95%","note":""} ],
   "sources": "Comma-separated source names · figures as reported near the close"
 }
 ```
 
-**`outlook` (required)** feeds the Home tab's **Running Outlook** — the card Eli looks at before a client call. 7-9 entries, each `{"topic","stance","tone","headline","explain","source"}`:
+> **Do not reuse the key `outlook` for this.** `outlook` is, and stays, the three-item *week ahead* calendar above (`{date, lead, body}`). In September 2026 the Running Outlook card read `outlook`, found those three week-ahead entries, decided a brief had published a board, and rendered three rows with no topic and no headline — the card looked empty to Eli for days. The board's key is **`outlookBoard`**. Publish both; they are different things.
+
+**`outlookBoard` (required)** feeds the Home tab's **Running Outlook** — the card Eli looks at before a client call. 7-9 entries, each `{"topic","stance","tone","headline","short","long","source"}`:
 
 - `topic`: rotate through these, always including Stocks, Bonds, Cash, The Fed and Mortgage rates, then 2-4 others: Crypto, Gold, The dollar, Housing, Inflation, International stocks, Corporate credit, Municipal bonds, Oil & energy, Small caps, Private credit, AI concentration, Labor market.
 - `stance`: 2-4 words, plain English, no ticker-speak ("Constructive", "Own it for income", "Still paid, but on a clock", "On hold").
 - `tone`: `up` | `flat` | `warn` | `down` — drives the dot color only.
 - `headline`: ONE sentence on where that asset class actually stands right now.
-- `explain`: 2-4 sentences written to be **said out loud to a client**, second person ("Tell them…", "The honest answer is…"). This is the point of the card: not what happened, but how to explain it and what, if anything, it changes for someone's plan. No jargon, no ticker symbols, no advice to trade.
+- `short`: **exactly 3** talking points on the next 6-12 months — effects, outlooks, projections — written to be **said out loud to a client**. Each one carries a figure or a named house where it honestly can ("Morgan Stanley's Vishy Tirupattur sees the 10-year near 4.25% by year-end"). No jargon, no ticker symbols, no advice to trade.
+- `long`: **exactly 3** talking points on the 3-5 year view for the same topic — the structural case, what history says, and what it means for someone's plan. This is where the durable, non-newsy sentences live; they should still be true in a month.
+- Keep each point to one or two sentences. Short-term points may go stale daily; long-term points should be carried forward and only revised when the structural case actually changes.
 - `source`: the institution and the named strategist behind the view, plus the key figure — e.g. "Goldman Sachs Research (Ben Snider) · S&P 500 year-end target 8000". **Source this from the top of the industry** — Goldman Sachs Research, Morgan Stanley, J.P. Morgan Global Research, BlackRock, Vanguard, Schwab (Liz Ann Sonders, Kathy Jones), PIMCO, Fed speeches and the SEP, Freddie Mac PMMS, Treasury. Never an anonymous blog, a promotional site, or a price-prediction page. If a view can't be attributed to a named institution, leave that topic out.
+
+`prices` (required) feeds the **Prices** half of the Home board: gold, crude (WTI), bitcoin and the broad dollar index, each `{"label","value","note","pct"}` with `pct` the day's percent move as a number. `scripts/refresh_rates.py` fetches these too and wins when it succeeds — these are the backstop for the days its sources are blocked, so print the close as reported and omit any row you cannot confirm.
 
 Carry a topic's view forward between days when nothing changed — this is a *running* outlook, not a daily reset — but re-check every figure you print and update the `source` date.
 
@@ -101,6 +108,8 @@ Topics, in this order (each its own section; skip a topic with a one-line "nothi
 
 **Depth (required — the site renders each item as a full article page).** Every item carries `detail`: 2-3 paragraphs, 150-260 words total, separated by a blank line (`\n\n`), written like a wire-service story — what happened, the context a smart reader needs, what happens next. Not a restatement of `lead`+`body`. Add `whyItMatters` (one plain sentence) on every item, and `quote` — `{"text": "...", "who": "Name, title"}` — whenever a source article carries a real, attributable quote (never invent or paraphrase one into quotation marks). `imgCaption` (under 12 words, what the photo shows) whenever `img` is set.
 
+**`video` (optional, and only when it is genuinely the story).** When a story is one people would rather watch than read — a product hands-on, a press conference, a launch, a game-winning play, a testimony — add `video`: a link to the actual clip. **Only YouTube (`youtube.com/watch?v=…`, `youtu.be/…`) and Vimeo links are rendered**; anything else is silently ignored by the site, so don't bother with a publisher's own player page. It must be the real, currently-live clip about *this* event from the outlet or organization involved — never a channel page, a search results page, a compilation, or a guess at a URL. If you can't confirm the clip exists, leave `video` out. `scripts/enrich_news.py` also pulls embeddable players off article pages on its own, so a missing `video` is not a failure.
+
 **Source + photo per item (required).** Every item carries `url` — the single best article it was drawn from (a wire service, major outlet, or the team's beat writer; the actual article page, not a homepage or search page) — and `source` — the outlet's short name ("Reuters", "AP", "ESPN", "Kentucky Sports Radio"). Then run **one** command for the whole edition to pull each article's lead photo:
 
 ```
@@ -125,7 +134,7 @@ Write `/tmp/news.json`:
   "glance": [ {"label":"Military & Conflict","teaser":"3-6 word chip"}, "x6, one per section incl. Random and Sports" ],
   "sections": [
     {"title":"US Military & Foreign Conflict","items":[
-      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences (the dek).","detail":"2-3 paragraphs, 150-260 words, blank line between paragraphs","whyItMatters":"one sentence","quote":{"text":"a real quote from a source article","who":"Name, role"},"storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgCaption":"what the photo shows","imgQuery":"fallback only: a photographable subject"}
+      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences (the dek).","detail":"2-3 paragraphs, 150-260 words, blank line between paragraphs","whyItMatters":"one sentence","quote":{"text":"a real quote from a source article","who":"Name, role"},"storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgCaption":"what the photo shows","imgQuery":"fallback only: a photographable subject","video":"https://www.youtube.com/watch?v=… (optional; see below)"}
     ]},
     "... x6 in topic order: the 5th titled \"Random\", the 6th titled \"Sports\" with every item carrying a group field: {\"lead\":\"...\",\"body\":\"...\",\"group\":\"Favorites\"}"
   ],

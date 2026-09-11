@@ -275,7 +275,11 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"  ! pmms: {e}", file=sys.stderr)
 
-    prices, pgot = market_prices()
+    try:
+        prices, pgot = market_prices()
+    except Exception as e:  # noqa: BLE001 -- never let one bad source take down the whole run
+        print(f"  ! market_prices: {e}", file=sys.stderr)
+        prices, pgot = [], []
     got += pgot
 
     if not rates and not prices:

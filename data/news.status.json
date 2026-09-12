@@ -1,14 +1,14 @@
 {
- "updated": "2026-09-12T09:18:59+00:00",
- "date": "2026-09-11",
- "items": 21,
- "had_photos": 21,
- "filled_this_run": 0,
- "from_feed": 0,
+ "updated": "2026-09-12T13:09:37+00:00",
+ "date": "2026-09-12",
+ "items": 20,
+ "had_photos": 18,
+ "filled_this_run": 1,
+ "from_feed": 1,
  "from_article": 0,
  "from_wikipedia": 0,
- "feed_pool": 0,
+ "feed_pool": 136,
  "videos": 0,
  "with_video": 0,
- "still_missing": 0
+ "still_missing": 1
 }

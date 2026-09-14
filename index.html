@@ -824,13 +824,6 @@
            box-shadow:0 6px 18px -8px color-mix(in srgb, var(--accent, var(--gold)) 80%, transparent)}
   .ga-next b{font-weight:900}
   .ga-next.ga-done{background:transparent;border-color:var(--hairline);color:var(--muted);cursor:default;box-shadow:none}
-  .ga-cats{display:flex;gap:7px;overflow-x:auto;padding:0 2px 14px;scrollbar-width:none}
-  .ga-cats::-webkit-scrollbar{display:none}
-  .ga-cat{appearance:none;font:inherit;font-size:12px;font-weight:800;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;
-          background:transparent;border:1px solid var(--hairline);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
-  .ga-cat i{font-style:normal;font-size:10px;font-weight:900;opacity:.6}
-  .ga-cat:hover{color:var(--ink);border-color:var(--accent, var(--gold))}
-  .ga-cat.on{background:var(--ink);border-color:var(--ink);color:var(--paper)} .ga-cat.on i{opacity:.7}
   .gt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:12px}
   .gt{position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;text-decoration:none;font:inherit;color:var(--ink);
       background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 15px 12px;cursor:pointer;
@@ -4283,7 +4276,33 @@ async function renderNowStrip(d){
   const auto = (d.countdowns || []).map(c => ({...c, id: c.id || "cal:" + c.date + ":" + c.label}));
   const byId = new Map();
   base.concat(auto, ov.added).forEach(c => { if(c && c.id && !ov.hidden.includes(c.id)) byId.set(c.id, c); });
-  const list = [...byId.values()];
+  // Sep 2026 bug (Eli): "duplicates of everything ... delete doesn't stick." Base (Firestore),
+  // auto (calendar) and ov.added (the local fallback used before Firestore/an add ever synced)
+  // can all describe the SAME real-world event under three different ids, so byId (keyed on id)
+  // let every one of them through as its own tile -- and deleting the one you clicked only hid
+  // that one id, so its same-event sibling reappeared on the next render and looked like the
+  // delete hadn't worked. Group by label+date (the only thing a person actually reads) so
+  // duplicates collapse into one tile that remembers every id behind it; nowRemove/nowEdit then
+  // act on the whole group at once. Priority within a group follows the concat order above --
+  // Firestore > calendar > local -- so the editable, synced copy is the one that's kept.
+  const groups = new Map();
+  [...byId.values()].forEach(c => {
+    const key = (c.label || "").trim().toLowerCase() + "|" + (c.date || "");
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(c);
+  });
+  let ovChanged = false;
+  const list = [];
+  groups.forEach(items => {
+    list.push({ ...items[0], siblingIds: items.map(x => x.id) });
+    // self-heal: a local-override entry that's now just a dead duplicate of the Firestore/
+    // calendar copy (left over from before it ever synced) gets quietly dropped so it stops
+    // duplicating on every future load, without the user having to hunt it down and delete it.
+    items.slice(1).forEach(dup => {
+      if(ov.added.some(a => a.id === dup.id)){ ov.added = ov.added.filter(a => a.id !== dup.id); ovChanged = true; }
+    });
+  });
+  if(ovChanged) nowSaveOverrides(ov);
   list.sort((a,b) => (a.date||"") < (b.date||"") ? -1 : 1).forEach(c => {
     if(!c.date) return;
     const n = daysUntil(c.date);
@@ -4291,7 +4310,7 @@ async function renderNowStrip(d){
     const big = n < 0 ? "Was" : n === 0 ? "Today" : n === 1 ? "1" : String(n);
     const unit = n < 0 ? "yesterday" : n === 0 ? "\u{1F389}" : n === 1 ? "day — tomorrow" : "days";
     const heat = n <= 2 ? "hot" : n <= 14 ? "warm" : "";
-    tiles.push({ id: c.id, cls: heat, icon: c.emoji || nowIcon(c.label, c.kind), label: c.label,
+    tiles.push({ id: c.id, siblingIds: c.siblingIds, cls: heat, icon: c.emoji || nowIcon(c.label, c.kind), label: c.label,
                  date: c.date, kind: c.kind || "countdown",
                  big, unit, pct: nowProgress(n), editable: true,
                  local: ov.added.some(a => a.id === c.id) });
@@ -4364,12 +4383,17 @@ function nowRemove(chip){
   const name = chip.label.replace(/ · [^·]*$/, "");
   if(!confirm(`Remove "${name}"?`)) return;
   const o = nowOverrides();
-  if(chip.local) o.added = o.added.filter(a => a.id !== chip.id);
-  else{
-    if(!o.hidden.includes(chip.id)) o.hidden.push(chip.id);
-    const api = window.__nowApi;
-    if(api && api.isReady() && !String(chip.id).startsWith("file:")) api.remove(chip.id);   // best effort: also drop it from the shared store
-  }
+  const api = window.__nowApi;
+  // Act on every id behind this tile (see the grouping note in renderNowStrip), not just
+  // chip.id -- otherwise deleting a merged duplicate only killed one twin and the other
+  // came right back on the next render, which is exactly what looked like "delete doesn't work."
+  (chip.siblingIds && chip.siblingIds.length ? chip.siblingIds : [chip.id]).forEach(id => {
+    if(o.added.some(a => a.id === id)) o.added = o.added.filter(a => a.id !== id);
+    else{
+      if(!o.hidden.includes(id)) o.hidden.push(id);
+      if(api && api.isReady() && !String(id).startsWith("file:")) api.remove(id);   // best effort: also drop it from the shared store
+    }
+  });
   nowSaveOverrides(o);
   renderNowStrip(nowLastDay);
 }
@@ -4387,15 +4411,22 @@ function nowAdd(label, date, kind){
    new local chip -- from then on it behaves exactly like any other local, fully-editable chip. */
 function nowEdit(chip, label, date, kind){
   const o = nowOverrides();
-  if(chip.local){
+  const api = window.__nowApi;
+  if(chip.local && (!chip.siblingIds || chip.siblingIds.length <= 1)){
     const item = o.added.find(a => a.id === chip.id);
     if(item){ item.label = label; item.date = date; item.kind = kind; }
     else o.added.push({ id: chip.id, label, date, kind });
   } else {
-    if(!o.hidden.includes(chip.id)) o.hidden.push(chip.id);
+    // Retire every id this tile represents (same as nowRemove) so editing a merged duplicate
+    // doesn't leave its sibling behind to reappear as a stale, unedited copy.
+    (chip.siblingIds && chip.siblingIds.length ? chip.siblingIds : [chip.id]).forEach(id => {
+      if(o.added.some(a => a.id === id)) o.added = o.added.filter(a => a.id !== id);
+      else{
+        if(!o.hidden.includes(id)) o.hidden.push(id);
+        if(api && api.isReady() && !String(id).startsWith("file:")) api.remove(id);
+      }
+    });
     o.added.push({ id: "loc:" + Date.now().toString(36), label, date, kind });
-    const api = window.__nowApi;
-    if(api && api.isReady() && !String(chip.id).startsWith("file:")) api.remove(chip.id);
   }
   nowSaveOverrides(o);
   renderNowStrip(nowLastDay);
@@ -6943,11 +6974,16 @@ async function renderBrainFoodDeck(gate){
    congruent. Don't get rid of any games though."
 
    The old page was three different visual languages stacked up: big colored boxes for the
-   built-ins, then list rows for the links, split into four headed sections you had to scroll
-   past. Now every game -- built-in or link -- is the SAME tile, in ONE grid, and the sections
-   became filter chips. The built-ins are still obviously the main event (accent ring, a
-   PLAY HERE badge, and their own live stat line); the links carry their favicon and an ↗.
-   A header ring shows how much of today is done and hands you the next unplayed one. */
+   built-ins, then list rows for the links. Every game -- built-in or link -- is the SAME tile.
+   The built-ins are still obviously the main event (accent ring, a PLAY HERE badge, and their
+   own live stat line); the links carry their favicon and an ↗. A header ring shows how much
+   of today is done and hands you the next unplayed one.
+
+   Round 2 (Eli, Sep 2026): "not a big fan of the tabs to see different categories" -- an
+   in-between version grouped everything into one grid behind clickable filter chips (see
+   renderGamesLauncher's dedicated comment below), which meant clicking through categories to
+   see the whole arcade. Now every tile is visible at once, grouped under static section
+   headers instead -- scroll, don't click. */
 function renderGamesLauncher(){
   if(!bfSeenToday()){ renderBrainFoodGate(); return; }
   const panel = $("#panel-quiz");
@@ -7005,14 +7041,19 @@ function renderGamesLauncher(){
       <span class="gt-check">✓</span>
     </a>`;
 
-  const cats = [
-    { k:"all",    n:"Everything", c: total },
-    { k:"here",   n:"Play here",  c: built.length },
-    { k:"word",   n:"Word & number", c: links.filter(l => l.cat === "word").length },
-    { k:"geo",    n:"Geography",  c: links.filter(l => l.cat === "geo").length },
-    { k:"logic",  n:"Logic",      c: links.filter(l => l.cat === "logic").length },
-    { k:"visual", n:"Visual",     c: links.filter(l => l.cat === "visual").length }
-  ].filter(c => c.c > 0);
+  // Sep 2026 (Eli): "I'm not a big fan of the tabs to see different categories" -- the old
+  // .ga-cats row filtered the grid down to one category at a time (everything else hidden),
+  // so seeing the whole arcade meant clicking through five tabs. Sections replace that: every
+  // game is on the page at once, still grouped by category via the same static-header style
+  // ("game-cat") the rest of the app already uses for Brain Food -- nothing to click, nothing
+  // hidden, just scroll.
+  const sections = [
+    { n:"Play here",       tiles: built.map(builtTile) },
+    { n:"Word & number",   tiles: links.filter(l => l.cat === "word").map(linkTile) },
+    { n:"Geography",       tiles: links.filter(l => l.cat === "geo").map(linkTile) },
+    { n:"Logic",           tiles: links.filter(l => l.cat === "logic").map(linkTile) },
+    { n:"Visual",          tiles: links.filter(l => l.cat === "visual").map(linkTile) }
+  ].filter(s => s.tiles.length);
 
   panel.innerHTML = `<div class="games-wrap">
     <div class="ga-head">
@@ -7028,9 +7069,7 @@ function renderGamesLauncher(){
       ${nextUp ? `<button class="ga-next" data-game="${nextUp.id}">Next: <b>${esc(nextUp.name)}</b> ▶</button>`
                : `<span class="ga-next ga-done">All dailies done 🎉</span>`}
     </div>
-    <div class="ga-cats" role="tablist">${cats.map((c,i) =>
-      `<button class="ga-cat${i===0?" on":""}" data-cat="${c.k}">${esc(c.n)}<i>${c.c}</i></button>`).join("")}</div>
-    <div class="gt-grid">${built.map(builtTile).join("")}${links.map(linkTile).join("")}</div>
+    ${sections.map(s => `<div class="game-cat">${esc(s.n)}</div><div class="gt-grid">${s.tiles.join("")}</div>`).join("")}
     <div id="gamesClose"></div>
   </div>`;
 
@@ -7038,11 +7077,6 @@ function renderGamesLauncher(){
   panel.querySelectorAll(".gt-built[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
   panel.querySelectorAll(".ga-next[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
   panel.querySelectorAll(".gt-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
-  panel.querySelectorAll(".ga-cat").forEach(btn => btn.addEventListener("click", () => {
-    const k = btn.dataset.cat;
-    panel.querySelectorAll(".ga-cat").forEach(b => b.classList.toggle("on", b === btn));
-    panel.querySelectorAll(".gt").forEach(t => { t.hidden = !(k === "all" || t.dataset.cat === k); });
-  }));
 }
 
 function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }

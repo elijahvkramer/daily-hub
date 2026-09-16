@@ -1,11 +1,11 @@
 {
- "updated": "2026-09-16T20:26:24+00:00",
+ "updated": "2026-09-16T23:16:19+00:00",
  "ok": true,
  "sources": [
   "effr",
   "gold",
   "btc"
  ],
- "rows": 10,
+ "rows": 3,
  "prices": 2
 }

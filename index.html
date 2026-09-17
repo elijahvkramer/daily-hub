@@ -1191,6 +1191,75 @@
   .pchg{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:900}
   .pchg.pos{background:rgba(24,153,107,.10);color:var(--up)}
   .pchg.neg{background:rgba(220,75,67,.10);color:var(--down)}
+
+  /* ---------- portfolio bento grid ---------- */
+  .pbento{display:grid;grid-template-columns:1.62fr 1fr;gap:16px;align-items:stretch;margin-top:2px}
+  .pbento>.pb-bar{grid-column:1/-1}
+  .pb-pos{grid-column:1}
+  .pb-side{grid-column:2;display:flex;flex-direction:column;gap:16px;min-width:0;min-height:0}
+  .pb-ai{grid-column:1}
+  .pb-hist{grid-column:2}
+  .pb-hold{grid-column:1/-1}
+
+  .pcard{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0;min-height:0}
+  .pb-side>.pcard{flex:1 1 auto}
+  .pc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .pc-head h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;color:var(--ink);line-height:1.2}
+  .pc-head p{margin:3px 0 0;font-size:11.5px;color:var(--muted);font-weight:600}
+  .pc-note{font-size:10px;color:var(--muted);font-weight:900;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;padding-top:3px}
+  .pc-cap{color:var(--muted);font-size:11.5px;line-height:1.55;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--hairline)}
+  .pc-body{flex:1;min-height:0}
+  .pb-empty{color:var(--muted);font-size:13px;margin:2px}
+  .pb-pos .pc-cap,.pb-hist .pc-cap,.pb-alloc .pc-cap{margin-top:auto}
+
+  .pb-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pb-bar .acct-toggle{margin:0}
+  .pb-bar-r{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .pb-bar-r .seg button{padding:7px 12px;font-size:11px}
+  .pb-bar-r .pstatus{margin-left:2px;font-size:11.5px}
+  .pb-bar .acct-card{font-size:12px;padding:8px 13px}
+  .pb-bar .pbtn{padding:8px 13px;font-size:11.5px}
+
+  .pb-pos-body{flex:1;min-height:210px;max-height:430px;overflow-y:auto;overflow-x:hidden;padding-right:6px}
+  .pb-pos .hchart{min-height:100%;gap:8px;justify-content:flex-start}
+  .pb-pos .hrow{grid-template-columns:148px 1fr;gap:12px;flex:1 0 30px}
+  .hrow .hname{display:flex;align-items:center;justify-content:flex-end;gap:7px}
+
+  .donut-mini{grid-template-columns:132px 1fr;gap:14px}
+  .donut-mini .donut-hold{width:132px;height:132px}
+  .donut-mini .dc-l{font-size:8.5px;letter-spacing:.12em}
+  .donut-mini .dc-v{font-size:15px;margin-top:1px}
+  .donut-mini .dc-s{font-size:10px;margin-top:1px}
+  .donut-mini .plegend{flex-direction:column;flex-wrap:nowrap;gap:2px;align-items:flex-start;max-height:152px;overflow-y:auto}
+  .donut-mini .plg{font-size:11px;padding:3px 7px;font-weight:800}
+
+  .pb-cal-list{display:flex;flex-direction:column;gap:11px}
+  .pb-cal-item{display:flex;align-items:center;gap:10px}
+  .pb-cal-item.crypto .cal-date{background:#F4EDE0;color:#8A6D2F}
+
+  .pb-ranges{display:flex;width:100%}
+  .pb-ranges button{flex:1;padding:6px 3px;font-size:10px;letter-spacing:.03em}
+  .pb-histhead{margin:10px 0 2px;color:var(--muted);font-size:11.5px;font-weight:700}
+  .pb-ai .ai-head{margin-bottom:10px}
+  .pb-ai .hn-row{padding:7px 0}
+  .pb-ai .chart-cap{margin-top:auto}
+
+  .pb-hold-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pb-hold-tools .seg button{padding:7px 11px;font-size:10.5px}
+  .pb-hold-tools .psearch{margin-left:0}
+  .pb-hold-tools .psearch input{width:196px;padding:8px 12px 8px 30px;font-size:12.5px}
+  .pcard .ptable-wrap{background:none;border:none;box-shadow:none;border-radius:0;margin:2px -18px -16px;width:calc(100% + 36px)}
+  .pcard .ptable th:first-child,.pcard .ptable td:first-child{padding-left:18px}
+  .pcard .ptable th:last-child,.pcard .ptable td:last-child{padding-right:18px}
+
+  @media(max-width:900px){
+    .pbento{grid-template-columns:1fr;gap:14px}
+    .pbento>*{grid-column:1}
+    .pb-bar-r{margin-left:0}
+    .pb-pos-body{max-height:340px}
+    .donut-mini{grid-template-columns:116px 1fr}
+    .donut-mini .donut-hold{width:116px;height:116px}
+  }
   @media(max-width:860px){
     .donut-flex{grid-template-columns:1fr;justify-items:center}
     .psearch input{width:150px}
@@ -5565,77 +5634,101 @@ function renderPortfolio(){
   const panel = $("#panel-portfolio");
   let h = "";
 
-  h += `<button class="pbtn game-back" id="pBackToday" style="margin-bottom:16px">← Back to Today</button>`;
+  h += `<button class="pbtn game-back" id="pBackToday" style="margin-bottom:14px">← Back to Today</button>`;
 
-  /* toolbar: Day vs All-Time performance view */
   const statusTxt = pStatusText();
   const ledCls = pLedClass();
-  h += `<div class="ptoolbar">
-    <div class="seg"><button data-p="day" class="${P.perf==="day"?"on":""}">Day</button><button data-p="all" class="${P.perf==="all"?"on":""}">All-Time</button></div>
-    <button class="pbtn" id="pRefresh">⟳ Refresh</button>
-    <span class="pstatus"><span class="led ${ledCls}"></span>${esc(statusTxt)}</span>
-  </div>`;
-
-  /* accounts, as a compact pill toggle instead of a card grid -- condenses
-     the top of the page; clicking still sets P.acct and re-renders */
   const day = P.perf === "day";
-  h += `<div class="acct-toggle">` + [{id:"all",label:"All accounts"}, ...HOLDINGS.accounts].map(a => {
-    const list = a.id === "all" ? P.pos : P.pos.filter(p => p.account === a.id);
-    const lt = pTotals(list);
-    return `<button class="acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">${esc(a.label)} <b>${usd(lt.value,0)}</b></button>`;
-  }).join("") + `</div>`;
+  const groups = pGroupsBySector(pView());
 
-  /* portfolio value history */
-  h += `<div class="kicker">Portfolio Value · History</div><div class="chart-card" id="histCard">
-    <div class="ptoolbar" style="margin-bottom:10px">
-      <div class="seg" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
-      <span class="pstatus" id="histHead"></span>
+  /* ---------------------------------------------------------------
+     Bento grid. Everything below lives in one 2-column mosaic instead
+     of the old full-width stack: control bar across the top, then
+     Positions beside Allocation+Calendar, AI Insight beside the value
+     history, and the full Holdings table across the bottom.
+     --------------------------------------------------------------- */
+  h += `<div class="pbento">`;
+
+  /* control bar: account toggle + perf toggle + refresh + live status */
+  h += `<div class="pb-bar">
+    <div class="acct-toggle">` + [{id:"all",label:"All accounts"}, ...HOLDINGS.accounts].map(a => {
+      const list = a.id === "all" ? P.pos : P.pos.filter(p => p.account === a.id);
+      const lt = pTotals(list);
+      return `<button class="acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">${esc(a.label)} <b>${usd(lt.value,0)}</b></button>`;
+    }).join("") + `</div>
+    <div class="pb-bar-r">
+      <div class="seg"><button data-p="day" class="${P.perf==="day"?"on":""}">Day</button><button data-p="all" class="${P.perf==="all"?"on":""}">All-Time</button></div>
+      <button class="pbtn" id="pRefresh">⟳ Refresh</button>
+      <span class="pstatus"><span class="led ${ledCls}"></span>${esc(statusTxt)}</span>
     </div>
-    <div id="histBody" style="position:relative"></div>
-    <div class="chart-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</div>
   </div>`;
 
-  /* calendar: earnings & other portfolio-relevant dates */
+  /* positions -- size & performance bars */
+  h += `<section class="pcard pb-pos">
+    <header class="pc-head">
+      <div><h4>Positions</h4><p>Size &amp; performance</p></div>
+      <span class="pc-note">${day ? "Best → worst today" : "Best → worst, all-time"}</span>
+    </header>
+    <div class="pc-body pb-pos-body"><div class="hchart" id="pBars"></div></div>
+    <p class="pc-cap">${day
+      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
+      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</p>
+  </section>`;
+
+  /* side stack: allocation donut over the calendar */
   const MON3 = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
   const calToday = new Date(); calToday.setHours(0,0,0,0);
   const calUpcoming = PORTFOLIO_EVENTS.map(e => ({...e, d:new Date(e.date+"T00:00:00")}))
     .filter(e => e.d >= calToday).sort((a,b) => a.d-b.d).slice(0,4);
-  h += `<div class="kicker">Calendar · Earnings &amp; Events</div><div class="chart-card"><div class="cal-row">`
-    + (calUpcoming.length ? calUpcoming.map(e => `<div class="cal-chip${e.account==="crypto"?" crypto":""}">
-        <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
-        <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
-      : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No upcoming events on record.</p>`)
-    + `</div></div>`;
 
-  /* AI insight -- replaces the old "Your Holdings in the News" feed with a
-     richer, dot-coded rundown; renderHoldingsNews() (below) fills this in
-     from the same Daily Market Brief data as before */
-  h += `<div class="kicker">AI Insight</div><div class="chart-card" id="hnews"><div class="spinner" style="margin:24px auto"></div></div>`;
+  h += `<div class="pb-side">
+    <section class="pcard pb-alloc">
+      <header class="pc-head"><div><h4>Allocation</h4><p>By sector</p></div></header>
+      <div class="donut-flex donut-mini">
+        <div class="donut-hold"><svg width="132" height="132" viewBox="0 0 250 250" id="pDonut"></svg>
+          <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(t.value,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
+        <div class="plegend" id="pLegend"></div>
+      </div>
+      <p class="pc-cap">Grouped by sector — click a slice to filter the table.</p>
+    </section>
+    <section class="pcard pb-cal">
+      <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
+      <div class="pb-cal-list">`
+        + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
+            <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
+            <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
+          : `<p class="pb-empty">No upcoming events on record.</p>`)
+      + `</div>
+    </section>
+  </div>`;
 
-  /* positions bars */
-  h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
-    <div class="chart-cap">${day
-      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
-      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</div></div>`;
+  /* AI insight -- renderHoldingsNews() fills this card in */
+  h += `<section class="pcard pb-ai" id="hnews"><div class="spinner" style="margin:34px auto"></div></section>`;
 
-  /* allocation donut */
-  const groups = pGroupsBySector(pView());
-  h += `<div class="kicker">Allocation by Sector</div><div class="chart-card donut-compact"><div class="donut-flex">
-    <div class="donut-hold"><svg width="170" height="170" viewBox="0 0 250 250" id="pDonut"></svg>
-      <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(t.value,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
-    <div><div class="plegend" id="pLegend"></div>
-      <div class="chart-cap" style="margin-top:12px">Grouped by sector, not by stock. Hover a slice for detail.</div></div>
-  </div></div>`;
+  /* portfolio value history */
+  h += `<section class="pcard pb-hist">
+    <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
+    <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+    <div class="pb-histhead" id="histHead"></div>
+    <div id="histBody" style="position:relative"></div>
+    <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
+  </section>`;
 
   /* holdings table */
-  h += `<div class="kicker">Holdings</div>
-    <div class="ptoolbar">
-      <div class="seg" id="pQuickSeg"><button data-q="">All</button><button data-q="gain">Gainers</button><button data-q="loss">Losers</button></div>
-      <span class="ftag${P.filter?" show":""}" id="pFtag">Filtered: ${esc(P.filter||"")} ✕</span>
-      <div class="psearch"><span class="si">⌕</span><input id="pSearch" placeholder="Search ticker or company…" value="${esc(P.search)}"></div>
-    </div>
+  h += `<section class="pcard pb-hold">
+    <header class="pc-head">
+      <div><h4>Holdings</h4><p>All positions across accounts</p></div>
+      <div class="pb-hold-tools">
+        <div class="seg" id="pQuickSeg"><button data-q="">All</button><button data-q="gain">Gainers</button><button data-q="loss">Losers</button></div>
+        <span class="ftag${P.filter?" show":""}" id="pFtag">Filtered: ${esc(P.filter||"")} ✕</span>
+        <div class="psearch"><span class="si">⌕</span><input id="pSearch" placeholder="Search ticker or company…" value="${esc(P.search)}"></div>
+      </div>
+    </header>
     <div class="ptable-wrap"><table class="ptable"><thead><tr id="pHead"></tr></thead><tbody id="pBody"></tbody></table></div>
-    <p class="sources">Holdings driven by exact share quantities from the Fidelity export (${HOLDINGS.meta.snapshotLabel}). Values = shares × price. Educational use only — not investment advice.</p>`;
+  </section>`;
+
+  h += `</div>`;
+  h += `<p class="sources">Holdings driven by exact share quantities from the Fidelity export (${HOLDINGS.meta.snapshotLabel}). Values = shares × price. Educational use only — not investment advice.</p>`;
 
   panel.innerHTML = h;
 
@@ -5985,7 +6078,7 @@ function renderHistory(){
   const dPct = first > 0 ? delta/first*100 : 0;
   $("#histHead").innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(pts[0].d))} → ${esc(shortDate(pts[pts.length-1].d))}`;
 
-  const W = 800, H = 170, PL = 56, PR = 14, PT = 8, PB = 26;
+  const W = Math.max(320, Math.round(body.clientWidth || 800)), H = 200, PL = 70, PR = 12, PT = 10, PB = 26;
   const vals = pts.map(p => p.v);
   let min = Math.min(...vals), max = Math.max(...vals);
   const pad = (max-min)*0.06 || max*0.005; min -= pad; max += pad;
@@ -6042,7 +6135,7 @@ function renderHistoryIntraday(body){
   const { pts, start, end } = ser;
   if(head) head.innerHTML = `<span class="hist-delta ${pcls(t.day)}">${usdS(t.day)} (${pctS(t.dayPct)})</span>&nbsp; ${intraIsToday() ? "Today's session" : "Last session (market closed)"}`;
 
-  const W = 800, H = 170, PL = 56, PR = 14, PT = 8, PB = 26;
+  const W = Math.max(320, Math.round(body.clientWidth || 800)), H = 200, PL = 70, PR = 12, PT = 10, PB = 26;
   const span = (end - start) || 1;
   const X = ts => PL + (W-PL-PR) * Math.max(0, Math.min(1, (ts-start)/span));
   const vals = pts.map(p => p.v);

@@ -1158,6 +1158,36 @@
   .abadge{font-size:9.5px;font-weight:900;letter-spacing:.1em;padding:3px 8px;border-radius:6px;background:var(--panel);color:var(--gold-dark)}
   .abadge.roth{background:#EDEAF2;color:#6B5B8A}
   .abadge.crypto{background:#F4EDE0;color:#8A6D2F}
+
+  /* ---------- portfolio redesign additions (logos, account pills, calendar, AI insight) ---------- */
+  .acct-toggle{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .acct-toggle .acct-card{appearance:none;border:1px solid var(--hairline);background:var(--card);color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:999px;cursor:pointer;transition:all .15s}
+  .acct-toggle .acct-card b{color:var(--ink);font-weight:800;margin-left:5px}
+  .acct-toggle .acct-card:hover{border-color:var(--gold);color:var(--ink)}
+  .acct-toggle .acct-card.on{background:var(--ink2);color:var(--gold);border-color:var(--ink2)}
+  .acct-toggle .acct-card.on b{color:#fff}
+
+  .logo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+
+  .ai-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .ai-head-l{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14.5px;color:var(--ink)}
+  .ai-head-r{font-size:11px;color:var(--muted);font-weight:700}
+  .hn-row{display:flex;gap:9px;padding:8px 2px;border-bottom:none;font-size:14px;line-height:1.55;align-items:flex-start}
+  .hn-dot{width:7px;height:7px;border-radius:50%;margin-top:7px;flex-shrink:0}
+
+  .cal-row{display:flex;flex-wrap:wrap;gap:12px}
+  .cal-chip{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.5);border:1px solid var(--hairline);border-radius:12px;padding:9px 13px;flex:1 1 190px}
+  .cal-date{width:36px;height:36px;border-radius:9px;background:var(--gold-soft);color:var(--gold-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;line-height:1.1;flex-shrink:0}
+  .cal-date span{font-size:13.5px}
+  .cal-date b{font-size:8.5px;letter-spacing:.04em}
+  .cal-label{display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--ink)}
+  .cal-label span{color:var(--muted);font-weight:600;font-size:11.5px}
+  .cal-chip.crypto .cal-date{background:#F4EDE0;color:#8A6D2F}
+
+  .donut-compact .donut-hold{width:170px;height:170px}
+  .donut-compact .donut-flex{grid-template-columns:170px 1fr}
+  .donut-compact .dc-v{font-size:17px}
+  @media(max-width:860px){ .donut-compact .donut-flex{grid-template-columns:1fr} }
   .pchg{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:900}
   .pchg.pos{background:rgba(24,153,107,.10);color:var(--up)}
   .pchg.neg{background:rgba(220,75,67,.10);color:var(--down)}
@@ -5223,7 +5253,7 @@ function renderFriendsBody(){
    and are decrypted at the site gate. */
 let HOLDINGS = null;
 
-const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, fetched:false, fetching:false, _fetchPromise:null, stockHist:{}, stockLoading:{},
+const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, quick:null, fetched:false, fetching:false, _fetchPromise:null, stockHist:{}, stockLoading:{},
   liveAt:0, liveSrc:null,   // when the numbers in P.live are from, and where: "live" (proxy) | "server" (data/quotes.json.enc) | "cache" (localStorage)
   paintHooks:[] };          // Home-tab widgets register a repaint here instead of polling on a timer
 
@@ -5457,6 +5487,71 @@ function pGroups(list){
   return Object.values(m).sort((a,b) => b.value - a.value);
 }
 
+/* Sector map for the Allocation donut -- Eli: add tickers here as your
+   holdings change. Unmapped tickers fall under "Other". */
+const TICKER_SECTOR = {
+  AAPL:"Technology", MSFT:"Technology", GOOGL:"Technology", GOOG:"Technology", NVDA:"Technology", AVGO:"Technology", CRM:"Technology", ORCL:"Technology",
+  TSLA:"Automotive", RIVN:"Automotive", F:"Automotive", GM:"Automotive",
+  NFLX:"Communication Services", SPOT:"Communication Services", META:"Communication Services", DIS:"Communication Services", CMCSA:"Communication Services",
+  AMZN:"Consumer Discretionary", NKE:"Consumer Discretionary", ABNB:"Consumer Discretionary", SBUX:"Consumer Discretionary", HD:"Consumer Discretionary", TGT:"Consumer Discretionary", MCD:"Consumer Discretionary",
+  PYPL:"Financials", V:"Financials", MA:"Financials", JPM:"Financials", BAC:"Financials", SQ:"Financials", GS:"Financials",
+  BTC:"Crypto", ETH:"Crypto", SOL:"Crypto", DOGE:"Crypto",
+  JNJ:"Healthcare", UNH:"Healthcare", PFE:"Healthcare", LLY:"Healthcare",
+  XOM:"Energy", CVX:"Energy"
+};
+function tickerSector(ticker){ return TICKER_SECTOR[ticker] || "Other"; }
+const SECTOR_COLORS = {
+  "Technology":"#0E6CD8", "Consumer Discretionary":"#8B5CF6", "Communication Services":"#0EA5A0",
+  "Financials":"#12855C", "Automotive":"#E37B1C", "Crypto":"#8A6D2F", "Healthcare":"#DB2777",
+  "Energy":"#B45309", "Other":"#94A3B8"
+};
+function gcolor(key){ return SECTOR_COLORS[key] || pcolor(key); }
+function pGroupsBySector(list){
+  const m = {};
+  list.forEach(p => { if(p.type === "cash") return; const k = tickerSector(p.ticker);
+    if(!m[k]) m[k] = {ticker:k, name:k, value:0, gain:0, hasGain:false};
+    m[k].value += p.marketValue;
+    if(p.gainDollar != null){ m[k].gain += p.gainDollar; m[k].hasGain = true; } });
+  return Object.values(m).sort((a,b) => b.value - a.value);
+}
+
+/* Real company logos, by ticker. Tries a ticker-keyed logo CDN first, then
+   (for the tickers listed below) a domain-keyed fallback through Clearbit's
+   logo API. If both fail -- CDN down, ticker not recognized -- the <img>
+   hides itself via logoFallback() and the colored monogram tile underneath
+   (already rendered) shows through, so a broken logo never breaks the UI. */
+const TICKER_DOMAIN = {
+  AAPL:"apple.com", MSFT:"microsoft.com", GOOGL:"abc.xyz", GOOG:"abc.xyz", NVDA:"nvidia.com", AVGO:"broadcom.com",
+  TSLA:"tesla.com", NFLX:"netflix.com", SPOT:"spotify.com", META:"meta.com", DIS:"disney.com", CMCSA:"comcast.com",
+  AMZN:"amazon.com", NKE:"nike.com", ABNB:"airbnb.com", SBUX:"starbucks.com", HD:"homedepot.com", TGT:"target.com", MCD:"mcdonalds.com",
+  PYPL:"paypal.com", V:"visa.com", MA:"mastercard.com", JPM:"jpmorganchase.com", BAC:"bankofamerica.com", SQ:"squareup.com", GS:"goldmansachs.com",
+  JNJ:"jnj.com", UNH:"unitedhealthgroup.com", PFE:"pfizer.com", LLY:"lilly.com", XOM:"exxonmobil.com", CVX:"chevron.com"
+};
+function logoFallback(img){
+  const next = img.dataset.fallback;
+  if(next){ img.dataset.fallback = ""; img.src = next; }
+  else{ img.style.display = "none"; }
+}
+function logoImg(ticker){
+  if(!ticker) return "";
+  const domain = TICKER_DOMAIN[ticker];
+  const primary = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(ticker)}?format=png`;
+  const fallback = domain ? `https://logo.clearbit.com/${domain}?size=128` : "";
+  return `<img class="logo-img" src="${primary}" data-fallback="${fallback}" alt="" loading="lazy" onerror="logoFallback(this)">`;
+}
+
+/* Portfolio calendar -- earnings dates, ex-dividend dates, and any other
+   date worth tracking against your holdings. Hand-maintained (no free,
+   reliable earnings-calendar API is wired up yet) -- add, edit or remove
+   rows as you learn new dates. `account` is optional, just for chip color. */
+const PORTFOLIO_EVENTS = [
+  { date:"2026-10-17", ticker:"NFLX", label:"Earnings, after close" },
+  { date:"2026-10-22", ticker:"TSLA", label:"Earnings, after close" },
+  { date:"2026-10-24", ticker:"AMZN", label:"Earnings, before open" },
+  { date:"2026-10-30", ticker:"AAPL", label:"Earnings, after close" },
+  { date:"2026-11-03", ticker:"PYPL", label:"Ex-dividend date" }
+];
+
 function renderPortfolio(){
   pCompute();
   const t = pTotals(pView());
@@ -5481,21 +5576,14 @@ function renderPortfolio(){
     <span class="pstatus"><span class="led ${ledCls}"></span>${esc(statusTxt)}</span>
   </div>`;
 
-  /* account cards */
+  /* accounts, as a compact pill toggle instead of a card grid -- condenses
+     the top of the page; clicking still sets P.acct and re-renders */
   const day = P.perf === "day";
-  h += `<div class="kicker">Accounts</div><div class="grid cols-4">`;
-  [{id:"all",label:"All Accounts"}, ...HOLDINGS.accounts].forEach(a => {
+  h += `<div class="acct-toggle">` + [{id:"all",label:"All accounts"}, ...HOLDINGS.accounts].map(a => {
     const list = a.id === "all" ? P.pos : P.pos.filter(p => p.account === a.id);
     const lt = pTotals(list);
-    const sub = day
-      ? `<span class="${pcls(lt.day)}">${usdS(lt.day)} (${pctS(lt.dayPct)}) today</span>`
-      : (lt.cost > 0
-          ? `<span class="${pcls(lt.gain)}">${usdS(lt.gain)} (${pctS(lt.gainPct)})</span>`
-          : `<span class="neutral">${list.length} holding${list.length===1?"":"s"}</span>`);
-    h += `<div class="card acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">
-      <div class="lbl">${esc(a.label)}</div><div class="big" style="font-size:21px">${usd(lt.value,0)}</div><div class="sub">${sub}</div></div>`;
-  });
-  h += `</div>`;
+    return `<button class="acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">${esc(a.label)} <b>${usd(lt.value,0)}</b></button>`;
+  }).join("") + `</div>`;
 
   /* portfolio value history */
   h += `<div class="kicker">Portfolio Value · History</div><div class="chart-card" id="histCard">
@@ -5507,8 +5595,22 @@ function renderPortfolio(){
     <div class="chart-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</div>
   </div>`;
 
-  /* your holdings in the news */
-  h += `<div class="kicker">Your Holdings in the News</div><div id="hnews"><div class="spinner" style="margin:24px auto"></div></div>`;
+  /* calendar: earnings & other portfolio-relevant dates */
+  const MON3 = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const calToday = new Date(); calToday.setHours(0,0,0,0);
+  const calUpcoming = PORTFOLIO_EVENTS.map(e => ({...e, d:new Date(e.date+"T00:00:00")}))
+    .filter(e => e.d >= calToday).sort((a,b) => a.d-b.d).slice(0,4);
+  h += `<div class="kicker">Calendar · Earnings &amp; Events</div><div class="chart-card"><div class="cal-row">`
+    + (calUpcoming.length ? calUpcoming.map(e => `<div class="cal-chip${e.account==="crypto"?" crypto":""}">
+        <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
+        <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
+      : `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No upcoming events on record.</p>`)
+    + `</div></div>`;
+
+  /* AI insight -- replaces the old "Your Holdings in the News" feed with a
+     richer, dot-coded rundown; renderHoldingsNews() (below) fills this in
+     from the same Daily Market Brief data as before */
+  h += `<div class="kicker">AI Insight</div><div class="chart-card" id="hnews"><div class="spinner" style="margin:24px auto"></div></div>`;
 
   /* positions bars */
   h += `<div class="kicker">Positions · Size &amp; Performance</div><div class="chart-card"><div class="hchart" id="pBars"></div>
@@ -5517,18 +5619,21 @@ function renderPortfolio(){
       : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</div></div>`;
 
   /* allocation donut */
-  const groups = pGroups(pView());
-  h += `<div class="kicker">Allocation</div><div class="chart-card"><div class="donut-flex">
-    <div class="donut-hold"><svg width="250" height="250" viewBox="0 0 250 250" id="pDonut"></svg>
+  const groups = pGroupsBySector(pView());
+  h += `<div class="kicker">Allocation by Sector</div><div class="chart-card donut-compact"><div class="donut-flex">
+    <div class="donut-hold"><svg width="170" height="170" viewBox="0 0 250 250" id="pDonut"></svg>
       <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(t.value,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
     <div><div class="plegend" id="pLegend"></div>
-      <div class="chart-cap" style="margin-top:18px">Slice = share of the current view. Hover for detail; click a slice or chip to filter the holdings table.</div></div>
+      <div class="chart-cap" style="margin-top:12px">Grouped by sector, not by stock. Hover a slice for detail.</div></div>
   </div></div>`;
 
   /* holdings table */
   h += `<div class="kicker">Holdings</div>
-    <div class="ptoolbar"><span class="ftag${P.filter?" show":""}" id="pFtag">Filtered: ${esc(P.filter||"")} ✕</span>
-    <div class="psearch"><span class="si">⌕</span><input id="pSearch" placeholder="Search ticker or company…" value="${esc(P.search)}"></div></div>
+    <div class="ptoolbar">
+      <div class="seg" id="pQuickSeg"><button data-q="">All</button><button data-q="gain">Gainers</button><button data-q="loss">Losers</button></div>
+      <span class="ftag${P.filter?" show":""}" id="pFtag">Filtered: ${esc(P.filter||"")} ✕</span>
+      <div class="psearch"><span class="si">⌕</span><input id="pSearch" placeholder="Search ticker or company…" value="${esc(P.search)}"></div>
+    </div>
     <div class="ptable-wrap"><table class="ptable"><thead><tr id="pHead"></tr></thead><tbody id="pBody"></tbody></table></div>
     <p class="sources">Holdings driven by exact share quantities from the Fidelity export (${HOLDINGS.meta.snapshotLabel}). Values = shares × price. Educational use only — not investment advice.</p>`;
 
@@ -5553,6 +5658,14 @@ function renderPortfolio(){
   $("#pRefresh").addEventListener("click", () => pFetchLive());
   panel.querySelectorAll(".acct-card").forEach(c => c.addEventListener("click", () => { P.acct = c.dataset.acct; P.filter = null; renderPortfolio(); }));
   $("#pFtag").addEventListener("click", () => { P.filter = null; renderPortfolio(); });
+  panel.querySelectorAll("#pQuickSeg button").forEach(b => {
+    b.classList.toggle("on", (b.dataset.q || null) === P.quick);
+    b.addEventListener("click", () => {
+      P.quick = b.dataset.q || null;
+      panel.querySelectorAll("#pQuickSeg button").forEach(x => x.classList.toggle("on", x === b));
+      pTable();
+    });
+  });
   const si = $("#pSearch");
   si.addEventListener("input", e => { P.search = e.target.value; pTable(); });
 
@@ -5872,7 +5985,7 @@ function renderHistory(){
   const dPct = first > 0 ? delta/first*100 : 0;
   $("#histHead").innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(pts[0].d))} → ${esc(shortDate(pts[pts.length-1].d))}`;
 
-  const W = 800, H = 250, PL = 62, PR = 14, PT = 12, PB = 30;
+  const W = 800, H = 170, PL = 56, PR = 14, PT = 8, PB = 26;
   const vals = pts.map(p => p.v);
   let min = Math.min(...vals), max = Math.max(...vals);
   const pad = (max-min)*0.06 || max*0.005; min -= pad; max += pad;
@@ -5929,7 +6042,7 @@ function renderHistoryIntraday(body){
   const { pts, start, end } = ser;
   if(head) head.innerHTML = `<span class="hist-delta ${pcls(t.day)}">${usdS(t.day)} (${pctS(t.dayPct)})</span>&nbsp; ${intraIsToday() ? "Today's session" : "Last session (market closed)"}`;
 
-  const W = 800, H = 250, PL = 62, PR = 14, PT = 12, PB = 30;
+  const W = 800, H = 170, PL = 56, PR = 14, PT = 8, PB = 26;
   const span = (end - start) || 1;
   const X = ts => PL + (W-PL-PR) * Math.max(0, Math.min(1, (ts-start)/span));
   const vals = pts.map(p => p.v);
@@ -6142,19 +6255,24 @@ function drawSmChart(body, pts, opts){
 /* ---------- your holdings in the news ---------- */
 async function renderHoldingsNews(){
   const el = $("#hnews"); if(!el) return;
+  const head = meta => `<div class="ai-head"><span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span><span class="ai-head-r">${meta}</span></div>`;
   try{
     const latest = (S.manifest?.market || [])[0];
-    if(!latest){ el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Appears here once the next market brief publishes.</p>`; return; }
+    if(!latest){ el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Appears here once the next market brief publishes.</p>`; return; }
     const d = await fetchDay("market", latest);
     const items = d.holdingsNews || [];
     if(!items.length){
-      el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No notable news on your holdings in the latest brief (${esc(shortDate(latest))}).</p>`;
+      el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No notable news on your holdings in the latest brief (${esc(shortDate(latest))}).</p>`;
       return;
     }
-    el.innerHTML = items.map(i => `<div class="hn-row"><div class="hn-tk">${esc(i.ticker)}</div><div><b>${esc(i.lead)}</b> ${esc(i.body)}</div></div>`).join("")
+    pCompute();
+    const byTicker = {}; pViewMerged().forEach(p => byTicker[p.ticker] = p);
+    const dotColor = tk => { const p = byTicker[tk]; if(!p || p.dayPct == null) return "var(--muted)"; return p.dayPct >= 0 ? "var(--up)" : "var(--down)"; };
+    el.innerHTML = head(`${items.length} insight${items.length===1?"":"s"} today`)
+      + items.map(i => `<div class="hn-row"><span class="hn-dot" style="background:${dotColor(i.ticker)}"></span><div><b>${esc(i.ticker)}</b> ${esc(i.lead)} ${esc(i.body)}</div></div>`).join("")
       + `<p class="chart-cap" style="border:none;padding-top:10px">From the ${esc(shortDate(latest))} Daily Market Brief.</p>`;
   }catch(e){
-    el.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Couldn't load the latest brief.</p>`;
+    el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Couldn't load the latest brief.</p>`;
   }
 }
 
@@ -6167,7 +6285,7 @@ function drawDonut(groups, t, acctLabel){
     const frac = t.value > 0 ? g.value/t.value : 0;
     const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
     c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",R);
-    c.setAttribute("fill","none"); c.setAttribute("stroke",pcolor(g.ticker)); c.setAttribute("stroke-width",26);
+    c.setAttribute("fill","none"); c.setAttribute("stroke",gcolor(g.ticker)); c.setAttribute("stroke-width",26);
     c.setAttribute("stroke-dasharray", `${Math.max(0,frac*C-2)} ${C}`);
     c.setAttribute("stroke-dashoffset", -off*C);
     if(P.filter && P.filter !== g.ticker) c.setAttribute("opacity",".3");
@@ -6182,7 +6300,7 @@ function drawDonut(groups, t, acctLabel){
   groups.forEach(g => {
     const d = document.createElement("div");
     d.className = "plg" + (P.filter === g.ticker ? " active" : "");
-    d.innerHTML = `<i style="background:${pcolor(g.ticker)}"></i>${esc(g.ticker)}`;
+    d.innerHTML = `<i style="background:${gcolor(g.ticker)}"></i>${esc(g.ticker)}`;
     d.addEventListener("click", () => { P.filter = P.filter === g.ticker ? null : g.ticker; renderPortfolio(); });
     leg.appendChild(d);
   });
@@ -6225,7 +6343,8 @@ function drawPBars(t){
         : `color:${col};position:absolute;right:calc(100% + 8px);white-space:nowrap`;
     const row = document.createElement("div"); row.className = "hrow";
     row.style.cursor = "pointer";
-    row.innerHTML = `<div class="hname"><b>${esc(p.ticker)}</b> <span style="color:var(--muted);font-weight:400;font-size:11px">${share.toFixed(1)}%</span></div>
+    const mkHtml = isCash ? "" : `<span class="mk" style="background:${pcolor(p.ticker)};width:20px;height:20px;border-radius:6px;font-size:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;position:relative;overflow:hidden;flex-shrink:0">${esc(p.ticker.slice(0,2))}${logoImg(p.ticker)}</span>`;
+    row.innerHTML = `<div class="hname">${mkHtml}<b>${esc(p.ticker)}</b> <span style="color:var(--muted);font-weight:400;font-size:11px">${share.toFixed(1)}%</span></div>
       <div class="htrack"><div class="hmid" style="left:${negShare}%"></div>
       <div class="hbar" style="${barStyle};width:0;overflow:visible"><span style="${labelStyle}">${esc(label)}</span></div></div>`;
     row.addEventListener("click", () => { if(p.type !== "cash") openStockModal(p.ticker); });
@@ -6255,8 +6374,10 @@ function pHead(){
 function pTable(){
   const tb = $("#pBody"); if(!tb) return; tb.innerHTML = "";
   let rows = pViewMerged().slice();
-  if(P.filter) rows = rows.filter(p => p.ticker === P.filter);
+  if(P.filter) rows = rows.filter(p => p.ticker === P.filter || tickerSector(p.ticker) === P.filter);
   if(P.search){ const s = P.search.toLowerCase(); rows = rows.filter(p => p.ticker.toLowerCase().includes(s) || p.name.toLowerCase().includes(s)); }
+  if(P.quick === "gain") rows = rows.filter(p => p.type !== "cash" && (P.perf === "day" ? p.dayDollar > 0 : (p.hasCost ? p.gainDollar > 0 : p.dayDollar > 0)));
+  if(P.quick === "loss") rows = rows.filter(p => p.type !== "cash" && (P.perf === "day" ? p.dayDollar < 0 : (p.hasCost ? p.gainDollar < 0 : p.dayDollar < 0)));
   const nv = v => v == null ? -Infinity : v;
   rows.sort((a,b) => { const x = a[P.sortKey], y = b[P.sortKey];
     if(typeof x === "string") return x.localeCompare(y) * P.sortDir;
@@ -6267,7 +6388,7 @@ function pTable(){
     const ab = p.account === "all" ? "ALL" : p.account === "roth" ? "ROTH" : p.account === "crypto" ? "CRYPTO" : "INDIV";
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><div class="ptk"><div class="mk" style="background:${pcolor(p.ticker)}">${esc(p.ticker.slice(0,4))}</div>
+      <td><div class="ptk"><div class="mk" style="background:${pcolor(p.ticker)};position:relative;overflow:hidden">${esc(p.ticker.slice(0,4))}${isCash?"":logoImg(p.ticker)}</div>
         <div class="nm"><b>${esc(p.ticker)}</b><span>${esc(p.name)}</span></div></div></td>
       <td><span class="abadge ${p.account}">${ab}</span></td>
       <td>${p.shares.toLocaleString("en-US",{maximumFractionDigits:8})}</td>

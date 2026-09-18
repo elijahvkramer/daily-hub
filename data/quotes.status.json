@@ -1,8 +1,8 @@
 {
- "updated": "2026-09-18T11:50:08+00:00",
+ "updated": "2026-09-18T16:22:06+00:00",
  "ok": true,
- "source": "yahoo",
- "refreshed": 1,
+ "source": "cnbc",
+ "refreshed": 11,
  "symbols": 12,
  "note": "written"
 }

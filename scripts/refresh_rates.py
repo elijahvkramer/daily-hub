@@ -5,6 +5,9 @@ Feeds the Home tab's rate board (every rate plotted on one shared scale). Source
 and key-free:
   * U.S. Treasury daily par yield curve (CSV)            -> 1/3/6-mo, 1/2/5/10/30-yr
   * Freddie Mac Primary Mortgage Market Survey (CSV)     -> 30-yr and 15-yr fixed
+  * FRED graph CSV                                       -> Brent/WTI crude, dollar, S&P, Nasdaq, Dow
+  * Stooq daily CSV                                      -> VTI
+  * gold-api.com / CoinGecko                             -> gold, bitcoin, ether
 
 Runs as a companion of the Calendar Refresh workflow, so the board is at most ~30 minutes
 stale instead of once-a-morning. Never fails the job; on a bad fetch the previous file stands.
@@ -28,7 +31,12 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={ids}&cosd={cosd}"
 GOLD_API = "https://api.gold-api.com/price/XAU"
 COINGECKO = ("https://api.coingecko.com/api/v3/simple/price"
-             "?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true")
+             "?ids=bitcoin,ethereum,pax-gold&vs_currencies=usd&include_24hr_change=true")
+# Stooq serves key-free daily CSV history for US-listed tickers. It is the only free,
+# datacenter-friendly source for a plain ETF close (FRED has the indexes but no VTI, and
+# Yahoo hard-blocks GitHub Actions IPs), so the broad-market ETFs come from here.
+STOOQ_CSV = "https://stooq.com/q/d/l/?s={sym}&i=d"
+STOOQ_ROWS = [("vti.us", "VTI", "total US market")]
 
 TREASURY_CSV = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
                 "daily-treasury-rates.csv/{year}/all?type=daily_treasury_yield_curve"
@@ -132,6 +140,29 @@ def fred_series(ids):
     return out
 
 
+def stooq_last_two(sym):
+    """(latest_close, prior_close) for a Stooq symbol, or (None, None)."""
+    try:
+        rows = [r for r in csv.DictReader(io.StringIO(fetch(STOOQ_CSV.format(sym=sym), timeout=15)))
+                if (r.get("Close") or "").strip()]
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! stooq {sym}: {e}", file=sys.stderr)
+        return None, None
+    if not rows:
+        return None, None
+    try:
+        cur = float(rows[-1]["Close"])
+    except (ValueError, KeyError):
+        return None, None
+    prev = None
+    if len(rows) > 1:
+        try:
+            prev = float(rows[-2]["Close"])
+        except (ValueError, KeyError):
+            prev = None
+    return cur, prev
+
+
 def pct_note(cur, prev):
     if prev in (None, 0):
         return None
@@ -153,11 +184,18 @@ def market_prices():
     # Outlook board -- FRED publishes daily closes for all three (a day behind live, same
     # as the rest of this board), so no separate market-data key is needed. -------------
     try:
-        f = fred_series(["DCOILWTICO", "DTWEXBGS", "SP500", "NASDAQCOM", "DJIA"])
-        if "DCOILWTICO" in f:
+        f = fred_series(["DCOILBRENTEU", "DCOILWTICO", "DTWEXBGS", "SP500", "NASDAQCOM", "DJIA"])
+        # Eli, Sep 2026: the board should carry Brent, not WTI. WTI stays as the fallback so
+        # the crude row never simply disappears when the Brent series lags a day.
+        if "DCOILBRENTEU" in f:
+            cur, prev = f["DCOILBRENTEU"]
+            prices.append({"label": "Brent Crude", "value": f"${cur:,.2f}", "pct": pct_note(cur, prev),
+                           "note": "Brent"})
+            got.append("brent")
+        elif "DCOILWTICO" in f:
             cur, prev = f["DCOILWTICO"]
-            prices.append({"label": "Crude", "value": f"${cur:,.2f}", "pct": pct_note(cur, prev),
-                           "note": "WTI"})
+            prices.append({"label": "Brent Crude", "value": f"${cur:,.2f}", "pct": pct_note(cur, prev),
+                           "note": "WTI proxy"})
             got.append("wti")
         if "DTWEXBGS" in f:
             cur, prev = f["DTWEXBGS"]
@@ -182,6 +220,14 @@ def market_prices():
     except Exception as e:  # noqa: BLE001
         print(f"  ! fred: {e}", file=sys.stderr)
 
+    # --- broad-market ETFs (VTI) -------------------------------------------------------
+    for sym, label, note in STOOQ_ROWS:
+        cur, prev = stooq_last_two(sym)
+        if cur is not None:
+            prices.append({"label": label, "value": f"${cur:,.2f}", "pct": pct_note(cur, prev),
+                           "note": note})
+            got.append(label.lower())
+
     # --- gold ---------------------------------------------------------------------------
     gold = None
     try:
@@ -202,6 +248,12 @@ def market_prices():
                            "pct": round(btc.get("usd_24h_change"), 2) if isinstance(btc.get("usd_24h_change"), (int, float)) else None,
                            "note": "24h"})
             got.append("btc")
+        eth = c.get("ethereum") or {}
+        if isinstance(eth.get("usd"), (int, float)):
+            prices.append({"label": "Ethereum", "value": f"${eth['usd']:,.0f}",
+                           "pct": round(eth.get("usd_24h_change"), 2) if isinstance(eth.get("usd_24h_change"), (int, float)) else None,
+                           "note": "24h"})
+            got.append("eth")
         pax = c.get("pax-gold") or {}
         if gold is None and isinstance(pax.get("usd"), (int, float)):
             gold = {"label": "Gold", "value": f"${pax['usd']:,.0f}", "note": "PAXG / oz",

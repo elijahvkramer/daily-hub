@@ -396,13 +396,17 @@
   /* Eli, Sep 2026: "make the height of the portfolio the same as the weather." Stretch the
      row and let both children fill it, so the two cards always end on the same line no
      matter which one has more to say. */
-  .home-row.snap-wx{grid-template-columns:1.75fr 1fr;align-items:stretch}
+  /* Eli, Sep 2026: portfolio & to-dos the same width, weather & Today the same width -- both rows share one column template. */
+  .home-row.snap-wx{grid-template-columns:var(--home-cols);align-items:stretch}
   .home-row.snap-wx > div{display:flex;min-height:0}
   .home-row.snap-wx > div > *{flex:1;min-height:0}
   @media(max-width:900px){.home-row.snap-wx{grid-template-columns:1fr}}
   #panel-calendar > .bento-card,#panel-calendar > .todo-today-row,#panel-calendar > #todayTriple,#panel-calendar > .home-row{margin-top:12px}
-  .todo-today-row{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-top:12px;align-items:start}
-  .todo-today-row > div{min-width:0}
+  :root{--home-cols:minmax(0,1.6fr) minmax(0,1fr)}
+  /* stretch (not start): the to-do card never shrinks below the Today box, however short the list is */
+  .todo-today-row{display:grid;grid-template-columns:var(--home-cols);gap:14px;margin-top:12px;align-items:stretch}
+  .todo-today-row > div{min-width:0;display:flex;flex-direction:column}
+  .todo-today-row > div > .bento-card{flex:1}
   @media(max-width:900px){.todo-today-row{grid-template-columns:1fr;gap:14px}}
 
   /* urgency toggle on a to-do row */
@@ -697,7 +701,9 @@
   .dv-allday > div{display:flex;flex-wrap:wrap;gap:5px}
   .dv-chip{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:color-mix(in srgb, var(--accent, var(--gold)) 14%, transparent);
            color:var(--accent-dark, var(--gold-dark));border:1px solid color-mix(in srgb, var(--accent, var(--gold)) 28%, transparent)}
-  .dv-scroll{position:relative;height:392px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;margin:0 -4px}
+  .dv-scroll{position:relative;flex:1 1 0;min-height:392px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;margin:0 -4px;padding:10px 0 10px}  /* top padding = room for the first hour label (was clipped) */
+  .dv-sub{display:inline-flex;align-items:center;gap:5px}
+  .dv-sub .tc-empty-check{width:15px;height:15px;font-size:9px;margin-right:0}
   .dv-scroll::-webkit-scrollbar{width:6px} .dv-scroll::-webkit-scrollbar-thumb{background:var(--hairline);border-radius:3px}
   .dv-grid{position:relative;padding-left:46px}
   .dv-hr{position:absolute;left:0;right:0;height:0;border-top:1px solid var(--hairline)}
@@ -715,8 +721,10 @@
   .dv-ev.tiny b{font-size:11.5px} .dv-ev.tiny i{margin-top:0;font-size:10px}
   .dv-now{position:absolute;left:-4px;right:0;height:0;border-top:2px solid var(--down);z-index:3;pointer-events:none}
   .dv-now span{position:absolute;left:-4px;top:-5px;width:9px;height:9px;border-radius:50%;background:var(--down)}
-  @media(max-width:600px){.dv-scroll{height:340px}}
+  @media(max-width:600px){.dv-scroll{min-height:340px}}
   .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+  .todo-today-row .agenda-card{flex:1;display:flex;flex-direction:column;min-width:0}
+  .todo-today-row .agenda-card .tc-head{flex:0 0 auto}
   .agenda-card .agenda-panel{padding-top:2px}
   .today-bottom .agenda-card{margin-top:0}
   .agenda-tabs{display:flex;gap:22px;border-bottom:1px solid var(--hairline)}
@@ -1080,10 +1088,10 @@
   .hist-delta{font-weight:900;font-size:13px}
 
   /* stock detail modal */
-  .modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(20,21,24,.62);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFadeIn .15s ease-out}
+  .modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(20,21,24,.72);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFadeIn .15s ease-out}
   @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
-  .modal-card{background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:840px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px 26px;position:relative}
-  .modal-close{position:absolute;top:16px;right:16px;appearance:none;border:none;background:var(--paper);width:32px;height:32px;border-radius:50%;font-size:15px;color:var(--muted);cursor:pointer;transition:all .14s}
+  .modal-card{background:var(--modal-solid, var(--card));backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--hairline);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:840px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px 26px;position:relative}
+  .modal-close{position:absolute;top:16px;right:16px;appearance:none;border:1px solid var(--hairline);background:var(--paper);width:32px;height:32px;border-radius:50%;font-size:15px;color:var(--muted);cursor:pointer;transition:all .14s}
   .modal-close:hover{background:var(--gold-soft);color:var(--ink)}
   .sm-head{display:flex;align-items:center;gap:14px;padding-right:36px}
   .sm-head .mk{width:44px;height:44px;border-radius:10px;color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1197,13 +1205,12 @@
   .pbento>.pb-bar{grid-column:1/-1}
   .pb-pos{grid-column:1}
   .pb-side{grid-column:2;display:flex;flex-direction:column;gap:16px;min-width:0;min-height:0}
-  .pb-ai{grid-column:1}
-  .pb-cal{grid-column:2}
+  .pb-ai{grid-column:1/-1}
   .pb-hold{grid-column:1/-1}
 
   .pcard{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0;min-height:0}
   .pb-side>.pcard{flex:1 1 auto}
-  .pb-side>.pb-alloc{flex:0 0 auto}
+  .pb-side>.pb-cal{flex:0 0 auto}
   .pc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
   .pc-head h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;color:var(--ink);line-height:1.2}
   .pc-head p{margin:3px 0 0;font-size:11.5px;color:var(--muted);font-weight:600}
@@ -1240,6 +1247,7 @@
   .ptile-id{min-width:0;display:flex;flex-direction:column;gap:2px}
   .ptile-id b{font-size:17px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
   .ptile-id span{font-size:11.5px;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ptile-id .ptile-px{font-style:normal;font-size:13px;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-top:1px;font-variant-numeric:tabular-nums}
   .ptile-chg{text-align:right;white-space:nowrap;font-size:19px;font-weight:900;letter-spacing:-.02em;line-height:1.15}
   .ptile-chg small{display:block;font-size:11.5px;font-weight:800;letter-spacing:0;opacity:.75}
   .ptile-foot{display:grid;grid-template-columns:minmax(0,1fr) 104px;align-items:end;gap:12px}
@@ -1312,6 +1320,78 @@
   @media(max-width:860px){
     .donut-flex{grid-template-columns:1fr;justify-items:center}
     .psearch input{width:150px}
+  }
+
+
+  /* ---------- Allocation & Risk (full-width card) ---------- */
+  .pb-alloc{grid-column:1/-1}
+  .pb-alloc .pc-head{align-items:center}
+  .pb-alloc .alloc-grid{margin-bottom:18px}
+  .alloc-grid{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(300px,350px);gap:22px 28px;align-items:start;margin-top:4px}
+  .alloc-grid > .al-donut{grid-column:1;grid-row:1}
+  .alloc-grid > .al-legend{grid-column:2;grid-row:1}
+  .alloc-grid > .al-risk{grid-column:3;grid-row:1/3}
+  .alloc-grid > .al-more{grid-column:1/3;grid-row:2;display:flex;flex-direction:column;gap:14px;min-width:0;padding-top:16px;border-top:1px solid var(--hairline)}
+  .al-donut{display:flex;justify-content:center}
+  .al-hold{position:relative;width:230px;height:230px}
+  .al-hold svg{transform:rotate(-90deg);display:block;overflow:visible}
+  .al-hold svg circle{cursor:pointer;transition:stroke-width .18s ease, opacity .25s, stroke-dasharray .95s cubic-bezier(.2,.8,.2,1)}
+  .al-hold .dc-v{font-size:24px}
+  .al-legend{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .al-row{display:grid;grid-template-columns:10px minmax(150px,1.5fr) minmax(0,1fr) 54px 92px;align-items:center;gap:12px;padding:9px 10px;border-radius:11px;cursor:pointer;
+          border:1px solid transparent;transition:background .15s, border-color .15s, opacity .2s}
+  .al-row:hover{background:var(--paper)}
+  .al-row.active{background:var(--paper);border-color:var(--hairline)}
+  .al-row.dim{opacity:.5}
+  .al-row > i{width:10px;height:10px;border-radius:3px}
+  .al-nm{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .al-nm b{font-size:13.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .al-nm span{font-size:11px;color:var(--muted);font-weight:700;line-height:1.35}
+  .al-bar{height:7px;border-radius:99px;background:var(--hairline);overflow:hidden}
+  .al-bar u{display:block;height:100%;border-radius:99px;text-decoration:none}
+  .al-pct{font-size:13px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
+  .al-val{font-size:12.5px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;line-height:1.25}
+  .al-val small{display:block;font-size:10.5px;font-weight:800;opacity:.85}
+  .al-risk{display:flex;flex-direction:column;gap:14px;min-width:0;padding-left:26px;border-left:1px solid var(--hairline)}
+  .al-gauge{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .al-gauge svg{width:100%;max-width:250px;display:block;overflow:visible}
+  .al-needle{transform-origin:100px 100px;transform-box:view-box;transition:transform 1.1s cubic-bezier(.2,.9,.25,1)}
+  .al-score{margin-top:-6px;line-height:1;display:flex;align-items:baseline;gap:5px}
+  .al-score b{font-size:38px;font-weight:900;letter-spacing:-.03em}
+  .al-score span{font-size:12px;color:var(--muted);font-weight:800}
+  .al-band{margin-top:7px;color:#fff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+  .al-read{margin:9px 0 0;font-size:12px;line-height:1.5;color:var(--muted);font-weight:600}
+  .al-read b{color:var(--ink)}
+  .al-factors{display:flex;flex-direction:column;gap:9px}
+  .al-f-top{display:flex;justify-content:space-between;font-size:11.5px;font-weight:900;letter-spacing:.02em}
+  .al-f-top span{color:var(--ink)} .al-f-top b{font-variant-numeric:tabular-nums}
+  .al-f-bar{height:6px;border-radius:99px;background:var(--hairline);overflow:hidden;margin-top:4px}
+  .al-f-bar i{display:block;height:100%;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .al-f small{display:block;margin-top:3px;font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.35}
+  .al-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  .al-stat{background:var(--paper);border:1px solid var(--hairline);border-radius:11px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+  .al-stat span{font-size:9.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .al-stat b{font-size:15px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .al-stat small{font-size:10px;color:var(--muted);font-weight:700}
+  .al-flags{display:flex;flex-direction:column;gap:7px}
+  .al-flag{display:flex;gap:9px;font-size:12px;line-height:1.5;color:var(--ink)}
+  .al-flag i{width:7px;height:7px;border-radius:50%;margin-top:6px;flex-shrink:0;background:var(--muted)}
+  .al-flag.warn i{background:var(--down)} .al-flag.good i{background:var(--up)} .al-flag.note i{background:#E0A100}
+  @media(max-width:1180px){
+    .alloc-grid{grid-template-columns:230px minmax(0,1fr)}
+    .alloc-grid > .al-risk{grid-column:1/-1;grid-row:2;padding-left:0;border-left:none;border-top:1px solid var(--hairline);padding-top:18px;
+             display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px 26px;align-items:center}
+    .alloc-grid > .al-more{grid-column:1/-1;grid-row:3}
+  }
+  @media(max-width:720px){
+    .alloc-grid{grid-template-columns:1fr}
+    .alloc-grid > .al-donut,.alloc-grid > .al-legend,.alloc-grid > .al-risk,.alloc-grid > .al-more{grid-column:1;grid-row:auto}
+    .alloc-grid > .al-risk{grid-template-columns:1fr}
+    .al-stats{grid-template-columns:1fr 1fr}
+    .pb-alloc .pc-head{flex-wrap:wrap;gap:10px}
+    .pb-alloc .seg button{padding:7px 12px;font-size:10.5px}
+    .al-row{grid-template-columns:10px minmax(0,1fr) 50px 84px}
+    .al-row .al-bar{display:none}
   }
 
   /* states */
@@ -1881,6 +1961,7 @@
            radial-gradient(60% 55% at 55% 110%,hsl(calc(var(--h) - 44) calc(82% * var(--sat)) 89%) 0,transparent 62%),
            var(--paper);
     --glass-blur:blur(18px) saturate(1.35);
+    --modal-solid:#FFFFFF;   /* pop-ups must be fully opaque -- --card is ~60% see-through in Glass */
   }
   html.glass[data-mode="dark"]{
     --accent:hsl(var(--h) calc(92% * var(--sat)) 68%);
@@ -1893,6 +1974,7 @@
     --muted:hsl(var(--h) calc(17% * var(--sat)) 66%);
     --panel:hsl(var(--h) calc(22% * var(--sat)) 14% / .5);
     --card:hsl(var(--h) calc(22% * var(--sat)) 16% / .66);
+    --modal-solid:hsl(var(--h) calc(22% * var(--sat)) 13%);
     --hairline:rgba(255,255,255,.17);
     --glass-edge:rgba(255,255,255,.13);
     --up:#4ADE9A; --down:#FF7B72;
@@ -3722,17 +3804,10 @@ function buildTodayScheduleHTML(todayList, todayDate){
   })();
   const isToday = !todayDate || todayDate === todayCT();
 
-  // Window the grid on the actual day rather than always 12am-12am: an hour before the
-  // first thing, an hour after the last, clamped to a sane 7am-10pm default.
-  let lo = 8*60, hi = 18*60;
-  if(timed.length){
-    lo = Math.min(...timed.map(e => e.start)) - 60;
-    hi = Math.max(...timed.map(e => e.end)) + 60;
-  }
-  if(isToday){ lo = Math.min(lo, nowMin - 30); hi = Math.max(hi, nowMin + 60); }
-  lo = Math.max(0, Math.floor(lo / 60) * 60);
-  hi = Math.min(24*60, Math.ceil(hi / 60) * 60);
-  if(hi - lo < 6*60) hi = Math.min(24*60, lo + 6*60);
+  // Eli, Sep 2026: "I should still be able to scroll basically the whole day even if there's only
+  // one event" -- so the grid is always the full 12am-12am day (it used to shrink to a window around
+  // the events, and clipped the first hour label). wireDayView() opens it on the now line / first event.
+  const lo = 0, hi = 24*60;
   const span = hi - lo;
   const y = m => (m - lo) / 60 * DAY_HOUR_PX;
 
@@ -3760,9 +3835,12 @@ function buildTodayScheduleHTML(todayList, todayDate){
   // Calendar -- if there's nothing on the calendar you can still show the green check, but it
   // should still show the timing throughout the day." So the hour grid always renders; an
   // empty day just gets the check banner above it instead of replacing it.
+  const dateTxt = todayDate ? new Date(todayDate + "T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}) : "";
+  const countTxt = list.length
+    ? `${list.length} ${list.length===1?"item":"items"}`
+    : `<span class="tc-empty-check">✓</span>Nothing scheduled`;
   return `<div class="bento-card agenda-card">
-    <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub">${list.length ? `${list.length} ${list.length===1?"item":"items"}` : ""}</span></span></div>
-    ${!list.length ? `<div class="tc-empty tc-empty-inline"><span class="tc-empty-check">✓</span>Nothing on the calendar today.</div>` : ""}
+    <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub dv-sub">${dateTxt ? esc(dateTxt) + (countTxt ? " · " : "") : ""}${countTxt}</span></span></div>
     ${allDayBand}
     <div class="dv-scroll" id="dvScroll"><div class="dv-grid" style="height:${span/60*DAY_HOUR_PX}px">
       ${hours}<div class="dv-body">${blocks}${nowLine}</div>
@@ -3778,8 +3856,14 @@ function wireDayView(root){
   const sc = (root || document).querySelector("#dvScroll");
   if(!sc || sc.dataset.scrolled) return;
   sc.dataset.scrolled = "1";
-  const mark = sc.querySelector(".dv-now") || sc.querySelector(".dv-ev");
-  if(mark) sc.scrollTop = Math.max(0, mark.offsetTop - sc.clientHeight * 0.35);
+  /* Open on a whole hour so the top hour label is never sliced in half: an hour before the now line
+     (today), else an hour before the first event, else 7am. The grid has 10px of top padding, so an hour
+     line sits at 10 + hour*DAY_HOUR_PX; land 12px above it so its label is fully visible. */
+  const nowEl = sc.querySelector(".dv-now"), evEl = sc.querySelector(".dv-ev");
+  const yOf = el => el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+  const anchorPx = nowEl ? yOf(nowEl) : (evEl ? yOf(evEl) : 8 * DAY_HOUR_PX + 10);
+  const hour = Math.max(0, Math.floor((anchorPx - 10) / DAY_HOUR_PX) - 1);
+  sc.scrollTop = Math.max(0, 10 + hour * DAY_HOUR_PX - 12);
 }
 
 /* ---- to-do item extras: expand/collapse state is a pure client-side UI
@@ -4360,7 +4444,12 @@ function refreshCalendarDueOverlay(root, d, todosState){
   const { today: dueToday, radar: dueRadar } = todoDueAsCalItems(dueEntries, d.date);
   const mergedToday = [...(d.today||[]), ...dueToday];
   const mergedRadar = [...(d.radar||[]), ...dueRadar];
-  if(todaySlot) todaySlot.innerHTML = buildTodayScheduleHTML(mergedToday, d.date);
+  if(todaySlot){
+    const oldSc = todaySlot.querySelector("#dvScroll"), keep = oldSc ? oldSc.scrollTop : null;
+    todaySlot.innerHTML = buildTodayScheduleHTML(mergedToday, d.date);
+    if(keep != null){ const nsc = todaySlot.querySelector("#dvScroll"); if(nsc){ nsc.scrollTop = keep; nsc.dataset.scrolled = "1"; } }
+    else wireDayView(todaySlot);
+  }
   if(triple){
     triple.innerHTML = `<div class="bento-card cal-card cal-full">${buildMiniCal(mergedToday, mergedRadar, d.date)}</div>`;
     const calCard = triple.querySelector(".cal-card");
@@ -5541,8 +5630,16 @@ function quoteIsToday(ts){
   const et = d => d.toLocaleDateString("en-CA", {timeZone:"America/New_York"});
   return et(new Date(ts*1000)) === et(new Date());
 }
+/* Cost-basis overrides (Eli, Sep 2026): total dollars paid for a ticker, applied on top of the
+   encrypted holdings export. BTC is $1,000 all-in; if it's ever held in more than one account the
+   $1,000 is split by share count so the total stays exactly $1,000. */
+const COST_BASIS_OVERRIDE = { BTC: 1000 };
 function pCompute(){
+  const ovShares = {};
+  HOLDINGS.positions.forEach(p => { if(COST_BASIS_OVERRIDE[p.ticker] != null) ovShares[p.ticker] = (ovShares[p.ticker]||0) + p.shares; });
   P.pos = HOLDINGS.positions.map(p => {
+    const ov = p.type !== "cash" ? COST_BASIS_OVERRIDE[p.ticker] : null;
+    if(ov != null){ p = {...p, avgCost: ovShares[p.ticker] > 0 ? ov / ovShares[p.ticker] : null}; }
     const hasCost = p.avgCost != null && p.type !== "cash";
     let price = p.snapshotPrice, prev = p.snapshotPrice, src = "snap";
     if(p.type === "cash"){ price = 1; prev = 1; src = "cash"; }
@@ -5605,33 +5702,109 @@ function pGroups(list){
   return Object.values(m).sort((a,b) => b.value - a.value);
 }
 
-/* Sector map for the Allocation donut -- Eli: add tickers here as your
-   holdings change. Unmapped tickers fall under "Other". */
-const TICKER_SECTOR = {
-  AAPL:"Technology", MSFT:"Technology", GOOGL:"Technology", GOOG:"Technology", NVDA:"Technology", AVGO:"Technology", CRM:"Technology", ORCL:"Technology",
-  TSLA:"Automotive", RIVN:"Automotive", F:"Automotive", GM:"Automotive",
-  NFLX:"Communication Services", SPOT:"Communication Services", META:"Communication Services", DIS:"Communication Services", CMCSA:"Communication Services",
-  AMZN:"Consumer Discretionary", NKE:"Consumer Discretionary", ABNB:"Consumer Discretionary", SBUX:"Consumer Discretionary", HD:"Consumer Discretionary", TGT:"Consumer Discretionary", MCD:"Consumer Discretionary",
-  PYPL:"Financials", V:"Financials", MA:"Financials", JPM:"Financials", BAC:"Financials", SQ:"Financials", GS:"Financials",
-  BTC:"Crypto", ETH:"Crypto", SOL:"Crypto", DOGE:"Crypto",
-  JNJ:"Healthcare", UNH:"Healthcare", PFE:"Healthcare", LLY:"Healthcare",
-  XOM:"Energy", CVX:"Energy"
+/* ---------------------------------------------------------------------------
+   Sector / type classification for the Allocation card.
+   Eli, Sep 2026: INTC, IBM, BAI, SPY, BPTRX were all landing in "Other". Now every position is
+   resolved in four passes, first hit wins:
+     1. STOCK_SECTORS  -- individual companies by ticker (GICS-style sectors)
+     2. FUND_SECTORS   -- ETFs / mutual funds by what they hold (BAI = AI & tech ETF -> Technology,
+                          SPY = S&P 500 -> Broad Market, BPTRX = Baron Partners -> Growth Funds ...)
+     3. sectorFromName -- keyword read of the position's name for anything not listed above
+     4. "Other"        -- only if all of that misses
+   To fix or add one, put the ticker on the right line below.
+   --------------------------------------------------------------------------- */
+const STOCK_SECTORS = {
+  "Technology": "AAPL MSFT GOOGL GOOG NVDA AVGO CRM ORCL INTC IBM AMD QCOM TXN MU AMAT LRCX KLAC ADBE NOW INTU CSCO ACN PANW SNPS CDNS ANET MRVL ADI NXPI ON MCHP SMCI DELL HPQ HPE PLTR SNOW DDOG NET CRWD ZS FTNT WDAY TEAM SHOP TSM ASML ARM SAP WDC STX NTAP GLW APH TER MPWR ADSK OKTA TWLO U PATH AI SOUN IONQ RGTI",
+  "Communication Services": "NFLX SPOT META DIS CMCSA T VZ TMUS WBD PARA CHTR EA TTWO RBLX SNAP PINS RDDT MTCH LYV ROKU FOXA NWSA OMC",
+  "Consumer Discretionary": "AMZN NKE ABNB SBUX HD TGT MCD LOW BKNG MAR HLT CMG LULU DKNG DASH ETSY EBAY TJX ROST YUM DPZ RCL CCL NCLH DECK ULTA BBY ORLY AZO GRMN EXPE CVNA CHWY WYNN LVS MGM",
+  "Automotive": "TSLA RIVN F GM LCID NIO XPEV LI STLA TM HMC RACE",
+  "Financials": "PYPL V MA JPM BAC SQ XYZ GS MS WFC C AXP BLK SCHW BRK-B SPGI MCO CME ICE COF USB PNC TFC AIG MET PRU ALL PGR CB TRV HOOD SOFI AFRM KKR BX APO AJG MMC AON TROW",
+  "Healthcare": "JNJ UNH PFE LLY MRK ABBV TMO ABT DHR BMY AMGN GILD CVS CI ELV HUM ISRG MDT SYK BSX VRTX REGN MRNA BIIB ZTS HCA NVO HIMS DXCM IDXX EW BDX",
+  "Energy": "XOM CVX COP OXY SLB EOG PSX MPC VLO KMI WMB HAL DVN BP SHEL FANG OKE TRGP",
+  "Industrials": "BA CAT DE GE HON UPS FDX LMT RTX NOC GD LUV DAL UAL AAL UNP CSX NSC MMM ETN EMR ITW WM RSG UBER LYFT PH CMI PCAR JCI TT CARR OTIS GEV AXON",
+  "Consumer Staples": "KO PEP PG WMT COST PM MO MDLZ CL KMB GIS KHC STZ MNST TSN HSY KR SYY EL KDP CELH",
+  "Utilities": "NEE DUK SO D AEP EXC SRE XEL VST CEG PCG ED EIX",
+  "Real Estate": "AMT PLD CCI EQIX PSA O SPG WELL DLR VICI AVB EQR",
+  "Materials": "LIN SHW APD FCX NEM NUE DOW DD ECL PPG MLM VMC ALB",
+  "Crypto": "BTC ETH SOL DOGE XRP ADA LTC AVAX LINK BCH MSTR COIN IBIT FBTC GBTC ETHA BITO"
 };
-function tickerSector(ticker){ return TICKER_SECTOR[ticker] || "Other"; }
+const FUND_SECTORS = {
+  "Broad Market": "SPY IVV VOO VTI ITOT SPLG SCHB SCHX QQQ QQQM DIA IWM IWB RSP VV MGC SPTM FXAIX FSKAX FZROX FNILX SWPPX SWTSX VFIAX VTSAX VTI VONE",
+  "Technology": "BAI XLK VGT SMH SOXX ARKK ARKW ARKQ ARKG AIQ BOTZ IGV FTEC SKYY CIBR ROBO QTEC TECL FNGS FNGU SOXL WCLD CLOU",
+  "Communication Services": "XLC VOX FCOM",
+  "Consumer Discretionary": "XLY VCR FDIS",
+  "Consumer Staples": "XLP VDC",
+  "Financials": "XLF VFH KBE KRE",
+  "Healthcare": "XLV VHT IBB XBI",
+  "Energy": "XLE VDE OIH XOP",
+  "Industrials": "XLI VIS ITA",
+  "Utilities": "XLU VPU",
+  "Real Estate": "VNQ XLRE IYR SCHH",
+  "Materials": "XLB VAW GDX GDXJ",
+  "Bonds & Income": "BND AGG TLT IEF SHY LQD HYG JNK BNDX VCIT VCSH MUB TIP SCHZ BIV BSV GOVT JPST SGOV BIL USFR",
+  "International": "VXUS VEA VWO EFA EEM IEFA IXUS VGK EWJ FXI MCHI IEMG ACWX",
+  "Dividend & Value": "SCHD VYM DGRO VIG DVY HDV VTV",
+  "Commodities": "GLD IAU SLV GLDM PDBC USO DBC",
+  "Growth Funds": "BPTRX BPTIX BPTUX VUG IWF MGK SCHG"
+};
+const TICKER_SECTOR = {}, FUND_TICKERS = new Set();
+Object.entries(STOCK_SECTORS).forEach(([sec, str]) => str.split(/\s+/).forEach(t => { TICKER_SECTOR[t] = sec; }));
+Object.entries(FUND_SECTORS).forEach(([sec, str]) => str.split(/\s+/).forEach(t => { TICKER_SECTOR[t] = sec; FUND_TICKERS.add(t); }));
+/* Keyword read of a position's name -- the safety net for tickers not listed above. Order matters. */
+const NAME_SECTORS = [
+  [/bitcoin|ethereum|crypto|blockchain/i,                          "Crypto"],
+  [/treasury|bond|fixed[- ]income|aggregate|municipal|money market/i, "Bonds & Income"],
+  [/gold|silver|commodit|precious/i,                                "Commodities"],
+  [/semiconductor|software|technolog|\btech\b|\bA\.?I\.?\b|artificial|cyber|cloud|robot|internet|innovation/i, "Technology"],
+  [/bank|financ|insur|capital markets|brokerage|payments/i,          "Financials"],
+  [/health|pharma|biotech|medical|therapeutic|genom|drug/i,          "Healthcare"],
+  [/energy|\boil\b|petrol|pipeline|natural gas|drilling/i,           "Energy"],
+  [/utilit/i,                                                        "Utilities"],
+  [/real estate|\breit\b|realty|properties/i,                        "Real Estate"],
+  [/mining|metals|materials|chemical|steel/i,                        "Materials"],
+  [/industrial|aerospace|defense|transport|airline|machinery/i,      "Industrials"],
+  [/consumer staples|food|beverage|grocery/i,                        "Consumer Staples"],
+  [/media|entertainment|streaming|telecom|communication|social/i,    "Communication Services"],
+  [/automo|electric vehicle|\bEV\b|motor/i,                          "Automotive"],
+  [/international|emerging|europe|asia|china|japan|ex[- ]?u\.?s|world ex|foreign/i, "International"],
+  [/dividend|value/i,                                                "Dividend & Value"],
+  [/growth|partners|opportunit/i,                                    "Growth Funds"],
+  [/s&p|\b500\b|total (stock )?market|russell|nasdaq|\bindex\b|large[- ]cap|broad/i, "Broad Market"]
+];
+function sectorFromName(name){
+  if(!name) return null;
+  for(const [re, sec] of NAME_SECTORS) if(re.test(name)) return sec;
+  return null;
+}
+/* Sector of one position (pass the whole position so the name-based fallback can work). */
+function sectorOf(p){
+  if(!p) return "Other";
+  if(p.type === "cash") return "Cash";
+  const t = String(p.ticker || "").toUpperCase().replace(/\./g, "-");
+  return TICKER_SECTOR[t] || TICKER_SECTOR[t.replace(/-USD$/, "")] || sectorFromName(p.name) || "Other";
+}
+function tickerSector(ticker){ return sectorOf({ticker}); }
+/* Coarse asset type for the "Type" view. */
+function assetClass(p){
+  if(!p) return "Other";
+  if(p.type === "cash") return "Cash";
+  const sec = sectorOf(p), t = String(p.ticker || "").toUpperCase().replace(/\./g, "-");
+  if(sec === "Crypto") return "Crypto";
+  if(FUND_TICKERS.has(t) || /\b(etf|fund|trust|index)\b/i.test(p.name || "")) return "ETFs & Funds";
+  return "Stocks";
+}
+/* Sectors that are themselves a spread of many holdings -- a fund in one of these does not count as a
+   concentrated bet, and can't be "your biggest sector". */
+const DIVERSIFIED_SECTORS = new Set(["Broad Market", "Bonds & Income", "International", "Dividend & Value"]);
 const SECTOR_COLORS = {
-  "Technology":"#0E6CD8", "Consumer Discretionary":"#8B5CF6", "Communication Services":"#0EA5A0",
-  "Financials":"#12855C", "Automotive":"#E37B1C", "Crypto":"#8A6D2F", "Healthcare":"#DB2777",
-  "Energy":"#B45309", "Other":"#94A3B8"
+  "Technology":"#0E6CD8", "Communication Services":"#0EA5A0", "Consumer Discretionary":"#8B5CF6", "Automotive":"#E37B1C",
+  "Financials":"#12855C", "Healthcare":"#DB2777", "Energy":"#B45309", "Industrials":"#64748B", "Consumer Staples":"#65A30D",
+  "Utilities":"#0891B2", "Real Estate":"#C026D3", "Materials":"#78716C", "Crypto":"#D4A017",
+  "Broad Market":"#6366F1", "Growth Funds":"#A78BFA", "Bonds & Income":"#7C9A6B", "International":"#38BDF8",
+  "Dividend & Value":"#F472B6", "Commodities":"#EAB308",
+  "Stocks":"#0E6CD8", "ETFs & Funds":"#6366F1", "Cash":"#B6C2CF", "Other":"#8C96A3"
 };
 function gcolor(key){ return SECTOR_COLORS[key] || pcolor(key); }
-function pGroupsBySector(list){
-  const m = {};
-  list.forEach(p => { if(p.type === "cash") return; const k = tickerSector(p.ticker);
-    if(!m[k]) m[k] = {ticker:k, name:k, value:0, gain:0, hasGain:false};
-    m[k].value += p.marketValue;
-    if(p.gainDollar != null){ m[k].gain += p.gainDollar; m[k].hasGain = true; } });
-  return Object.values(m).sort((a,b) => b.value - a.value);
-}
 
 /* Real company logos, by ticker. Tries a ticker-keyed logo CDN first, then
    (for the tickers listed below) a domain-keyed fallback through Clearbit's
@@ -5687,7 +5860,6 @@ function renderPortfolio(){
 
   const statusTxt = pStatusText();
   const ledCls = pLedClass();
-  const groups = pGroupsBySector(pView());
 
   /* ---------------------------------------------------------------
      Bento grid. Everything below lives in one 2-column mosaic instead
@@ -5720,44 +5892,43 @@ function renderPortfolio(){
     <p class="pc-cap">One card per holding, best to worst by today's move. The big number is today; underneath it is market value, this position's share of the current view and its all-time gain. The line is the last 30 trading days, the bar across the bottom is position size. Click a card for the full detail view.</p>
   </section>`;
 
-  /* side stack: allocation donut over the calendar */
+  /* side stack: portfolio value history over the calendar */
   const MON3 = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
   const calToday = new Date(); calToday.setHours(0,0,0,0);
   const calUpcoming = PORTFOLIO_EVENTS.map(e => ({...e, d:new Date(e.date+"T00:00:00")}))
     .filter(e => e.d >= calToday).sort((a,b) => a.d-b.d).slice(0,4);
 
   h += `<div class="pb-side">
-    <section class="pcard pb-alloc">
-      <header class="pc-head"><div><h4>Allocation</h4><p>By sector</p></div></header>
-      <div class="donut-flex donut-mini">
-        <div class="donut-hold"><svg width="132" height="132" viewBox="0 0 250 250" id="pDonut"></svg>
-          <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(t.value,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
-        <div class="plegend" id="pLegend"></div>
-      </div>
-      <p class="pc-cap">Grouped by sector — click a slice to filter the table.</p>
-    </section>
     <section class="pcard pb-hist">
       <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
-      <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+      <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"Today")===r?"on":""}">${r}</button>`).join("")}</div>
       <div class="pb-histhead" id="histHead"></div>
       <div id="histBody" style="position:relative"></div>
       <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
     </section>
+    <section class="pcard pb-cal">
+      <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
+      <div class="pb-cal-list">`
+        + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
+            <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
+            <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
+          : `<p class="pb-empty">No upcoming events on record.</p>`)
+      + `</div>
+    </section>
   </div>`;
+
+  /* allocation + risk -- full width (Eli, Sep 2026: "make it cooler, add a risk score"); drawAlloc() fills #allocBody */
+  h += `<section class="pcard pb-alloc">
+    <header class="pc-head">
+      <div><h4>Allocation &amp; Risk</h4><p>What you own, and how hard it can swing</p></div>
+      <div class="seg" id="allocSeg">${[["sector","Sector"],["holding","Holding"],["class","Type"]].map(([k,l]) => `<button data-v="${k}" class="${(P.allocView||"sector")===k?"on":""}">${l}</button>`).join("")}</div>
+    </header>
+    <div class="alloc-grid" id="allocBody"><div class="spinner" style="margin:40px auto"></div></div>
+    <p class="pc-cap">Click any slice or row to filter the Holdings table. Sectors are read from each ticker (ETFs by what they hold — e.g. BAI is an AI &amp; tech fund, so it counts as Technology). The risk score is an educational estimate from the last year of daily prices, your position sizes and how concentrated they are — not a forecast and not investment advice.</p>
+  </section>`;
 
   /* AI insight -- renderInsightCard() fills this card in; nothing is pre-generated */
   h += `<section class="pcard pb-ai" id="hnews"></section>`;
-
-  /* earnings & events calendar (swapped with Portfolio Value, Sep 2026) */
-  h += `<section class="pcard pb-cal">
-    <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
-    <div class="pb-cal-list">`
-      + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
-          <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
-          <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
-        : `<p class="pb-empty">No upcoming events on record.</p>`)
-    + `</div>
-  </section>`;
 
   /* holdings table */
   h += `<section class="pcard pb-hold">
@@ -5783,6 +5954,11 @@ function renderPortfolio(){
     panel.querySelectorAll("#histSeg button").forEach(x => x.classList.toggle("on", x === b));
     renderHistory();
   }));
+  panel.querySelectorAll("#allocSeg button").forEach(b => b.addEventListener("click", () => {
+    P.allocView = b.dataset.v; P.filter = null;
+    panel.querySelectorAll("#allocSeg button").forEach(x => x.classList.toggle("on", x === b));
+    pSyncFilterTag(); drawAlloc(); pTable();
+  }));
   const backBtn = $("#pBackToday");
   if(backBtn) backBtn.addEventListener("click", () => animatedTabSwitch(async () => {
     S.tab = "calendar"; localStorage.setItem("dh-tab","calendar");
@@ -5804,7 +5980,7 @@ function renderPortfolio(){
   const si = $("#pSearch");
   si.addEventListener("input", e => { P.search = e.target.value; pTable(); });
 
-  drawDonut(groups, t, acctLabel);
+  drawAlloc();
   drawPTiles(t);
   pHead(); pTable();
   renderHistory();
@@ -5945,7 +6121,7 @@ async function loadHistory(){
   P.histStamp = Date.now();
   if(Object.keys(P.histData).length) pHistCacheSave(P.histData);
   P.histLoading = false; P.histReady = true;
-  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); }
+  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc(); }
 }
 
 /* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
@@ -6100,7 +6276,7 @@ function histSeries(){
 const HIST_RANGES = {"1W":7, "1M":31, "3M":93, "6M":186, "1Y":370, "5Y":1856};
 function renderHistory(){
   const body = $("#histBody"); if(!body) return;
-  const range = P.histRange || "1M";
+  const range = P.histRange || "Today";
   if(range === "Today"){ renderHistoryIntraday(body); return; }
   if(!P.histReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadHistory(); return; }
   const all = histSeries();
@@ -6169,7 +6345,7 @@ function renderHistory(){
    once you're already on the full portfolio page. Respects the account filter (pView()),
    unlike the Home snapshot which always shows every account. */
 function renderHistoryIntraday(body){
-  if(!P.intraReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadIntraday().then(() => { if(S.tab === "portfolio" && (P.histRange||"1M") === "Today") renderHistory(); }); return; }
+  if(!P.intraReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadIntraday().then(() => { if(S.tab === "portfolio" && (P.histRange||"Today") === "Today") renderHistory(); }); return; }
   const ser = intradaySeries(pView());
   const head = $("#histHead");
   if(!ser){ body.innerHTML = `<div class="empty">${P.fetching ? "Loading today's session…" : "Today's session data isn't available yet — try Refresh."}</div>`; if(head) head.textContent = ""; return; }
@@ -6466,7 +6642,7 @@ function insBuild(p, st, spy){
     T("flat", `<b>Trend.</b> Daily price history for ${esc(p.ticker)} isn't available from the quote feed, so the moving-average and range read is skipped for this one.`);
   }
 
-  const sector = tickerSector(p.ticker);
+  const sector = sectorOf(p);
   if(sector !== "Other") T("flat", `<b>Sector.</b> Sits in your ${esc(sector)} sleeve on the allocation donut.`);
 
   const ev = PORTFOLIO_EVENTS.filter(e => e.ticker === p.ticker && new Date(e.date + "T00:00:00") >= new Date(new Date().setHours(0,0,0,0)))
@@ -6495,12 +6671,21 @@ function renderInsightCard(){
       <span class="ai-head-r">On demand · nothing pre-written</span>
     </div>
     <div class="ins-pick" id="insPick">${chips || `<span class="ins-empty">No holdings in this view.</span>`}</div>
-    <div id="insBody"><p class="ins-empty">Pick any holding above and a read is written on the spot — today's move against your cost basis, where the price sits versus its moving averages and 52-week range, how it compares to the S&amp;P, how much it usually moves, and anything your published briefs said about it.</p></div>`;
-  el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => insGenerate(b.dataset.ins)));
+    <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above and a read is written on the spot — today's move against your cost basis, where the price sits versus its moving averages and 52-week range, how it compares to the S&amp;P, how much it usually moves, and anything your published briefs said about it.</p>`}</div>`;
+  el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => {
+    if(P.insTicker === b.dataset.ins) insClear(); else insGenerate(b.dataset.ins);   // click the lit chip again = hide the read
+  }));
   if(P.insTicker && list.some(p => p.ticker === P.insTicker)) insGenerate(P.insTicker);
 }
+/* Un-pick: drop the selection, cancel any read still being written, and blank everything beneath the chips. */
+function insClear(){
+  P.insTicker = null; P.insCleared = true;
+  P.insToken = (P.insToken || 0) + 1;
+  document.querySelectorAll("#insPick .ins-chip").forEach(c => c.classList.remove("on"));
+  const body = $("#insBody"); if(body) body.innerHTML = "";
+}
 async function insGenerate(ticker){
-  P.insTicker = ticker;
+  P.insTicker = ticker; P.insCleared = false;
   const body = $("#insBody"); if(!body) return;
   document.querySelectorAll("#insPick .ins-chip").forEach(c => c.classList.toggle("on", c.dataset.ins === ticker));
   body.innerHTML = `<div class="spinner" style="margin:26px auto"></div>`;
@@ -6536,33 +6721,257 @@ async function insGenerate(ticker){
   if(rb) rb.addEventListener("click", () => insGenerate(ticker));
 }
 
-function drawDonut(groups, t, acctLabel){
-  const svg = $("#pDonut"); if(!svg) return;
-  const R = 97, C = 2*Math.PI*R, cx = 125, cy = 125;
-  let off = 0; svg.innerHTML = "";
-  const resetCenter = () => { $("#dcL").textContent = "Total"; $("#dcV").textContent = usd(t.value,0); $("#dcS").textContent = acctLabel; };
-  groups.forEach(g => {
-    const frac = t.value > 0 ? g.value/t.value : 0;
-    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",R);
-    c.setAttribute("fill","none"); c.setAttribute("stroke",gcolor(g.ticker)); c.setAttribute("stroke-width",26);
-    c.setAttribute("stroke-dasharray", `${Math.max(0,frac*C-2)} ${C}`);
-    c.setAttribute("stroke-dashoffset", -off*C);
-    if(P.filter && P.filter !== g.ticker) c.setAttribute("opacity",".3");
-    c.addEventListener("mouseenter", () => { c.setAttribute("stroke-width",32);
-      $("#dcL").textContent = g.ticker; $("#dcV").textContent = usd(g.value,0);
-      $("#dcS").textContent = (t.value>0?(g.value/t.value*100).toFixed(1):0) + "% of view"; });
-    c.addEventListener("mouseleave", () => { c.setAttribute("stroke-width",26); resetCenter(); });
-    c.addEventListener("click", () => { P.filter = P.filter === g.ticker ? null : g.ticker; renderPortfolio(); });
-    svg.appendChild(c); off += frac;
+/* ---------------------------------------------------------------------------
+   Allocation & Risk. One card: donut + ranked legend on the left, a 0-100 risk score with its
+   five ingredients on the right. Everything is computed in the browser from what the page already
+   holds (share counts, live prices, and the five-year daily closes in P.histData).
+   --------------------------------------------------------------------------- */
+function pSyncFilterTag(){
+  const f = $("#pFtag"); if(!f) return;
+  f.textContent = `Filtered: ${P.filter || ""} ✕`;
+  f.classList.toggle("show", !!P.filter);
+}
+function pSetFilter(k){
+  P.filter = P.filter === k ? null : k;
+  pSyncFilterTag(); drawAlloc(); pTable();
+}
+function allocGroups(list, mode){
+  const m = {};
+  list.forEach(p => {
+    const key = mode === "holding" ? (p.type === "cash" ? "Cash" : p.ticker) : mode === "class" ? assetClass(p) : sectorOf(p);
+    const g = m[key] || (m[key] = {key, value:0, day:0, gain:0, cost:0, tickers:[]});
+    g.value += p.marketValue; g.day += p.dayDollar;
+    if(p.gainDollar != null){ g.gain += p.gainDollar; g.cost += p.costBasis; }
+    if(p.type !== "cash" && !g.tickers.includes(p.ticker)) g.tickers.push(p.ticker);
   });
-  const leg = $("#pLegend"); leg.innerHTML = "";
+  return Object.values(m).filter(g => g.value > 0).sort((a,b) => b.value - a.value);
+}
+
+/* ---- risk model ---- */
+const RISK_BANDS = [
+  {max:20,  label:"Conservative",          col:"#12855C"},
+  {max:40,  label:"Moderately conservative", col:"#6BB04A"},
+  {max:60,  label:"Moderate",              col:"#E0A100"},
+  {max:80,  label:"Aggressive",            col:"#EA7A1F"},
+  {max:101, label:"Very aggressive",       col:"#D2453C"}
+];
+const riskBand = sc => RISK_BANDS.find(b => sc < b.max) || RISK_BANDS[RISK_BANDS.length-1];
+function riskModel(list){
+  const invPos = list.filter(p => p.type !== "cash" && p.marketValue > 0);
+  const cash = list.filter(p => p.type === "cash").reduce((s,p) => s + p.marketValue, 0);
+  const invTotal = invPos.reduce((s,p) => s + p.marketValue, 0), total = invTotal + cash;
+  if(!invPos.length || total <= 0) return null;
+
+  const byT = {};
+  invPos.forEach(p => {
+    const g = byT[p.ticker] || (byT[p.ticker] = {ticker:p.ticker, sym:p.fetchSymbol || p.ticker, sector:sectorOf(p), cls:assetClass(p), mv:0});
+    g.mv += p.marketValue;
+  });
+  const H = Object.values(byT).sort((a,b) => b.mv - a.mv).map(g => ({...g, w:g.mv/invTotal}));   // w = share of invested dollars
+  const isDiv = h => DIVERSIFIED_SECTORS.has(h.sector);
+  const hhi = H.reduce((s,h) => s + h.w*h.w * (isDiv(h) ? 0.1 : 1), 0);   // a broad fund counts as ~10 names
+  const nEff = hhi > 0 ? 1/hhi : H.length;
+  const singles = H.filter(h => !isDiv(h));
+  const topSingle = singles[0] || null;
+  const sec = {}; singles.forEach(h => { sec[h.sector] = (sec[h.sector] || 0) + h.w; });
+  const topSecEntry = Object.entries(sec).sort((a,b) => b[1] - a[1])[0] || null;
+  const cryptoW = H.filter(h => h.cls === "Crypto").reduce((s,h) => s + h.w, 0);
+  const divW = H.filter(isDiv).reduce((s,h) => s + h.w, 0);
+
+  /* price-based stats: one year of daily returns, constant weights, aligned on SPY's trading days */
+  let vol = null, beta = null, maxDD = null, volBy = {}, badDayPct = null;
+  const hd = P.histData;
+  if(hd){
+    const dkey = ts => new Date(ts*1000).toISOString().slice(0,10);
+    let spineSym = hd["SPY"] && hd["SPY"].t && hd["SPY"].t.length > 120 ? "SPY" : null;
+    if(!spineSym) spineSym = H.map(h => h.sym).filter(sy => hd[sy] && hd[sy].t).sort((a,b) => hd[b].t.length - hd[a].t.length)[0] || null;
+    if(spineSym){
+      const sp = hd[spineSym].t.map((ts,i) => ({d:dkey(ts), c:hd[spineSym].c[i]})).filter(x => x.c != null).slice(-253);
+      const dates = sp.map(x => x.d);
+      const asRets = arr => arr.map((v,i) => (i && v != null && arr[i-1] != null && arr[i-1] > 0) ? v/arr[i-1] - 1 : null);
+      const series = sym => {
+        const h = hd[sym]; if(!h || !h.t) return null;
+        const m = {}; h.t.forEach((ts,i) => { if(h.c[i] != null) m[dkey(ts)] = h.c[i]; });
+        let last = null; return dates.map(d => { if(m[d] != null) last = m[d]; return last; });
+      };
+      const sd = a => { const v = a.filter(x => x != null); if(v.length < 30) return null; const mu = v.reduce((s,x)=>s+x,0)/v.length; return Math.sqrt(v.reduce((s,x)=>s+(x-mu)*(x-mu),0)/(v.length-1)); };
+      const covered = [];
+      H.forEach(h => {
+        const r = series(h.sym); if(!r) return;
+        const rr = asRets(r), s1 = sd(rr);
+        if(s1 == null) return;
+        volBy[h.ticker] = s1 * Math.sqrt(252);
+        covered.push({h, rr});
+      });
+      if(covered.length){
+        const covTotal = covered.reduce((s,c) => s + c.h.mv, 0) + cash;
+        const rp = dates.map((_, t) => t === 0 ? null : covered.reduce((s,c) => s + (c.h.mv/covTotal) * (c.rr[t] == null ? 0 : c.rr[t]), 0));
+        const rpv = rp.filter(x => x != null), sdP = sd(rp);
+        if(sdP != null){
+          vol = sdP * Math.sqrt(252);
+          badDayPct = 1.645 * sdP;
+          const rs = asRets(sp.map(x => x.c));
+          const pairs = rp.map((x,i) => [x, rs[i]]).filter(([a,b]) => a != null && b != null);
+          if(pairs.length > 30){
+            const ma = pairs.reduce((s,[a])=>s+a,0)/pairs.length, mb = pairs.reduce((s,[,b])=>s+b,0)/pairs.length;
+            const cov = pairs.reduce((s,[a,b])=>s+(a-ma)*(b-mb),0), vb = pairs.reduce((s,[,b])=>s+(b-mb)*(b-mb),0);
+            if(vb > 0) beta = cov/vb;
+          }
+          let idx = 1, peak = 1, dd = 0;
+          rpv.forEach(x => { idx *= (1 + x); peak = Math.max(peak, idx); dd = Math.min(dd, idx/peak - 1); });
+          maxDD = dd;
+        }
+      }
+    }
+  }
+  const specW = cryptoW + H.filter(h => h.cls !== "Crypto" && volBy[h.ticker] != null && volBy[h.ticker] > 0.50).reduce((s,h) => s + h.w, 0);
+
+  const lin = (x,a,b) => Math.max(0, Math.min(100, (x-a)/(b-a)*100));
+  const pc = x => (x*100).toFixed(0) + "%";
+  const F = [];
+  if(vol != null)   F.push({k:"vol",  label:"Volatility",    w:.30, score:lin(vol, .05, .35), note:`swings about ${(vol*100).toFixed(0)}% a year`});
+  if(maxDD != null) F.push({k:"dd",   label:"Drawdown",      w:.15, score:lin(-maxDD, .05, .35), note:`worst peak-to-trough drop of ${(maxDD*100).toFixed(0)}% this year`});
+  F.push({k:"conc", label:"Concentration", w:.25,
+    score: .5*lin(16 - nEff, 0, 14) + .5*lin(topSingle ? topSingle.w : 0, .10, .45),
+    note: `≈${nEff.toFixed(1)} effective holdings` + (topSingle ? `, largest single name ${topSingle.ticker} at ${pc(topSingle.w)}` : "")});
+  F.push({k:"sector", label:"Sector tilt", w:.15, score: lin(topSecEntry ? topSecEntry[1] : 0, .25, .70),
+    note: topSecEntry ? `${topSecEntry[0]} is ${pc(topSecEntry[1])} of invested dollars` : "spread across broad funds"});
+  F.push({k:"spec", label:"Speculative",   w:.15, score: lin(specW, 0, .30),
+    note: specW > 0 ? `${pc(specW)} in crypto and very-high-volatility names` : "nothing crypto or very-high-volatility"});
+  const wsum = F.reduce((s,f) => s + f.w, 0);
+  const score = Math.round(F.reduce((s,f) => s + f.w*f.score, 0) / wsum);
+  F.forEach(f => f.score = Math.round(f.score));
+  const driver = F.slice().sort((a,b) => b.w*b.score - a.w*a.score)[0];
+
+  const flags = [];
+  if(topSingle && topSingle.w > .25) flags.push({t:"warn", txt:`<b>${esc(topSingle.ticker)}</b> is ${pc(topSingle.w)} of your invested dollars — one position that size can dominate your results.`});
+  if(topSecEntry && topSecEntry[1] > .40){
+    const names = singles.filter(h => h.sector === topSecEntry[0]).map(h => h.ticker).slice(0,5).join(", ");
+    flags.push({t:"warn", txt:`<b>${esc(topSecEntry[0])}</b> is ${pc(topSecEntry[1])} of the portfolio (${esc(names)}) — these tend to fall together.`});
+  }
+  if(cryptoW > .10) flags.push({t:"warn", txt:`<b>Crypto</b> is ${pc(cryptoW)} of invested dollars — it can move 5–10% in a day.`});
+  if(beta != null && beta > 1.25) flags.push({t:"note", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move about ${Math.round((beta-1)*100)}% more than the S&amp;P 500 in either direction.`});
+  if(beta != null && beta < .75) flags.push({t:"good", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move noticeably less than the S&amp;P 500.`});
+  const cashW = cash/total;
+  if(cashW < .03) flags.push({t:"note", txt:`Only <b>${(cashW*100).toFixed(1)}% cash</b> — little dry powder for a dip or a surprise expense.`});
+  else if(cashW > .25) flags.push({t:"note", txt:`<b>${pc(cashW)} in cash</b> — a safe cushion, but it earns less than being invested over time.`});
+  if(divW >= .30) flags.push({t:"good", txt:`<b>${pc(divW)}</b> sits in broad or income funds — that is real ballast under the single names.`});
+  if(!flags.length) flags.push({t:"good", txt:`No red flags: no oversized position, sector or speculative sleeve.`});
+
+  return { score, band:riskBand(score), F, driver, flags:flags.slice(0,4), nEff, topHolding:H[0], top3:H.slice(0,3).reduce((s,h)=>s+h.w,0),
+           cashW, vol, beta, maxDD, badDayPct, badDayUsd: badDayPct != null ? badDayPct*total : null, total };
+}
+
+/* semicircle gauge: five colour bands, the band you're in lit, a needle that sweeps to the score */
+function gaugeArc(a0, a1, r){
+  const rad = d => d*Math.PI/180, cx = 100, cy = 100;
+  const x0 = cx + r*Math.cos(rad(a0)), y0 = cy - r*Math.sin(rad(a0)), x1 = cx + r*Math.cos(rad(a1)), y1 = cy - r*Math.sin(rad(a1));
+  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function riskHTML(R){
+  if(!R) return `<div class="al-risk"><p class="pb-empty">No invested positions in this view.</p></div><div class="al-more"></div>`;
+  const cur = RISK_BANDS.findIndex(b => R.score < b.max);
+  const segs = RISK_BANDS.map((b,i) => {
+    const lo = i*20, hi = Math.min(100, (i+1)*20);
+    return `<path d="${gaugeArc(180 - lo*1.8 - .8, 180 - hi*1.8 + .8, 84)}" fill="none" stroke="${b.col}" stroke-width="15" stroke-linecap="butt" opacity="${i === cur ? 1 : .26}"/>`;
+  }).join("");
+  const lvl = sc => sc < 35 ? "var(--up)" : (sc < 65 ? "#E0A100" : "var(--down)");
+  const stat = (l, v, sub) => `<div class="al-stat"><span>${l}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+  const pcs = x => (x*100).toFixed(1) + "%";
+  const stats = [
+    stat("Effective holdings", R.nEff.toFixed(1), `fund-adjusted count`),
+    stat("Largest holding", esc(R.topHolding.ticker), pcs(R.topHolding.w) + " of invested"),
+    stat("Top 3 holdings", pcs(R.top3), "of invested"),
+    stat("Cash", pcs(R.cashW), "of total"),
+    R.vol != null ? stat("Est. volatility", (R.vol*100).toFixed(1) + "%", "annualized") : "",
+    R.beta != null ? stat("Beta vs S&amp;P 500", R.beta.toFixed(2), R.beta > 1 ? "amplifies the market" : "dampens the market") : "",
+    R.maxDD != null ? stat("Worst drop, 1Y", (R.maxDD*100).toFixed(1) + "%", "peak to trough") : "",
+    R.badDayUsd != null ? stat("Bad day (1 in 20)", "−" + usd(R.badDayUsd, 0), "−" + (R.badDayPct*100).toFixed(1) + "% of total") : ""
+  ].filter(Boolean).join("");
+  return `<div class="al-risk">
+    <div class="al-gauge">
+      <svg viewBox="0 0 200 112" aria-hidden="true">${segs}
+        <g class="al-needle" id="alNeedle" style="transform:rotate(-90deg)"><line x1="100" y1="100" x2="100" y2="34" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="100" r="6.5" fill="var(--ink)"/><circle cx="100" cy="100" r="2.5" fill="var(--card, #fff)"/></g>
+      </svg>
+      <div class="al-score" data-score="${R.score}"><b style="color:${R.band.col}">${R.score}</b><span>/ 100</span></div>
+      <div class="al-band" style="background:${R.band.col}">${R.band.label}</div>
+      <p class="al-read">Biggest driver: <b>${esc(R.driver.label.toLowerCase())}</b> — ${esc(R.driver.note)}.${R.vol == null ? ` <i>Volatility &amp; drawdown join the score once price history loads.</i>` : ""}</p>
+    </div>
+    <div class="al-factors">${R.F.map(f => `<div class="al-f" title="${esc(f.note)}">
+        <div class="al-f-top"><span>${f.label}</span><b>${f.score}</b></div>
+        <div class="al-f-bar"><i style="width:${Math.max(3, f.score)}%;background:${lvl(f.score)}"></i></div>
+        <small>${esc(f.note)}</small></div>`).join("")}</div>
+  </div>
+  <div class="al-more">
+    <div class="al-stats">${stats}</div>
+    <div class="al-flags">${R.flags.map(f => `<div class="al-flag ${f.t}"><i></i><div>${f.txt}</div></div>`).join("")}</div>
+  </div>`;
+}
+
+function drawAlloc(){
+  const body = $("#allocBody"); if(!body) return;
+  const list = pView(), t = pTotals(list);
+  const mode = P.allocView || "sector";
+  const groups = allocGroups(list, mode);
+  const acctLabel = P.acct === "all" ? "all accounts" : ((HOLDINGS.accounts.find(a => a.id === P.acct) || {}).label || "");
+  const total = t.value;
+  const R = riskModel(list);
+
+  const rows = groups.map(g => {
+    const pct = total > 0 ? g.value/total*100 : 0, col = gcolor(g.key);
+    const tk = mode === "holding" ? "" : g.tickers.slice(0,6).join(" · ") + (g.tickers.length > 6 ? ` +${g.tickers.length - 6}` : "");
+    return `<div class="al-row${P.filter === g.key ? " active" : ""}${P.filter && P.filter !== g.key ? " dim" : ""}" data-k="${esc(g.key)}">
+      <i style="background:${col}"></i>
+      <div class="al-nm"><b>${esc(g.key)}</b>${tk ? `<span>${esc(tk)}</span>` : ""}</div>
+      <div class="al-bar"><u style="width:${Math.max(2, pct).toFixed(1)}%;background:${col}"></u></div>
+      <div class="al-pct">${pct.toFixed(1)}%</div>
+      <div class="al-val">${usd(g.value,0)}<small class="${pcls(g.day)}">${usdS(g.day)}</small></div>
+    </div>`;
+  }).join("");
+
+  body.innerHTML = `<div class="al-donut">
+      <div class="al-hold"><svg width="230" height="230" viewBox="0 0 250 250" id="pDonut"></svg>
+        <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(total,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
+    </div>
+    <div class="al-legend" id="pLegend">${rows || `<p class="pb-empty">Nothing to show in this view.</p>`}</div>
+    ${riskHTML(R)}`;
+
+  /* donut: rounded, animated draw-in; hover a slice OR its row and the centre reads that group */
+  const svg = $("#pDonut"), Rr = 97, C = 2*Math.PI*Rr, cx = 125, cy = 125;
+  const center = (l, v, s) => { $("#dcL").textContent = l; $("#dcV").textContent = v; $("#dcS").textContent = s; };
+  const resetCenter = () => center("Total", usd(total,0), acctLabel);
+  const track = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  track.setAttribute("cx",cx); track.setAttribute("cy",cy); track.setAttribute("r",Rr); track.setAttribute("fill","none");
+  track.setAttribute("stroke","var(--hairline)"); track.setAttribute("stroke-width",26); track.setAttribute("opacity",".5");
+  svg.appendChild(track);
+  const arcs = {};
+  let off = 0;
   groups.forEach(g => {
-    const d = document.createElement("div");
-    d.className = "plg" + (P.filter === g.ticker ? " active" : "");
-    d.innerHTML = `<i style="background:${gcolor(g.ticker)}"></i>${esc(g.ticker)}`;
-    d.addEventListener("click", () => { P.filter = P.filter === g.ticker ? null : g.ticker; renderPortfolio(); });
-    leg.appendChild(d);
+    const frac = total > 0 ? g.value/total : 0, len = Math.max(0, frac*C - 3);
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",Rr); c.setAttribute("fill","none");
+    c.setAttribute("stroke", gcolor(g.key)); c.setAttribute("stroke-width",26); c.setAttribute("stroke-linecap","butt");
+    c.setAttribute("stroke-dasharray", `0 ${C}`); c.setAttribute("stroke-dashoffset", -off*C);
+    if(P.filter && P.filter !== g.key) c.setAttribute("opacity",".28");
+    c.dataset.len = len;
+    c.addEventListener("mouseenter", () => hi(g, true));
+    c.addEventListener("mouseleave", () => hi(g, false));
+    c.addEventListener("click", () => pSetFilter(g.key));
+    svg.appendChild(c); arcs[g.key] = c; off += frac;
+  });
+  function hi(g, on){
+    const c = arcs[g.key]; if(c) c.setAttribute("stroke-width", on ? 33 : 26);
+    if(on) center(g.key, usd(g.value,0), (total > 0 ? (g.value/total*100).toFixed(1) : 0) + "% of view"); else resetCenter();
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    Object.values(arcs).forEach(c => c.setAttribute("stroke-dasharray", `${c.dataset.len} ${C}`));
+    const nd = $("#alNeedle"); if(nd && R) nd.style.transform = `rotate(${(-90 + R.score*1.8).toFixed(1)}deg)`;
+  }));
+  body.querySelectorAll(".al-row").forEach(r => {
+    const g = groups.find(x => x.key === r.dataset.k);
+    r.addEventListener("mouseenter", () => hi(g, true));
+    r.addEventListener("mouseleave", () => hi(g, false));
+    r.addEventListener("click", () => pSetFilter(r.dataset.k));
   });
 }
 
@@ -6618,7 +7027,7 @@ function drawPTiles(t){
       ? `${share.toFixed(1)}% of view<br>money market`
       : `${share.toFixed(1)}% of view<br>` + (p.hasCost ? `${pctS(p.gainPct)} all-time` : `no cost basis`);
     tile.innerHTML = `<div class="ptile-top">${logo}
-        <div class="ptile-id"><b>${esc(p.ticker)}</b><span>${esc(p.name || "")}</span></div>${chg}</div>
+        <div class="ptile-id"><b>${esc(p.ticker)}</b><span>${esc(p.name || "")}</span>${isCash ? "" : `<em class="ptile-px">${usd(p.price)}</em>`}</div>${chg}</div>
       <div class="ptile-foot">
         <div class="ptile-val"><b>${usd(p.marketValue,0)}</b><span>${sub}</span></div>
         ${isCash ? `<div class="ptile-spark"></div>` : pSparkSvg(p)}
@@ -6653,7 +7062,7 @@ function pHead(){
 function pTable(){
   const tb = $("#pBody"); if(!tb) return; tb.innerHTML = "";
   let rows = pViewMerged().slice();
-  if(P.filter) rows = rows.filter(p => p.ticker === P.filter || tickerSector(p.ticker) === P.filter);
+  if(P.filter) rows = rows.filter(p => p.ticker === P.filter || sectorOf(p) === P.filter || assetClass(p) === P.filter);
   if(P.search){ const s = P.search.toLowerCase(); rows = rows.filter(p => p.ticker.toLowerCase().includes(s) || p.name.toLowerCase().includes(s)); }
   if(P.quick === "gain") rows = rows.filter(p => p.type !== "cash" && p.dayDollar > 0);
   if(P.quick === "loss") rows = rows.filter(p => p.type !== "cash" && p.dayDollar < 0);

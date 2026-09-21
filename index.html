@@ -902,6 +902,8 @@
           background:linear-gradient(150deg, color-mix(in srgb, var(--gcol,var(--accent,#5B7CFA)) 92%, #fff) 0%, var(--gcol,var(--accent,#5B7CFA)) 58%, color-mix(in srgb, var(--gcol,var(--accent,#5B7CFA)) 74%, #000) 100%)}
   .app-ic::after{content:"";position:absolute;inset:0;border-radius:22px;border:1px solid rgba(255,255,255,.22);
                  background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0) 52%);pointer-events:none}
+  .app-ic.has-logo{background:#fff}
+  .app-ic img{width:68%;height:68%;object-fit:contain;border-radius:12px}
   .app:hover .app-ic{transform:translateY(-4px) scale(1.035);box-shadow:0 18px 34px -14px rgba(20,40,80,.6),0 1px 2px rgba(0,0,0,.12)}
   .app:active .app-ic{transform:translateY(-1px) scale(.97)}
   .app-nm{font-size:12.5px;font-weight:800;letter-spacing:-.01em;line-height:1.25;text-align:center;
@@ -8738,37 +8740,37 @@ const GAME_SHELVES = [
     { id:"quiz",      name:"Word Quiz",      ic:"\u{1F4D6}", col:"#C2703B" }
   ]},
   { n:"New York Times", note:"free games", games:[
-    { name:"Wordle",       ic:"\u{1F7E9}", col:"#3A3A3C", url:"https://www.nytimes.com/games/wordle/index.html" },
-    { name:"Connections",  ic:"\u{1F517}", col:"#A77BC0", url:"https://www.nytimes.com/games/connections" },
-    { name:"Strands",      ic:"\u{1F9F5}", col:"#2E86AB", url:"https://www.nytimes.com/games/strands" },
-    { name:"The Mini",     ic:"\u{1F521}", col:"#3A7CE1", url:"https://www.nytimes.com/crosswords/game/mini" },
-    { name:"Spelling Bee", ic:"\u{1F41D}", col:"#2B2B2B", url:"https://www.nytimes.com/puzzles/spelling-bee" },
-    { name:"Letter Boxed", ic:"\u{1F4E6}", col:"#5A7DE0", url:"https://www.nytimes.com/puzzles/letter-boxed" },
-    { name:"Tiles",        ic:"\u{1F9E9}", col:"#E07A5F", url:"https://www.nytimes.com/puzzles/tiles" },
-    { name:"Sudoku",       ic:"\u{1F522}", col:"#2D6A8F", url:"https://www.nytimes.com/puzzles/sudoku/easy" },
-    { name:"Pips",         ic:"\u{1F3B2}", col:"#C75146", url:"https://www.nytimes.com/puzzles/pips" }
+    { name:"Wordle",       ic:"\u{1F7E9}", col:"#3A3A3C", url:"https://www.nytimes.com/games/wordle/index.html", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Connections",  ic:"\u{1F517}", col:"#A77BC0", url:"https://www.nytimes.com/games/connections", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Strands",      ic:"\u{1F9F5}", col:"#2E86AB", url:"https://www.nytimes.com/games/strands", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"The Mini",     ic:"\u{1F521}", col:"#3A7CE1", url:"https://www.nytimes.com/crosswords/game/mini", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Spelling Bee", ic:"\u{1F41D}", col:"#2B2B2B", url:"https://www.nytimes.com/puzzles/spelling-bee", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Letter Boxed", ic:"\u{1F4E6}", col:"#5A7DE0", url:"https://www.nytimes.com/puzzles/letter-boxed", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Tiles",        ic:"\u{1F9E9}", col:"#E07A5F", url:"https://www.nytimes.com/puzzles/tiles", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Sudoku",       ic:"\u{1F522}", col:"#2D6A8F", url:"https://www.nytimes.com/puzzles/sudoku/easy", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
+    { name:"Pips",         ic:"\u{1F3B2}", col:"#C75146", url:"https://www.nytimes.com/puzzles/pips", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" }
   ]},
   { n:"LinkedIn", note:"daily puzzles", games:[
-    { name:"Queens",      ic:"\u{1F451}", col:"#6D28D9", url:"https://www.linkedin.com/games/queens" },
-    { name:"Tango",       ic:"\u{1F317}", col:"#0EA5E9", url:"https://www.linkedin.com/games/tango" },
-    { name:"Zip",         ic:"\u{26A1}",  col:"#7C3AED", url:"https://www.linkedin.com/games/zip" },
-    { name:"Crossclimb",  ic:"\u{1FA9C}", col:"#0A66C2", url:"https://www.linkedin.com/games/crossclimb" },
-    { name:"Pinpoint",    ic:"\u{1F4CD}", col:"#0F766E", url:"https://www.linkedin.com/games/pinpoint" },
-    { name:"Mini Sudoku", ic:"\u{1F9EE}", col:"#0891B2", url:"https://www.linkedin.com/games/mini-sudoku" }
+    { name:"Queens",      ic:"\u{1F451}", col:"#6D28D9", url:"https://www.linkedin.com/games/queens", logo:"https://static.licdn.com/aero-v1/sc/h/6uvsjtqx2j32uh1a803qygh5y" },
+    { name:"Tango",       ic:"\u{1F317}", col:"#0EA5E9", url:"https://www.linkedin.com/games/tango", logo:"https://static.licdn.com/aero-v1/sc/h/gqavqd9gk6ja1s27lr1p2zz2" },
+    { name:"Zip",         ic:"\u{26A1}",  col:"#7C3AED", url:"https://www.linkedin.com/games/zip", logo:"https://static.licdn.com/aero-v1/sc/h/d67y35f347xvmfy90wegovpng" },
+    { name:"Crossclimb",  ic:"\u{1FA9C}", col:"#0A66C2", url:"https://www.linkedin.com/games/crossclimb", logo:"https://static.licdn.com/aero-v1/sc/h/4mjo14pdidwm233ks38d99107" },
+    { name:"Pinpoint",    ic:"\u{1F4CD}", col:"#0F766E", url:"https://www.linkedin.com/games/pinpoint", logo:"https://static.licdn.com/aero-v1/sc/h/75hui8gm3kv7ics73rcgqeaef" },
+    { name:"Mini Sudoku", ic:"\u{1F9EE}", col:"#0891B2", url:"https://www.linkedin.com/games/mini-sudoku", logo:"https://static.licdn.com/aero-v1/sc/h/6nflnl3tlil95zu7bjkqq3huc" }
   ]},
   { n:"Geography", games:[
-    { name:"Worldle",    ic:"\u{1F5FA}️", col:"#2F6B54", url:"https://worldle.teuteuf.fr/" },
-    { name:"Globle",     ic:"\u{1F30D}", col:"#2563EB", url:"https://globle-game.com/game" },
-    { name:"Flagle",     ic:"\u{1F6A9}", col:"#1E3A8A", url:"https://www.flagle.io/" },
-    { name:"Travle",     ic:"\u{1F9ED}", col:"#1D7A8C", url:"https://travle.earth/" },
-    { name:"TimeGuessr", ic:"\u{23F3}",  col:"#B45309", url:"https://timeguessr.com/" },
-    { name:"MapTap",     ic:"\u{1F4CC}", col:"#0E9F6E", url:"https://maptap.gg/" }
+    { name:"Worldle",    ic:"\u{1F5FA}️", col:"#2F6B54", url:"https://worldle.teuteuf.fr/", logo:"https://worldle.teuteuf.fr/logo192.png" },
+    { name:"Globle",     ic:"\u{1F30D}", col:"#2563EB", url:"https://globle-game.com/game", logo:"https://globle-game.com/apple-touch-icon.png" },
+    { name:"Flagle",     ic:"\u{1F6A9}", col:"#1E3A8A", url:"https://www.flagle.io/", logo:"https://www.flagle.io/logo192.png" },
+    { name:"Travle",     ic:"\u{1F9ED}", col:"#1D7A8C", url:"https://travle.earth/", logo:"https://travle.earth/icons/apple-touch-icon-180x180.png" },
+    { name:"TimeGuessr", ic:"\u{23F3}",  col:"#B45309", url:"https://timeguessr.com/", logo:"https://timeguessr.com/apple-touch-icon.png" },
+    { name:"MapTap",     ic:"\u{1F4CC}", col:"#0E9F6E", url:"https://maptap.gg/", logo:"https://maptap.gg/apple-touch-icon.png" }
   ]},
   { n:"Misc", games:[
-    { name:"Size It Up", ic:"\u{1F4CF}", col:"#6366F1", url:"https://magnitudle.com/size-it-up" },
-    { name:"Krillion",   ic:"\u{1F990}", col:"#0E7490", url:"https://krillion.io/" },
-    { name:"Nerdle",     ic:"\u{2797}",  col:"#1E293B", url:"https://nerdlegame.com/" },
-    { name:"Costcodle",  ic:"\u{1F6D2}", col:"#0369A1", url:"https://costcodle.com/" }
+    { name:"Size It Up", ic:"\u{1F4CF}", col:"#6366F1", url:"https://magnitudle.com/size-it-up", logo:"https://magnitudle.com/apple-magnitude-icon.png" },
+    { name:"Krillion",   ic:"\u{1F990}", col:"#0E7490", url:"https://krillion.io/", logo:"https://krillion.io/apple-icon.png?apple-icon.24b26y9qhjk-g.png" },
+    { name:"Nerdle",     ic:"\u{2797}",  col:"#1E293B", url:"https://nerdlegame.com/", logo:"https://nerdlegame.com/logo192.png" },
+    { name:"Costcodle",  ic:"\u{1F6D2}", col:"#0369A1", url:"https://costcodle.com/", logo:"https://costcodle.com/public/apple-touch-icon.png" }
   ]}
 ];
 
@@ -8785,7 +8787,8 @@ function renderGamesLauncher(){
   const tile = (g, built) => {
     const key = built ? g.id : g.name;
     const on = played.has(key) ? " played" : "";
-    const inner = `<span class="app-ic" style="--gcol:${g.col}">${g.ic}</span><span class="app-tick">✓</span>
+    const icInner = g.logo ? `<img src="${esc(g.logo)}" alt="" loading="lazy">` : g.ic;
+    const inner = `<span class="app-ic${g.logo ? " has-logo" : ""}" style="--gcol:${g.col}">${icInner}</span><span class="app-tick">✓</span>
         <span class="app-nm">${esc(g.name)}</span>`;
     return built
       ? `<button type="button" class="app${on}" data-game="${esc(g.id)}" title="${esc(g.name)}">${inner}</button>`

@@ -202,6 +202,52 @@
   .np-nav button{appearance:none;background:none;border:none;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--topbar-muted);padding:12px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s, border-color .15s;white-space:nowrap}
   .np-nav button:hover{color:var(--cream)}
   .np-nav button.on{color:var(--gold);border-bottom-color:var(--gold)}
+  .np-nav button.np-nav-desk{color:var(--gold);letter-spacing:.14em}
+  .np-nav button.np-nav-desk.on{color:var(--gold);border-bottom-color:var(--gold)}
+  /* ---------- The Newsroom (topic -> story) ---------- */
+  .nr-desk{border:1px solid var(--hairline);border-radius:16px;padding:22px 22px 20px;background:color-mix(in srgb, var(--ink2) 4%, transparent)}
+  .nr-kick{font-size:10.5px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dark)}
+  .nr-h{font-family:Georgia,serif;font-size:clamp(22px,3.2vw,30px);font-weight:900;line-height:1.1;letter-spacing:-.015em;margin:8px 0 6px}
+  .nr-lede{font-size:14px;line-height:1.6;color:var(--muted);max-width:60ch;margin-bottom:14px}
+  .nr-form{display:flex;gap:10px;flex-wrap:wrap}
+  .nr-in{flex:1;min-width:210px;font:inherit;font-size:15px;font-weight:700;padding:13px 16px;border-radius:12px;
+         border:1px solid var(--hairline);background:var(--card);color:var(--ink);outline:none}
+  .nr-in:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent)}
+  .nr-go{appearance:none;font:inherit;font-size:12.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+         padding:13px 22px;border-radius:12px;cursor:pointer;border:1px solid var(--gold);background:var(--gold);color:#fff;white-space:nowrap}
+  .nr-go[disabled]{opacity:.55;cursor:default}
+  .nr-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .nr-chip{appearance:none;font:inherit;font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer;
+           border:1px solid var(--hairline);background:var(--card);color:var(--muted)}
+  .nr-chip:hover{color:var(--ink);border-color:var(--gold)}
+  .nr-hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:18px;font-weight:700}
+  .nr-work{text-align:center;padding:38px 10px 26px}
+  .nr-work-t{font-family:Georgia,serif;font-size:19px;font-weight:900;margin-top:14px}
+  .nr-work-s{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .nr-story{margin-top:26px;padding-top:22px;border-top:2px solid var(--ink2)}
+  .nr-bg{margin:18px 0;padding:14px 16px;border-radius:12px;background:color-mix(in srgb, var(--ink2) 5%, transparent);border-left:3px solid var(--gold)}
+  .nr-bg p{font-size:13.5px;line-height:1.6;color:var(--muted);margin:6px 0 0}
+  .nr-talk{margin-top:16px;padding:14px 16px;border-radius:12px;border:1px dashed color-mix(in srgb, var(--gold) 55%, transparent)}
+  .nr-talk p{font-size:13.5px;line-height:1.62;margin:6px 0 0}
+  .nr-curve{margin:18px 0;border:1px solid var(--hairline);border-radius:12px;padding:12px 14px 6px}
+  .nr-curve-h{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;font-weight:900;
+              letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .nr-curve-h .up{color:var(--up)} .nr-curve-h .down{color:var(--muted)}
+  .nr-curve-svg{width:100%;height:46px;display:block}
+  .nr-srcs{display:flex;flex-direction:column;margin-top:8px}
+  .nr-src{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:baseline;padding:10px 2px;
+          border-bottom:1px solid var(--hairline);text-decoration:none;color:var(--ink)}
+  .nr-src:last-child{border-bottom:none}
+  .nr-src:hover{background:color-mix(in srgb, var(--gold) 7%, transparent)}
+  .nr-src-o{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nr-src-t{font-size:13.5px;font-weight:700;line-height:1.4}
+  .nr-src-w{font-size:10.5px;color:var(--muted);white-space:nowrap;font-weight:800}
+  @media(max-width:620px){
+    .nr-src{grid-template-columns:1fr auto;}
+    .nr-src-o{grid-column:1/-1}
+    .nr-desk{padding:18px 16px 16px}
+  }
   .np-body{background:var(--card);border:1px solid var(--hairline);border-top:none;border-radius:0 0 14px 14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px}
   /* front page: lead + rail */
   .np-front{display:grid;grid-template-columns:1.85fr 1fr;gap:0}
@@ -816,53 +862,157 @@
 
   /* ---------- games: newspaper "Puzzles & Diversions" (game-y) ---------- */
   .game-back{margin-bottom:20px}
-  .games-wrap{max-width:900px;margin:0 auto}
-  /* ---------- arcade: one grid, one tile shape, filters instead of stacked sections ---------- */
-  .ga-head{display:flex;align-items:center;gap:16px;padding:4px 2px 16px}
-  .ga-ring{position:relative;width:56px;height:56px;flex-shrink:0}
-  .ga-ring svg{width:56px;height:56px;transform:rotate(-90deg)}
-  .ga-trk{fill:none;stroke:color-mix(in srgb, var(--ink) 10%, transparent);stroke-width:5}
-  .ga-fil{fill:none;stroke:var(--accent, var(--gold));stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
-  .ga-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
-  .ga-ht{flex:1;min-width:0}
-  .ga-t{font-family:Georgia,serif;font-size:clamp(24px,4vw,32px);font-weight:900;letter-spacing:-.01em;line-height:1.05}
-  .ga-s{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:3px}
-  .ga-next{appearance:none;font:inherit;font-size:12.5px;font-weight:800;padding:11px 16px;border-radius:999px;cursor:pointer;
-           background:var(--accent, var(--gold));border:1px solid var(--accent, var(--gold));color:#fff;white-space:nowrap;
-           box-shadow:0 6px 18px -8px color-mix(in srgb, var(--accent, var(--gold)) 80%, transparent)}
-  .ga-next b{font-weight:900}
-  .ga-next.ga-done{background:transparent;border-color:var(--hairline);color:var(--muted);cursor:default;box-shadow:none}
-  .gt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:12px}
-  .gt{position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;text-decoration:none;font:inherit;color:var(--ink);
-      background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:18px;padding:14px 15px 12px;cursor:pointer;
-      box-shadow:var(--shadow);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s;min-height:132px}
-  /* Eli, Sep 2026: "the tabs at the top ... doesn't work" -- the category chips WERE wiring up
-     fine and setting el.hidden = true, but author CSS always beats the browser's own
-     [hidden]{display:none} at equal specificity, and .gt{display:flex} is author CSS, so a
-     "hidden" tile just kept rendering. This is the actual fix -- everything else already worked. */
-  .gt[hidden]{display:none!important}
-  html.glass .gt{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
-  .gt:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(20,40,80,.4),var(--shadow)}
-  .gt-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
-  .gt-ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;
-         background:color-mix(in srgb, var(--gcol, var(--accent)) 16%, transparent)}
-  .gt-fav{width:26px;height:26px;border-radius:7px;background:#fff;padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-  .gt-badge{font-size:8.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:999px;
-            background:color-mix(in srgb, var(--gcol, var(--accent)) 16%, transparent);color:var(--gcol, var(--accent-dark))}
-  .gt-ext-m{font-size:13px;color:var(--muted)}
-  .gt-nm{font-size:15px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
-  .gt-tg{font-size:12px;line-height:1.42;color:var(--muted);flex:1}
-  .gt-ft{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:6px;padding-top:8px;border-top:1px solid var(--hairline)}
-  .gt-st{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .gt-go{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-dark, var(--gold-dark));white-space:nowrap}
-  .gt-built{border-color:color-mix(in srgb, var(--gcol) 42%, transparent)}
-  .gt-built .gt-go{color:var(--gcol)}
-  .gt-check{position:absolute;top:11px;right:12px;width:19px;height:19px;border-radius:50%;background:var(--up);color:#fff;
-            font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center}
-  .gt.played .gt-check{display:flex} .gt.played .gt-top{opacity:.55} .gt.played{opacity:.82}
-  .gt.played .gt-badge,.gt.played .gt-ext-m{visibility:hidden}
-  @media(max-width:560px){.gt-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-    .ga-next{padding:9px 12px;font-size:11.5px}.gt{min-height:120px;padding:12px 13px 10px}}
+  .games-wrap{max-width:1000px;margin:0 auto}
+  /* ---------- arcade: the home screen ----------
+     Eli, Sep 2026: "make the games moreso just the icon and the name instead of a tab with a
+     small icon and name / desc / website. I wanted it to almost just be like a large app you
+     click on." So a tile is exactly that -- a big rounded app icon with its name underneath,
+     nothing else. Families (NYT, LinkedIn, Geography, Misc) each get their own row that
+     scrolls left-to-right, the way a console or an App Store shelf does, instead of one long
+     wrapping grid. The per-day checkmark he already had is the only status left: the
+     played-today counter ring and the "Next: ..." button were both explicitly dropped. */
+  .ga-title{font-family:Georgia,serif;font-size:clamp(26px,4.4vw,36px);font-weight:900;letter-spacing:-.015em;line-height:1.05;padding:2px 2px 2px}
+  .ga-sub{font-size:13px;color:var(--muted);font-weight:700;margin:5px 0 4px;padding-left:2px}
+  .shelf{position:relative;margin:0 -4px}
+  .shelf-h{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+           margin:28px 0 12px;padding-left:4px;display:flex;align-items:center;gap:12px}
+  .shelf-h::after{content:"";flex:1;height:2px;background:var(--ink2);opacity:.12}
+  .shelf-h .shelf-n{flex:0 0 auto;font-size:10.5px;letter-spacing:.1em;opacity:.7}
+  .shelf-track{display:flex;gap:14px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;
+               padding:6px 4px 12px;scrollbar-width:none;-ms-overflow-style:none}
+  .shelf-track::-webkit-scrollbar{display:none}
+  .shelf-track::after{content:"";flex:0 0 2px}
+  .shelf-ar{position:absolute;top:calc(50% - 16px);transform:translateY(-50%);width:34px;height:34px;border-radius:50%;
+            display:none;align-items:center;justify-content:center;cursor:pointer;z-index:3;font-size:15px;font-weight:900;
+            background:var(--card);color:var(--ink);border:1px solid var(--glass-edge,var(--hairline));
+            box-shadow:0 8px 22px -10px rgba(20,40,80,.55),var(--shadow)}
+  html.glass .shelf-ar{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .shelf-ar.l{left:-6px} .shelf-ar.r{right:-6px}
+  .shelf-ar.on{display:flex;opacity:.5;transition:opacity .15s}
+  .shelf:hover .shelf-ar.on{opacity:1}
+  @media(hover:none){.shelf-ar{display:none!important}}
+
+  .app{position:relative;flex:0 0 auto;width:96px;scroll-snap-align:start;display:flex;flex-direction:column;
+       align-items:center;gap:9px;text-decoration:none;color:var(--ink);font:inherit;background:none;border:none;
+       padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .app-ic{position:relative;width:78px;height:78px;border-radius:22px;display:flex;align-items:center;justify-content:center;
+          font-size:34px;line-height:1;overflow:hidden;
+          box-shadow:0 10px 24px -12px rgba(20,40,80,.55), 0 1px 2px rgba(0,0,0,.12);
+          transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s;
+          background:linear-gradient(150deg, color-mix(in srgb, var(--gcol,var(--accent,#5B7CFA)) 92%, #fff) 0%, var(--gcol,var(--accent,#5B7CFA)) 58%, color-mix(in srgb, var(--gcol,var(--accent,#5B7CFA)) 74%, #000) 100%)}
+  .app-ic::after{content:"";position:absolute;inset:0;border-radius:22px;border:1px solid rgba(255,255,255,.22);
+                 background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0) 52%);pointer-events:none}
+  .app:hover .app-ic{transform:translateY(-4px) scale(1.035);box-shadow:0 18px 34px -14px rgba(20,40,80,.6),0 1px 2px rgba(0,0,0,.12)}
+  .app:active .app-ic{transform:translateY(-1px) scale(.97)}
+  .app-nm{font-size:12.5px;font-weight:800;letter-spacing:-.01em;line-height:1.25;text-align:center;
+          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* the tick sits on the tile, not inside the icon -- .app-ic clips (overflow:hidden) for its
+     rounded gloss, which used to slice the badge in half */
+  .app-tick{position:absolute;top:-4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--up);color:#fff;
+            font-size:12px;font-weight:900;display:none;align-items:center;justify-content:center;line-height:1;
+            border:2.5px solid var(--card);box-shadow:0 2px 6px rgba(0,0,0,.22);z-index:3}
+  .app.played .app-tick{display:flex}
+  .app.played .app-ic{opacity:.55;filter:saturate(.55)}
+  @media(max-width:560px){
+    .app{width:80px}
+    .app-ic{width:66px;height:66px;border-radius:18px;font-size:29px}
+    .app-ic::after{border-radius:18px}
+    .app-tick{right:0;width:20px;height:20px;font-size:11px}
+    .app-nm{font-size:11.5px}
+    .shelf-track{gap:11px}
+  }
+  /* ---------- The Daily Case: a five-round engagement ---------- */
+  .dc-wrap{max-width:780px;margin:0 auto}
+  .dc-file{margin-top:14px;border:1px solid var(--hairline);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+  html.glass .dc-file{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .dc-tab{display:flex;justify-content:space-between;gap:10px;background:var(--ink2);color:var(--topbar-muted);
+          padding:9px 16px;font-size:9.5px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}
+  .dc-t{font-family:Georgia,serif;font-size:clamp(21px,3.2vw,27px);font-weight:900;line-height:1.14;letter-spacing:-.015em;padding:16px 18px 0}
+  .dc-who{font-size:12.5px;font-weight:800;color:var(--gold-dark);padding:8px 18px 0;line-height:1.5}
+  .dc-sit{font-size:15px;line-height:1.66;padding:10px 18px 18px;margin:0}
+  .dc-rail{display:flex;gap:6px;margin:16px 0 14px;flex-wrap:wrap}
+  .dc-pip{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;border-radius:999px;
+          background:color-mix(in srgb, var(--ink) 7%, transparent);color:var(--muted)}
+  .dc-pip.on{background:var(--gold);color:#fff}
+  .dc-pip.done{background:color-mix(in srgb, var(--up) 15%, transparent);color:var(--up)}
+  .dc-card{border:1px solid var(--hairline);border-radius:16px;background:var(--card);box-shadow:var(--shadow);padding:20px 20px 18px;margin-bottom:14px}
+  html.glass .dc-card{backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .dc-k{font-size:10px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-dark);display:flex;justify-content:space-between;gap:10px}
+  .dc-k span{color:var(--muted);letter-spacing:.06em}
+  .dc-q{font-family:Georgia,serif;font-size:20px;font-weight:900;line-height:1.24;letter-spacing:-.01em;margin:10px 0 6px}
+  .dc-note{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 14px}
+  .dc-opts{display:grid;gap:9px}
+  .dc-opt{appearance:none;font:inherit;text-align:left;width:100%;cursor:pointer;padding:13px 15px;border-radius:13px;
+          border:1px solid var(--hairline);background:var(--card);color:var(--ink);transition:border-color .15s,background .15s,transform .12s}
+  .dc-opt:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .dc-opt.on{border-color:var(--gold);background:color-mix(in srgb, var(--gold) 9%, transparent);box-shadow:inset 3px 0 0 var(--gold)}
+  .dc-opt-t{display:block;font-size:14.5px;font-weight:700;line-height:1.5}
+  .dc-opt-talk .dc-opt-t{font-weight:600;font-size:14px}
+  .dc-ans{margin-top:9px;padding-top:9px;border-top:1px dashed var(--hairline);font-size:13.5px;line-height:1.55;
+          color:var(--gold-dark);font-weight:700;font-style:italic}
+  .dc-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding-top:13px;border-top:1px solid var(--hairline)}
+  .dc-count{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .dc-go{appearance:none;font:inherit;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+         padding:11px 20px;border-radius:999px;cursor:pointer;border:1px solid var(--gold);background:var(--gold);color:#fff;white-space:nowrap}
+  .dc-go[disabled]{opacity:.4;cursor:default;box-shadow:none}
+  .dc-sliders{display:grid;gap:16px}
+  .dc-sl-h{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px}
+  .dc-sl-v{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--gold-dark)}
+  .dc-sl-hint{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .dc-range{width:100%;accent-color:var(--gold);height:22px;cursor:pointer}
+  .dc-total{margin-top:16px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:12px;
+            padding:10px 14px;border-radius:12px;background:color-mix(in srgb, var(--ink) 5%, transparent)}
+  .dc-total b{font-size:17px;font-variant-numeric:tabular-nums}
+  .dc-total.ok{color:var(--up);background:color-mix(in srgb, var(--up) 10%, transparent)}
+  .dc-total.bad{color:var(--down);background:color-mix(in srgb, var(--down) 9%, transparent)}
+  .dc-balance{margin-left:auto;appearance:none;font:inherit;font-size:11px;font-weight:900;letter-spacing:.08em;
+              text-transform:uppercase;padding:7px 13px;border-radius:999px;cursor:pointer;border:1px solid var(--hairline);background:var(--card);color:var(--ink)}
+  .dc-decs{display:grid;gap:11px}
+  .dc-dec{border:1px solid var(--hairline);border-radius:13px;padding:13px 15px}
+  .dc-dec-t{font-size:14.5px;font-weight:700;line-height:1.5;margin-bottom:10px}
+  .dc-yn{display:flex;gap:8px}
+  .dc-yn button{appearance:none;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+                padding:9px 18px;border-radius:999px;cursor:pointer;border:1px solid var(--hairline);background:var(--card);color:var(--muted)}
+  .dc-y.on{background:var(--up);border-color:var(--up);color:#fff}
+  .dc-n.on{background:var(--ink2);border-color:var(--ink2);color:var(--cream)}
+  .dc-score{text-align:center}
+  .dc-grade{display:flex;align-items:baseline;justify-content:center;gap:16px;margin:8px 0 2px}
+  .dc-grade b{font-family:Georgia,serif;font-size:clamp(46px,9vw,66px);font-weight:900;line-height:1;letter-spacing:-.03em;color:var(--gold)}
+  .dc-grade span{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
+  .dc-grade i{font-size:15px;color:var(--muted);font-style:normal}
+  .dc-verdict{font-size:14px;font-weight:800;color:var(--muted);margin-bottom:18px}
+  .dc-bars{display:grid;gap:9px;text-align:left;margin-top:6px}
+  .dc-bar{display:grid;grid-template-columns:104px 1fr 54px;align-items:center;gap:10px}
+  .dc-bar-l{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .dc-bar-t{height:8px;border-radius:999px;background:color-mix(in srgb, var(--ink) 8%, transparent);overflow:hidden}
+  .dc-bar-t span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 55%,transparent),var(--gold));
+                 transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .dc-bar-v{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right}
+  .dc-bar-v i{font-size:11px;color:var(--muted);font-style:normal}
+  .dc-sh{font-family:Georgia,serif;font-size:16px;font-weight:900;margin:18px 0 6px}
+  .dc-p{font-size:14px;line-height:1.62;margin:0 0 6px}
+  .dc-ul{margin:4px 0 0;padding-left:18px;font-size:14px;line-height:1.6}
+  .dc-ul li{margin-bottom:5px}
+  .dc-tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+  .dc-tbl th{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--hairline)}
+  .dc-tbl td{padding:7px 6px;border-bottom:1px solid var(--hairline)}
+  .dc-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+  .dc-tbl .ok{color:var(--up)} .dc-tbl .off{color:var(--down)}
+  .dc-rev{border-left:3px solid var(--hairline);padding:2px 0 2px 13px;margin:12px 0}
+  .dc-rev.ok{border-left-color:var(--up)} .dc-rev.off{border-left-color:var(--down)}
+  .dc-rev-h{font-size:14px;font-weight:800;line-height:1.45}
+  .dc-rev-a{font-size:11.5px;font-weight:800;color:var(--muted);margin:4px 0 5px;text-transform:uppercase;letter-spacing:.06em}
+  .dc-rev p{font-size:13.5px;line-height:1.58;color:var(--muted);margin:0}
+  .dc-quote{margin:10px 0 0;padding:14px 16px;border-radius:12px;background:color-mix(in srgb, var(--gold) 8%, transparent);
+            font-size:14px;line-height:1.6;font-weight:600}
+  .dc-stats{display:flex;justify-content:space-between;font-size:10.5px;font-weight:900;letter-spacing:.12em;
+            text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline)}
+  @media(max-width:560px){
+    .dc-card{padding:16px 15px 15px}
+    .dc-bar{grid-template-columns:86px 1fr 46px;gap:8px}
+    .dc-foot{flex-direction:column;align-items:stretch;gap:9px}
+    .dc-go{width:100%}
+  }
   .game-cat{color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;margin:26px 0 14px;display:flex;align-items:center;gap:12px}
   .game-cat::after{content:"";flex:1;height:2px;background:var(--ink2);opacity:.12}
 
@@ -1891,6 +2041,10 @@
   .rb-row{display:grid;grid-template-columns:86px 1fr 74px;align-items:center;gap:8px;padding:3px 0}
   .rb-prow{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--hairline)}
   .rb-prow:last-child{border-bottom:none}
+  /* a permanent row the feed has not answered for yet -- present, but visibly waiting */
+  .rb-wait .rb-pv{color:var(--muted);font-weight:700}
+  .rb-wait .rb-l{opacity:.7}
+  .rb-wait .rb-chip{font-size:9.5px;letter-spacing:.02em}
   .rb-pv{font-size:14px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
   .rb-pn{font-size:11px;color:var(--muted);text-align:right;min-width:52px}
   .rb-chip{font-size:10.5px;font-weight:900;font-variant-numeric:tabular-nums;padding:2px 6px;border-radius:999px;
@@ -2627,6 +2781,10 @@ async function renderNews(d){
   // reachable in code only for old bookmarked links / S.pendingNewsView, harmlessly unused).
   let nav = `<button data-nv="front" class="on">Front Page</button>`;
   sections.forEach((s,si) => nav += `<button data-nv="${si}">${esc(secShort(s.title))}</button>`);
+  /* Eli, Sep 2026: "I want the ability to type in a topic and it generate a news story for me,
+     in case there's a news story I want to know about that I didn't see on the daily news
+     brief." The Newsroom is that -- a permanent nav stop, not a buried search box. */
+  nav += `<button data-nv="desk" class="np-nav-desk">\u2726 Newsroom</button>`;
 
   p.innerHTML = `<div class="np-masthead">
       <div class="np-tagline"><span>${esc(dateLabel)}</span><span>Private Edition</span></div>
@@ -2639,7 +2797,7 @@ async function renderNews(d){
   p.querySelectorAll("#npNav button").forEach(b => b.addEventListener("click", () => {
     const v = b.dataset.nv;
     p.querySelectorAll("#npNav button").forEach(x => x.classList.toggle("on", x===b));
-    showNewsView(v === "front" || v === "markets" ? v : Number(v));
+    showNewsView(v === "front" || v === "markets" || v === "desk" ? v : Number(v));
   }));
 
   /* prefetch the market brief in the background so the Markets tab is instant */
@@ -2775,6 +2933,14 @@ function showNewsView(view){
     return;
   }
 
+  if(view === "desk"){
+    setNavActive("desk");
+    body.innerHTML = nrDeskHTML();
+    nrWire(body);
+    wireNewsPhotos(body);
+    return;
+  }
+
   // Eli, Sep 2026: the full Markets brief (and its "At the Close" strip on the front page)
   // is gone entirely -- the Running Outlook on Home covers markets now.
 
@@ -2826,6 +2992,348 @@ function showNewsView(view){
 }
 /* newspaper headline styling: drop a single trailing period so leads read as headlines, not sentences */
 function headline(s){ return String(s||"").replace(/\s*\.\s*$/,""); }
+
+/* ================= The Newsroom (type a topic, get the story) =================
+   Eli, Sep 2026: "On the news, I want the ability to type in a topic and it generate a news
+   story for me, in case there's a news story I want to know about that I didn't see on the
+   daily news brief. Be creative with this."
+
+   The honest version of that. Nothing here is invented: the page queries GDELT's public
+   article index (every English-language outlet it monitors, updated every 15 minutes),
+   pulls the real headlines, outlets, timestamps and lead images, and then does the work a
+   wire editor does -- dedupe the syndicated copies, find the dominant thread, cluster the
+   rest into themes, and lay it out as a written page. Wikipedia supplies the background
+   paragraph. The connective sentences are assembled here, and the page says so at the
+   bottom; every claim in the story is a real headline with a link next to it.
+
+   Extras that make it feel like a real desk rather than a search box: a 14-day coverage
+   curve so you can see whether a story is breaking or fading, an outlet count, and -- for
+   anything financial or policy-shaped -- a client talk track, which is the version of this
+   Eli actually needs at a kitchen table. */
+const NR_CACHE = {};
+let NR = { q:"", busy:false, story:null, err:"", ran:false };
+
+/* GDELT and Wikipedia both answer browsers directly most of the time; the two shared CORS
+   proxies the portfolio already leans on are raced alongside so one bad day for any single
+   route doesn't take the desk down. */
+async function nrFetchJSON(target, ms){
+  const urls = [target,
+    "https://cors-get-proxy.sirjosh.workers.dev/?url=" + encodeURIComponent(target),
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(target)];
+  const attempts = urls.map(u => (async () => {
+    const r = await pFetchTimeout(u, ms || 12000, {cache:"no-store"});
+    if(!r.ok) throw new Error("bad status");
+    let t = await r.text();
+    /* GDELT occasionally emits raw control characters inside article titles, which is not
+       legal JSON and makes JSON.parse throw on an otherwise perfectly good payload. */
+    t = t.replace(/^﻿/, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, " ");
+    const j = JSON.parse(t);
+    if(!j || typeof j !== "object") throw new Error("bad json");
+    return j;
+  })());
+  return Promise.any(attempts);
+}
+
+const NR_STOP = new Set(("a an and are as at be been but by for from has have how in into is it its of on or "+
+  "that the their they this to was were what when where which who will with you your after over under amid "+
+  "says say said new news latest update updates report reports could would should may might than then there "+
+  "not no more most just now his her he she them we us our i about against before between during out up down "+
+  "off again once all any both each few other some such only own same so too very can t s don t here").split(/\s+/));
+const nrWords = t => String(t || "").toLowerCase().replace(/[^a-z0-9\s'-]/g, " ").split(/\s+/)
+  .filter(w => w.length > 2 && !NR_STOP.has(w));
+/* "Fed holds rates steady - Reuters" / "Fed holds rates steady | CNBC" -> drop the outlet tail */
+function nrCleanTitle(t){
+  let s = String(t || "").replace(/\s+/g, " ").trim();
+  s = s.replace(/\s+[-–—|]\s+[^-–—|]{2,40}$/, "");
+  s = s.replace(/\s*\.\.\.$/, "");
+  return s;
+}
+const nrOutlet = a => {
+  const d = String(a.domain || "").replace(/^www\./, "");
+  const core = d.split(".")[0] || d;
+  const NAMES = { reuters:"Reuters", apnews:"The Associated Press", bbc:"BBC", cnbc:"CNBC", ft:"Financial Times",
+    wsj:"The Wall Street Journal", nytimes:"The New York Times", washingtonpost:"The Washington Post",
+    bloomberg:"Bloomberg", theguardian:"The Guardian", aljazeera:"Al Jazeera", npr:"NPR", axios:"Axios",
+    politico:"Politico", cnn:"CNN", foxbusiness:"Fox Business", foxnews:"Fox News", marketwatch:"MarketWatch",
+    barrons:"Barron's", economist:"The Economist", forbes:"Forbes", businessinsider:"Business Insider",
+    yahoo:"Yahoo", msn:"MSN", nbcnews:"NBC News", cbsnews:"CBS News", abcnews:"ABC News", usatoday:"USA Today",
+    thehill:"The Hill", newsweek:"Newsweek", time:"TIME", investopedia:"Investopedia", morningstar:"Morningstar",
+    espn:"ESPN", theathletic:"The Athletic", tennessean:"The Tennessean", wired:"WIRED", theverge:"The Verge",
+    techcrunch:"TechCrunch", arstechnica:"Ars Technica", engadget:"Engadget", sciencedaily:"ScienceDaily" };
+  return NAMES[core] || (core ? core.charAt(0).toUpperCase() + core.slice(1) : d);
+};
+/* GDELT stamps are YYYYMMDDTHHMMSSZ */
+function nrDate(sd){
+  const m = String(sd || "").match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+  if(!m) return null;
+  return new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5]));
+}
+function nrAgo(d){
+  if(!d) return "";
+  const mins = Math.max(1, Math.round((Date.now() - d.getTime())/60000));
+  if(mins < 60) return mins + "m ago";
+  const h = Math.round(mins/60);
+  if(h < 36) return h + "h ago";
+  return Math.round(h/24) + "d ago";
+}
+
+const nrPhrase = q => { const t = String(q || "").trim(); return /\s/.test(t) ? `"${t}"` : t; };
+async function nrArticles(q, timespan){
+  const target = "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+    encodeURIComponent(nrPhrase(q) + " sourcelang:english") +
+    "&mode=artlist&maxrecords=75&sort=datedesc&timespan=" + timespan + "&format=json";
+  try{
+    const j = await nrFetchJSON(target);
+    return Array.isArray(j.articles) ? j.articles : [];
+  }catch(e){ return []; }
+}
+async function nrTimeline(q){
+  const target = "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+    encodeURIComponent(nrPhrase(q) + " sourcelang:english") +
+    "&mode=timelinevol&timespan=14d&format=json";
+  try{
+    const j = await nrFetchJSON(target);
+    const series = (j.timeline || [])[0];
+    return (series && Array.isArray(series.data)) ? series.data.map(d => ({ d:d.date, v:+d.value || 0 })) : [];
+  }catch(e){ return []; }
+}
+async function nrBackground(q){
+  try{
+    const url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" +
+      encodeURIComponent(q) + "&gsrlimit=1&prop=extracts|pageimages&exintro=1&explaintext=1&" +
+      "piprop=thumbnail&pithumbsize=900&format=json&origin=*";
+    const r = await pFetchTimeout(url, 9000, {});
+    const j = await r.json();
+    const page = Object.values((j && j.query && j.query.pages) || {})[0];
+    if(!page || !page.extract) return null;
+    const sentences = String(page.extract).replace(/\s+/g, " ").split(/(?<=\.)\s/).slice(0, 3).join(" ");
+    return { title: page.title, text: sentences,
+             image: (page.thumbnail && /\.jpe?g$/i.test(String(page.thumbnail.source).split("?")[0])) ? page.thumbnail.source : null };
+  }catch(e){ return null; }
+}
+
+/* Two headlines are "the same story" when most of their meaningful words overlap -- which is
+   what syndication looks like: forty outlets running one agency's copy under one headline. */
+function nrSame(a, b){
+  const A = new Set(a), B = new Set(b);
+  if(!A.size || !B.size) return false;
+  let hit = 0; A.forEach(w => { if(B.has(w)) hit++; });
+  return hit / Math.min(A.size, B.size) >= 0.68;
+}
+function nrTopic(words){
+  const t = words.join(" ");
+  if(/market|stock|econom|fed|rate|inflation|earning|bond|yield|dollar|recession|tariff|bank|oil|crypto|bitcoin|treasury|tax|retire/.test(t)) return "markets";
+  if(/elect|senate|congress|court|bill|policy|president|campaign|vote|law|regulat/.test(t)) return "policy";
+  if(/war|strike|troops|missile|border|treaty|sanction|military|ceasefire|attack/.test(t)) return "conflict";
+  if(/ai\b|chip|software|tech|launch|space|satellite|model|startup|robot/.test(t)) return "tech";
+  if(/game|season|coach|playoff|championship|draft|injur/.test(t)) return "sport";
+  if(/health|drug|trial|disease|vaccine|hospital|fda/.test(t)) return "health";
+  return "general";
+}
+const NR_MATTERS = {
+  markets: "The test, reading this as an investor rather than a spectator, is whether it changes the cash flows a portfolio is actually being paid for, or only the mood around them. Most weeks it is the mood.",
+  policy:  "Policy stories move in two stages: what was announced, and what survives implementation. The gap between the two is usually where the real consequences live.",
+  conflict:"Coverage volume in the first days of a conflict story tracks attention far better than it tracks outcome. Watch what the specialist outlets add a week later.",
+  tech:    "The useful question is whether this changes what a technology can do, or only who owns it. The second kind of story repeats far more often than the first.",
+  sport:   "Worth reading for what it is — the fun kind of news, where being wrong costs nothing.",
+  health:  "Health coverage compresses a slow process into a single day's headline. Trial stage, sample size and who funded it usually matter more than the number in the headline.",
+  general: "Worth checking back on in a week: stories that keep their outlet count are the ones that turned out to be about something."
+};
+const NR_TALK = {
+  markets: "If a client brings this up: name the fact, then separate it from the plan. “Here's what actually happened, here's what it changes for your money, and here's why we're not trading on it.” Nine times in ten the second answer is “nothing structural” — and saying that out loud is the service.",
+  policy:  "If a client brings this up: distinguish proposed from enacted, and enacted from effective. Nothing in a plan should move on a proposal, and saying so calmly is worth more than a forecast."
+};
+
+function nrBuild(q, arts, tl, bg){
+  const seen = [], items = [];
+  arts.forEach(a => {
+    const title = nrCleanTitle(a.title);
+    if(!title || title.length < 18) return;
+    const w = nrWords(title);
+    if(w.length < 3) return;
+    const dup = seen.findIndex(s => nrSame(s.w, w));
+    if(dup >= 0){ seen[dup].n++; seen[dup].outlets.add(nrOutlet(a)); return; }
+    const it = { title, w, url:a.url, domain:String(a.domain||"").replace(/^www\./,""), outlet:nrOutlet(a),
+                 img:(a.socialimage && /^https?:/i.test(a.socialimage)) ? a.socialimage : null,
+                 when:nrDate(a.seendate), n:1, outlets:new Set([nrOutlet(a)]) };
+    seen.push(it); items.push(it);
+  });
+  if(!items.length) return null;
+
+  const outlets = new Set(arts.map(nrOutlet));
+  /* word frequency across every surviving headline -> what this story is actually about */
+  const freq = {};
+  items.forEach(it => new Set(it.w).forEach(w => freq[w] = (freq[w]||0) + it.n));
+  const keys = Object.keys(freq).sort((a,b) => freq[b]-freq[a]);
+  const score = it => it.w.reduce((s,w) => s + (freq[w]||0), 0) / Math.sqrt(it.w.length) + it.n * 3;
+  const ranked = items.slice().sort((a,b) => score(b) - score(a));
+  const lead = ranked[0];
+
+  /* themes: greedily gather headlines that share the lead words of an unused headline */
+  const used = new Set([items.indexOf(lead)]);
+  const themes = [];
+  ranked.forEach(it => {
+    const i = items.indexOf(it);
+    if(used.has(i) || themes.length >= 4) return;
+    const core = it.w.filter(w => (freq[w]||0) > 1).slice(0, 6);
+    const group = [it];
+    used.add(i);
+    items.forEach((o, j) => {
+      if(used.has(j) || group.length >= 6) return;
+      const hits = o.w.filter(w => core.includes(w)).length;
+      if(hits >= 2){ group.push(o); used.add(j); }
+    });
+    themes.push({ key: core[0] || "", items: group });
+  });
+
+  const topic = nrTopic(keys.slice(0, 25));
+  const total = arts.length;
+  const window = "the last few days";
+  const nOut = outlets.size;
+
+  const paras = [];
+  paras.push(`Coverage of ${nrTitleCase(q)} in ${window}: ${total} report${total===1?"":"s"} across ${nOut} outlet${nOut===1?"":"s"}. `
+    + `The dominant thread, by weight of coverage, is the one ${lead.outlet} put this way: “${lead.title}.”`
+    + (lead.n > 1 ? ` ${lead.n - 1} other outlet${lead.n-1===1?"":"s"} ran that same story.` : ""));
+  themes.slice(0, 4).forEach(t => {
+    const head = t.items[0];
+    const others = t.items.slice(1, 4);
+    let p = `${head.outlet} reports: “${head.title}.”`;
+    if(others.length){
+      const names = others.map(o => o.outlet);
+      p += ` Running alongside it, ${names.slice(0,-1).join(", ")}${names.length>1?" and ":""}${names[names.length-1]} `
+         + `carr${names.length>1?"y":"ies"} the same thread — ${others.map(o => `“${o.title}”`).join("; ")}.`;
+    }
+    paras.push(p);
+  });
+
+  return {
+    q, topic, lead, items, themes, timeline: tl, background: bg,
+    outletCount: nOut, articleCount: total,
+    headline: lead.title,
+    dek: (ranked[1] && ranked[1].title !== lead.title) ? ranked[1].title : (bg ? bg.text.split(/(?<=\.)\s/)[0] : ""),
+    image: (items.find(i => i.img) || {}).img || (bg && bg.image) || null,
+    paras,
+    matters: NR_MATTERS[topic] || NR_MATTERS.general,
+    talk: NR_TALK[topic] || null,
+    builtAt: new Date()
+  };
+}
+function cap(s){ s = String(s||"").trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+/* Respect what was typed when it carries capitals ("Nvidia", "JPMorgan"); otherwise title-case
+   it so the story does not open with "Federal reserve". */
+const NR_SMALL = new Set(["a","an","and","as","at","by","for","in","of","on","or","the","to","vs"]);
+function nrTitleCase(q){
+  const t = String(q || "").trim();
+  if(/[A-Z]/.test(t)) return t;
+  return t.split(/\s+/).map((w,i) => (i && NR_SMALL.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+async function nrGenerate(q){
+  q = String(q || "").trim();
+  if(!q) return;
+  NR.q = q; NR.busy = true; NR.err = ""; NR.story = null; NR.ran = true;
+  showNewsView("desk");
+  try{
+    if(NR_CACHE[q.toLowerCase()]){ NR.story = NR_CACHE[q.toLowerCase()]; NR.busy = false; showNewsView("desk"); return; }
+    let arts = await nrArticles(q, "3d");
+    if(arts.length < 6) arts = await nrArticles(q, "2w");
+    if(arts.length < 4 && /\s/.test(q)) arts = await nrArticles(q.split(/\s+/).join(" OR "), "2w");
+    if(!arts.length){
+      NR.err = "Nothing is being reported on that in the last two weeks — or the wire index didn't answer. Try a name, a place, or a company instead of a question.";
+      NR.busy = false; showNewsView("desk"); return;
+    }
+    const [tl, bg] = await Promise.all([nrTimeline(q), nrBackground(q)]);
+    const story = nrBuild(q, arts, tl, bg);
+    if(!story){ NR.err = "The wire returned results but nothing usable enough to write from. Try a narrower topic."; NR.busy = false; showNewsView("desk"); return; }
+    NR_CACHE[q.toLowerCase()] = story;
+    NR.story = story;
+  }catch(e){
+    NR.err = "The wire index couldn't be reached just now. Try again in a moment.";
+  }
+  NR.busy = false;
+  showNewsView("desk");
+}
+
+function nrSpark(tl){
+  if(!tl || tl.length < 4) return "";
+  const W = 320, H = 46, max = Math.max(...tl.map(p => p.v)) || 1;
+  const X = i => (i/(tl.length-1)) * W;
+  const Y = v => H - (v/max) * (H - 6) - 2;
+  let d = "", area = `M 0 ${H}`;
+  tl.forEach((p,i) => { const x = X(i).toFixed(1), y = Y(p.v).toFixed(1); d += `${i?"L":"M"} ${x} ${y} `; area += ` L ${x} ${y}`; });
+  area += ` L ${W} ${H} Z`;
+  const last = tl[tl.length-1], prev = tl[Math.max(0, tl.length-4)];
+  const rising = last.v >= prev.v;
+  return `<div class="nr-curve">
+    <div class="nr-curve-h"><span>Coverage, last 14 days</span><span class="${rising?"up":"down"}">${rising?"▲ building":"▼ fading"}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="nr-curve-svg">
+      <defs><linearGradient id="nrG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--gold)" stop-opacity=".30"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+      <path d="${area}" fill="url(#nrG)"/>
+      <path d="${d}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/>
+    </svg></div>`;
+}
+
+const NR_SEEDS = ["Federal Reserve", "Treasury yields", "Nvidia", "Tennessee", "mortgage rates",
+                  "Social Security", "oil prices", "artificial intelligence", "Kentucky basketball", "bitcoin"];
+
+function nrDeskHTML(){
+  const s = NR.story;
+  const searchBar = `<div class="nr-desk">
+      <div class="nr-kick">The Newsroom</div>
+      <h2 class="nr-h">Ask the wire for a story.</h2>
+      <p class="nr-lede">Type any topic — a company, a person, a place, a policy — and this desk pulls what the world's
+        outlets have actually published on it in the last few days and writes it up as a page.</p>
+      <form class="nr-form" id="nrForm" autocomplete="off">
+        <input class="nr-in" id="nrIn" type="search" placeholder="e.g. Federal Reserve, Nvidia earnings, Nashville" value="${esc(NR.q)}" ${NR.busy?"disabled":""}>
+        <button class="nr-go" id="nrGo" type="submit" ${NR.busy?"disabled":""}>${NR.busy?"Working…":"Write it"}</button>
+      </form>
+      <div class="nr-chips">${NR_SEEDS.map(t => `<button type="button" class="nr-chip" data-seed="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+    </div>`;
+
+  if(NR.busy) return searchBar + `<div class="nr-work"><div class="spinner"></div>
+      <div class="nr-work-t">Reading the wire on “${esc(NR.q)}”</div>
+      <div class="nr-work-s">Pulling reports, dropping the syndicated duplicates, finding the dominant thread…</div></div>`;
+  if(NR.err) return searchBar + `<div class="empty" style="margin-top:18px">${esc(NR.err)}</div>`;
+  if(!s) return searchBar + (NR.ran ? "" : `<div class="nr-hint">Nothing off-limits — if an outlet published it, the desk can find it.</div>`);
+
+  const latest = s.items.slice(0, 10);
+  const srcRows = latest.map(it => `<a class="nr-src" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">
+      <span class="nr-src-o">${esc(it.outlet)}</span>
+      <span class="nr-src-t">${esc(it.title)}</span>
+      <span class="nr-src-w">${esc(nrAgo(it.when))} ↗</span></a>`).join("");
+
+  return searchBar + `<article class="nw-article nr-story">
+      <div class="nw-card-k">Newsroom · ${esc(nrTitleCase(s.q))} · assembled ${esc(s.builtAt.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}))}</div>
+      <h1 class="nw-art-t">${esc(s.headline)}</h1>
+      ${s.dek ? `<p class="nw-art-dek">${esc(s.dek)}</p>` : ""}
+      <div class="nw-art-by">${s.articleCount} reports · ${s.outletCount} outlets · wire index via GDELT</div>
+      ${s.image ? `<div class="nw-ph nw-art-ph" data-src="${esc(s.image)}"></div>` : ""}
+      <div class="nw-art-body">
+        ${s.paras.map(p => `<p>${esc(p)}</p>`).join("")}
+        ${s.background ? `<div class="nr-bg"><div class="nw-card-k">Background · ${esc(s.background.title)}</div><p>${esc(s.background.text)}</p></div>` : ""}
+        ${nrSpark(s.timeline)}
+        <blockquote class="nw-quote">“${esc(s.lead.title)}”<cite>— ${esc(s.lead.outlet)}</cite></blockquote>
+        <div class="nw-why"><div class="nw-card-k">Why it matters</div><p>${esc(s.matters)}</p></div>
+        ${s.talk ? `<div class="nr-talk"><div class="nw-card-k">Client talk track</div><p>${esc(s.talk)}</p></div>` : ""}
+      </div>
+      <div class="nw-card-k" style="margin-top:22px">The wire, in full</div>
+      <div class="nr-srcs">${srcRows}</div>
+      <p class="sources" style="margin-top:18px">Every headline, outlet and link above is real and was published in the window shown.
+        The connecting sentences were written on this page from those headlines — read the sources before you repeat any of it.</p>
+      <div style="text-align:center;margin-top:16px"><button class="pbtn" id="nrAgain">Rewrite this story</button></div>
+    </article>`;
+}
+function nrWire(body){
+  const form = body.querySelector("#nrForm");
+  if(form) form.addEventListener("submit", e => { e.preventDefault(); const v = body.querySelector("#nrIn").value; if(v.trim()) nrGenerate(v); });
+  body.querySelectorAll(".nr-chip[data-seed]").forEach(b => b.addEventListener("click", () => nrGenerate(b.dataset.seed)));
+  const again = body.querySelector("#nrAgain");
+  if(again) again.addEventListener("click", () => { delete NR_CACHE[String(NR.q).toLowerCase()]; nrGenerate(NR.q); });
+  const input = body.querySelector("#nrIn");
+  if(input && !NR.busy && !NR.story) setTimeout(() => { try{ input.focus(); }catch(e){} }, 60);
+}
 
 /* ================= calendar (encrypted) ================= */
 async function deriveKey(pass, salt){
@@ -4863,14 +5371,21 @@ const BOARD_YIELDS = [
   { label:"30-yr",       match:/^30[ -]?(yr|year)|30[ -]?yr treasury/i },
   { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
 ];
+/* Eli, Sep 2026 (round 4): "under Yields, I would like to see the following prices at all
+   times: Gold, Brent Crude, BTC, ETH, all the main Indexes (S&P, VTI, etc.)." So this list is
+   a contract, not a filter -- every row below is rendered on every load. A row the feed has
+   not answered for yet prints an em dash and "awaiting refresh" instead of vanishing, which
+   is the whole point of "at all times": the board's shape never changes under him. */
 const BOARD_PRICES = [
-  { label:"S&P 500", match:/^s&p ?500$|^spx$/i,      icon:"\u{1F4C8}" },
-  { label:"Nasdaq",  match:/^nasdaq/i,                icon:"\u{1F4BB}" },
-  { label:"Dow",     match:/^dow/i,                   icon:"\u{1F3ED}" },
-  { label:"Gold",    match:/^gold|xau/i,             icon:"\u{1F947}" },
-  { label:"Crude",   match:/crude|wti|oil|^brent/i,  icon:"\u{1F6E2}️" },
-  { label:"Bitcoin", match:/bitcoin|^btc/i,          icon:"\u{1FA99}" },
-  { label:"Dollar",  match:/dollar index|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}" }
+  { label:"S&P 500", group:"Indexes", match:/^s&p ?500$|^spx$/i,        icon:"\u{1F4C8}" },
+  { label:"VTI",     group:"Indexes", match:/^vti\b|total us market/i,  icon:"\u{1F310}" },
+  { label:"Nasdaq",  group:"Indexes", match:/^nasdaq/i,                 icon:"\u{1F4BB}" },
+  { label:"Dow",     group:"Indexes", match:/^dow/i,                    icon:"\u{1F3ED}" },
+  { label:"Gold",        group:"Commodities & crypto", match:/^gold|xau/i,             icon:"\u{1F947}" },
+  { label:"Brent Crude", group:"Commodities & crypto", match:/brent|crude|wti|^oil$/i, icon:"\u{1F6E2}\uFE0F" },
+  { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}" },
+  { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}" },
+  { label:"Dollar",      group:"Commodities & crypto", match:/dollar index|^dollar$|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}" }
 ];
 const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
@@ -4889,7 +5404,10 @@ function boardHTML(rates, prices){
   const psrc = (prices || []).filter(p => p && p.label);
   BOARD_PRICES.forEach(spec => {
     const p = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
-    if(p){ usedP.add(p); ps.push({ label: spec.label, value: p.value, note: p.note || "", pct: p.pct, icon: spec.icon }); }
+    if(p) usedP.add(p);
+    ps.push({ label: spec.label, group: spec.group, icon: spec.icon,
+              value: p ? p.value : "\u2014", note: p ? (p.note || "") : "",
+              pct: p ? p.pct : undefined, missing: !p });
   });
   if(!ys.length && !ps.length) return "";
 
@@ -4913,10 +5431,13 @@ function boardHTML(rates, prices){
       `<div class="rb-prow"><div class="rb-l">${esc(r.label)}</div><div class="rb-pv">${esc(r.value)}</div>
        <div class="rb-pn">${esc(r.note || "")}</div></div>`).join("");
   }
-  const priceBlock = ps.length ? `<div class="rb-h">Prices</div>` + ps.map(p => {
+  let lastGroup = null;
+  const priceBlock = ps.length ? ps.map(p => {
+    let head = "";
+    if(p.group !== lastGroup){ lastGroup = p.group; head = `<div class="rb-h">${esc(p.group)}</div>`; }
     const move = typeof p.pct === "number" ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
                : (p.note ? `<span class="rb-chip flat">${esc(p.note)}</span>` : "");
-    return `<div class="rb-prow"><div class="rb-l"><span class="rb-ic">${p.icon || ""}</span>${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${move}</div></div>`;
+    return head + `<div class="rb-prow${p.missing ? " rb-wait" : ""}"><div class="rb-l"><span class="rb-ic">${p.icon || ""}</span>${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${p.missing ? `<span class="rb-chip flat">awaiting refresh</span>` : move}</div></div>`;
   }).join("") : "";
   return `<div class="rb">${yieldBlock}${priceBlock}</div>`;
 }
@@ -4965,10 +5486,10 @@ async function renderDesk(){
     `<div class="rb"><div class="rb-h">Board</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Rates publish with the next refresh.</p></div>`;
   grid.innerHTML = `<div>${left}</div><div>${right}</div>`;
 
-  const spx = (md.indices || []).find(i => /s&p/i.test(i.name || "")) || (md.indices || [])[0];
-  const label = card.querySelector(".bc-label");
-  if(label && !label.querySelector(".desk-mood") && spx && typeof spx.pct === "number")
-    label.insertAdjacentHTML("beforeend", ` <span class="desk-mood ${cls(spx.pct)}">${esc((spx.name||"").replace(/ composite/i,""))} ${fmtPct(spx.pct)}</span>`);
+  /* Eli, Sep 2026: "we don't need the random green S&P 500 % change thing at the top left" --
+     the board below now carries the S&P (and VTI, Nasdaq, Dow) as permanent rows, so the chip
+     on the card label was saying the same thing twice. */
+  card.querySelector(".bc-label .desk-mood")?.remove();
 
   const panel = grid.querySelector("#olPanel");
   const paintOutlook = x => {
@@ -6330,10 +6851,7 @@ function renderHistory(){
     const px = X(i), py = Y(pts[i].v);
     hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
     dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
-    tip.style.display = "block";
-    tip.style.left = (px/W*100) + "%";
-    tip.style.top = (py/H*r.height) + "px";
-    tip.innerHTML = `${esc(longDate(pts[i].d))} · <span class="tv">${usd(pts[i].v,0)}</span>`;
+    placeChartTip(tip, tip.parentNode, px, py, W, H, `${esc(longDate(pts[i].d))} · <span class="tv">${usd(pts[i].v,0)}</span>`);
   });
   $("#histHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
@@ -6393,10 +6911,7 @@ function renderHistoryIntraday(body){
     const px = X(pts[idx].ts), py = Y(pts[idx].v);
     hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
     dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
-    tip.style.display = "block";
-    tip.style.left = (px/W*100) + "%";
-    tip.style.top = (py/H*r.height) + "px";
-    tip.innerHTML = `${esc(fmtTipTime(pts[idx].ts))} · <span class="tv">${usd(pts[idx].v,0)}</span>`;
+    placeChartTip(tip, tip.parentNode, px, py, W, H, `${esc(fmtTipTime(pts[idx].ts))} · <span class="tv">${usd(pts[idx].v,0)}</span>`);
   });
   $("#histHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
@@ -6505,6 +7020,27 @@ function renderStockChart(pos){
 /* self-contained chart renderer for the stock modal -- deliberately not shared with
    renderHistory()/renderHistoryIntraday() above so changes here can't affect the
    already-working portfolio-value chart (a little duplication, on purpose). */
+/* Eli, Sep 2026: "there is a formatting error where the price gets cut off on the side if it
+   goes past the white pop up tab." The tooltip was positioned as a percentage of the chart
+   and centred with transform:translate(-50%,...), so hovering the last few points pushed half
+   of it outside the card -- and .modal-card scrolls vertically, which clips horizontally too,
+   so the overflowing half was simply sliced off. This places the tip in real pixels and
+   clamps it to the container, exactly the way a native chart tooltip behaves at an edge. */
+function placeChartTip(tip, container, px, py, W, H, html){
+  tip.innerHTML = html;
+  tip.style.display = "block";
+  const cw = container.clientWidth || W;
+  const ch = container.clientHeight || H;
+  const tw = tip.offsetWidth || 0;
+  let x = px / W * cw;
+  if(tw && tw + 8 < cw) x = Math.max(tw/2 + 4, Math.min(cw - tw/2 - 4, x));
+  else x = cw / 2;
+  tip.style.left = x.toFixed(1) + "px";
+  /* keep it off the top edge too -- translate(-50%,-120%) lifts it above the point */
+  const th = tip.offsetHeight || 26;
+  const y = Math.max(th * 1.2, py / H * ch);
+  tip.style.top = y.toFixed(1) + "px";
+}
 function drawSmChart(body, pts, opts){
   const W=760, H=230, PL=58, PR=14, PT=12, PB=28;
   const vals = pts.map(p=>p.v).concat(opts.refLine!=null ? [opts.refLine] : []);
@@ -6525,7 +7061,7 @@ function drawSmChart(body, pts, opts){
      <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Lato">${usd(v,2)}</text>`).join("");
   const refSvg = opts.refLine!=null
     ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="var(--topbar-muted)" stroke-width="1.5" stroke-dasharray="5,4"/>
-       <text x="${W-PR}" y="${(Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Lato" font-weight="700">${esc(opts.refLabel||"")}</text>`
+       <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Lato" font-weight="700">${esc(opts.refLabel||"")}</text>`
     : "";
   body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="smSvg">
     <defs><linearGradient id="smGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
@@ -6555,10 +7091,7 @@ function drawSmChart(body, pts, opts){
     const px = X(pts[idx],idx), py = Y(pts[idx].v);
     hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
     dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
-    tip.style.display = "block";
-    tip.style.left = (px/W*100) + "%";
-    tip.style.top = (py/H*r.height) + "px";
-    tip.innerHTML = opts.fmtTip(pts[idx]);
+    placeChartTip(tip, body, px, py, W, H, opts.fmtTip(pts[idx]));
   });
   $("#smHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
@@ -7518,6 +8051,344 @@ async function renderBrainFoodGate(){ return renderBrainFoodDeck(true); }
    games. Each card sits on its own living "aurora" (a canvas of slow-moving color fields)
    with a photo of the subject when the brief named one, and a big year pulled out of the
    history tidbit when there is one. Swipe, tap Next, or use the arrow keys. */
+/* ---------- the no-repeat guarantee ----------
+   Eli, Sep 2026: "I've been seeing repetition on the brain food. Make sure we're never
+   repeating fun facts, words, or history tidbits."
+
+   Two parts. First, a ledger: every fact, tidbit and word the deck has ever shown is
+   fingerprinted into localStorage, so a repeat is detectable even when the morning brief
+   sends one. Second, a backstop bank -- if the brief's item has been seen before (or the
+   brief did not publish one), the deck pulls the next unseen item from these lists instead.
+   Words fall back to the published word bank, which is hundreds of entries deep.
+
+   The day's three picks are frozen into localStorage the first time the deck is opened, so
+   re-opening it later the same day shows the same cards rather than re-rolling. Only when a
+   whole bank has been exhausted does that kind's ledger reset and start a fresh cycle. */
+const BF_FACT_BANK = [
+  "A day on Venus is longer than its year — it takes 243 Earth days to spin once and 225 to orbit the Sun.",
+  "Honey found in Egyptian tombs was still edible after 3,000 years; its low water content and acidity make it nearly immortal.",
+  "Octopuses have three hearts, and two of them stop beating whenever the animal swims.",
+  "The Eiffel Tower can stand about 15 centimetres taller in summer, because iron expands in the heat.",
+  "Bananas are berries in the botanical sense, but strawberries are not.",
+  "There are more possible arrangements of a shuffled deck of cards than there are atoms on Earth.",
+  "Wombat droppings are cubic, shaped by the last stretch of an unusually elastic intestine.",
+  "Sharks existed before trees: the first sharks swam roughly 400 million years ago, and the first trees appeared about 350 million years ago.",
+  "Sound travels about 4.3 times faster through water than through air.",
+  "A group of flamingos is called a flamboyance.",
+  "The human nose can distinguish something on the order of a trillion different smells.",
+  "Antarctica is technically the world's largest desert — it receives almost no precipitation.",
+  "Hot water can freeze faster than cold water under the right conditions, an effect named after a Tanzanian schoolboy, Erasto Mpemba.",
+  "Scotland's national animal is the unicorn.",
+  "Cows have best friends and get measurably stressed when separated from them.",
+  "The shortest war in recorded history lasted about 38 minutes, between Britain and Zanzibar.",
+  "Lightning strikes the Earth roughly 8 million times a day.",
+  "A bolt of lightning is about five times hotter than the surface of the Sun.",
+  "Butterflies taste with their feet, using chemoreceptors on their legs.",
+  "The Sahara Desert was green grassland with lakes as recently as 6,000 years ago.",
+  "Your body contains roughly the same number of bacterial cells as human cells.",
+  "Venus is the only planet in our solar system that rotates clockwise as seen from above its north pole.",
+  "The inventor of the Pringles can, Fredric Baur, was buried in one at his request.",
+  "Sea otters hold hands while sleeping so they do not drift apart.",
+  "The dot over a lowercase i or j is called a tittle.",
+  "Nearly 20 percent of the oxygen you breathe comes from the Amazon; most of the rest comes from ocean plankton.",
+  "The unicorn-like narwhal's tusk is actually a tooth that grows through its upper lip.",
+  "There is enough DNA in a single human body to stretch to the Sun and back roughly 60 times.",
+  "A teaspoon of neutron star material would weigh about six billion tons on Earth.",
+  "Bees can recognise individual human faces by combining features the way we do.",
+  "The loudest animal on Earth relative to its size is a two-millimetre water boatman, which sings by rubbing its abdomen.",
+  "Glass is not a slow-moving liquid; old window panes are thicker at the bottom because of how they were made.",
+  "The Moon is drifting away from Earth at about 3.8 centimetres a year.",
+  "Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid.",
+  "Bubble wrap was originally invented as textured wallpaper.",
+  "Oxford University is older than the Aztec Empire.",
+  "A single strand of spider silk is stronger than steel of the same diameter.",
+  "Penguins propose to their mates with a pebble.",
+  "There is a species of jellyfish, Turritopsis dohrnii, that can revert to its juvenile stage and effectively avoid dying of old age.",
+  "The world's quietest room, at Microsoft's headquarters, measures background noise below the sound of your own blood.",
+  "An ostrich's eye is bigger than its brain.",
+  "Norway knighted a penguin named Nils Olav, who holds a rank in the Norwegian King's Guard.",
+  "The smell of fresh rain has a name: petrichor, coined by two Australian scientists in 1964.",
+  "Humans share about 60 percent of their DNA with bananas.",
+  "The tongue of a blue whale can weigh as much as an elephant.",
+  "Pineapples take about two years to grow a single fruit.",
+  "There are more trees on Earth than stars in the Milky Way — roughly three trillion to a few hundred billion.",
+  "Tardigrades can survive the vacuum of space, and several have done so on orbital experiments.",
+  "The Great Wall of China is not visible to the naked eye from the Moon.",
+  "A hummingbird's heart can beat more than 1,200 times a minute in flight.",
+  "Ketchup was sold in the 1830s as a patent medicine for indigestion.",
+  "Mount Everest grows about four millimetres a year as India pushes into Asia.",
+  "Peanuts are legumes, not nuts, and they grow underground.",
+  "Astronauts get taller in space — the spine decompresses by up to five centimetres.",
+  "Crows can hold grudges against specific human faces for years and teach that grudge to their offspring.",
+  "The hashtag symbol's formal name is octothorpe.",
+  "Coffee is the second most traded commodity by volume among developing countries, behind crude oil.",
+  "Sloths can hold their breath longer than dolphins — up to 40 minutes — by slowing their heart rate.",
+  "Iceland has no mosquitoes.",
+  "The word 'salary' comes from the Latin for salt, which Roman soldiers were sometimes paid to buy.",
+  "A cloud can weigh more than a million pounds and still float, because the air beneath it is denser.",
+  "Elephants are the only mammals that cannot jump.",
+  "There are more public libraries in the United States than McDonald's locations.",
+  "The Statue of Liberty's exterior copper is about the thickness of two pennies.",
+  "Rats laugh when tickled, at an ultrasonic frequency humans cannot hear.",
+  "Saturn's density is low enough that it would float in a sufficiently large body of water.",
+  "The first webcam was pointed at a coffee pot in a Cambridge University lab so researchers could avoid wasted trips.",
+  "Alaska is simultaneously the westernmost, easternmost and northernmost U.S. state, because the Aleutians cross the 180th meridian.",
+  "A 'jiffy' is an actual unit of time: one hundredth of a second in some engineering contexts.",
+  "Giraffes have the same number of neck vertebrae as humans — seven.",
+  "Wild dolphins have signature whistles that function like names and are used to address one another.",
+  "The average cumulus cloud holds about as much water as 100 elephants weigh.",
+  "The heart of a shrimp is located in its head.",
+  "Canada has more lakes than the rest of the world combined.",
+  "Nutmeg is toxic in large doses and was once worth more by weight than gold.",
+  "Your stomach lining replaces itself roughly every three to four days.",
+  "The inventor of the frisbee was turned into a frisbee after he died; his ashes were moulded into discs.",
+  "A shrimp's eye can have more than a dozen types of colour receptor; humans have three.",
+  "The longest recorded flight of a chicken is 13 seconds.",
+  "Baby elephants suck their trunks the way human infants suck their thumbs.",
+  "Russia's land area is larger than the surface area of Pluto.",
+  "The Hawaiian alphabet has just 13 letters.",
+  "A bolt of lightning contains enough energy to toast about 100,000 slices of bread.",
+  "Sea cucumbers can expel their internal organs to deter predators and then regrow them.",
+  "The Mariana Trench is deeper than Mount Everest is tall — by more than two kilometres.",
+  "Nearly all the gold on Earth's surface arrived via asteroid bombardment after the planet's core had formed.",
+  "Vending machines kill more people annually than sharks do.",
+  "The shortest commercial flight in the world, in Scotland's Orkney Islands, takes under two minutes.",
+  "The colour orange was named after the fruit, not the other way around.",
+  "A snail can sleep for up to three years when conditions are dry.",
+  "There is a basketball court on the top floor of the U.S. Supreme Court building, nicknamed the Highest Court in the Land.",
+  "Hummingbirds are the only birds that can fly backwards.",
+  "The Dead Sea is so salty that almost nothing lives in it, and it is about ten times saltier than the ocean.",
+  "Redheads need roughly 20 percent more general anaesthetic than average.",
+  "Polar bear fur is not white; each hair is hollow and transparent, and their skin underneath is black.",
+  "Pigeons can distinguish between paintings by Monet and Picasso.",
+  "The plastic tips on shoelaces are called aglets.",
+  "Neptune has only completed one orbit of the Sun since its discovery in 1846.",
+  "The human brain uses about 20 percent of the body's energy while making up 2 percent of its mass.",
+  "An eagle's eyesight is roughly four to eight times sharper than a human's.",
+  "Bamboo can grow nearly a metre in a single day in the right species and conditions.",
+  "There are about 10 quintillion insects alive on Earth at any moment.",
+  "Napoleon was of average height for a Frenchman of his era; the short jokes came from British propaganda and a units mix-up.",
+  "Water can boil and freeze at the same time at its triple point, a precise combination of temperature and pressure.",
+  "The Moon has moonquakes, some lasting more than ten minutes because the dry rock rings like a bell.",
+  "A group of pugs is called a grumble.",
+  "Sunflowers track the Sun only while young; mature flowers settle facing east to warm up faster and attract more pollinators.",
+  "The longest word in most English dictionaries, pneumonoultramicroscopicsilicovolcanoconiosis, was coined largely to be long.",
+  "Wolves howl in harmony, deliberately avoiding matching pitch so the pack sounds larger.",
+  "Chameleons change colour mainly to regulate temperature and signal mood, not to match their background.",
+  "There are roughly 60,000 miles of blood vessels in an adult human body.",
+  "The fear of long words is, unhelpfully, called hippopotomonstrosesquippedaliophobia.",
+  "Ants do not have lungs; oxygen enters through tiny holes called spiracles along their bodies.",
+  "A group of jellyfish is called a smack.",
+  "Fingernails grow roughly three times faster than toenails, and faster on your dominant hand.",
+  "The Amazon River is so powerful that fresh water is detectable in the Atlantic more than 100 miles offshore.",
+  "Some species of bamboo flower simultaneously worldwide, once every 60 to 120 years, then die.",
+  "The average human will walk the equivalent of three times around the Earth in a lifetime.",
+  "Lobsters were once considered poor-man's food in colonial America and fed to prisoners and servants.",
+  "A snowflake can take up to an hour to fall from cloud to ground.",
+  "Cats cannot taste sweetness; the gene for the sweet receptor is broken in the whole cat family.",
+  "Mosquitoes are drawn to carbon dioxide from more than 50 metres away.",
+  "The average lead pencil can draw a line roughly 35 miles long.",
+  "A 'moment' was a real medieval unit of time equal to about 90 seconds."
+];
+
+const BF_HIST_BANK = [
+  "In 1440, Johannes Gutenberg began assembling the movable-type press that would put a book within reach of ordinary Europeans within a generation.",
+  "In 1492, Christopher Columbus made landfall in the Bahamas, having badly underestimated the size of the Earth.",
+  "In 1517, Martin Luther published his Ninety-five Theses, and the printing press turned a local academic quarrel into the Reformation.",
+  "In 1588, storms and English fireships scattered the Spanish Armada, ending Philip II's plan to invade England.",
+  "In 1602, the Dutch East India Company issued the first publicly traded shares, inventing the stock market as we know it.",
+  "In 1607, English settlers founded Jamestown, and more than half of them were dead within a year.",
+  "In 1620, the Mayflower Compact was signed aboard ship because the passengers had landed far north of their charter.",
+  "In 1666, the Great Fire of London burned for four days and destroyed roughly 13,000 houses, but killed remarkably few people.",
+  "In 1687, Isaac Newton published the Principia, explaining the orbits of planets and the fall of an apple with the same equation.",
+  "In 1721, Robert Walpole became Britain's first de facto prime minister in the wake of the South Sea Bubble.",
+  "In 1752, Britain and its colonies skipped eleven days to adopt the Gregorian calendar; 2 September was followed by 14 September.",
+  "In 1776, the Declaration of Independence was approved on 4 July, but most delegates did not sign it until August.",
+  "In 1783, the Montgolfier brothers sent a sheep, a duck and a rooster aloft in a balloon to see whether altitude was survivable.",
+  "In 1787, the U.S. Constitution was drafted in a closed Philadelphia room during one of the hottest summers on record.",
+  "In 1803, the Louisiana Purchase doubled the size of the United States for about four cents an acre.",
+  "In 1815, the eruption of Mount Tambora led to the following 'year without a summer' and crop failures across the Northern Hemisphere.",
+  "In 1816, Mary Shelley began writing Frankenstein during that same sunless summer on Lake Geneva.",
+  "In 1825, the Erie Canal opened and cut the cost of moving freight from Buffalo to New York City by about 90 percent.",
+  "In 1831, Charles Darwin boarded HMS Beagle as an unpaid gentleman naturalist, largely to keep the captain company.",
+  "In 1844, Samuel Morse sent the message 'What hath God wrought' from Washington to Baltimore by telegraph.",
+  "In 1848, gold was found at Sutter's Mill, and San Francisco grew from a village of 1,000 to a city of 25,000 in two years.",
+  "In 1851, the Great Exhibition opened in London's Crystal Palace, a building of iron and glass assembled in months.",
+  "In 1859, Edwin Drake drilled the first commercial oil well in Pennsylvania at a depth of just 69 feet.",
+  "In 1863, the first stretch of the London Underground opened, running steam locomotives through tunnels.",
+  "In 1865, the Thirteenth Amendment abolished slavery in the United States, eight months after the Emancipation Proclamation took effect.",
+  "In 1869, the Suez Canal opened, cutting the sea route from London to Bombay roughly in half.",
+  "In 1869, the golden spike joined the American transcontinental railroad at Promontory Summit, Utah.",
+  "In 1876, Alexander Graham Bell filed his telephone patent hours before a rival, Elisha Gray, filed a caveat for a similar idea.",
+  "In 1879, Thomas Edison's team found a carbon filament that burned for over 13 hours, making electric light practical.",
+  "In 1883, Krakatoa erupted with a blast heard nearly 3,000 miles away, the loudest sound in recorded history.",
+  "In 1886, Coca-Cola was first sold at an Atlanta pharmacy, averaging about nine servings a day in its first year.",
+  "In 1889, the Eiffel Tower opened to mixed reviews; a petition of Paris artists had called it a 'useless monstrosity'.",
+  "In 1896, the first modern Olympic Games were held in Athens, with 14 nations competing.",
+  "In 1903, the Wright brothers flew 120 feet at Kitty Hawk, a distance shorter than the wingspan of a modern airliner.",
+  "In 1906, the San Francisco earthquake and the fires that followed destroyed roughly 80 percent of the city.",
+  "In 1908, Henry Ford introduced the Model T, and by 1925 the price had fallen from $850 to under $300.",
+  "In 1912, the Titanic sank on its maiden voyage after receiving multiple ice warnings it did not act on.",
+  "In 1913, the Federal Reserve was created in response to the Panic of 1907, which J.P. Morgan had personally helped contain.",
+  "In 1914, an unofficial Christmas truce broke out along stretches of the Western Front, with soldiers trading food and songs.",
+  "In 1918, the influenza pandemic began killing more people than the First World War had, with estimates running past 50 million.",
+  "In 1920, American women won the vote when Tennessee ratified the Nineteenth Amendment by a single legislator's change of mind.",
+  "In 1928, Alexander Fleming returned from holiday to find mould killing bacteria in a dish he had forgotten to clean.",
+  "In 1929, the Wall Street Crash wiped out a decade of gains in weeks, though the market's true bottom came in 1932.",
+  "In 1930, Clyde Tombaugh discovered Pluto by comparing photographic plates taken days apart.",
+  "In 1933, the Glass-Steagall Act separated commercial and investment banking in the United States, a wall that stood until 1999.",
+  "In 1935, the Social Security Act was signed, originally covering about 60 percent of American workers.",
+  "In 1936, the BBC began the world's first regular high-definition television service, broadcasting to a few hundred sets.",
+  "In 1938, a radio adaptation of The War of the Worlds aired, and the scale of the panic it caused was itself largely a press invention.",
+  "In 1939, the first commercially available helicopter flight took place in the United States with Igor Sikorsky at the controls.",
+  "In 1944, roughly 156,000 Allied troops landed in Normandy in the largest seaborne invasion ever attempted.",
+  "In 1945, the United Nations Charter was signed in San Francisco by 50 nations.",
+  "In 1947, Bell Labs demonstrated the first working transistor, the component underneath essentially all modern electronics.",
+  "In 1947, Chuck Yeager broke the sound barrier over the Mojave with two broken ribs he had not reported.",
+  "In 1948, the Marshall Plan began sending about $13 billion to rebuild Western Europe.",
+  "In 1953, Watson and Crick published the double-helix structure of DNA, leaning heavily on Rosalind Franklin's X-ray work.",
+  "In 1954, Roger Bannister ran a mile in 3:59.4, and the record fell again within seven weeks.",
+  "In 1955, Rosa Parks refused to move from her bus seat in Montgomery, beginning a boycott that lasted 381 days.",
+  "In 1957, the Soviet Union launched Sputnik, a 184-pound sphere whose beeping was audible on amateur radios worldwide.",
+  "In 1958, the integrated circuit was demonstrated by Jack Kilby at Texas Instruments using a sliver of germanium.",
+  "In 1960, the bathyscaphe Trieste carried two men to the bottom of the Mariana Trench, nearly seven miles down.",
+  "In 1961, Yuri Gagarin orbited the Earth once in 108 minutes and became the first human in space.",
+  "In 1963, the first successful liver transplant was attempted in Denver, and the field spent years learning from its failures.",
+  "In 1964, the Civil Rights Act was signed after the longest filibuster in Senate history to that point.",
+  "In 1967, Christiaan Barnard performed the first human heart transplant in Cape Town; the patient lived 18 days.",
+  "In 1969, Apollo 11 landed on the Moon with about 25 seconds of fuel remaining in the descent stage.",
+  "In 1969, the first message was sent over ARPANET; the system crashed after two letters of the word 'login'.",
+  "In 1971, Ray Tomlinson sent the first network email and chose the @ symbol because it was otherwise unused in names.",
+  "In 1971, the United States ended the dollar's convertibility to gold, dismantling the Bretton Woods system.",
+  "In 1973, the OPEC oil embargo quadrupled crude prices and introduced Americans to the 55 mph speed limit.",
+  "In 1974, the first universal product code was scanned in an Ohio supermarket, on a pack of chewing gum.",
+  "In 1975, Microsoft was founded, initially to write a BASIC interpreter for a mail-order computer kit.",
+  "In 1976, Apple Computer was founded on April Fools' Day, and its third co-founder sold his stake for $800 twelve days later.",
+  "In 1977, the Voyager probes launched; both are still transmitting from interstellar space decades later.",
+  "In 1978, the 401(k) provision entered the U.S. tax code almost unnoticed, and a benefits consultant spotted its potential two years later.",
+  "In 1979, the Sony Walkman went on sale in Japan and made private, portable listening ordinary.",
+  "In 1980, smallpox was declared eradicated, the only human disease ever eliminated in the wild.",
+  "In 1981, IBM shipped its first personal computer, and its decision to license rather than own the operating system reshaped the industry.",
+  "In 1983, Stanislav Petrov judged a Soviet missile-warning alert to be a false alarm and declined to report it up the chain.",
+  "In 1985, scientists identified the hole in the Antarctic ozone layer, leading to the Montreal Protocol two years later.",
+  "In 1986, the Chernobyl reactor exploded during a safety test that had been repeatedly postponed.",
+  "In 1987, markets fell more than 20 percent in a single day on Black Monday, still the largest one-day percentage drop on record.",
+  "In 1989, Tim Berners-Lee circulated a proposal at CERN that his manager annotated 'vague, but exciting'.",
+  "In 1989, the Berlin Wall opened after an East German official misread a note at a press conference.",
+  "In 1990, the Hubble Space Telescope launched with a flawed mirror that took a 1993 servicing mission to correct.",
+  "In 1991, the World Wide Web went public, and the first website simply explained what the web was.",
+  "In 1994, the Channel Tunnel opened after six years of digging from both sides that met within centimetres.",
+  "In 1995, Amazon sold its first book, a technical text on computational thought, out of a Seattle garage.",
+  "In 1997, IBM's Deep Blue beat world champion Garry Kasparov over six games.",
+  "In 1998, Google was incorporated in a garage in Menlo Park, financed partly by a $100,000 cheque written before the company legally existed.",
+  "In 1999, the euro was introduced for accounting purposes, three years before any notes or coins circulated.",
+  "In 2000, the dot-com bubble peaked in March, and the Nasdaq would not regain that level for fifteen years.",
+  "In 2001, Wikipedia launched as a side project meant to feed articles into a more formal encyclopedia that never took off.",
+  "In 2004, Facebook launched from a Harvard dorm room, restricted at first to students with a harvard.edu address.",
+  "In 2007, the first iPhone went on sale with no app store; third-party apps arrived a year later.",
+  "In 2008, Lehman Brothers filed the largest bankruptcy in U.S. history, with more than $600 billion in assets.",
+  "In 2009, the Bitcoin network produced its first block, with a newspaper headline about bank bailouts written into it.",
+  "In 2010, the Deepwater Horizon spill released an estimated 4.9 million barrels of oil into the Gulf of Mexico.",
+  "In 2012, a car-sized rover named Curiosity landed on Mars using a rocket-powered crane that lowered it on cables.",
+  "In 2015, the Paris Agreement was adopted by 196 parties, setting a target of well under two degrees of warming.",
+  "In 2016, gravitational waves were detected for the first time, a century after Einstein predicted them.",
+  "In 2019, astronomers released the first image of a black hole, assembled from petabytes of data shipped on hard drives.",
+  "In 2020, markets fell into the fastest bear market in history in 33 days, then recovered the losses within five months.",
+  "In 1348, the Black Death reached England, and within two years it had killed perhaps a third of the population.",
+  "In 1215, English barons forced King John to seal Magna Carta, which he then asked the Pope to annul within weeks.",
+  "In 1066, William of Normandy won at Hastings after a feigned retreat drew the English shield wall out of position.",
+  "In 800, Charlemagne was crowned emperor in Rome on Christmas Day, reportedly without prior warning.",
+  "In 79, Vesuvius buried Pompeii and Herculaneum, preserving a Roman town in extraordinary detail.",
+  "In 1453, the fall of Constantinople ended the Roman Empire's last remnant after 1,100 years.",
+  "In 1543, Copernicus published his heliocentric model, receiving the first printed copy on the day he died.",
+  "In 1607, the first recorded use of the word 'bankrupt' in English law appeared, from the Italian for a broken bench.",
+  "In 1720, the South Sea Bubble burst, taking with it investors including Isaac Newton, who reportedly lost a fortune.",
+  "In 1773, colonists dumped 342 chests of tea into Boston Harbor, worth roughly $1.7 million in today's money.",
+  "In 1799, the Rosetta Stone was found by French soldiers digging fortifications in Egypt.",
+  "In 1804, Haiti declared independence after the only successful large-scale slave revolt in modern history.",
+  "In 1836, Texas declared independence from Mexico and spent nearly a decade as its own republic.",
+  "In 1857, the first transatlantic telegraph cable attempt failed; the successful cable came in 1866.",
+  "In 1871, the Great Chicago Fire destroyed about three square miles and left roughly a third of the city homeless.",
+  "In 1893, New Zealand became the first self-governing country to grant women the vote.",
+  "In 1901, Marconi received a transatlantic radio signal in Newfoundland that many physicists insisted was impossible.",
+  "In 1911, Roald Amundsen reached the South Pole a month ahead of Robert Falcon Scott, whose party did not survive the return.",
+  "In 1927, Charles Lindbergh flew from New York to Paris alone in 33 and a half hours without a front windscreen.",
+  "In 1931, the Empire State Building was completed in 410 days, ahead of schedule and under budget.",
+  "In 1941, the Manhattan Project's predecessor was authorised, eventually employing 130,000 people who mostly did not know its purpose.",
+  "In 1952, Britain's Great Smog killed thousands in London and led directly to the Clean Air Act of 1956.",
+  "In 1962, the Cuban Missile Crisis brought the superpowers within days of nuclear war before a quiet trade over Turkish missiles ended it.",
+  "In 1972, the last humans to date left the Moon, and Apollo 17's crew spent about 75 hours on the surface.",
+  "In 1993, the first web browser with inline images, Mosaic, made the web visual and traffic grew more than a thousandfold in a year."
+];
+
+const BF_LEDGER_KEY = "dh-bf-ledger";
+function bfLedger(){ try{ return JSON.parse(localStorage.getItem(BF_LEDGER_KEY) || "{}") || {}; }catch(e){ return {}; } }
+function bfSaveLedger(l){ try{ localStorage.setItem(BF_LEDGER_KEY, JSON.stringify(l)); }catch(e){} }
+function bfNorm(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+function bfId(s){ return String(hashStr(bfNorm(s))); }
+function bfSeen(kind, text){ const l = bfLedger(); return !!(l[kind] && l[kind][bfId(text)]); }
+function bfMark(kind, text){
+  if(!text) return;
+  const l = bfLedger(); const m = l[kind] = l[kind] || {};
+  m[bfId(text)] = todayCT();
+  /* keep the ledger from growing without bound -- oldest entries fall off past 900 */
+  const keys = Object.keys(m);
+  if(keys.length > 900){ keys.sort((a,b) => (m[a] || "").localeCompare(m[b] || "")).slice(0, keys.length - 900).forEach(k => delete m[k]); }
+  bfSaveLedger(l);
+}
+/* Pick the next unseen item out of `bank`, deterministically for the given day. When every
+   item has been seen, that kind's ledger is cleared so the cycle starts over rather than
+   the deck silently repeating. `textOf` maps a bank entry to the string we fingerprint. */
+function bfNextUnseen(kind, bank, day, textOf){
+  textOf = textOf || (x => x);
+  let pool = bank.filter(x => !bfSeen(kind, textOf(x)));
+  if(!pool.length){
+    const l = bfLedger(); delete l[kind]; bfSaveLedger(l);
+    pool = bank.slice();
+  }
+  if(!pool.length) return null;
+  const r = bfRand(hashStr(kind + "|" + day));
+  return pool[Math.floor(r() * pool.length) % pool.length];
+}
+/* The whole day's Brain Food, chosen once and then frozen. */
+async function bfTodaysCards(close){
+  const day = todayCT(), key = "dh-bf-day-" + day;
+  try{ const saved = JSON.parse(localStorage.getItem(key) || "null"); if(saved && saved.v === 2) return saved; }catch(e){}
+  const out = { v:2, day };
+
+  const briefFact = close && close.funFact;
+  if(briefFact && !bfSeen("fact", briefFact)){
+    out.fact = { text: briefFact, subject: close.funFactSubject, image: close.funFactImage };
+  } else {
+    const t = bfNextUnseen("fact", BF_FACT_BANK, day);
+    if(t) out.fact = { text: t };
+  }
+
+  const briefHist = close && close.historyTidbit;
+  if(briefHist && !bfSeen("history", briefHist)){
+    out.history = { text: briefHist, subject: close.historySubject, image: close.historyImage };
+  } else {
+    const t = bfNextUnseen("history", BF_HIST_BANK, day);
+    if(t) out.history = { text: t };
+  }
+
+  const briefWord = close && close.word;
+  if(briefWord && briefWord.term && !bfSeen("word", briefWord.term)){
+    out.word = briefWord;
+  } else {
+    let bank = [];
+    try{ bank = await fetchWords(); }catch(e){ bank = []; }
+    const w = bank.length ? bfNextUnseen("word", bank, day, x => x.term) : null;
+    out.word = w || briefWord || null;
+  }
+
+  if(out.fact) bfMark("fact", out.fact.text);
+  if(out.history) bfMark("history", out.history.text);
+  if(out.word && out.word.term) bfMark("word", out.word.term);
+  try{ localStorage.setItem(key, JSON.stringify(out)); }catch(e){}
+  return out;
+}
+
 let bfAnim = null;
 function bfStopAnim(){ if(bfAnim){ cancelAnimationFrame(bfAnim.raf); bfAnim = null; } }
 
@@ -7708,13 +8579,15 @@ async function renderBrainFoodDeck(gate){
   const panel = $("#panel-quiz");
   panel.innerHTML = `<div class="spinner"></div>`;
   const close = await fetchLatestClose();
-  if(!close || !(close.funFact || close.historyTidbit || close.word)){ try{ localStorage.setItem("dh-bf-seen", todayCT()); }catch(e){} renderGamesLauncher(); return; }
+  /* Eli, Sep 2026: "The daily case does not need to be on brain food." -- so the deck is
+     strictly fun fact, history tidbit, word of the day, and then the games. */
+  const today = await bfTodaysCards(close);
+  if(!today.fact && !today.history && !today.word){ try{ localStorage.setItem("dh-bf-seen", todayCT()); }catch(e){} renderGamesLauncher(); return; }
   $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = ""; $("#staleNote").style.display = "none";
   const cards = [];
-  if(close.funFact) cards.push({ kind:"fact", kicker:"Fun fact", text: close.funFact, subject: close.funFactSubject, image: close.funFactImage });
-  if(close.historyTidbit){ const yr = (close.historyTidbit.match(/\b(1\d{3}|20\d{2})\b/) || [])[1]; cards.push({ kind:"history", kicker:"History tidbit", text: close.historyTidbit, subject: close.historySubject, image: close.historyImage, year: yr }); }
-  if(close.word) cards.push({ kind:"word", kicker:"Word of the day", word: close.word });
-  if(close.case && close.case.title) cards.push({ kind:"case", kicker: close.case.topic || "The Daily Case", text: close.case.title, sub: (close.case.situation || "").split(/(?<=\.)\s/)[0] });
+  if(today.fact) cards.push({ kind:"fact", kicker:"Fun fact", text: today.fact.text, subject: today.fact.subject, image: today.fact.image });
+  if(today.history){ const yr = (today.history.text.match(/^In\s+(\d{2,4})\b/) || today.history.text.match(/\b(1\d{3}|20\d{2})\b/) || [])[1]; cards.push({ kind:"history", kicker:"History tidbit", text: today.history.text, subject: today.history.subject, image: today.history.image, year: yr }); }
+  if(today.word) cards.push({ kind:"word", kicker:"Word of the day", word: today.word });
   cards.push({ kind:"done", kicker:"That's today's Brain Food", text: gate ? "On to the games." : "See you tomorrow." });
   let i = 0;
   const done = () => { try{ localStorage.setItem("dh-bf-seen", todayCT()); }catch(e){} };
@@ -7723,11 +8596,9 @@ async function renderBrainFoodDeck(gate){
     const c = cards[i];
     const body = c.kind === "word"
       ? `<div class="bf-word">${esc(c.word.term)}</div><div class="bf-say">${esc(c.word.respell || c.word.ipa || "")}${c.word.pos ? ` · <i>${esc(c.word.pos)}</i>` : ""}</div><div class="bf-def">${esc(c.word.definition || "")}</div>${c.word.example ? `<div class="bf-ex">“${esc(c.word.example)}”</div>` : ""}`
-      : c.kind === "case" ? `<div class="bf-text bf-title">${esc(c.text)}</div>${c.sub ? `<div class="bf-sub">${esc(c.sub)}…</div>` : ""}`
       : c.kind === "done" ? `<div class="bf-text bf-title">${esc(c.text)}</div>`
       : `<div class="bf-text">${esc(c.text)}</div>`;
     const cta = c.kind === "word" ? `<button class="bf-btn" id="bfQuiz">Take the word quiz</button>`
-      : c.kind === "case" ? `<button class="bf-btn" id="bfCase">Open the case</button>`
       : c.kind === "done" ? `<button class="bf-btn bf-primary" id="bfGames">Games →</button>` : "";
     panel.innerHTML = `<div class="bf-stage">
       <div class="bf-top"><span class="bf-date">${esc(niceDate(todayCT()))}</span><span class="bf-count">${i+1} / ${cards.length}</span>${gate ? "" : `<button class="pbtn game-back bf-back" id="bfBack">← Games</button>`}</div>
@@ -7771,7 +8642,6 @@ async function renderBrainFoodDeck(gate){
     card.addEventListener("touchend", e => { if(sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if(dx < -40) go(i+1, "next"); else if(dx > 40) go(i-1, "prev"); }, {passive:true});
     $("#bfBack")?.addEventListener("click", () => { bfStopAnim(); done(); gamesView = "launcher"; renderGamesLauncher(); });
     $("#bfQuiz")?.addEventListener("click", () => { bfStopAnim(); done(); markGamePlayed("quiz"); gamesView = "quiz"; renderGamesTab(); });
-    $("#bfCase")?.addEventListener("click", () => { bfStopAnim(); done(); markGamePlayed("case"); gamesView = "case"; renderGamesTab(); });
     $("#bfGames")?.addEventListener("click", () => { bfStopAnim(); done(); gamesView = "launcher"; renderGamesLauncher(); });
     if(i === cards.length-1) done();
   };
@@ -7779,20 +8649,62 @@ async function renderBrainFoodDeck(gate){
   paint();
 }
 /* ---------- the arcade ----------
-   Eli, Sep 2026: "completely re-organize the games tab so it looks cleaner / nicer / more
-   congruent. Don't get rid of any games though."
+   Eli, Sep 2026 (round 3): "make the games moreso just the icon and the name instead of a tab
+   with a small icon and name / desc / website. I wanted it to almost just be like a large app
+   you click on." -- so every game is now an app icon and a name, full stop. No blurb, no
+   domain, no per-game stat line.
 
-   The old page was three different visual languages stacked up: big colored boxes for the
-   built-ins, then list rows for the links. Every game -- built-in or link -- is the SAME tile.
-   The built-ins are still obviously the main event (accent ring, a PLAY HERE badge, and their
-   own live stat line); the links carry their favicon and an ↗. A header ring shows how much
-   of today is done and hands you the next unplayed one.
+   Families get their own left-to-right shelf rather than one wrapping grid: the free NYT
+   games together, the LinkedIn games together, geography together, and everything else under
+   Misc. Icons are drawn here (glyph on a brand-coloured gradient) rather than pulled as
+   favicons, because every NYT game shares one favicon and every LinkedIn game shares another
+   -- nine identical tiles is the opposite of an app screen.
 
-   Round 2 (Eli, Sep 2026): "not a big fan of the tabs to see different categories" -- an
-   in-between version grouped everything into one grid behind clickable filter chips (see
-   renderGamesLauncher's dedicated comment below), which meant clicking through categories to
-   see the whole arcade. Now every tile is visible at once, grouped under static section
-   headers instead -- scroll, don't click. */
+   Also dropped on Eli's instruction: the played-today counter ring ("I don't need the counter
+   at the top") and the "Next: Brain Food" button ("unneeded"). The per-tile daily checkmark
+   is the only progress marker left, which is exactly what he asked to keep. */
+const GAME_SHELVES = [
+  { n:"Play here", built:true, games:[
+    { id:"brainfood", name:"Brain Food",     ic:"\u{1F9E0}", col:"#0E9F6E" },
+    { id:"case",      name:"The Daily Case", ic:"\u{1F5C2}️", col:"#7A4E8C" },
+    { id:"crossword", name:"Crossword",      ic:"\u{270F}️",  col:"#378ADD" },
+    { id:"quiz",      name:"Word Quiz",      ic:"\u{1F4D6}", col:"#C2703B" }
+  ]},
+  { n:"New York Times", note:"free games", games:[
+    { name:"Wordle",       ic:"\u{1F7E9}", col:"#3A3A3C", url:"https://www.nytimes.com/games/wordle/index.html" },
+    { name:"Connections",  ic:"\u{1F517}", col:"#A77BC0", url:"https://www.nytimes.com/games/connections" },
+    { name:"Strands",      ic:"\u{1F9F5}", col:"#2E86AB", url:"https://www.nytimes.com/games/strands" },
+    { name:"The Mini",     ic:"\u{1F521}", col:"#3A7CE1", url:"https://www.nytimes.com/crosswords/game/mini" },
+    { name:"Spelling Bee", ic:"\u{1F41D}", col:"#2B2B2B", url:"https://www.nytimes.com/puzzles/spelling-bee" },
+    { name:"Letter Boxed", ic:"\u{1F4E6}", col:"#5A7DE0", url:"https://www.nytimes.com/puzzles/letter-boxed" },
+    { name:"Tiles",        ic:"\u{1F9E9}", col:"#E07A5F", url:"https://www.nytimes.com/puzzles/tiles" },
+    { name:"Sudoku",       ic:"\u{1F522}", col:"#2D6A8F", url:"https://www.nytimes.com/puzzles/sudoku/easy" },
+    { name:"Pips",         ic:"\u{1F3B2}", col:"#C75146", url:"https://www.nytimes.com/puzzles/pips" }
+  ]},
+  { n:"LinkedIn", note:"daily puzzles", games:[
+    { name:"Queens",      ic:"\u{1F451}", col:"#6D28D9", url:"https://www.linkedin.com/games/queens" },
+    { name:"Tango",       ic:"\u{1F317}", col:"#0EA5E9", url:"https://www.linkedin.com/games/tango" },
+    { name:"Zip",         ic:"\u{26A1}",  col:"#7C3AED", url:"https://www.linkedin.com/games/zip" },
+    { name:"Crossclimb",  ic:"\u{1FA9C}", col:"#0A66C2", url:"https://www.linkedin.com/games/crossclimb" },
+    { name:"Pinpoint",    ic:"\u{1F4CD}", col:"#0F766E", url:"https://www.linkedin.com/games/pinpoint" },
+    { name:"Mini Sudoku", ic:"\u{1F9EE}", col:"#0891B2", url:"https://www.linkedin.com/games/mini-sudoku" }
+  ]},
+  { n:"Geography", games:[
+    { name:"Worldle",    ic:"\u{1F5FA}️", col:"#2F6B54", url:"https://worldle.teuteuf.fr/" },
+    { name:"Globle",     ic:"\u{1F30D}", col:"#2563EB", url:"https://globle-game.com/game" },
+    { name:"Flagle",     ic:"\u{1F6A9}", col:"#1E3A8A", url:"https://www.flagle.io/" },
+    { name:"Travle",     ic:"\u{1F9ED}", col:"#1D7A8C", url:"https://travle.earth/" },
+    { name:"TimeGuessr", ic:"\u{23F3}",  col:"#B45309", url:"https://timeguessr.com/" },
+    { name:"MapTap",     ic:"\u{1F4CC}", col:"#0E9F6E", url:"https://maptap.gg/" }
+  ]},
+  { n:"Misc", games:[
+    { name:"Size It Up", ic:"\u{1F4CF}", col:"#6366F1", url:"https://magnitudle.com/size-it-up" },
+    { name:"Krillion",   ic:"\u{1F990}", col:"#0E7490", url:"https://krillion.io/" },
+    { name:"Nerdle",     ic:"\u{2797}",  col:"#1E293B", url:"https://nerdlegame.com/" },
+    { name:"Costcodle",  ic:"\u{1F6D2}", col:"#0369A1", url:"https://costcodle.com/" }
+  ]}
+];
+
 function renderGamesLauncher(){
   if(!bfSeenToday()){ renderBrainFoodGate(); return; }
   const panel = $("#panel-quiz");
@@ -7801,91 +8713,54 @@ function renderGamesLauncher(){
   $("#heroSub").textContent = "";
   $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
-  const favicon = d => `https://www.google.com/s2/favicons?domain=${d}&sz=64`;
   const played = getPlayedGames();
 
-  /* Mini and Freehand were retired Sep 2026 (Eli's call); The Case File became The Daily Case. */
-  const built = [
-    { id:"brainfood", name:"Brain Food", tag:"Today's fun fact, history tidbit and word of the day, as cards", icon:"🧠", col:"#0E9F6E", stat: bfSeenToday() ? "Read today" : "Not read yet" },
-    { id:"case", name:"The Daily Case", tag:"A real client scenario, four moves, one right call", icon:"🗂️", col:"#7A4E8C", stat: dcStatLabel() },
-    { id:"crossword", name:"Crossword", tag:"Challenging 12×12 grid, fully checked, new daily", icon:"✏️", col:"#378ADD", stat: cwStatLabel() },
-    { id:"quiz", name:"Word Quiz", tag:"Five questions on today's word and its cousins", icon:"📖", col:"#C2703B", stat: qBestLabel() }
-  ];
-  const links = [
-    { cat:"word", name:"Wordle", tag:"Five letters, six tries", url:"https://www.nytimes.com/games/wordle/index.html", domain:"nytimes.com" },
-    { cat:"word", name:"Connections", tag:"Group sixteen words", url:"https://www.nytimes.com/games/connections", domain:"nytimes.com" },
-    { cat:"word", name:"Strands", tag:"Word search with a twist", url:"https://www.nytimes.com/games/strands", domain:"nytimes.com" },
-    { cat:"word", name:"Nerdle", tag:"Wordle for equations", url:"https://nerdlegame.com/", domain:"nerdlegame.com" },
-    { cat:"word", name:"Costcodle", tag:"Guess the price", url:"https://costcodle.com/", domain:"costcodle.com" },
-    { cat:"logic", name:"Queens", tag:"One queen per row, column and region", url:"https://www.linkedin.com/games/queens", domain:"linkedin.com" },
-    { cat:"geo",  name:"Worldle", tag:"Country by silhouette", url:"https://worldle.teuteuf.fr/", domain:"worldle.teuteuf.fr" },
-    { cat:"geo",  name:"Travle", tag:"Chain the countries", url:"https://travle.earth/", domain:"travle.earth" },
-    { cat:"geo",  name:"Globle", tag:"Country by proximity", url:"https://globle-game.com/game", domain:"globle-game.com" },
-    { cat:"geo",  name:"Flagle", tag:"Country by flag", url:"https://www.flagle.io/", domain:"flagle.io" },
-    { cat:"geo",  name:"TimeGuessr", tag:"Guess the photo's time and place", url:"https://timeguessr.com/", domain:"timeguessr.com" },
-    { cat:"geo",  name:"MapTap", tag:"Today's five history spots on a 3D globe", url:"https://maptap.gg/", domain:"maptap.gg" },
-    { cat:"visual", name:"Size It Up", tag:"Resize five objects against a reference", url:"https://magnitudle.com/size-it-up", domain:"magnitudle.com" }
-  ];
+  const tile = (g, built) => {
+    const key = built ? g.id : g.name;
+    const on = played.has(key) ? " played" : "";
+    const inner = `<span class="app-ic" style="--gcol:${g.col}">${g.ic}</span><span class="app-tick">✓</span>
+        <span class="app-nm">${esc(g.name)}</span>`;
+    return built
+      ? `<button type="button" class="app${on}" data-game="${esc(g.id)}" title="${esc(g.name)}">${inner}</button>`
+      : `<a class="app app-ext${on}" data-game="${esc(g.name)}" title="${esc(g.name)}" href="${g.url}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+  };
 
-  const doneBuilt = built.filter(g => played.has(g.id)).length;
-  const doneLinks = links.filter(g => played.has(g.name)).length;
-  const total = built.length + links.length, done = doneBuilt + doneLinks;
-  const nextUp = built.find(g => !played.has(g.id)) || null;
-  const pct = total ? done / total : 0;
-  const R = 22, C = 2 * Math.PI * R;
-
-  const builtTile = g => `<button class="gt gt-built${played.has(g.id) ? " played" : ""}" data-game="${g.id}" data-cat="here" style="--gcol:${g.col}">
-      <span class="gt-top"><span class="gt-ic">${g.icon}</span><span class="gt-badge">Play here</span></span>
-      <span class="gt-nm">${esc(g.name)}</span>
-      <span class="gt-tg">${esc(g.tag)}</span>
-      <span class="gt-ft"><span class="gt-st">${esc(g.stat)}</span><span class="gt-go">Play ▶</span></span>
-      <span class="gt-check">✓</span>
-    </button>`;
-  const linkTile = g => `<a class="gt gt-ext${played.has(g.name) ? " played" : ""}" data-game="${esc(g.name)}" data-cat="${g.cat}"
-      href="${g.url}" target="_blank" rel="noopener noreferrer">
-      <span class="gt-top"><img class="gt-fav" src="${favicon(g.domain)}" alt="" loading="lazy"><span class="gt-ext-m">↗</span></span>
-      <span class="gt-nm">${esc(g.name)}</span>
-      <span class="gt-tg">${esc(g.tag)}</span>
-      <span class="gt-ft"><span class="gt-st">${esc(g.domain)}</span><span class="gt-go">Open ↗</span></span>
-      <span class="gt-check">✓</span>
-    </a>`;
-
-  // Sep 2026 (Eli): "I'm not a big fan of the tabs to see different categories" -- the old
-  // .ga-cats row filtered the grid down to one category at a time (everything else hidden),
-  // so seeing the whole arcade meant clicking through five tabs. Sections replace that: every
-  // game is on the page at once, still grouped by category via the same static-header style
-  // ("game-cat") the rest of the app already uses for Brain Food -- nothing to click, nothing
-  // hidden, just scroll.
-  const sections = [
-    { n:"Play here",       tiles: built.map(builtTile) },
-    { n:"Word & number",   tiles: links.filter(l => l.cat === "word").map(linkTile) },
-    { n:"Geography",       tiles: links.filter(l => l.cat === "geo").map(linkTile) },
-    { n:"Logic",           tiles: links.filter(l => l.cat === "logic").map(linkTile) },
-    { n:"Visual",          tiles: links.filter(l => l.cat === "visual").map(linkTile) }
-  ].filter(s => s.tiles.length);
+  const shelves = GAME_SHELVES.map((sh, si) => `
+    <div class="shelf-h">${esc(sh.n)}${sh.note ? `<span class="shelf-n">${esc(sh.note)}</span>` : ""}</div>
+    <div class="shelf" data-shelf="${si}">
+      <button type="button" class="shelf-ar l" data-dir="-1" aria-label="Scroll left">‹</button>
+      <div class="shelf-track">${sh.games.map(g => tile(g, !!sh.built)).join("")}</div>
+      <button type="button" class="shelf-ar r" data-dir="1" aria-label="Scroll right">›</button>
+    </div>`).join("");
 
   panel.innerHTML = `<div class="games-wrap">
-    <div class="ga-head">
-      <div class="ga-ring" aria-hidden="true">
-        <svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="${R}" class="ga-trk"></circle>
-          <circle cx="28" cy="28" r="${R}" class="ga-fil" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(C * (1 - pct)).toFixed(1)}"></circle></svg>
-        <b>${done}</b>
-      </div>
-      <div class="ga-ht">
-        <div class="ga-t">Arcade</div>
-        <div class="ga-s">${done} of ${total} played today${doneBuilt === built.length ? " · all four dailies done" : ""}</div>
-      </div>
-      ${nextUp ? `<button class="ga-next" data-game="${nextUp.id}">Next: <b>${esc(nextUp.name)}</b> ▶</button>`
-               : `<span class="ga-next ga-done">All dailies done 🎉</span>`}
-    </div>
-    ${sections.map(s => `<div class="game-cat">${esc(s.n)}</div><div class="gt-grid">${s.tiles.join("")}</div>`).join("")}
+    <div class="ga-title">Arcade</div>
+    <div class="ga-sub">Tap a game. A check means you already played it today.</div>
+    ${shelves}
     <div id="gamesClose"></div>
   </div>`;
 
   const open = id => { if(id === "brainfood"){ renderBrainFoodDeck(false); return; } markGamePlayed(id); gamesView = id; renderGamesTab(); };
-  panel.querySelectorAll(".gt-built[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
-  panel.querySelectorAll(".ga-next[data-game]").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
-  panel.querySelectorAll(".gt-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
+  panel.querySelectorAll(".app[data-game]:not(.app-ext)").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
+  panel.querySelectorAll(".app-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
+
+  /* Arrows only exist when a shelf actually overflows -- on a wide screen the short shelves
+     fit whole, and a dead arrow floating over them looks broken. */
+  panel.querySelectorAll(".shelf").forEach(sh => {
+    const track = sh.querySelector(".shelf-track");
+    const sync = () => {
+      const over = track.scrollWidth - track.clientWidth > 8;
+      sh.querySelector(".shelf-ar.l").classList.toggle("on", over && track.scrollLeft > 4);
+      sh.querySelector(".shelf-ar.r").classList.toggle("on", over && track.scrollLeft < track.scrollWidth - track.clientWidth - 4);
+    };
+    sh.querySelectorAll(".shelf-ar").forEach(b => b.addEventListener("click", () => {
+      track.scrollBy({ left: (+b.dataset.dir) * Math.max(220, track.clientWidth * 0.8), behavior:"smooth" });
+      setTimeout(sync, 420);
+    }));
+    track.addEventListener("scroll", sync, {passive:true});
+    requestAnimationFrame(sync);
+    window.addEventListener("resize", sync, {passive:true});
+  });
 }
 
 function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }
@@ -8067,69 +8942,741 @@ function cfBuild(seedStr, depth){
            liar: { suspect: liarSuspect, cat: liarCat, falseVal: liarFalseVal },
            id: theme.id + "-" + hashStr(seedStr) };
 }
-/* ================= built-in: The Daily Case (general client scenarios) =================
-   Published by the daily brief as close.case on the calendar file: a household, a situation,
-   four moves, the right one, the reasoning, and the classic mistake. Random across the whole
-   profession -- ages, wealth, risk profiles, life events -- never one client type. */
+/* ================= built-in: The Daily Case =================
+   Eli, Sep 2026: "think of ways to make the daily case a LOT more complex and also deeper /
+   more steps / interactive. Almost like you make multiple decisions, scale investments, etc.
+   and then you get a score based on your overall decision making."
+
+   So the one-question multiple choice is gone. A case is now a five-round engagement with a
+   generated household, scored out of 100:
+
+     1. DISCOVERY   (20) pick three of seven questions. The answers are generated from the
+                         household's real numbers, so a good question actually hands you a
+                         figure you need in round three -- skip discovery and you are guessing.
+     2. DIAGNOSIS   (20) name the two risks that are actually primary for this case.
+     3. ALLOCATION  (25) four sliders that must total 100%. Scored against a target band
+                         derived from the household's horizon, risk capacity and cash needs.
+     4. STRUCTURE   (20) four yes/no calls on the moves this case actually turns on.
+     5. THE CONVERSATION (15) how you would say it out loud.
+
+   Everything is generated: five life stages x four wealth bands x seven family shapes x eight
+   working lives x sixteen trigger events, so the case is random across the whole profession
+   rather than one client type. The day's case is seeded off the date (same case all day, and
+   the same case if you come back to it); "deal me another" reseeds on demand. */
+
+function dcRng(seed){
+  let s = (typeof seed === "string" ? hashStr(seed) : seed) >>> 0 || 1;
+  return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+}
+const dcPick = (r, a) => a[Math.floor(r() * a.length) % a.length];
+const dcInt = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+const dcK = n => n >= 1000 ? "$" + (n/1000).toFixed(n >= 10000 ? 1 : 2).replace(/\.0+$/,"") + "M" : "$" + Math.round(n) + "k";
+const dcPct = n => Math.round(n) + "%";
+
+const DC_STAGES = [
+  { k:"early", label:"early accumulation", age:[28,38], horizon:30, retireIn:30 },
+  { k:"mid",   label:"mid-career",         age:[39,51], horizon:22, retireIn:18 },
+  { k:"pre",   label:"pre-retirement",     age:[53,63], horizon:12, retireIn:4 },
+  { k:"new",   label:"newly retired",      age:[64,71], horizon:7,  retireIn:0 },
+  { k:"late",  label:"later retirement",   age:[73,84], horizon:4,  retireIn:0 }
+];
+const DC_WEALTH = [
+  { k:"modest",      label:"building",      income:[62,115],  assets:[45,190],   cash:[6,28] },
+  { k:"comfortable", label:"comfortable",   income:[125,215], assets:[280,780],  cash:[18,65] },
+  { k:"affluent",    label:"affluent",      income:[235,460], assets:[950,2700], cash:[45,160] },
+  { k:"hnw",         label:"high net worth",income:[420,950], assets:[3100,9200],cash:[110,420] }
+];
+const DC_FAMILY = [
+  { k:"single",  d:"single, no dependents",              dep:0, stab:0 },
+  { k:"couple",  d:"married, no children",               dep:0, stab:1 },
+  { k:"young",   d:"married with two children under 8",  dep:2, stab:-1 },
+  { k:"teens",   d:"married with teenagers at home",     dep:2, stab:-1 },
+  { k:"divorced",d:"recently divorced, sharing custody",  dep:1, stab:-1 },
+  { k:"widowed", d:"widowed",                            dep:0, stab:-1 },
+  { k:"blended", d:"remarried, children from both sides", dep:2, stab:-1 }
+];
+const DC_WORK = [
+  { k:"w2",      d:["a product manager","a regional operations director","a marketing director","a software engineer"], stab:3, pension:false },
+  { k:"owner",   d:["the owner of a three-truck HVAC company","the owner of a small manufacturing shop","the founder of a staffing firm","the owner of two restaurants"], stab:1, pension:false },
+  { k:"gov",     d:["a public school principal","a county engineer","a tenured professor","a state agency administrator"], stab:5, pension:true },
+  { k:"mil",     d:["an Army Reserve officer with a civilian job","a retired Air Force senior NCO","a federal civilian on FERS"], stab:5, pension:true },
+  { k:"sales",   d:["a medical device rep paid mostly on commission","a commercial real estate broker","a mortgage originator"], stab:1, pension:false },
+  { k:"medical", d:["a hospitalist","an anesthesiologist","a dentist with one practice location","a veterinarian who owns her clinic"], stab:4, pension:false },
+  { k:"trade",   d:["a self-employed electrician","an independent general contractor","a long-haul owner-operator"], stab:2, pension:false },
+  { k:"retired", d:["retired from a utility after 31 years","retired from teaching","retired from a corporate finance role"], stab:4, pension:true }
+];
+const DC_NAMES = [["Maria","Alvarez"],["James","Whitfield"],["Priya","Raman"],["Dan","Kowalski"],["Tasha","Bell"],
+  ["Ed","Mancini"],["Grace","Okafor"],["Walt","Brennan"],["Lena","Petrov"],["Marcus","Hale"],["Joyce","Tran"],
+  ["Carl","Dutton"],["Renee","Boudreaux"],["Sam","Ferrell"],["Nadia","Haddad"],["Roy","Tillman"],["Amy","Lindqvist"],
+  ["Hector","Salas"],["Beth","Carmichael"],["Omar","Nasser"],["Dee","Whitaker"],["Frank","Okonkwo"]];
+
+/* Every scoring hook in the case hangs off these tags. */
+const DC_RISK = {
+  liquidity:    "There is no cash cushion sized to what is actually about to be spent.",
+  concentration:"Too much of the outcome rides on one position.",
+  tax:          "The tax bill is being decided by accident rather than on purpose.",
+  incomeGap:    "Income has stopped or is about to, and nothing is scheduled to replace it.",
+  insurance:    "A single bad event lands entirely on this household's balance sheet.",
+  estate:       "Beneficiaries, titling or authority documents do not match the family as it exists now.",
+  behavioral:   "The plan is about to be overridden by how the last few months felt.",
+  sequence:     "Withdrawals are set to start into whatever the market happens to be doing.",
+  horizon:      "Money needed soon is invested as if it were not.",
+  longevity:    "The plan quietly assumes an average lifespan and no long-term care.",
+  debt:         "Expensive debt is being carried alongside invested assets.",
+  education:    "A large, dated education bill has no funding vehicle behind it."
+};
+
+const DC_EVENTS = [
+  { k:"inherit",  t:"An inheritance lands in cash",
+    s:"{n} just received {amt} from a parent's estate. It is sitting in a savings account and {they} {have} not touched it in four months.",
+    p:["behavioral", "tax"], flags:["behavioral","tax","estate"], cashNeedPct:0.10, riskDelta:0 },
+  { k:"sale",     t:"A business sells",
+    s:"{n} is closing on the sale of {their} company for {amt} before tax. After this, {their} only income is whatever the proceeds produce.",
+    p:["liquidity", "tax"], flags:["liquidity","tax","concentration","estate"], cashNeedPct:0.20, riskDelta:-1 },
+  { k:"jobloss",  t:"The income stops",
+    s:"{n} was laid off three weeks ago with eight weeks of severance. {They} {have} {cash} in cash and no offer yet.",
+    p:["incomeGap", "liquidity"], flags:["incomeGap","liquidity","insurance","behavioral"], cashNeedPct:0.35, riskDelta:-2 },
+  { k:"concstock",t:"One ticker is most of the net worth",
+    s:"{pctc}% of {n}'s investable assets sit in {their} employer's stock, most of it with a very low basis. {They} believe{s} in the company.",
+    p:["concentration", "tax"], flags:["concentration","tax","behavioral"], cashNeedPct:0.05, riskDelta:0 },
+  { k:"panic",    t:"Wanting out after a drawdown",
+    s:"After an 18% drop over five weeks, {n} calls and asks to move everything to cash “until this settles down.” The plan has not otherwise changed.",
+    p:["behavioral", "horizon"], flags:["behavioral","sequence","horizon"], cashNeedPct:0.05, riskDelta:0 },
+  { k:"retire3",  t:"Retirement, three years out",
+    s:"{n} intends to stop working in about three years and has never seen the plan expressed as a paycheck.",
+    p:["sequence", "incomeGap"], flags:["sequence","incomeGap","tax","longevity"], cashNeedPct:0.12, riskDelta:-1 },
+  { k:"inhira",   t:"An inherited IRA and a ten-year clock",
+    s:"{n} inherited a {amt} traditional IRA from a parent who died last year. Nothing has been withdrawn.",
+    p:["tax", "estate"], flags:["tax","estate","horizon"], cashNeedPct:0.05, riskDelta:0 },
+  { k:"baby",     t:"A second child arrives",
+    s:"{n} and {their} spouse just had a second child. Life insurance is whatever the employer provides, and there is no will.",
+    p:["insurance", "estate"], flags:["insurance","estate","education","liquidity"], cashNeedPct:0.12, riskDelta:0 },
+  { k:"divorce",  t:"Splitting one plan into two",
+    s:"{n}'s divorce finalizes next month. The retirement accounts divide by QDRO and the house is being sold.",
+    p:["estate", "incomeGap"], flags:["estate","liquidity","insurance","incomeGap"], cashNeedPct:0.22, riskDelta:-1 },
+  { k:"disability",t:"A health event stops the paycheck",
+    s:"{n} has been out of work for four months after a serious health event and is living off savings. Group disability replaces 50% of base pay and is taxable.",
+    p:["insurance", "incomeGap"], flags:["insurance","incomeGap","liquidity","estate"], cashNeedPct:0.30, riskDelta:-2 },
+  { k:"parent",   t:"A parent starts needing care",
+    s:"{n}'s mother is moving into assisted living at about $6,500 a month. Nobody holds a power of attorney for her.",
+    p:["estate", "longevity"], flags:["estate","liquidity","longevity","insurance"], cashNeedPct:0.18, riskDelta:-1 },
+  { k:"rsu",      t:"A large vest hits in December",
+    s:"{amt} of restricted stock vests for {n} in December, all of it taxed as ordinary income at vest.",
+    p:["tax", "concentration"], flags:["tax","concentration","behavioral"], cashNeedPct:0.08, riskDelta:0 },
+  { k:"home",     t:"A down payment, eighteen months out",
+    s:"{n} plans to buy a house in about eighteen months and needs roughly {amt} for the down payment. It is currently invested alongside everything else.",
+    p:["horizon", "liquidity"], flags:["horizon","liquidity","debt"], cashNeedPct:0.40, riskDelta:-2 },
+  { k:"pension",  t:"Lump sum or lifetime income",
+    s:"{n} has been offered a choice: a {amt} lump sum, or a single-life pension of about {mo} a month for life.",
+    p:["longevity", "incomeGap"], flags:["longevity","tax","incomeGap","sequence"], cashNeedPct:0.08, riskDelta:-1 },
+  { k:"crypto",   t:"A crypto position that ran",
+    s:"A crypto position {n} bought years ago is now {pctc}% of {their} investable assets after a long rally. {They} {have} never rebalanced it.",
+    p:["concentration", "behavioral"], flags:["concentration","behavioral","tax"], cashNeedPct:0.05, riskDelta:0 },
+  { k:"widow",    t:"The first year alone",
+    s:"{n}'s spouse died seven months ago. Beneficiary designations still name a parent who died in 2011, and next year {they} file{s} as single.",
+    p:["estate", "tax"], flags:["estate","tax","incomeGap","behavioral"], cashNeedPct:0.15, riskDelta:-1 },
+  { k:"debtload", t:"Investing around expensive debt",
+    s:"{n} is contributing hard to a brokerage account while carrying {amt2} of credit-card and personal-loan debt in the high teens.",
+    p:["debt", "liquidity"], flags:["debt","behavioral","liquidity"], cashNeedPct:0.10, riskDelta:0 },
+  { k:"education",t:"Tuition starts in four years",
+    s:"{n}'s oldest starts college in four years. There is no 529, and the plan so far is “we'll figure it out.”",
+    p:["education", "horizon"], flags:["education","horizon","liquidity","tax"], cashNeedPct:0.20, riskDelta:-1 }
+];
+
+/* ---------- discovery bank ----------
+   `hot` lists the flags that make a question worth asking in THIS case. A question that is
+   hot is worth 3, a fundamentals question is always worth 2, and the rest are worth 0 --
+   plausible, professional-sounding, and a waste of one of your three asks. */
+const DC_QUESTIONS = [
+  { id:"purpose", q:"What is this money for, and when do you need to touch it?", base:2, hot:["horizon","liquidity","education"],
+    a:c => `About ${dcK(c.cashNeed)} inside two years; the rest has roughly a ${c.horizon}-year horizon.` },
+  { id:"cash",    q:"How much cash do you keep, and how many months of spending is that?", base:2, hot:["liquidity","incomeGap","jobloss"],
+    a:c => `${dcK(c.cash)} on hand — about ${c.cashMonths} months of ${dcK(c.spend)}-a-year spending.` },
+  { id:"income",  q:"Where does the household income come from, and how reliable is it?", base:2, hot:["incomeGap","insurance","debt"],
+    a:c => `${dcK(c.income)} a year, ${c.stab >= 4 ? "highly stable" : c.stab >= 3 ? "reasonably stable" : "lumpy and commission-sensitive"}.${c.pension ? " There is a pension behind it." : ""}` },
+  { id:"drop",    q:"If this portfolio fell 25% next year, what would you actually do?", base:1, hot:["behavioral","sequence","concentration"],
+    a:c => c.tolerance <= 2 ? "“Honestly? I'd want out. I know that's the wrong answer.”" : c.tolerance >= 4 ? "“I'd add to it. I've sat through worse.”" : "“I'd be uncomfortable but I'd leave it alone — I think.”" },
+  { id:"tax",     q:"What did last year's return look like — bracket, and what's in taxable versus deferred?", base:1, hot:["tax","concentration"],
+    a:c => `Roughly the ${c.bracket}% marginal bracket. ${c.taxablePct}% of the investable assets are in taxable accounts, the rest tax-deferred.` },
+  { id:"basis",   q:"What is your cost basis in the concentrated position?", base:0, hot:["concentration","tax"],
+    a:c => c.concPct ? `About ${dcK(c.concValue)} of value on roughly ${dcK(Math.round(c.concValue*0.22))} of basis.` : "Nothing here is concentrated enough for basis to matter." },
+  { id:"insure",  q:"What does your insurance actually cover — life, disability, liability?", base:1, hot:["insurance","incomeGap","longevity"],
+    a:c => `Group life at ${c.dep ? "one" : "two"}x salary, group disability at 50% of base pay and taxable, and no umbrella policy.` },
+  { id:"docs",    q:"When were your beneficiaries and estate documents last updated?", base:1, hot:["estate"],
+    a:c => "Beneficiary forms have not been touched since the accounts were opened, and there is no current will or power of attorney." },
+  { id:"debt",    q:"What debt is on the balance sheet, and at what rate?", base:1, hot:["debt","liquidity","education"],
+    a:c => c.debt ? `${dcK(c.debt)} at rates in the high teens, plus a mortgage.` : "A mortgage at a low fixed rate, nothing else meaningful." },
+  { id:"spouse",  q:"Who else is part of this decision, and how do they see it?", base:2, hot:["estate","behavioral","divorce"],
+    a:c => c.family.dep || c.family.k === "couple" ? "A spouse who has never been in one of these meetings and is more conservative." : "Nobody else — but an adult sibling keeps offering opinions." },
+  { id:"care",    q:"What is the plan if someone needs long-term care?", base:1, hot:["longevity","estate","insurance"],
+    a:c => "There isn't one. The assumption is that family would handle it." },
+  { id:"goal",    q:"What would make you feel like this worked, five years from now?", base:2, hot:["behavioral","incomeGap"],
+    a:c => "“That I stopped checking it every week and nothing blew up.”" },
+  /* --- plausible, professional, and worth nothing --- */
+  { id:"platform",q:"Which custodian or platform do you prefer to hold this at?", base:0, hot:[],
+    a:() => "“Whatever you normally use is fine.”" },
+  { id:"perf",    q:"What return did your old account get last year?", base:0, hot:[],
+    a:() => "“Somewhere around nine percent? I'd have to look.”" },
+  { id:"funds",   q:"Do you have a preference between active and index funds?", base:0, hot:[],
+    a:() => "“I've read both are good. You tell me.”" },
+  { id:"stmt",    q:"Would you rather get statements by mail or email?", base:0, hot:[],
+    a:() => "“Email, I guess.”" },
+  { id:"news",    q:"What's your read on where the market goes from here?", base:0, hot:[],
+    a:() => "“Everybody on TV says something different. That's kind of why I'm here.”" },
+  { id:"meet",    q:"How often would you like to meet?", base:0, hot:[],
+    a:() => "“Twice a year? Whatever's normal.”" }
+];
+
+/* ---------- structural decisions ---------- */
+const DC_DECISIONS = [
+  { id:"cashfirst", need:["liquidity","incomeGap","horizon"],
+    q:c => `Carve ${dcK(c.cashNeed)} out of the portfolio into cash and short Treasuries before investing anything else.`,
+    yes:true, why:c => `Money that gets spent inside two years does not belong in the market. Sizing that first is what lets the rest of the portfolio be left alone when it falls.` },
+  { id:"lumpsum", ev:["inherit","sale","rsu","pension","panic","inhira"], need:["behavioral","tax"],
+    q:() => "Wait for a pullback before putting the cash to work.",
+    yes:false, why:() => "Waiting for a better entry is a forecast dressed up as prudence. If the lump sum genuinely cannot be stomached, a short, dated schedule — not an open-ended wait — is the compromise." },
+  { id:"trim", ev:["concstock","crypto"], need:["concentration"],
+    q:c => `Sell down the concentrated position from ${c.concPct}% to no more than 15% of investable assets, over two tax years.`,
+    yes:true, why:c => `At ${c.concPct}% a single company is deciding the outcome. Splitting the sale across tax years keeps the bill manageable without pretending the risk is acceptable.` },
+  { id:"holdall", ev:["concstock","crypto"], need:["concentration","behavioral"],
+    q:() => "Hold the whole concentrated position because selling would trigger capital gains.",
+    yes:false, why:() => "The tax is a cost of fixing the problem, not a reason to keep it. A 40% drawdown in one name costs far more than the gains bill on trimming it." },
+  { id:"roth", need:["tax","sequence","incomeGap"],
+    q:c => c.bracket <= 24 ? "Use the low-income years to convert part of the traditional IRA to Roth, filling the current bracket." : "Do a large Roth conversion this year, on top of already-high income.",
+    yes:c => c.bracket <= 24, why:c => c.bracket <= 24 ? "Conversions are a bracket-arbitrage trade. Low-income years are exactly when they are cheap, and the window closes when income or RMDs restart." : "Converting on top of peak income pays the highest rate this household will ever face. Wait for the gap years." },
+  { id:"ten", ev:["inhira"], need:["tax","estate"],
+    q:() => "Spread the inherited IRA withdrawals across the full ten years rather than waiting for year ten.",
+    yes:true, why:() => "Ten years is a deadline, not a schedule. Letting it all land in one year stacks the entire balance on top of that year's income." },
+  { id:"term", ev:["baby","divorce","disability","education","jobloss"], need:["insurance","education"],
+    q:c => `Put level term life in place sized to the obligation — roughly ${dcK(c.insNeed)} — before anything is invested.`,
+    yes:true, why:c => "Group coverage ends with the job and is rarely sized to the mortgage plus the children. Term is cheap; the gap is not." },
+  { id:"perm", need:["insurance"],
+    q:() => "Solve the coverage gap with permanent life insurance rather than term.",
+    yes:false, why:() => "The need here is large, dated and temporary. Permanent coverage solves a different problem at several times the premium, which usually means the household buys less coverage than it needs." },
+  { id:"bene", need:["estate"],
+    q:() => "Update beneficiary designations and titling before any investment change is made.",
+    yes:true, why:() => "Beneficiary forms beat the will. A stale designation quietly overrides every other document in the file, and fixing it costs nothing but an afternoon." },
+  { id:"debtpay", ev:["debtload"], need:["debt"],
+    q:c => `Redirect new contributions to clearing the ${dcK(c.debt || 30)} of high-teens debt before adding to the brokerage account.`,
+    yes:true, why:() => "A guaranteed, tax-free 18% return is better than anything a portfolio can promise. Investing around that debt is a negative-carry trade." },
+  { id:"bucket", need:["sequence","incomeGap","longevity"],
+    q:() => "Hold two to three years of planned withdrawals in short bonds and cash, so distributions never have to come out of equities in a bad year.",
+    yes:true, why:() => "Sequence risk is the whole problem in the first retirement decade. A short-duration reserve converts a forced sale into a choice." },
+  { id:"annuityall", ev:["pension","retire3","widow"], need:["longevity","incomeGap"],
+    q:() => "Annuitize the majority of the portfolio to remove longevity risk entirely.",
+    yes:false, why:() => "Covering the essential-spending gap with guaranteed income is sound; handing over the majority of the assets gives up liquidity and heirs to solve a problem that a floor already solves." },
+  { id:"529", ev:["education","baby"], need:["education"],
+    q:() => "Open a 529 and fund it on a schedule that lands before the first tuition bill.",
+    yes:true, why:() => "A four-year horizon still gets the tax-free growth and, in many states, a deduction — and it puts a dated obligation in a dated account instead of in the long-term portfolio." },
+  { id:"allcash", need:["behavioral","sequence"],
+    q:() => "Move to cash now and return once the market looks calmer.",
+    yes:false, why:() => "“Calmer” is only ever visible afterwards. Selling requires two correct calls and is how most of a decade's return gets missed." },
+  { id:"poa", ev:["parent"], need:["longevity","estate"],
+    q:() => "Get durable power of attorney and healthcare directives signed for the parent before anything else is discussed.",
+    yes:true, why:() => "Without authority, nobody can move a dollar or make a call when it matters, and the fix after incapacity is guardianship court." },
+  { id:"withhold", ev:["rsu"], need:["tax","concentration"],
+    q:() => "Assume the shares withheld at vest cover the tax bill.",
+    yes:false, why:() => "Statutory withholding at vest is commonly 22%, well below the bracket this lands in. The shortfall shows up as a surprise in April." },
+  { id:"lump", ev:["pension"], need:["longevity","incomeGap"],
+    q:c => "Compare the pension lump sum against the lifetime income at an honest discount rate before choosing.",
+    yes:true, why:() => "The lump sum is only generous relative to a rate and a lifespan. Running both against actual spending needs turns a gut call into an arithmetic one." },
+  { id:"selltimed", ev:["home"], need:["horizon","liquidity"],
+    q:c => "Leave the down-payment money invested in equities so it keeps growing until it is needed.",
+    yes:false, why:() => "Eighteen months is not an investment horizon. A 20% drawdown at the wrong moment does not reduce the house price." }
+];
+
+const DC_EVENT_STAGES = {
+  inherit:["early","mid","pre","new","late"], sale:["mid","pre","new"],
+  jobloss:["early","mid","pre"], concstock:["early","mid","pre"],
+  panic:["early","mid","pre","new","late"], retire3:["pre"],
+  inhira:["mid","pre","new"], baby:["early","mid"],
+  divorce:["early","mid","pre"], disability:["early","mid","pre"],
+  parent:["mid","pre","new"], rsu:["early","mid","pre"],
+  home:["early","mid"], pension:["pre","new"],
+  crypto:["early","mid","pre"], widow:["pre","new","late"],
+  debtload:["early","mid"], education:["early","mid","pre"]
+};
+/* which risk gets named first when several apply */
+const DC_FLAG_ORDER = ["incomeGap","liquidity","concentration","insurance","behavioral","sequence",
+                       "horizon","debt","estate","tax","education","longevity"];
+
+const DC_TALK = {
+  behavioral: {
+    right:"Start with what they told you they wanted, then name the trade honestly: “You said the goal was to not have to think about this. Selling now makes it something you have to think about twice — once to get out, once to get back in. Here is what we will do instead, and here is the line that would actually change the plan.”",
+    jargon:"Walk them through the historical distribution of drawdowns, the standard deviation of the current allocation and the expected shortfall at the 95th percentile, then show the efficient frontier.",
+    cave:"Agree to move it all to cash for now, tell them you will watch it closely, and revisit once things look calmer." },
+  liquidity: {
+    right:"Lead with the number: “Before we invest a dollar, we are setting aside what you are going to spend in the next two years, because that money should never be exposed to a bad quarter. Everything after that has a job with a longer clock.”",
+    jargon:"Explain the liability-matching framework, duration bucketing and the glidepath methodology you will use to structure the reserve tranche.",
+    cave:"Invest everything now so it starts growing, and plan to sell whatever is needed when the expense actually shows up." },
+  concentration: {
+    right:"Separate the company from the position: “I am not telling you the company is bad. I am telling you that one company is currently deciding how your retirement goes, and you did not choose that job for it. Here is a two-year schedule that cuts the risk without handing the IRS a single bad year.”",
+    jargon:"Model the idiosyncratic risk contribution, show the tracking error against the benchmark, and quantify the tax drag of a full liquidation at current marginal rates.",
+    cave:"Leave it alone for now since selling means paying tax, and revisit if the stock gets extended." },
+  incomeGap: {
+    right:"Turn the balance sheet into a paycheck: “Let's stop talking in totals. Here is the monthly number that has to show up, here is where each piece of it comes from, and here is how many months of it we have covered right now.”",
+    jargon:"Present the Monte Carlo probability of success across 1,000 trials with a 4% initial withdrawal rate and an inflation-adjusted glidepath.",
+    cave:"Reassure them that the balance is large enough to be fine and suggest they keep spending as normal while you monitor it." },
+  insurance: {
+    right:"Frame it as the one bad day: “Everything we are building assumes you keep working. The cheapest thing we do today is make sure the plan survives the version of the year where you cannot. Here is the gap, and here is roughly what closing it costs.”",
+    jargon:"Review the human-capital replacement model, the present value of future earnings net of consumption, and the appropriate benefit period and elimination period selection.",
+    cave:"Note that the employer coverage is probably adequate for now and revisit insurance once the investment accounts are set up." },
+  estate: {
+    right:"Make it concrete and small: “The forms on these accounts beat whatever a will says. Right now they name someone who has been gone since 2011. This is an afternoon of paperwork, and it is the highest-return hour we will spend together.”",
+    jargon:"Outline the probate-avoidance hierarchy, per-stirpes versus per-capita designations and the titling implications for the revocable trust.",
+    cave:"Suggest they get to the estate documents when they have time, and move on to the investment discussion today." },
+  tax: {
+    right:"Put a number on the choice: “The bill is getting paid either way. The only question is which year and at what rate, and that part we control. Here is what happens if we do nothing, and here is what happens if we spread it.”",
+    jargon:"Model the marginal effective tax rate across the bracket-fill scenario including IRMAA thresholds, NIIT exposure and the interaction with capital-gain stacking.",
+    cave:"Recommend deferring the decision to the accountant at tax time so nothing is done prematurely." },
+  sequence: {
+    right:"Name the specific risk: “The danger in the first few years is not a bad market, it is selling into one. So we are going to hold two or three years of your withdrawals somewhere that does not care what stocks do, and let the rest be long money.”",
+    jargon:"Illustrate the sequence-of-returns sensitivity by running the withdrawal schedule against the 1966 and 2000 return paths on a rolling basis.",
+    cave:"Keep the allocation where it is and adjust later if the market turns against them." },
+  longevity: {
+    right:"Split essential from flexible: “Let's cover the bills you will have no matter what with income you cannot outlive, and let the rest stay invested and liquid. That way a long life is a good thing instead of a risk.”",
+    jargon:"Compare the internal rate of return on the annuitization option against the portfolio's expected return at the 85th percentile mortality assumption.",
+    cave:"Suggest they are likely fine given family history, and revisit the care question in a few years." },
+  horizon: {
+    right:"Match the clock to the money: “This is money with a date on it. Between now and that date, the only thing that matters is that the number is there — not that it grew. Long money and short money get different treatment, and that is the whole idea.”",
+    jargon:"Apply duration matching against the liability, using a barbell of T-bills and short corporates to minimise interest-rate sensitivity relative to the spend date.",
+    cave:"Leave it invested so it has the best chance of growing, and revisit closer to the purchase." },
+  debt: {
+    right:"Do the arithmetic out loud: “That balance is costing you eighteen percent, guaranteed, after tax. I cannot promise you eighteen percent anywhere. So the highest-return investment available to you right now is paying that off, and then we invest hard.”",
+    jargon:"Compare the after-tax cost of capital against the portfolio's expected risk-adjusted return, adjusting for the option value of liquidity.",
+    cave:"Keep investing alongside the debt so they do not miss out on market returns while paying it down." },
+  education: {
+    right:"Give the bill a home: “Four years is still enough time for this to be tax-free growth instead of a scramble. Let's give tuition its own account with its own schedule, so it stops competing with retirement every month.”",
+    jargon:"Evaluate the 529 versus UTMA versus taxable-account tradeoff under the expected family contribution formula and state deduction limits.",
+    cave:"Suggest they save into the brokerage account generally and decide later how much of it goes to tuition." }
+};
+
+/* A generated household still has to be a household that could exist: a hospitalist does not
+   earn $72k, a retired teacher does not have restricted stock vesting in December, and a
+   federal employee is not the one getting laid off. These two tables keep the random draws
+   from producing a case that reads as nonsense. */
+const DC_WORK_WEALTH = { medical:[2,3], owner:[1,3], sales:[1,2], w2:[0,2], trade:[0,1], gov:[0,1], mil:[0,1], retired:[0,3] };
+/* Family shape has to fit the life stage -- nobody has teenagers at home at 76. */
+const DC_FAMILY_STAGES = {
+  early:["single","couple","young","divorced","blended"],
+  mid:  ["single","couple","young","teens","divorced","blended"],
+  pre:  ["single","couple","teens","divorced","widowed","blended"],
+  new:  ["single","couple","divorced","widowed","blended"],
+  late: ["single","couple","widowed","blended"]
+};
+/* And some events dictate the family outright -- a widowhood case cannot be "married". */
+const DC_EVENT_FAMILY = { widow:["widowed"], divorce:["divorced"], baby:["young","blended"],
+                          education:["young","teens","blended","divorced"], parent:["single","couple","young","teens","blended","divorced"] };
+const DC_EVENT_WORK  = { sale:["owner","medical","trade"], rsu:["w2","medical"], concstock:["w2","medical","sales"],
+                         pension:["gov","mil","retired"], jobloss:["w2","sales","medical","trade"],
+                         disability:["w2","sales","medical","gov","mil"] };
+
+function dcBuild(seed){
+  const r = dcRng(seed);
+  const stage = dcPick(r, DC_STAGES);
+  const wealth = dcPick(r, DC_WEALTH);
+  const wi = DC_WEALTH.indexOf(wealth);
+  const famPool = DC_FAMILY.filter(f => (DC_FAMILY_STAGES[stage.k] || []).includes(f.k));
+  let family = dcPick(r, famPool.length ? famPool : DC_FAMILY);
+  const workPool = DC_WORK.slice(0, 7).filter(w => { const b = DC_WORK_WEALTH[w.k]; return wi >= b[0] && wi <= b[1]; });
+  let work = (stage.k === "new" || stage.k === "late") ? DC_WORK[7] : dcPick(r, workPool.length ? workPool : DC_WORK.slice(0, 7));
+  let evPool = DC_EVENTS.filter(e => (DC_EVENT_STAGES[e.k] || []).includes(stage.k)
+                                  && (!DC_EVENT_WORK[e.k] || DC_EVENT_WORK[e.k].includes(work.k))
+                                  && !(e.k === "pension" && !work.pension));
+  evPool = evPool.filter(e => !DC_EVENT_FAMILY[e.k] || DC_EVENT_FAMILY[e.k].includes(family.k)
+                           || DC_EVENT_FAMILY[e.k].some(k => famPool.some(f => f.k === k)));
+  const ev = dcPick(r, evPool.length ? evPool : DC_EVENTS.filter(e => (DC_EVENT_STAGES[e.k] || []).includes(stage.k)));
+  /* an event that dictates the family shape wins over the random draw */
+  if(DC_EVENT_FAMILY[ev.k] && !DC_EVENT_FAMILY[ev.k].includes(family.k)){
+    const forced = DC_FAMILY.filter(f => DC_EVENT_FAMILY[ev.k].includes(f.k)
+                                      && (DC_FAMILY_STAGES[stage.k] || []).includes(f.k));
+    if(forced.length) family = dcPick(r, forced);
+  }
+  const [first, last] = dcPick(r, DC_NAMES);
+
+  const retired = stage.k === "new" || stage.k === "late";
+  const income = dcInt(r, wealth.income[0], wealth.income[1]) * (retired ? 0.45 : 1);
+  const assets = dcInt(r, wealth.assets[0], wealth.assets[1]);
+  const cash   = dcInt(r, wealth.cash[0], wealth.cash[1]);
+  const spend  = Math.round(income * (retired ? 0.95 : 0.66));
+  const bracket = income > 500 ? 37 : income > 340 ? 35 : income > 200 ? 32 : income > 120 ? 24 : income > 62 ? 22 : 12;
+
+  const c = {
+    id: seed, ev, stage, wealth, family, work,
+    name: first + " " + last, first,
+    age: dcInt(r, stage.age[0], stage.age[1]),
+    workDesc: dcPick(r, work.d),
+    income: Math.round(income), assets, cash, spend, bracket,
+    cashMonths: Math.max(1, Math.round(cash / (spend/12))),
+    taxablePct: dcInt(r, 25, 70),
+    pension: !!work.pension,
+    stab: Math.max(1, Math.min(5, work.stab + family.stab)),
+    flags: ev.flags.slice(),
+    debt: ev.k === "debtload" ? dcInt(r, 28, 95) : (r() < 0.25 ? dcInt(r, 12, 40) : 0),
+    concPct: (ev.k === "concstock" || ev.k === "crypto") ? dcInt(r, 32, 58) : 0
+  };
+  c.concValue = Math.round(assets * c.concPct / 100);
+  c.insNeed = Math.round((c.income * 10 + (c.family.dep ? 250 : 0)) / 50) * 50;
+  c.horizon = ev.k === "home" ? 2 : ev.k === "education" ? 4 : stage.horizon;
+  c.cashNeed = Math.max(12, Math.round(assets * ev.cashNeedPct));
+  c.tolerance = Math.max(1, Math.min(5, dcInt(r, 1, 5) + (ev.k === "panic" ? -2 : 0)));
+  c.capacity = Math.max(1, Math.min(5, Math.round(
+    1 + Math.min(2.2, c.horizon/12) + (c.stab-3)*0.5 + wi*0.4 + (ev.riskDelta||0) + 1.4)));
+
+  /* ---- the target allocation this case is scored against ---- */
+  const tCash = Math.max(3, Math.min(45, Math.round(c.cashNeed / assets * 100)));
+  const tReal = wi >= 2 ? 8 : 5;
+  const remaining = 100 - tCash - tReal;
+  const eqRaw = Math.max(20, Math.min(85, Math.round(20 + c.horizon*1.9 + (c.capacity-3)*7)));
+  const tEq = Math.max(10, Math.min(remaining - 8, eqRaw));
+  c.target = { eq: tEq, bond: remaining - tEq, cash: tCash, real: tReal };
+
+  /* ---- round 1: which seven questions are on the table ---- */
+  const worth = q => q.hot.some(f => c.flags.includes(f)) ? 3 : q.base;
+  const scored = DC_QUESTIONS.map(q => ({ q, w: worth(q) }));
+  const hot = scored.filter(x => x.w === 3).sort(() => r() - 0.5).slice(0, 3);
+  const mid = scored.filter(x => x.w === 2 && !hot.includes(x)).sort(() => r() - 0.5).slice(0, 2);
+  const cold = scored.filter(x => x.w === 0).sort(() => r() - 0.5).slice(0, 7 - hot.length - mid.length);
+  c.questions = hot.concat(mid, cold).sort(() => r() - 0.5);
+  c.qMax = c.questions.map(x => x.w).sort((a,b) => b-a).slice(0,3).reduce((a,b) => a+b, 0) || 1;
+
+  /* ---- round 2: the two risks that are actually primary ----
+     Each event names its own primary pair (a generic severity ranking gets this wrong -- an
+     inherited IRA is a tax and estate problem, not a horizon one). The four distractors are
+     real risks drawn from flags this case does NOT carry. */
+  c.rightRisks = (ev.p && ev.p.length === 2) ? ev.p.slice() : DC_FLAG_ORDER.filter(f => c.flags.includes(f)).slice(0, 2);
+  const absent = DC_FLAG_ORDER.filter(f => !c.flags.includes(f)).sort(() => r() - 0.5).slice(0, 4);
+  c.riskOptions = c.rightRisks.concat(absent).sort(() => r() - 0.5);
+
+  /* ---- round 4: four structural calls this case actually turns on ---- */
+  /* A decision only appears when the case actually contains the facts it talks about: an
+     inherited-IRA call has no business showing up in a new-baby case just because both carry
+     an "estate" flag. `ev` is that whitelist. */
+  const fit = DC_DECISIONS.filter(d => d.need.some(f => c.flags.includes(f)) && (!d.ev || d.ev.includes(ev.k)));
+  const extra = DC_DECISIONS.filter(d => !fit.includes(d) && ["cashfirst","bene","allcash","lumpsum"].includes(d.id));
+  let chosen = fit.sort(() => r() - 0.5).slice(0, 4);
+  while(chosen.length < 4 && extra.length) chosen.push(extra.pop());
+  /* always give at least one where the right answer is "no" -- otherwise the round is a
+     four-times-yes reflex test rather than a judgement test */
+  const yesOf = d => typeof d.yes === "function" ? d.yes(c) : d.yes;
+  if(chosen.every(d => yesOf(d))){
+    const nope = DC_DECISIONS.filter(d => !yesOf(d) && d.need.some(f => c.flags.includes(f)) && (!d.ev || d.ev.includes(ev.k)))[0]
+              || DC_DECISIONS.find(d => d.id === "allcash");
+    if(nope) chosen[chosen.length-1] = nope;
+  }
+  c.decisions = chosen.map(d => ({ d, text: typeof d.q === "function" ? d.q(c) : d.q, yes: yesOf(d),
+                                   why: typeof d.why === "function" ? d.why(c) : d.why }));
+
+  /* ---- round 5 ---- */
+  const talkFlag = c.rightRisks[0] || "behavioral";
+  const t = DC_TALK[talkFlag] || DC_TALK.behavioral;
+  c.talk = [{ t:t.right, ok:true, tag:"right" }, { t:t.jargon, ok:false, tag:"jargon" }, { t:t.cave, ok:false, tag:"cave" }]
+    .sort(() => r() - 0.5);
+  c.talkWhy = { jargon:"Technically correct and completely unusable. A client who cannot repeat your reasoning back to a spouse will not follow it under stress.",
+                cave:"It feels like service and it is abandonment. Agreeing with the instinct you were hired to counterweight is the single most expensive thing an advisor does." };
+
+  /* ---- the narrative ---- */
+  const they = c.family.k === "couple" || c.family.dep ? "They" : "They";
+  const amt = dcK(ev.k === "inherit" ? Math.round(assets * dcInt(r, 25, 70)/100)
+            : ev.k === "sale" ? Math.round(assets * dcInt(r, 90, 180)/100)
+            : ev.k === "inhira" ? Math.round(assets * dcInt(r, 30, 80)/100)
+            : ev.k === "rsu" ? Math.round(assets * dcInt(r, 12, 35)/100)
+            : ev.k === "home" ? Math.max(40, Math.round(assets * 0.35))
+            : ev.k === "pension" ? Math.round(assets * dcInt(r, 40, 110)/100)
+            : Math.round(assets * 0.4));
+  const mo = "$" + (dcInt(r, 26, 62) * 100).toLocaleString("en-US");
+  c.situation = ev.s
+    .replace(/\{n\}/g, c.first).replace(/\{They\}/g, they).replace(/\{they\}/g, they.toLowerCase())
+    .replace(/\{their\}/g, "their").replace(/\{have\}/g, "have").replace(/\{s\}/g, "")
+    .replace(/\{amt2\}/g, dcK(c.debt || 45)).replace(/\{amt\}/g, amt).replace(/\{mo\}/g, mo)
+    .replace(/\{pctc\}/g, String(c.concPct || 40)).replace(/\{cash\}/g, dcK(cash));
+  c.profile = `${c.name}, ${c.age} — ${c.workDesc}, ${c.family.d}. About ${dcK(c.income)} of household income, ${dcK(assets)} investable, ${dcK(cash)} in cash.`;
+  return c;
+}
+
+/* ---------- running record ---------- */
 function dcStats(){ try{ return JSON.parse(localStorage.getItem("dh-dc-stats") || "{}"); }catch(e){ return {}; } }
 function dcStatLabel(){
   const s = dcStats();
   if(!s.played) return "No cases yet";
-  return `${Math.round(100*(s.right||0)/s.played)}% right · streak ${s.streak||0}`;
+  return `Avg ${Math.round((s.total||0)/s.played)}/100 · best ${s.best||0}`;
 }
-async function renderDailyCase(){
+function dcGrade(n){
+  return n >= 92 ? {g:"A",  w:"Textbook."} : n >= 84 ? {g:"A−", w:"Strong work."}
+       : n >= 76 ? {g:"B+", w:"Solid, with a gap."} : n >= 68 ? {g:"B",  w:"Defensible."}
+       : n >= 58 ? {g:"C+", w:"Half the case."} : n >= 48 ? {g:"C",  w:"Missed the centre of it."}
+       : {g:"D", w:"Start again with the questions."};
+}
+
+let DC = null;   // { c, step, a:{q:[],risks:[],alloc:{},dec:{},talk:null}, scored:null }
+
+const DC_STEPS = ["Discovery","Diagnosis","Allocation","Structure","The conversation","Debrief"];
+const DC_ALLOC_ROWS = [
+  { k:"eq",   label:"Equities",     hint:"Global stocks — the growth engine, and the part that falls" },
+  { k:"bond", label:"Bonds",        hint:"High-quality fixed income — ballast and, now, real yield" },
+  { k:"cash", label:"Cash",         hint:"T-bills and money market — anything spent within two years" },
+  { k:"real", label:"Real assets",  hint:"Real estate, commodities, infrastructure — inflation defence" }
+];
+
+function dcKey(id){ return "dh-dc-play-" + id; }
+function dcSave(){
+  if(!DC) return;
+  try{ localStorage.setItem(dcKey(DC.c.id), JSON.stringify({ step:DC.step, a:DC.a, scored:DC.scored })); }catch(e){}
+}
+function dcLoad(id){
+  try{ const j = JSON.parse(localStorage.getItem(dcKey(id)) || "null"); return j && j.a ? j : null; }catch(e){ return null; }
+}
+
+function dcScore(){
+  const c = DC.c, a = DC.a;
+  const qPts = a.q.reduce((s,id) => s + (c.questions.find(x => x.q.id === id) || {w:0}).w, 0);
+  const discovery = Math.round(20 * Math.min(1, qPts / c.qMax));
+  const rightRisks = a.risks.filter(f => c.rightRisks.includes(f)).length;
+  const diagnosis = Math.round(20 * (rightRisks / 2));
+  const dev = ["eq","bond","cash","real"].reduce((s,k) => s + Math.abs((a.alloc[k]||0) - c.target[k]), 0);
+  const allocation = Math.round(25 * Math.max(0, 1 - dev / 60));
+  const decRight = c.decisions.filter((d,i) => a.dec[i] === d.yes).length;
+  const structure = decRight * 5;
+  const pick = c.talk[a.talk];
+  const conversation = pick && pick.ok ? 15 : 0;
+  const total = discovery + diagnosis + allocation + structure + conversation;
+  return { discovery, diagnosis, allocation, structure, conversation, total, dev, decRight, rightRisks, qPts };
+}
+function dcCommit(sc){
+  try{
+    const s = dcStats();
+    s.played = (s.played||0) + 1;
+    s.total = (s.total||0) + sc.total;
+    s.best = Math.max(s.best||0, sc.total);
+    s.streak = sc.total >= 80 ? (s.streak||0) + 1 : 0;
+    localStorage.setItem("dh-dc-stats", JSON.stringify(s));
+  }catch(e){}
+}
+
+function renderDailyCase(fresh){
   const panel = $("#panel-quiz");
-  $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = ""; $("#staleNote").style.display = "none";
-  panel.innerHTML = `<div class="spinner"></div>`;
-  const close = await fetchLatestClose();
-  const c = close && close.case;
-  const back = `<button class="pbtn game-back" id="dcBack">← Back to Games</button>`;
-  if(!c || !Array.isArray(c.options) || c.options.length < 2){
-    panel.innerHTML = `<div class="cw-wrap">${back}<div class="empty">No case has been published yet today — the morning brief writes one each day.</div></div>`;
-    $("#dcBack").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
-    return;
+  $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = "";
+  $("#staleNote").style.display = "none";
+
+  const id = fresh ? ("free-" + Date.now()) : ("case-" + todayCT());
+  if(!DC || DC.c.id !== id){
+    const c = dcBuild(id);
+    const saved = fresh ? null : dcLoad(id);
+    DC = { c, step: saved ? saved.step : 0, a: saved ? saved.a : { q:[], risks:[], alloc:null, dec:{}, talk:null }, scored: saved ? saved.scored : null };
+    if(!DC.a.alloc) DC.a.alloc = { eq:60, bond:25, cash:10, real:5 };
   }
-  const day = (S.manifest && S.manifest.calendar || [])[0] || todayCT();
-  const key = "dh-dc-" + day;
-  let done = null; try{ done = JSON.parse(localStorage.getItem(key) || "null"); }catch(e){}
-  const paint = () => {
-    const picked = done ? done.picked : null;
-    const letters = "ABCD";
-    panel.innerHTML = `<div class="cw-wrap">${back}
-      <div class="cw-banner" style="margin-top:14px"><b>${esc(c.topic || "The Daily Case")}</b>${c.difficulty ? ` · ${esc(c.difficulty)}` : ""} · ${esc(niceDate(day))}</div>
-      <div class="qcard" style="margin-top:14px">
-        <div class="eyebrow">Case</div>
-        <h2 style="font-size:22px;font-weight:900;line-height:1.2;margin:2px 0 12px">${esc(c.title || "")}</h2>
-        ${c.profile ? `<p style="font-size:14px;line-height:1.6;color:var(--muted);margin-bottom:10px"><b style="color:var(--ink)">Who:</b> ${esc(c.profile)}</p>` : ""}
-        <p style="font-size:15px;line-height:1.65;margin-bottom:14px">${esc(c.situation || "")}</p>
-        <p style="font-size:15px;font-weight:900;margin-bottom:12px">${esc(c.question || "What is the best next move?")}</p>
-        <div style="display:grid;gap:8px">${c.options.map((o,i) => {
-          const isAns = i === c.answer, isPick = picked === i;
-          const cls = picked == null ? "" : (isAns ? " dc-right" : (isPick ? " dc-wrong" : " dc-dim"));
-          return `<button type="button" class="pbtn dc-opt${cls}" data-i="${i}" style="text-align:left;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;white-space:normal"${picked!=null?" disabled":""}><b>${letters[i]}</b><span>${esc(o)}</span></button>`; }).join("")}</div>
-        ${picked != null ? `<div style="margin-top:16px;padding:14px 16px;border-radius:14px;background:color-mix(in srgb, ${picked===c.answer?"var(--up)":"var(--down)"} 10%, transparent)">
-            <div style="font-weight:900;margin-bottom:6px">${picked===c.answer ? "Right call." : "Not this time — the answer is " + letters[c.answer] + "."}</div>
-            <p style="font-size:14px;line-height:1.6;margin:0">${esc(c.reasoning || "")}</p>
-            ${c.trap ? `<p style="font-size:13px;line-height:1.55;margin:10px 0 0;color:var(--muted)"><b style="color:var(--ink)">The trap:</b> ${esc(c.trap)}</p>` : ""}
-            ${c.rule ? `<p style="font-size:12.5px;margin:10px 0 0;color:var(--muted)">${esc(c.rule)}</p>` : ""}
-          </div>` : ""}
-      </div>
-      <div style="text-align:center;margin-top:14px;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">${esc(dcStatLabel())}</div>
-    </div>`;
-    $("#dcBack").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
-    if(picked == null) panel.querySelectorAll(".dc-opt").forEach(b => b.addEventListener("click", () => {
-      const i = +b.dataset.i, right = i === c.answer;
-      done = {picked:i, right};
-      try{
-        localStorage.setItem(key, JSON.stringify(done));
-        const st = dcStats(); st.played = (st.played||0)+1; if(right){ st.right = (st.right||0)+1; st.streak = (st.streak||0)+1; } else st.streak = 0;
-        localStorage.setItem("dh-dc-stats", JSON.stringify(st));
-      }catch(e){}
-      paint();
-    }));
-  };
-  paint();
+  dcPaint();
 }
+
+function dcPaint(){
+  const panel = $("#panel-quiz"), c = DC.c, a = DC.a;
+  const rail = DC_STEPS.map((s,i) => `<span class="dc-pip${i===DC.step?" on":i<DC.step?" done":""}">${esc(s)}</span>`).join("");
+
+  const head = `<button class="pbtn game-back" id="dcBack">← Back to Games</button>
+    <div class="dc-file">
+      <div class="dc-tab"><span>Case № ${String(hashStr(c.id)%9000+1000)}</span>
+        <span>${esc(c.stage.label)} · ${esc(c.wealth.label)}</span></div>
+      <div class="dc-t">${esc(c.ev.t)}</div>
+      <div class="dc-who">${esc(c.profile)}</div>
+      <p class="dc-sit">${esc(c.situation)}</p>
+    </div>
+    <div class="dc-rail">${rail}</div>`;
+
+  let bodyHTML = "";
+  if(DC.step === 0){
+    bodyHTML = `<div class="dc-card">
+      <div class="dc-k">Round 1 · Discovery <span>20 points</span></div>
+      <h3 class="dc-q">You get three questions before you say anything. Choose them.</h3>
+      <p class="dc-note">Whatever you ask gets answered with this household's real numbers — and you will need some of those numbers in round three.</p>
+      <div class="dc-opts">${c.questions.map(x => {
+        const on = a.q.includes(x.q.id);
+        const ansd = on ? `<div class="dc-ans">“${esc(x.q.a(c))}”</div>` : "";
+        return `<button type="button" class="dc-opt${on?" on":""}" data-q="${esc(x.q.id)}"><span class="dc-opt-t">${esc(x.q.q)}</span>${ansd}</button>`;
+      }).join("")}</div>
+      <div class="dc-foot"><span class="dc-count">${a.q.length} of 3 asked</span>
+        <button class="dc-go" id="dcNext" ${a.q.length < 3 ? "disabled" : ""}>Next →</button></div>
+    </div>`;
+  } else if(DC.step === 1){
+    bodyHTML = `<div class="dc-card">
+      <div class="dc-k">Round 2 · Diagnosis <span>20 points</span></div>
+      <h3 class="dc-q">Which two risks are actually primary here?</h3>
+      <p class="dc-note">Several of these are real risks for someone. Only two are the ones this case turns on.</p>
+      <div class="dc-opts">${c.riskOptions.map(f => `
+        <button type="button" class="dc-opt${a.risks.includes(f)?" on":""}" data-risk="${esc(f)}">
+          <span class="dc-opt-t">${esc(DC_RISK[f])}</span></button>`).join("")}</div>
+      <div class="dc-foot"><span class="dc-count">${a.risks.length} of 2 chosen</span>
+        <button class="dc-go" id="dcNext" ${a.risks.length < 2 ? "disabled" : ""}>Next →</button></div>
+    </div>`;
+  } else if(DC.step === 2){
+    const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0);
+    const known = a.q.includes("purpose") || a.q.includes("cash");
+    bodyHTML = `<div class="dc-card">
+      <div class="dc-k">Round 3 · Allocation <span>25 points</span></div>
+      <h3 class="dc-q">Build the portfolio. It has to total 100%.</h3>
+      <p class="dc-note">${known
+        ? `You know what you learned in discovery: about ${dcK(c.cashNeed)} is needed inside two years, against ${dcK(c.assets)} investable and a ${c.horizon}-year horizon for the rest.`
+        : `You did not ask what this money is for or how much cash they keep — so you are sizing this blind. That is the cost of a wasted question.`}</p>
+      <div class="dc-sliders">${DC_ALLOC_ROWS.map(rw => `
+        <div class="dc-sl">
+          <div class="dc-sl-h"><b>${esc(rw.label)}</b><span class="dc-sl-v" data-v="${rw.k}">${a.alloc[rw.k]||0}%</span></div>
+          <input type="range" min="0" max="100" step="1" value="${a.alloc[rw.k]||0}" data-a="${rw.k}" class="dc-range">
+          <div class="dc-sl-hint">${esc(rw.hint)}</div>
+        </div>`).join("")}</div>
+      <div class="dc-total ${tot===100?"ok":"bad"}">Total <b id="dcTot">${tot}</b>%${tot===100?" ✓":""}
+        <button class="dc-balance" id="dcBal">Balance to 100</button></div>
+      <div class="dc-foot"><span class="dc-count">${tot===100?"Ready":"Must total exactly 100%"}</span>
+        <button class="dc-go" id="dcNext" ${tot!==100?"disabled":""}>Next →</button></div>
+    </div>`;
+  } else if(DC.step === 3){
+    const answered = c.decisions.filter((d,i) => a.dec[i] !== undefined).length;
+    bodyHTML = `<div class="dc-card">
+      <div class="dc-k">Round 4 · Structure <span>20 points</span></div>
+      <h3 class="dc-q">Four calls. Do it, or don't.</h3>
+      <div class="dc-decs">${c.decisions.map((d,i) => `
+        <div class="dc-dec">
+          <div class="dc-dec-t">${esc(d.text)}</div>
+          <div class="dc-yn">
+            <button type="button" class="dc-y${a.dec[i]===true?" on":""}" data-d="${i}" data-v="1">Do it</button>
+            <button type="button" class="dc-n${a.dec[i]===false?" on":""}" data-d="${i}" data-v="0">Don't</button>
+          </div>
+        </div>`).join("")}</div>
+      <div class="dc-foot"><span class="dc-count">${answered} of 4 answered</span>
+        <button class="dc-go" id="dcNext" ${answered < 4 ? "disabled" : ""}>Next →</button></div>
+    </div>`;
+  } else if(DC.step === 4){
+    bodyHTML = `<div class="dc-card">
+      <div class="dc-k">Round 5 · The conversation <span>15 points</span></div>
+      <h3 class="dc-q">Now say it to ${esc(c.first)}. Which version?</h3>
+      <div class="dc-opts">${c.talk.map((t,i) => `
+        <button type="button" class="dc-opt dc-opt-talk${a.talk===i?" on":""}" data-talk="${i}">
+          <span class="dc-opt-t">${esc(t.t)}</span></button>`).join("")}</div>
+      <div class="dc-foot"><span class="dc-count">${a.talk==null?"Pick one":"Ready"}</span>
+        <button class="dc-go" id="dcNext" ${a.talk==null?"disabled":""}>Score the case →</button></div>
+    </div>`;
+  } else {
+    bodyHTML = dcDebriefHTML();
+  }
+
+  panel.innerHTML = `<div class="dc-wrap">${head}${bodyHTML}
+    <div class="dc-stats"><span>${esc(dcStatLabel())}</span><span>Streak ${dcStats().streak || 0}</span></div>
+    <div style="text-align:center;margin-top:12px"><button class="pbtn" id="dcNew">Deal me a different case</button></div>
+  </div>`;
+  dcWire();
+}
+
+function dcDebriefHTML(){
+  const c = DC.c, a = DC.a, sc = DC.scored;
+  const g = dcGrade(sc.total);
+  const bar = (label, got, max) => `<div class="dc-bar"><div class="dc-bar-l">${esc(label)}</div>
+      <div class="dc-bar-t"><span style="width:${(got/max*100).toFixed(0)}%"></span></div>
+      <div class="dc-bar-v">${got}<i>/${max}</i></div></div>`;
+
+  const missed = c.questions.filter(x => x.w === 3 && !a.q.includes(x.q.id));
+  const riskLines = c.rightRisks.map(f => `<li><b>${esc(DC_RISK[f])}</b>${a.risks.includes(f) ? " — you had it." : " — you missed it."}</li>`).join("");
+  const allocRows = DC_ALLOC_ROWS.map(rw => {
+    const you = a.alloc[rw.k]||0, t = c.target[rw.k], d = you - t;
+    return `<tr><td>${esc(rw.label)}</td><td class="dc-num">${you}%</td><td class="dc-num">${t}%</td>
+      <td class="dc-num ${Math.abs(d)<=4?"ok":"off"}">${d>0?"+":""}${d}</td></tr>`;
+  }).join("");
+  const decRows = c.decisions.map((d,i) => {
+    const right = a.dec[i] === d.yes;
+    return `<div class="dc-rev ${right?"ok":"off"}">
+      <div class="dc-rev-h">${right?"✓":"✗"} ${esc(d.text)}</div>
+      <div class="dc-rev-a">Correct answer: <b>${d.yes ? "do it" : "don't"}</b></div>
+      <p>${esc(d.why)}</p></div>`;
+  }).join("");
+  const pick = c.talk[a.talk], rightTalk = c.talk.find(t => t.ok);
+
+  return `<div class="dc-card dc-score">
+      <div class="dc-grade"><b>${esc(g.g)}</b><span>${sc.total}<i>/100</i></span></div>
+      <div class="dc-verdict">${esc(g.w)}</div>
+      <div class="dc-bars">
+        ${bar("Discovery", sc.discovery, 20)}
+        ${bar("Diagnosis", sc.diagnosis, 20)}
+        ${bar("Allocation", sc.allocation, 25)}
+        ${bar("Structure", sc.structure, 20)}
+        ${bar("Conversation", sc.conversation, 15)}
+      </div>
+    </div>
+    <div class="dc-card">
+      <div class="dc-k">The debrief</div>
+      <h4 class="dc-sh">Discovery</h4>
+      <p class="dc-p">${missed.length
+        ? `You left ${missed.length} high-value question${missed.length===1?"":"s"} on the table: ${missed.map(m => `“${esc(m.q.q)}”`).join(" and ")}.`
+        : `You asked the three that mattered. Everything downstream got easier because of it.`}</p>
+      <h4 class="dc-sh">The two risks that were primary</h4>
+      <ul class="dc-ul">${riskLines}</ul>
+      <h4 class="dc-sh">Allocation</h4>
+      <p class="dc-p">Target comes out of a ${c.horizon}-year horizon, a risk capacity of ${c.capacity} out of 5, and ${dcK(c.cashNeed)} of spending inside two years against ${dcK(c.assets)} invested.</p>
+      <table class="dc-tbl"><thead><tr><th></th><th class="dc-num">You</th><th class="dc-num">Target</th><th class="dc-num">Gap</th></tr></thead><tbody>${allocRows}</tbody></table>
+      <h4 class="dc-sh">Structure — ${sc.decRight} of 4</h4>
+      ${decRows}
+      <h4 class="dc-sh">The conversation</h4>
+      <p class="dc-p">${pick && pick.ok
+        ? "You led with their goal, named the trade-off in their language and gave one concrete next step. That is the whole job."
+        : esc((pick && c.talkWhy[pick.tag]) || "") + " The version that works:"}</p>
+      ${pick && pick.ok ? "" : `<blockquote class="dc-quote">${esc(rightTalk.t)}</blockquote>`}
+    </div>`;
+}
+
+function dcWire(){
+  const panel = $("#panel-quiz"), c = DC.c, a = DC.a;
+  $("#dcBack").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
+  $("#dcNew").addEventListener("click", () => { DC = null; renderDailyCase(true); });
+
+  panel.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.q, i = a.q.indexOf(id);
+    if(i >= 0) a.q.splice(i,1); else if(a.q.length < 3) a.q.push(id);
+    dcSave(); dcPaint();
+  }));
+  panel.querySelectorAll("[data-risk]").forEach(b => b.addEventListener("click", () => {
+    const f = b.dataset.risk, i = a.risks.indexOf(f);
+    if(i >= 0) a.risks.splice(i,1); else if(a.risks.length < 2) a.risks.push(f);
+    dcSave(); dcPaint();
+  }));
+  panel.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
+    a.dec[+b.dataset.d] = b.dataset.v === "1";
+    dcSave(); dcPaint();
+  }));
+  panel.querySelectorAll("[data-talk]").forEach(b => b.addEventListener("click", () => {
+    a.talk = +b.dataset.talk; dcSave(); dcPaint();
+  }));
+
+  /* sliders repaint only the numbers, so dragging stays smooth */
+  panel.querySelectorAll(".dc-range").forEach(el => {
+    const sync = () => {
+      a.alloc[el.dataset.a] = +el.value;
+      const badge = panel.querySelector(`[data-v="${el.dataset.a}"]`);
+      if(badge) badge.textContent = el.value + "%";
+      const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0);
+      const tn = $("#dcTot"); if(tn){ tn.textContent = tot; tn.parentNode.className = "dc-total " + (tot===100?"ok":"bad"); }
+      const go = $("#dcNext"); if(go) go.disabled = tot !== 100;
+      const cnt = panel.querySelector(".dc-count"); if(cnt) cnt.textContent = tot===100 ? "Ready" : "Must total exactly 100%";
+    };
+    el.addEventListener("input", sync);
+    el.addEventListener("change", () => { sync(); dcSave(); });
+  });
+  $("#dcBal")?.addEventListener("click", () => {
+    const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0) || 1;
+    let rest = 100;
+    DC_ALLOC_ROWS.forEach((rw,i) => {
+      const v = i === DC_ALLOC_ROWS.length-1 ? rest : Math.round((a.alloc[rw.k]||0) / tot * 100);
+      a.alloc[rw.k] = Math.max(0, v); rest -= a.alloc[rw.k];
+    });
+    dcSave(); dcPaint();
+  });
+
+  $("#dcNext")?.addEventListener("click", () => {
+    if(DC.step === 4){
+      DC.scored = dcScore();
+      dcCommit(DC.scored);
+      DC.step = 5;
+    } else DC.step++;
+    dcSave(); dcPaint();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+}
+
 function caseStatLabel(){
   const s = Number(localStorage.getItem("dh-case-solved")||"0");
   return s ? s + (s===1?" case closed":" cases closed") : "No cases closed";

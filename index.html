@@ -1198,11 +1198,12 @@
   .pb-pos{grid-column:1}
   .pb-side{grid-column:2;display:flex;flex-direction:column;gap:16px;min-width:0;min-height:0}
   .pb-ai{grid-column:1}
-  .pb-hist{grid-column:2}
+  .pb-cal{grid-column:2}
   .pb-hold{grid-column:1/-1}
 
   .pcard{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0;min-height:0}
   .pb-side>.pcard{flex:1 1 auto}
+  .pb-side>.pb-alloc{flex:0 0 auto}
   .pc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
   .pc-head h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;color:var(--ink);line-height:1.2}
   .pc-head p{margin:3px 0 0;font-size:11.5px;color:var(--muted);font-weight:600}
@@ -1220,10 +1221,58 @@
   .pb-bar .acct-card{font-size:12px;padding:8px 13px}
   .pb-bar .pbtn{padding:8px 13px;font-size:11.5px}
 
-  .pb-pos-body{flex:1;min-height:210px;max-height:430px;overflow-y:auto;overflow-x:hidden;padding-right:6px}
-  .pb-pos .hchart{min-height:100%;gap:8px;justify-content:flex-start}
-  .pb-pos .hrow{grid-template-columns:148px 1fr;gap:12px;flex:1 0 30px}
-  .hrow .hname{display:flex;align-items:center;justify-content:flex-end;gap:7px}
+  /* Positions -- card tiles (Eli, Sep 2026). The old diverging-bar rows put each logo
+     INSIDE a right-aligned name column, so every icon landed at a different x depending
+     on how long its ticker was -- that is the "staggered left/right" look. A tile gives
+     every position the same frame: the logo always sits in the same corner of its card,
+     which is also what lets it be 52px instead of 20px. */
+  .pb-pos-body{flex:1;min-height:240px;max-height:600px;overflow-y:auto;overflow-x:hidden;padding-right:6px;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 46px),rgba(0,0,0,0) 100%);
+    mask-image:linear-gradient(to bottom,#000 calc(100% - 46px),rgba(0,0,0,0) 100%)}
+  .ptiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
+  .ptile{position:relative;display:flex;flex-direction:column;gap:12px;padding:14px 15px;border:1px solid var(--hairline);border-radius:15px;background:var(--paper);cursor:pointer;overflow:hidden;
+    transition:transform .16s cubic-bezier(.2,.7,.2,1), box-shadow .16s, border-color .16s}
+  .ptile:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 9px 24px rgba(0,0,0,.09)}
+  .ptile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tile-accent,var(--hairline))}
+  .ptile-top{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:12px}
+  .ptile-logo{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;position:relative;overflow:hidden;
+    font-size:14px;font-weight:900;color:#fff;letter-spacing:-.03em;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07)}
+  .ptile-id{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .ptile-id b{font-size:17px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+  .ptile-id span{font-size:11.5px;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ptile-chg{text-align:right;white-space:nowrap;font-size:19px;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+  .ptile-chg small{display:block;font-size:11.5px;font-weight:800;letter-spacing:0;opacity:.75}
+  .ptile-foot{display:grid;grid-template-columns:minmax(0,1fr) 104px;align-items:end;gap:12px}
+  .ptile-val b{display:block;font-size:15.5px;font-weight:900;letter-spacing:-.01em}
+  .ptile-val span{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+  .ptile-spark{height:38px}
+  .ptile-spark svg{display:block;width:100%;height:38px}
+  .ptile-w{height:4px;border-radius:99px;background:var(--hairline);overflow:hidden}
+  .ptile-w i{display:block;height:100%;border-radius:99px;background:var(--tile-accent,var(--gold))}
+  .ptile.cash{background:var(--card);cursor:default}
+  .ptile.cash:hover{transform:none;border-color:var(--hairline);box-shadow:none}
+  @media(max-width:1120px){ .ptiles{grid-template-columns:1fr} }
+
+  /* ---------- AI Insight: generated on demand, one holding at a time ---------- */
+  .ins-pick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+  .ins-chip{appearance:none;font:inherit;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hairline);background:var(--card);
+    color:var(--ink);border-radius:999px;padding:4px 13px 4px 4px;font-size:12.5px;font-weight:800;cursor:pointer;transition:all .15s}
+  .ins-chip:hover{border-color:var(--gold)}
+  .ins-chip.on{background:var(--ink2);color:var(--gold);border-color:var(--ink2)}
+  .ins-chip .mk{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:8px;font-weight:900;color:#fff;position:relative;overflow:hidden;flex-shrink:0}
+  .ins-empty{color:var(--muted);font-size:13.5px;line-height:1.65;padding:10px 2px}
+  .ins-head{display:flex;align-items:center;gap:11px;padding:2px 0 10px;border-bottom:1px solid var(--hairline);margin-bottom:10px}
+  .ins-head .mk{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:10px;font-weight:900;color:#fff;position:relative;overflow:hidden;flex-shrink:0}
+  .ins-head-t{min-width:0;flex:1}
+  .ins-head-t b{display:block;font-size:15px;font-weight:900;letter-spacing:-.01em}
+  .ins-head-t span{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+  .ins-verdict{font-size:14px;line-height:1.6;font-weight:800;color:var(--ink);margin:0 0 6px}
+  .ins-row{display:grid;grid-template-columns:8px 1fr;gap:11px;align-items:start;padding:7px 0;font-size:13.5px;line-height:1.6}
+  .ins-row i{width:8px;height:8px;border-radius:50%;margin-top:7px}
+  .ins-foot{color:var(--muted);font-size:11.5px;line-height:1.55;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--hairline)}
+  .ins-regen{appearance:none;font:inherit;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;background:none;
+    border:1px solid var(--hairline);border-radius:8px;color:var(--muted);padding:6px 11px;cursor:pointer;flex-shrink:0}
+  .ins-regen:hover{border-color:var(--gold);color:var(--gold-dark)}
 
   .donut-mini{grid-template-columns:132px 1fr;gap:14px}
   .donut-mini .donut-hold{width:132px;height:132px}
@@ -5322,7 +5371,7 @@ function renderFriendsBody(){
    and are decrypted at the site gate. */
 let HOLDINGS = null;
 
-const P = { pos:[], live:{}, perf:"day", acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, quick:null, fetched:false, fetching:false, _fetchPromise:null, stockHist:{}, stockLoading:{},
+const P = { pos:[], live:{}, acct:"all", sortKey:"marketValue", sortDir:-1, search:"", filter:null, quick:null, fetched:false, fetching:false, _fetchPromise:null, stockHist:{}, stockLoading:{},
   liveAt:0, liveSrc:null,   // when the numbers in P.live are from, and where: "live" (proxy) | "server" (data/quotes.json.enc) | "cache" (localStorage)
   paintHooks:[] };          // Home-tab widgets register a repaint here instead of polling on a timer
 
@@ -5638,7 +5687,6 @@ function renderPortfolio(){
 
   const statusTxt = pStatusText();
   const ledCls = pLedClass();
-  const day = P.perf === "day";
   const groups = pGroupsBySector(pView());
 
   /* ---------------------------------------------------------------
@@ -5657,22 +5705,19 @@ function renderPortfolio(){
       return `<button class="acct-card${P.acct===a.id?" on":""}" data-acct="${a.id}">${esc(a.label)} <b>${usd(lt.value,0)}</b></button>`;
     }).join("") + `</div>
     <div class="pb-bar-r">
-      <div class="seg"><button data-p="day" class="${P.perf==="day"?"on":""}">Day</button><button data-p="all" class="${P.perf==="all"?"on":""}">All-Time</button></div>
       <button class="pbtn" id="pRefresh">⟳ Refresh</button>
       <span class="pstatus"><span class="led ${ledCls}"></span>${esc(statusTxt)}</span>
     </div>
   </div>`;
 
-  /* positions -- size & performance bars */
+  /* positions -- one card per holding */
   h += `<section class="pcard pb-pos">
     <header class="pc-head">
-      <div><h4>Positions</h4><p>Size &amp; performance</p></div>
-      <span class="pc-note">${day ? "Best → worst today" : "Best → worst, all-time"}</span>
+      <div><h4>Positions</h4><p>Today's move, size &amp; 30-day trend</p></div>
+      <span class="pc-note">Best → worst today</span>
     </header>
-    <div class="pc-body pb-pos-body"><div class="hchart" id="pBars"></div></div>
-    <p class="pc-cap">${day
-      ? "Sorted best to worst by today's move — gainers extend right in green, decliners left in red, mirroring the Markets sector chart. The grey % beside each ticker is its share of the current view; cash sits at the midline."
-      : "Sorted best to worst by total gain/loss since purchase — gains extend right in green, losses left in red. The grey % beside each ticker is its share of the current view; cash sits at the midline, Bitcoin in gold (no cost basis on record)."}</p>
+    <div class="pc-body pb-pos-body"><div class="ptiles" id="pTiles"></div></div>
+    <p class="pc-cap">One card per holding, best to worst by today's move. The big number is today; underneath it is market value, this position's share of the current view and its all-time gain. The line is the last 30 trading days, the bar across the bottom is position size. Click a card for the full detail view.</p>
   </section>`;
 
   /* side stack: allocation donut over the calendar */
@@ -5691,27 +5736,27 @@ function renderPortfolio(){
       </div>
       <p class="pc-cap">Grouped by sector — click a slice to filter the table.</p>
     </section>
-    <section class="pcard pb-cal">
-      <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
-      <div class="pb-cal-list">`
-        + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
-            <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
-            <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
-          : `<p class="pb-empty">No upcoming events on record.</p>`)
-      + `</div>
+    <section class="pcard pb-hist">
+      <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
+      <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
+      <div class="pb-histhead" id="histHead"></div>
+      <div id="histBody" style="position:relative"></div>
+      <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
     </section>
   </div>`;
 
-  /* AI insight -- renderHoldingsNews() fills this card in */
-  h += `<section class="pcard pb-ai" id="hnews"><div class="spinner" style="margin:34px auto"></div></section>`;
+  /* AI insight -- renderInsightCard() fills this card in; nothing is pre-generated */
+  h += `<section class="pcard pb-ai" id="hnews"></section>`;
 
-  /* portfolio value history */
-  h += `<section class="pcard pb-hist">
-    <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
-    <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"1M")===r?"on":""}">${r}</button>`).join("")}</div>
-    <div class="pb-histhead" id="histHead"></div>
-    <div id="histBody" style="position:relative"></div>
-    <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
+  /* earnings & events calendar (swapped with Portfolio Value, Sep 2026) */
+  h += `<section class="pcard pb-cal">
+    <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
+    <div class="pb-cal-list">`
+      + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
+          <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
+          <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
+        : `<p class="pb-empty">No upcoming events on record.</p>`)
+    + `</div>
   </section>`;
 
   /* holdings table */
@@ -5733,9 +5778,6 @@ function renderPortfolio(){
   panel.innerHTML = h;
 
   /* wire toolbar */
-  panel.querySelectorAll(".ptoolbar .seg button[data-p]").forEach(b => b.addEventListener("click", () => {
-    P.perf = b.dataset.p; renderPortfolio();
-  }));
   panel.querySelectorAll("#histSeg button").forEach(b => b.addEventListener("click", () => {
     P.histRange = b.dataset.r;
     panel.querySelectorAll("#histSeg button").forEach(x => x.classList.toggle("on", x === b));
@@ -5763,10 +5805,10 @@ function renderPortfolio(){
   si.addEventListener("input", e => { P.search = e.target.value; pTable(); });
 
   drawDonut(groups, t, acctLabel);
-  drawPBars(t);
+  drawPTiles(t);
   pHead(); pTable();
   renderHistory();
-  renderHoldingsNews();
+  renderInsightCard();
 
   pAutoFetch();
 }
@@ -5882,7 +5924,7 @@ async function loadHistory(){
   if(cached && syms.every(x => cached[x])){
     P.histData = cached; P.histStamp = Date.now();
     P.histLoading = false; P.histReady = true;
-    if(S.tab === "portfolio") renderHistory();
+    if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); }
     return;
   }
   P.histData = await pSparkHist(syms);
@@ -5903,7 +5945,7 @@ async function loadHistory(){
   P.histStamp = Date.now();
   if(Object.keys(P.histData).length) pHistCacheSave(P.histData);
   P.histLoading = false; P.histReady = true;
-  if(S.tab === "portfolio") renderHistory();
+  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); }
 }
 
 /* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
@@ -6345,28 +6387,153 @@ function drawSmChart(body, pts, opts){
   $("#smHit").addEventListener("mouseleave", () => { tip.style.display = "none"; hair.style.display = "none"; dot.style.display = "none"; });
 }
 
-/* ---------- your holdings in the news ---------- */
-async function renderHoldingsNews(){
-  const el = $("#hnews"); if(!el) return;
-  const head = meta => `<div class="ai-head"><span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span><span class="ai-head-r">${meta}</span></div>`;
-  try{
-    const latest = (S.manifest?.market || [])[0];
-    if(!latest){ el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Appears here once the next market brief publishes.</p>`; return; }
-    const d = await fetchDay("market", latest);
-    const items = d.holdingsNews || [];
-    if(!items.length){
-      el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">No notable news on your holdings in the latest brief (${esc(shortDate(latest))}).</p>`;
-      return;
-    }
-    pCompute();
-    const byTicker = {}; pViewMerged().forEach(p => byTicker[p.ticker] = p);
-    const dotColor = tk => { const p = byTicker[tk]; if(!p || p.dayPct == null) return "var(--muted)"; return p.dayPct >= 0 ? "var(--up)" : "var(--down)"; };
-    el.innerHTML = head(`${items.length} insight${items.length===1?"":"s"} today`)
-      + items.map(i => `<div class="hn-row"><span class="hn-dot" style="background:${dotColor(i.ticker)}"></span><div><b>${esc(i.ticker)}</b> ${esc(i.lead)} ${esc(i.body)}</div></div>`).join("")
-      + `<p class="chart-cap" style="border:none;padding-top:10px">From the ${esc(shortDate(latest))} Daily Market Brief.</p>`;
-  }catch(e){
-    el.innerHTML = head("") + `<p style="color:var(--muted);font-size:14px;padding:4px 2px">Couldn't load the latest brief.</p>`;
+/* ---------------------------------------------------------------------------
+   AI Insight, on demand. Nothing is pre-generated any more: pick any holding
+   and the read is written on the spot, in your browser, out of the numbers the
+   page already has -- live quote, five years of daily closes, your own cost
+   basis and weights, plus anything the published briefs said about that ticker.
+   --------------------------------------------------------------------------- */
+function insSeries(sym){
+  const h = P.histData && P.histData[sym];
+  const c = h && h.c ? h.c.filter(v => v != null) : [];
+  if(c.length < 30) return null;
+  const last = c[c.length-1];
+  const ma = n => c.length >= n ? c.slice(-n).reduce((a,b) => a+b, 0)/n : null;
+  const ret = n => c.length > n ? (last/c[c.length-1-n] - 1)*100 : null;
+  const yr = c.slice(-252);
+  const hi = Math.max(...yr), lo = Math.min(...yr);
+  const r = [];
+  for(let i=1; i<yr.length; i++) if(yr[i-1] > 0) r.push(yr[i]/yr[i-1] - 1);
+  const mean = r.length ? r.reduce((a,b) => a+b, 0)/r.length : 0;
+  const sd = r.length ? Math.sqrt(r.reduce((a,b) => a + (b-mean)*(b-mean), 0)/r.length) : 0;
+  return { last, ma50: ma(50), ma200: ma(200), r21: ret(21), r63: ret(63), r252: ret(252),
+           hi, lo, rangePos: hi > lo ? (last-lo)/(hi-lo)*100 : 50, dayVol: sd*100, days: c.length };
+}
+/* Anything the last few published market briefs said about this ticker. */
+async function insBriefNotes(ticker){
+  const dates = (S.manifest?.market || []).slice(0, 4);
+  const out = [];
+  for(const d of dates){
+    try{
+      const day = await fetchDay("market", d);
+      (day.holdingsNews || []).forEach(n => { if(n.ticker === ticker) out.push({date: d, lead: n.lead, body: n.body}); });
+      if(out.length >= 2) break;
+    }catch(e){}
   }
+  return out.slice(0, 2);
+}
+function insBuild(p, st, spy){
+  const rows = [], tone = { up:"var(--up)", down:"var(--down)", flat:"var(--muted)", note:"var(--gold)" };
+  const T = (t, txt) => rows.push({ c: tone[t] || tone.flat, txt });
+  const dirWord = p.dayPct >= 0 ? "up" : "down";
+
+  T(p.dayPct >= 0 ? "up" : "down",
+    `<b>Today.</b> ${esc(p.ticker)} is at ${usd(p.price)}, ${dirWord} ${Math.abs(p.dayPct).toFixed(2)}% on the session — ${usdS(p.dayDollar)} across the ${p.shares.toLocaleString("en-US",{maximumFractionDigits:4})} share${p.shares===1?"":"s"} you hold.`);
+
+  const posBits = [`Worth ${usd(p.marketValue,0)}`];
+  if(p.hasCost) posBits.push(`against a ${usd(p.costBasis,0)} cost basis — ${usdS(p.gainDollar)}, or ${pctS(p.gainPct)}, since you bought`);
+  T(p.hasCost ? (p.gainDollar >= 0 ? "up" : "down") : "flat",
+    `<b>Your position.</b> ${posBits.join(" ")}.` + (p.weight != null ? ` That is ${p.weight.toFixed(1)}% of the current view.` : ""));
+
+  if(st){
+    const above50 = st.ma50 != null && st.last >= st.ma50, above200 = st.ma200 != null && st.last >= st.ma200;
+    let trend;
+    if(above50 && above200) trend = "above both its 50- and 200-day averages — an uptrend that is intact on both the short and long clock";
+    else if(!above50 && !above200) trend = "below both its 50- and 200-day averages — the trend is broken on both clocks";
+    else if(above50) trend = "back above its 50-day average but still under the 200-day — a bounce inside a longer downtrend";
+    else trend = "under its 50-day average but still above the 200-day — a pullback inside a longer uptrend";
+    T(above50 && above200 ? "up" : (!above50 && !above200 ? "down" : "flat"),
+      `<b>Trend.</b> ${usd(st.last)} is ${trend}.` +
+      (st.r21 != null ? ` One month ${pctS(st.r21)}` : "") +
+      (st.r63 != null ? `, three months ${pctS(st.r63)}` : "") +
+      (st.r252 != null ? `, twelve months ${pctS(st.r252)}` : "") + ".");
+
+    T(st.rangePos >= 85 ? "note" : (st.rangePos <= 15 ? "down" : "flat"),
+      `<b>52-week range.</b> ${usd(st.lo)} to ${usd(st.hi)}; today sits ${st.rangePos.toFixed(0)}% of the way up that range, ` +
+      `${((st.hi/st.last - 1)*100).toFixed(1)}% below the high and ${((st.last/st.lo - 1)*100).toFixed(1)}% above the low.`);
+
+    if(spy != null && st.r63 != null){
+      const gap = st.r63 - spy;
+      T(gap >= 0 ? "up" : "down",
+        `<b>Versus the market.</b> Over three months it has ${gap >= 0 ? "beaten" : "trailed"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points (${pctS(st.r63)} against ${pctS(spy)}).`);
+    }
+    if(st.dayVol){
+      const dollar = p.marketValue * st.dayVol/100;
+      T(st.dayVol >= 2.5 ? "note" : "flat",
+        `<b>How much it moves.</b> A typical day for ${esc(p.ticker)} over the past year is ±${st.dayVol.toFixed(2)}% — about ${usd(dollar,0)} on a position this size. Today's move is ${(Math.abs(p.dayPct)/(st.dayVol||1)).toFixed(1)}× that.`);
+    }
+  } else {
+    T("flat", `<b>Trend.</b> Daily price history for ${esc(p.ticker)} isn't available from the quote feed, so the moving-average and range read is skipped for this one.`);
+  }
+
+  const sector = tickerSector(p.ticker);
+  if(sector !== "Other") T("flat", `<b>Sector.</b> Sits in your ${esc(sector)} sleeve on the allocation donut.`);
+
+  const ev = PORTFOLIO_EVENTS.filter(e => e.ticker === p.ticker && new Date(e.date + "T00:00:00") >= new Date(new Date().setHours(0,0,0,0)))
+    .sort((a,b) => a.date.localeCompare(b.date)).slice(0,2);
+  ev.forEach(e => T("note", `<b>On the calendar.</b> ${esc(shortDate(e.date))} — ${esc(e.label)}.`));
+
+  let verdict;
+  if(st){
+    const strong = (st.ma50 != null && st.last >= st.ma50) && (st.ma200 != null && st.last >= st.ma200);
+    const weak = (st.ma50 != null && st.last < st.ma50) && (st.ma200 != null && st.last < st.ma200);
+    verdict = strong ? `Trend intact, ${st.rangePos.toFixed(0)}% up its 52-week range, ${pctS(p.dayPct)} today.`
+            : weak   ? `Trend broken on both clocks, ${st.rangePos.toFixed(0)}% up its 52-week range, ${pctS(p.dayPct)} today.`
+                     : `Mixed trend — one moving average holding, one not, ${pctS(p.dayPct)} today.`;
+  } else {
+    verdict = `${pctS(p.dayPct)} today, ${usd(p.marketValue,0)} on the book.`;
+  }
+  return { rows, verdict };
+}
+function renderInsightCard(){
+  const el = $("#hnews"); if(!el) return;
+  const list = pViewMerged().filter(p => p.type !== "cash");
+  const chips = list.map(p => `<button class="ins-chip${P.insTicker===p.ticker?" on":""}" data-ins="${esc(p.ticker)}">
+      <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>${esc(p.ticker)}</button>`).join("");
+  el.innerHTML = `<div class="ai-head">
+      <span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span>
+      <span class="ai-head-r">On demand · nothing pre-written</span>
+    </div>
+    <div class="ins-pick" id="insPick">${chips || `<span class="ins-empty">No holdings in this view.</span>`}</div>
+    <div id="insBody"><p class="ins-empty">Pick any holding above and a read is written on the spot — today's move against your cost basis, where the price sits versus its moving averages and 52-week range, how it compares to the S&amp;P, how much it usually moves, and anything your published briefs said about it.</p></div>`;
+  el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => insGenerate(b.dataset.ins)));
+  if(P.insTicker && list.some(p => p.ticker === P.insTicker)) insGenerate(P.insTicker);
+}
+async function insGenerate(ticker){
+  P.insTicker = ticker;
+  const body = $("#insBody"); if(!body) return;
+  document.querySelectorAll("#insPick .ins-chip").forEach(c => c.classList.toggle("on", c.dataset.ins === ticker));
+  body.innerHTML = `<div class="spinner" style="margin:26px auto"></div>`;
+  const token = P.insToken = (P.insToken || 0) + 1;
+
+  if(!P.histReady) await loadHistory();
+  if(token !== P.insToken) return;
+
+  const t = pTotals(pView());
+  const p = pViewMerged().find(x => x.ticker === ticker);
+  if(!p){ body.innerHTML = `<p class="ins-empty">That holding is not in the current account view.</p>`; return; }
+  p.weight = t.value > 0 ? p.marketValue/t.value*100 : null;
+
+  const st = insSeries(p.fetchSymbol || p.ticker);
+  const spyS = insSeries("SPY");
+  const built = insBuild(p, st, spyS ? spyS.r63 : null);
+
+  let notes = [];
+  try{ notes = await insBriefNotes(ticker); }catch(e){}
+  if(token !== P.insToken) return;
+  notes.forEach(n => built.rows.push({ c:"var(--gold)",
+    txt: `<b>From your ${esc(shortDate(n.date))} brief.</b> ${esc(n.lead)} ${esc(n.body)}` }));
+
+  body.innerHTML = `<div class="ins-head">
+      <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>
+      <span class="ins-head-t"><b>${esc(p.ticker)}${p.name ? " · " + esc(p.name) : ""}</b><span>${usd(p.price)} · ${esc(pctS(p.dayPct))} today · ${usd(p.marketValue,0)} held</span></span>
+      <button class="ins-regen" id="insRegen">⟳ Redo</button>
+    </div>
+    <p class="ins-verdict">${esc(built.verdict)}</p>`
+    + built.rows.map(r => `<div class="ins-row"><i style="background:${r.c}"></i><div>${r.txt}</div></div>`).join("")
+    + `<p class="ins-foot">Written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes, your own cost basis and the published briefs. Educational only — not investment advice.</p>`;
+  const rb = $("#insRegen");
+  if(rb) rb.addEventListener("click", () => insGenerate(ticker));
 }
 
 function drawDonut(groups, t, acctLabel){
@@ -6399,52 +6566,71 @@ function drawDonut(groups, t, acctLabel){
   });
 }
 
-function drawPBars(t){
-  const el = $("#pBars"); if(!el) return;
-  const day = P.perf === "day";
-  // metric that drives direction and length, sector-chart style
-  const metric = p => p.type === "cash" ? 0 : (day ? p.dayPct : (p.hasCost ? p.gainPct : p.dayPct));
-  const list = pViewMerged().slice().sort((a,b) => metric(b) - metric(a));   // best to worst
-  const posMax = Math.max(0, ...list.map(p => metric(p)));
-  const negMax = Math.max(0, ...list.map(p => -metric(p)));
-  const range = Math.max(.1, posMax + negMax);
-  const negShare = negMax > 0 ? Math.max(8, negMax/range*100) : 5;    // midline position (%)
-  const posLane = 100 - negShare, negLane = negShare;
-  // Reserve a hard margin (% of the full track) on whichever side a bar's value label sits,
-  // so the label can never render past the card edge, no matter how the data shakes out.
-  const LABEL_RESERVE = 11;
+/* ---------------------------------------------------------------------------
+   Positions, as cards. Replaces the old diverging-bar chart: the bars put each
+   logo inside a right-aligned name column, so the icons stepped left and right
+   with ticker length and had to stay tiny to fit. A card fixes the logo in one
+   corner of a known-size frame, which is what lets it be 52px.
+   --------------------------------------------------------------------------- */
+function pSparkSvg(p){
+  const h = P.histData && P.histData[p.fetchSymbol || p.ticker];
+  const c = h && h.c ? h.c.filter(v => v != null) : [];
+  const vals = c.slice(-30);
+  if(vals.length < 4) return `<div class="ptile-spark"></div>`;
+  const W = 104, H = 38, PAD = 5;
+  const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+  const X = i => (i/(vals.length-1)*W).toFixed(1);
+  const Y = v => (H - PAD - (v-min)/span*(H - PAD*2)).toFixed(1);
+  const line = vals.map((v,i) => `${i?"L":"M"} ${X(i)} ${Y(v)}`).join(" ");
+  const up = vals[vals.length-1] >= vals[0];
+  const col = up ? "var(--up)" : "var(--down)";
+  const gid = "spk" + String(p.ticker).replace(/[^A-Za-z0-9]/g,"");
+  return `<div class="ptile-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${col}" stop-opacity=".24"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${line} L ${W} ${H} L 0 ${H} Z" fill="url(#${gid})"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  </svg></div>`;
+}
+
+function drawPTiles(t){
+  const el = $("#pTiles"); if(!el) return;
+  const rank = p => p.type === "cash" ? -Infinity : (p.dayPct || 0);
+  const list = pViewMerged().slice().sort((a,b) => rank(b) - rank(a));
   el.innerHTML = "";
   list.forEach(p => {
-    const m = metric(p);
-    const share = t.value > 0 ? p.marketValue/t.value*100 : 0;
     const isCash = p.type === "cash";
-    const noCost = !day && !p.hasCost && !isCash;
-    const col = isCash ? "var(--topbar-muted)" : noCost ? "var(--gold)" : (m >= 0 ? "var(--up)" : "var(--down)");
-    const label = isCash ? "Cash" : pctS(m) + (noCost ? " today" : "");
-    const pos = m >= 0;
-    const lane = pos ? posLane : negLane;
-    const rawW = isCash ? 1.4 : Math.abs(m)/range * 94;
-    const w = isCash ? 1.4 : Math.max(1.4, Math.min(rawW, Math.max(1.4, lane - LABEL_RESERVE)));
-    const inside = !pos && w >= 12;   // negative labels sit inside the bar in white, like the sector chart
-    const barStyle = pos
-      ? `background:${col};left:${negShare}%;justify-content:flex-end`
-      : `background:${col};right:${100-negShare}%;justify-content:flex-start`;
-    const labelStyle = inside
-      ? "color:#fff"
-      : pos
-        ? `color:${isCash ? "var(--muted)" : col};position:absolute;left:calc(100% + 8px);white-space:nowrap`
-        : `color:${col};position:absolute;right:calc(100% + 8px);white-space:nowrap`;
-    const row = document.createElement("div"); row.className = "hrow";
-    row.style.cursor = "pointer";
-    const mkHtml = isCash ? "" : `<span class="mk" style="background:${pcolor(p.ticker)};width:20px;height:20px;border-radius:6px;font-size:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;position:relative;overflow:hidden;flex-shrink:0">${esc(p.ticker.slice(0,2))}${logoImg(p.ticker)}</span>`;
-    row.innerHTML = `<div class="hname">${mkHtml}<b>${esc(p.ticker)}</b> <span style="color:var(--muted);font-weight:400;font-size:11px">${share.toFixed(1)}%</span></div>
-      <div class="htrack"><div class="hmid" style="left:${negShare}%"></div>
-      <div class="hbar" style="${barStyle};width:0;overflow:visible"><span style="${labelStyle}">${esc(label)}</span></div></div>`;
-    row.addEventListener("click", () => { if(p.type !== "cash") openStockModal(p.ticker); });
-    el.appendChild(row);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ row.querySelector(".hbar").style.width = w + "%"; }));
+    const share = t.value > 0 ? p.marketValue/t.value*100 : 0;
+    const col = isCash ? "var(--topbar-muted)" : (p.dayPct >= 0 ? "var(--up)" : "var(--down)");
+    const tile = document.createElement("div");
+    tile.className = "ptile" + (isCash ? " cash" : "");
+    tile.style.setProperty("--tile-accent", col);
+    const logo = isCash
+      ? `<div class="ptile-logo" style="background:var(--topbar-muted);font-size:20px">$</div>`
+      : `<div class="ptile-logo" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,4))}${logoImg(p.ticker)}</div>`;
+    const chg = isCash
+      ? `<div class="ptile-chg" style="color:var(--muted);font-size:13px">Cash<small>no daily move</small></div>`
+      : `<div class="ptile-chg" style="color:${col}">${esc(pctS(p.dayPct))}<small>${esc(usdS(p.dayDollar))}</small></div>`;
+    // deliberate two-line stack: at tile width this wrapped anyway, and a forced break
+    // keeps every card's value block the same height instead of wrapping at random.
+    const sub = isCash
+      ? `${share.toFixed(1)}% of view<br>money market`
+      : `${share.toFixed(1)}% of view<br>` + (p.hasCost ? `${pctS(p.gainPct)} all-time` : `no cost basis`);
+    tile.innerHTML = `<div class="ptile-top">${logo}
+        <div class="ptile-id"><b>${esc(p.ticker)}</b><span>${esc(p.name || "")}</span></div>${chg}</div>
+      <div class="ptile-foot">
+        <div class="ptile-val"><b>${usd(p.marketValue,0)}</b><span>${sub}</span></div>
+        ${isCash ? `<div class="ptile-spark"></div>` : pSparkSvg(p)}
+      </div>
+      <div class="ptile-w"><i style="width:${Math.max(2, Math.min(100, share)).toFixed(1)}%"></i></div>`;
+    if(!isCash) tile.addEventListener("click", () => openStockModal(p.ticker));
+    el.appendChild(tile);
   });
+  if(!P.histReady) loadHistory();     // sparklines fill in when the daily closes land
 }
+/* Repaint the tiles in place (keeps scroll position) once daily history arrives. */
+function pRepaintTiles(){ if($("#pTiles")) drawPTiles(pTotals(pView())); }
 
 const PCOLS = [
   {k:"ticker",label:"Symbol"},{k:"account",label:"Account"},{k:"shares",label:"Shares"},
@@ -6469,8 +6655,8 @@ function pTable(){
   let rows = pViewMerged().slice();
   if(P.filter) rows = rows.filter(p => p.ticker === P.filter || tickerSector(p.ticker) === P.filter);
   if(P.search){ const s = P.search.toLowerCase(); rows = rows.filter(p => p.ticker.toLowerCase().includes(s) || p.name.toLowerCase().includes(s)); }
-  if(P.quick === "gain") rows = rows.filter(p => p.type !== "cash" && (P.perf === "day" ? p.dayDollar > 0 : (p.hasCost ? p.gainDollar > 0 : p.dayDollar > 0)));
-  if(P.quick === "loss") rows = rows.filter(p => p.type !== "cash" && (P.perf === "day" ? p.dayDollar < 0 : (p.hasCost ? p.gainDollar < 0 : p.dayDollar < 0)));
+  if(P.quick === "gain") rows = rows.filter(p => p.type !== "cash" && p.dayDollar > 0);
+  if(P.quick === "loss") rows = rows.filter(p => p.type !== "cash" && p.dayDollar < 0);
   const nv = v => v == null ? -Infinity : v;
   rows.sort((a,b) => { const x = a[P.sortKey], y = b[P.sortKey];
     if(typeof x === "string") return x.localeCompare(y) * P.sortDir;

@@ -3013,25 +3013,37 @@ function headline(s){ return String(s||"").replace(/\s*\.\s*$/,""); }
 const NR_CACHE = {};
 let NR = { q:"", busy:false, story:null, err:"", ran:false };
 
-/* GDELT and Wikipedia both answer browsers directly most of the time; the two shared CORS
-   proxies the portfolio already leans on are raced alongside so one bad day for any single
-   route doesn't take the desk down. */
+/* GDELT serves no CORS header at all (verified live, Sep 2026 -- a direct browser fetch is a
+   hard "Failed to fetch"), so every call goes through the two shared proxies the portfolio
+   already leans on, raced against each other. It also rate-limits bursts, answering with a
+   plain-text "Please limit your queries..." instead of JSON -- so a non-JSON body is treated
+   as a throttle and retried after a pause rather than reported as a failure. */
+const nrSleep = ms => new Promise(r => setTimeout(r, ms));
 async function nrFetchJSON(target, ms){
-  const urls = [target,
-    "https://cors-get-proxy.sirjosh.workers.dev/?url=" + encodeURIComponent(target),
-    "https://api.allorigins.win/raw?url=" + encodeURIComponent(target)];
+  const urls = ["https://cors-get-proxy.sirjosh.workers.dev/?url=" + encodeURIComponent(target),
+                "https://api.allorigins.win/raw?url=" + encodeURIComponent(target)];
   const attempts = urls.map(u => (async () => {
     const r = await pFetchTimeout(u, ms || 12000, {cache:"no-store"});
     if(!r.ok) throw new Error("bad status");
     let t = await r.text();
-    /* GDELT occasionally emits raw control characters inside article titles, which is not
-       legal JSON and makes JSON.parse throw on an otherwise perfectly good payload. */
-    t = t.replace(/^﻿/, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, " ");
+    /* GDELT also emits raw control characters inside article titles, which is not legal JSON
+       and makes JSON.parse throw on an otherwise perfectly good payload. */
+    t = t.replace(/^\uFEFF/, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, " ").trim();
+    if(!t.startsWith("{")) throw new Error(/please limit/i.test(t) ? "throttled" : "not json");
     const j = JSON.parse(t);
     if(!j || typeof j !== "object") throw new Error("bad json");
     return j;
   })());
   return Promise.any(attempts);
+}
+/* GDELT publishes a hard limit of one request every five seconds and answers a burst with
+   plain text rather than JSON, so the retry waits it out properly. Verified live, Sep 2026. */
+async function nrGdelt(target){
+  for(let i = 0; i < 2; i++){
+    try{ return await nrFetchJSON(target); }
+    catch(e){ if(i === 0) await nrSleep(6200); }
+  }
+  return null;
 }
 
 const NR_STOP = new Set(("a an and are as at be been but by for from has have how in into is it its of on or "+
@@ -3041,13 +3053,30 @@ const NR_STOP = new Set(("a an and are as at be been but by for from has have ho
   "off again once all any both each few other some such only own same so too very can t s don t here").split(/\s+/));
 const nrWords = t => String(t || "").toLowerCase().replace(/[^a-z0-9\s'-]/g, " ").split(/\s+/)
   .filter(w => w.length > 2 && !NR_STOP.has(w));
-/* "Fed holds rates steady - Reuters" / "Fed holds rates steady | CNBC" -> drop the outlet tail */
+/* GDELT stores titles tokenised, so they come back with spaces around punctuation and inside
+   hyphenated words ("tightening , high crude to restrain", "before year - end"). This puts
+   them back together, then drops the trailing outlet tail ("... - Reuters", "... | CNBC"). */
 function nrCleanTitle(t){
   let s = String(t || "").replace(/\s+/g, " ").trim();
-  s = s.replace(/\s+[-–—|]\s+[^-–—|]{2,40}$/, "");
+  s = s.replace(/\s+_\s+/g, " ");
+  s = s.replace(/\s+([,.;:!?%)\]])/g, "$1").replace(/([(\[])\s+/g, "$1");
+  s = s.replace(/\s+'\s*s\b/g, "'s").replace(/\s+’\s*s\b/g, "’s");
+  /* strip the outlet tail BEFORE rejoining hyphens, or "before year - end" loses its end --
+     and only when the tail is capitalised like a masthead and enough headline remains */
+  s = s.replace(/\s+[-–—|]\s+([A-Z][^-–—|]{1,39})$/, (m, tail, off) => off >= 22 ? "" : m);
+  /* " - " between two word characters is a split hyphen ("year - end"), unless what follows is
+     a connective, in which case it was a real dash ("yields slip - and stocks follow") */
+  s = s.replace(/([A-Za-z0-9])\s-\s([A-Za-z0-9]\w*)/g,
+                (m, a, b) => /^(and|but|or|so|then|as|with|while|after|before|the|a|an|for|yet|plus)$/i.test(b) ? m : a + "-" + b);
   s = s.replace(/\s*\.\.\.$/, "");
-  return s;
+  return s.trim();
 }
+/* Paywall interstitials, bot checks and directory pages come back from the index looking like
+   headlines. None of them are. */
+const NR_JUNK = /^(category|tag|topic|archive|page)\s*[:|]|permission not required|access denied|are you a robot|just a moment|please enable javascript|subscribe to (continue|read)|sign (in|up) to|log in to|page not found|404|403 forbidden|attention required|your browser|cookie|privacy policy|terms of (use|service)|latest news|breaking news$|home ?page/i;
+/* A small nudge toward outlets a reader has heard of, so the lead story is not a syndication
+   farm's copy of a wire report when the wire report itself is in the list. */
+const NR_MAJOR = /^(reuters|apnews|ap|bbc|cnbc|ft|wsj|nytimes|washingtonpost|bloomberg|theguardian|aljazeera|npr|axios|politico|cnn|marketwatch|barrons|economist|forbes|businessinsider|nbcnews|cbsnews|abcnews|usatoday|thehill|time|morningstar|theathletic|espn|wired|theverge|techcrunch|arstechnica)\./i;
 const nrOutlet = a => {
   const d = String(a.domain || "").replace(/^www\./, "");
   const core = d.split(".")[0] || d;
@@ -3082,20 +3111,16 @@ async function nrArticles(q, timespan){
   const target = "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
     encodeURIComponent(nrPhrase(q) + " sourcelang:english") +
     "&mode=artlist&maxrecords=75&sort=datedesc&timespan=" + timespan + "&format=json";
-  try{
-    const j = await nrFetchJSON(target);
-    return Array.isArray(j.articles) ? j.articles : [];
-  }catch(e){ return []; }
+  const j = await nrGdelt(target);
+  return (j && Array.isArray(j.articles)) ? j.articles : [];
 }
 async function nrTimeline(q){
   const target = "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
     encodeURIComponent(nrPhrase(q) + " sourcelang:english") +
     "&mode=timelinevol&timespan=14d&format=json";
-  try{
-    const j = await nrFetchJSON(target);
-    const series = (j.timeline || [])[0];
-    return (series && Array.isArray(series.data)) ? series.data.map(d => ({ d:d.date, v:+d.value || 0 })) : [];
-  }catch(e){ return []; }
+  const j = await nrGdelt(target);
+  const series = j && (j.timeline || [])[0];
+  return (series && Array.isArray(series.data)) ? series.data.map(d => ({ d:d.date, v:+d.value || 0 })) : [];
 }
 async function nrBackground(q){
   try{
@@ -3148,7 +3173,8 @@ function nrBuild(q, arts, tl, bg){
   const seen = [], items = [];
   arts.forEach(a => {
     const title = nrCleanTitle(a.title);
-    if(!title || title.length < 18) return;
+    if(!title || title.length < 18 || NR_JUNK.test(title)) return;
+    if(!/[a-z]/.test(title)) return;
     const w = nrWords(title);
     if(w.length < 3) return;
     const dup = seen.findIndex(s => nrSame(s.w, w));
@@ -3165,7 +3191,8 @@ function nrBuild(q, arts, tl, bg){
   const freq = {};
   items.forEach(it => new Set(it.w).forEach(w => freq[w] = (freq[w]||0) + it.n));
   const keys = Object.keys(freq).sort((a,b) => freq[b]-freq[a]);
-  const score = it => it.w.reduce((s,w) => s + (freq[w]||0), 0) / Math.sqrt(it.w.length) + it.n * 3;
+  const score = it => it.w.reduce((s,w) => s + (freq[w]||0), 0) / Math.sqrt(it.w.length)
+                    + it.n * 3 + (NR_MAJOR.test(it.domain) ? 6 : 0);
   const ranked = items.slice().sort((a,b) => score(b) - score(a));
   const lead = ranked[0];
 
@@ -3188,7 +3215,13 @@ function nrBuild(q, arts, tl, bg){
 
   const topic = nrTopic(keys.slice(0, 25));
   const total = arts.length;
-  const window = "the last few days";
+  /* say the real span rather than a vague "the last few days" -- it is straight off the
+     timestamps, and it is the difference between a breaking story and a slow one */
+  const stamps = items.map(i => i.when).filter(Boolean).map(d => d.getTime());
+  const hours = stamps.length > 1 ? (Math.max(...stamps) - Math.min(...stamps)) / 36e5 : 0;
+  const window = hours < 6 ? "the last few hours"
+               : hours < 40 ? `the last ${Math.max(1, Math.round(hours))} hours`
+               : `the last ${Math.round(hours/24)} days`;
   const nOut = outlets.size;
 
   const paras = [];
@@ -3236,18 +3269,26 @@ async function nrGenerate(q){
   showNewsView("desk");
   try{
     if(NR_CACHE[q.toLowerCase()]){ NR.story = NR_CACHE[q.toLowerCase()]; NR.busy = false; showNewsView("desk"); return; }
-    let arts = await nrArticles(q, "3d");
-    if(arts.length < 6) arts = await nrArticles(q, "2w");
-    if(arts.length < 4 && /\s/.test(q)) arts = await nrArticles(q.split(/\s+/).join(" OR "), "2w");
+    /* ONE blocking call to the wire. GDELT allows one request every five seconds, and the
+       proxy hop puts a single round trip at roughly ten, so making the reader wait through a
+       second one just to draw a chart is not a trade worth making. The story renders off the
+       article list (which carries its own timestamps, enough for a "when this landed" curve)
+       and the richer 14-day attention curve is fetched afterwards and slotted in. Wikipedia
+       is a different host and answers directly, so it runs alongside for free. */
+    const bgP = nrBackground(q);
+    let arts = await nrArticles(q, "7d");
+    if(arts.length < 4){ await nrSleep(6200); arts = await nrArticles(/\s/.test(q) ? q.split(/\s+/).join(" OR ") : q, "3w"); }
     if(!arts.length){
-      NR.err = "Nothing is being reported on that in the last two weeks — or the wire index didn't answer. Try a name, a place, or a company instead of a question.";
+      NR.err = "Nothing is being reported on that in the last three weeks \u2014 or the wire index didn't answer. Try a name, a place, or a company instead of a question.";
       NR.busy = false; showNewsView("desk"); return;
     }
-    const [tl, bg] = await Promise.all([nrTimeline(q), nrBackground(q)]);
+    const bg = await bgP;
+    const tl = nrSeenCurve(arts);
     const story = nrBuild(q, arts, tl, bg);
     if(!story){ NR.err = "The wire returned results but nothing usable enough to write from. Try a narrower topic."; NR.busy = false; showNewsView("desk"); return; }
     NR_CACHE[q.toLowerCase()] = story;
     NR.story = story;
+    nrUpgradeCurve(story);
   }catch(e){
     NR.err = "The wire index couldn't be reached just now. Try again in a moment.";
   }
@@ -3255,6 +3296,32 @@ async function nrGenerate(q){
   showNewsView("desk");
 }
 
+/* A curve off the article timestamps we already have -- available instantly, no extra call. */
+function nrSeenCurve(arts){
+  const days = {};
+  arts.forEach(a => { const d = nrDate(a.seendate); if(!d) return; const k = d.toISOString().slice(0,10); days[k] = (days[k]||0) + 1; });
+  const keys = Object.keys(days).sort();
+  if(keys.length < 3) return [];
+  const out = [];
+  const start = new Date(keys[0] + "T00:00:00Z"), end = new Date(keys[keys.length-1] + "T00:00:00Z");
+  for(let t = start.getTime(); t <= end.getTime(); t += 864e5){
+    const k = new Date(t).toISOString().slice(0,10);
+    out.push({ d:k, v: days[k] || 0 });
+  }
+  out.label = "Reports gathered, by day";
+  return out;
+}
+/* Then, once GDELT's five-second window has passed, swap in the real 14-day attention curve
+   without making the reader wait for it. */
+async function nrUpgradeCurve(story){
+  await nrSleep(6200);
+  const tl = await nrTimeline(story.q);
+  if(!tl || tl.length < 4) return;
+  story.timeline = tl;
+  if(NR.story !== story) return;
+  const host = document.querySelector("#npBody .nr-curve");
+  if(host) host.outerHTML = nrSpark(tl);
+}
 function nrSpark(tl){
   if(!tl || tl.length < 4) return "";
   const W = 320, H = 46, max = Math.max(...tl.map(p => p.v)) || 1;

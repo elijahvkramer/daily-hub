@@ -903,7 +903,7 @@
   .app-ic::after{content:"";position:absolute;inset:0;border-radius:22px;border:1px solid rgba(255,255,255,.22);
                  background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0) 52%);pointer-events:none}
   .app-ic.has-logo{background:#fff}
-  .app-ic img{width:68%;height:68%;object-fit:contain;border-radius:12px}
+  .app-ic img{width:84%;height:84%;object-fit:contain;border-radius:0}
   .app:hover .app-ic{transform:translateY(-4px) scale(1.035);box-shadow:0 18px 34px -14px rgba(20,40,80,.6),0 1px 2px rgba(0,0,0,.12)}
   .app:active .app-ic{transform:translateY(-1px) scale(.97)}
   .app-nm{font-size:12.5px;font-weight:800;letter-spacing:-.01em;line-height:1.25;text-align:center;
@@ -9504,9 +9504,9 @@ async function renderBrainFoodDeck(gate){
 
    Families get their own left-to-right shelf rather than one wrapping grid: the free NYT
    games together, the LinkedIn games together, geography together, and everything else under
-   Misc. Icons are drawn here (glyph on a brand-coloured gradient) rather than pulled as
-   favicons, because every NYT game shares one favicon and every LinkedIn game shares another
-   -- nine identical tiles is the opposite of an app screen.
+   Misc. Non-built-in tiles use each game's real app icon (local /icons files for NYT,
+   official logo URLs for LinkedIn/Geography/Misc) rather than a shared favicon, so every
+   tile reads as its own app rather than duplicates.
 
    Also dropped on Eli's instruction: the played-today counter ring ("I don't need the counter
    at the top") and the "Next: Brain Food" button ("unneeded"). The per-tile daily checkmark
@@ -9519,15 +9519,9 @@ const GAME_SHELVES = [
     { id:"quiz",      name:"Word Quiz",      ic:"\u{1F4D6}", col:"#C2703B" }
   ]},
   { n:"New York Times", note:"free games", games:[
-    { name:"Wordle",       ic:"\u{1F7E9}", col:"#3A3A3C", url:"https://www.nytimes.com/games/wordle/index.html", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Connections",  ic:"\u{1F517}", col:"#A77BC0", url:"https://www.nytimes.com/games/connections", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Strands",      ic:"\u{1F9F5}", col:"#2E86AB", url:"https://www.nytimes.com/games/strands", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"The Mini",     ic:"\u{1F521}", col:"#3A7CE1", url:"https://www.nytimes.com/crosswords/game/mini", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Spelling Bee", ic:"\u{1F41D}", col:"#2B2B2B", url:"https://www.nytimes.com/puzzles/spelling-bee", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Letter Boxed", ic:"\u{1F4E6}", col:"#5A7DE0", url:"https://www.nytimes.com/puzzles/letter-boxed", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Tiles",        ic:"\u{1F9E9}", col:"#E07A5F", url:"https://www.nytimes.com/puzzles/tiles", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Sudoku",       ic:"\u{1F522}", col:"#2D6A8F", url:"https://www.nytimes.com/puzzles/sudoku/easy", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" },
-    { name:"Pips",         ic:"\u{1F3B2}", col:"#C75146", url:"https://www.nytimes.com/puzzles/pips", logo:"https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2c/b7/c1/2cb7c134-68dd-35f7-ec7f-55d48768bad7/mzabit.4329891830613105951.png/256x256bb.png" }
+    { name:"Wordle",       ic:"\u{1F7E9}", col:"#3A3A3C", url:"https://www.nytimes.com/games/wordle/index.html", logo:"icon-wordle.png" },
+    { name:"Connections",  ic:"\u{1F517}", col:"#A77BC0", url:"https://www.nytimes.com/games/connections", logo:"icon-connections.png" },
+    { name:"Strands",      ic:"\u{1F9F5}", col:"#2E86AB", url:"https://www.nytimes.com/games/strands", logo:"icon-strands.png" }
   ]},
   { n:"LinkedIn", note:"daily puzzles", games:[
     { name:"Queens",      ic:"\u{1F451}", col:"#6D28D9", url:"https://www.linkedin.com/games/queens", logo:"https://static.licdn.com/aero-v1/sc/h/6uvsjtqx2j32uh1a803qygh5y" },

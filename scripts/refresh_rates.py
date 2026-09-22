@@ -20,6 +20,7 @@ import io
 import json
 import os
 import sys
+import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -266,6 +267,69 @@ def market_prices():
     return prices, got
 
 
+# Last resort for the price rows. FRED's graph CSV and Stooq both refuse GitHub Actions' IP
+# range, which is why the board was publishing three prices out of nine all through Sep 2026 --
+# S&P, Nasdaq, Dow, VTI, Brent and the dollar printed "awaiting refresh" on every load. The
+# browser gets these from Yahoo through a public CORS worker; the same worker answers from here,
+# so the published file can carry them too (for first paint, and for any device whose own proxy
+# call fails). Entirely best-effort: anything that throws just leaves the row to the live path.
+YAHOO_SPARK = ("https://query1.finance.yahoo.com/v7/finance/spark"
+               "?symbols={syms}&range=1d&interval=1d")
+CORS_WORKER = "https://cors-get-proxy.sirjosh.workers.dev/?url={url}"
+# (yahoo symbol, board label, note, format)
+YAHOO_ROWS = [
+    ("%5EGSPC", "S&P 500", "prior close", "int"),
+    ("%5EIXIC", "Nasdaq", "prior close", "int"),
+    ("%5EDJI", "Dow", "prior close", "int"),
+    ("VTI", "VTI", "total US market", "usd2"),
+    ("GC%3DF", "Gold", "spot / oz", "usd0"),
+    ("BZ%3DF", "Brent Crude", "Brent", "usd2"),
+    ("DX-Y.NYB", "Dollar", "broad index", "num2"),
+]
+
+
+def yahoo_prices(have):
+    """Fill in whatever the direct sources didn't answer for. `have` is a set of lowercase labels."""
+    wanted = [r for r in YAHOO_ROWS if r[1].lower() not in have]
+    if not wanted:
+        return [], []
+    target = YAHOO_SPARK.format(syms="%2C".join(r[0] for r in wanted))
+    url = CORS_WORKER.format(url=urllib.parse.quote(target, safe=""))
+    try:
+        data = json.loads(fetch(url, timeout=20))
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! yahoo proxy: {e}", file=sys.stderr)
+        return [], []
+    results = ((data.get("spark") or {}).get("result")) or []
+    by_sym = {}
+    for item in results:
+        resp = (item.get("response") or [{}])[0]
+        meta = resp.get("meta") or {}
+        if isinstance(meta.get("regularMarketPrice"), (int, float)):
+            by_sym[item.get("symbol")] = (
+                meta["regularMarketPrice"],
+                meta.get("chartPreviousClose") or meta.get("previousClose"),
+            )
+    out, got = [], []
+    for sym, label, note, fmt in wanted:
+        raw = urllib.parse.unquote(sym)
+        cur_prev = by_sym.get(raw) or by_sym.get(sym)
+        if not cur_prev:
+            continue
+        cur, prev = cur_prev
+        if fmt == "int":
+            value = f"{cur:,.0f}"
+        elif fmt == "usd0":
+            value = f"${cur:,.0f}"
+        elif fmt == "usd2":
+            value = f"${cur:,.2f}"
+        else:
+            value = f"{cur:,.2f}"
+        out.append({"label": label, "value": value, "pct": pct_note(cur, prev), "note": note})
+        got.append("y:" + label.lower())
+    return out, got
+
+
 def fed_funds():
     """Effective fed funds, straight from the New York Fed. Falls back to FRED's DFF."""
     try:
@@ -333,6 +397,14 @@ def main():
         print(f"  ! market_prices: {e}", file=sys.stderr)
         prices, pgot = [], []
     got += pgot
+
+    # whatever is still missing, try Yahoo through the CORS worker
+    try:
+        extra, egot = yahoo_prices({p["label"].lower() for p in prices})
+        prices += extra
+        got += egot
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! yahoo fill: {e}", file=sys.stderr)
 
     if not rates and not prices:
         print("no rate source answered; leaving the previous rate file untouched")

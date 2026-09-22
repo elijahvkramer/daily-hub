@@ -1475,19 +1475,131 @@
   }
 
 
+  /* ---------- AI Insight, news-first (Sep 2026 rebuild) ---------- */
+  .ins-head-px{text-align:right;flex-shrink:0;line-height:1.2}
+  .ins-head-px b{display:block;font-size:17px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .ins-head-px span{display:block;font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums}
+  .ins-head-px .pos,.ins-head-px b.pos{color:var(--up)} .ins-head-px .neg,.ins-head-px b.neg{color:var(--down)}
+  .ins-hero{position:relative;margin:2px 0 14px;border:1px solid var(--hairline);border-radius:14px;overflow:hidden;background:var(--paper)}
+  .ins-spark{display:block;width:100%;height:96px}
+  .ins-hero-cap{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+                padding:0 13px 11px;margin-top:-4px}
+  .ins-hero-cap span{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .ins-hero-cap b{font-size:13px;font-weight:800;color:var(--ink);text-align:right}
+
+  .ins-why{margin-bottom:16px}
+  .ins-why-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+             font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-dark);
+             padding-bottom:7px;margin-bottom:10px;border-bottom:1px solid var(--hairline)}
+  .ins-why-s{font-size:10.5px;letter-spacing:.02em;text-transform:none;font-weight:700;color:var(--muted)}
+  .ins-news{display:flex;flex-direction:column;gap:2px}
+  .ins-story{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;
+             padding:9px 10px;border-radius:12px;text-decoration:none;color:inherit;border:1px solid transparent;
+             transition:background .15s,border-color .15s}
+  .ins-story:hover{background:var(--paper);border-color:var(--hairline)}
+  .ins-story.nophoto{grid-template-columns:minmax(0,1fr)}
+  .ins-story.nophoto .ins-story-img{display:none}
+  .ins-story-img{width:64px;height:48px;border-radius:9px;overflow:hidden;background:var(--hairline);display:block}
+  .ins-story-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .ins-story-b{min-width:0;display:block}
+  .ins-story-m{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:10.5px;font-weight:800;color:var(--muted);margin-bottom:3px}
+  .ins-story-t{display:block;font-size:13.5px;line-height:1.42;font-weight:700;color:var(--ink)}
+  .ins-story.ctx .ins-story-t{font-weight:600;color:var(--muted)}
+  .ins-tag{font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+           padding:2px 7px;border-radius:999px;background:color-mix(in srgb, var(--muted) 14%, transparent);color:var(--muted)}
+  .ins-tag.ern{background:color-mix(in srgb, #0E6CD8 15%, transparent);color:#0E6CD8}
+  .ins-tag.anl{background:color-mix(in srgb, #8B5CF6 16%, transparent);color:#7C3AED}
+  .ins-tag.gui{background:color-mix(in srgb, #E0A100 20%, transparent);color:#9A6E00}
+  .ins-tag.dea{background:color-mix(in srgb, #12855C 16%, transparent);color:#12855C}
+  .ins-tag.leg{background:color-mix(in srgb, #D2453C 15%, transparent);color:#C0392F}
+  .ins-tag.cap{background:color-mix(in srgb, #0EA5A0 16%, transparent);color:#0E8B87}
+  .ins-tag.ldr{background:color-mix(in srgb, #DB2777 14%, transparent);color:#BE185D}
+  .ins-tag.mac{background:color-mix(in srgb, #64748B 18%, transparent);color:#475569}
+  .ins-tag.biz{background:color-mix(in srgb, #65A30D 16%, transparent);color:#4D7C0F}
+  .ins-ctx-h{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+             margin:12px 0 4px;padding-top:9px;border-top:1px solid var(--hairline)}
+  .ins-sk{height:48px;border-radius:12px;margin-bottom:6px;background:linear-gradient(90deg,var(--hairline),color-mix(in srgb,var(--hairline) 35%,transparent),var(--hairline));
+          background-size:200% 100%;animation:insSk 1.3s ease-in-out infinite}
+  @keyframes insSk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .ins-pulse{display:flex;align-items:flex-end;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--hairline)}
+  .ins-pulse-bars{display:flex;align-items:flex-end;gap:5px;height:40px}
+  .ins-pb{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%;width:16px}
+  .ins-pb i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--gold)}
+  .ins-pb u{text-decoration:none;font-size:8.5px;font-weight:900;color:var(--muted)}
+  .ins-pulse-l{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+  .ins-pulse-l span{display:block;letter-spacing:.02em;text-transform:none;font-weight:700;opacity:.8}
+
+  .ins-vis{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;margin-bottom:14px}
+  .ins-v{border:1px solid var(--hairline);border-radius:13px;padding:11px 13px 12px;background:var(--card);min-width:0}
+  .ins-v-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:10px;font-weight:900;
+           letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+  .ins-v-h b{font-size:14px;letter-spacing:-.01em;text-transform:none;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ins-v-h b.pos{color:var(--up)} .ins-v-h b.neg{color:var(--down)}
+  .ins-v small{display:block;margin-top:8px;font-size:10.5px;line-height:1.45;color:var(--muted);font-weight:600}
+  .ins-range{position:relative;height:8px;border-radius:99px;background:var(--hairline)}
+  .ins-range-fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 25%,transparent),var(--gold))}
+  .ins-range-dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%);
+                 box-shadow:0 0 0 3px var(--card)}
+  .ins-range-e{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+  .ins-dots{display:flex;gap:8px;flex-wrap:wrap}
+  .ins-dot{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--muted);
+           border:1px solid var(--hairline);border-radius:999px;padding:4px 10px}
+  .ins-dot i{width:7px;height:7px;border-radius:50%;background:var(--down)}
+  .ins-dot.on i{background:var(--up)}
+  .ins-dot b{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:900}
+  .ins-rets{display:flex;gap:14px;margin-top:9px}
+  .ins-rets span{display:flex;flex-direction:column;gap:1px}
+  .ins-rets u{text-decoration:none;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--muted)}
+  .ins-rets b{font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
+  .ins-rets b.pos{color:var(--up)} .ins-rets b.neg{color:var(--down)}
+  .ins-div{position:relative;height:10px;border-radius:99px;background:var(--hairline);overflow:hidden}
+  .ins-div i{position:absolute;top:0;bottom:0;border-radius:99px}
+  .ins-div i.pos{background:var(--up)} .ins-div i.neg{background:var(--down)}
+  .ins-div-mid{position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:color-mix(in srgb,var(--ink) 30%,transparent);z-index:2}
+  .ins-m-t{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:10px;font-weight:900;
+           letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .ins-m-t b{font-size:14px;letter-spacing:-.01em;text-transform:none;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ins-m-bar{height:8px;border-radius:99px;background:var(--hairline);overflow:hidden}
+  .ins-m-bar i{display:block;height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .ins-m small{display:block;margin-top:8px;font-size:10.5px;line-height:1.45;color:var(--muted);font-weight:600}
+  .ins-pos{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px}
+  .ins-pos div{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .ins-pos u{text-decoration:none;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+  .ins-pos b{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+  .ins-pos b.pos{color:var(--up)} .ins-pos b.neg{color:var(--down)}
+  .ins-more{border-top:1px solid var(--hairline);padding-top:4px}
+  .ins-more summary{cursor:pointer;list-style:none;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
+                    color:var(--muted);padding:9px 2px}
+  .ins-more summary::-webkit-details-marker{display:none}
+  .ins-more summary::before{content:"▸ ";color:var(--gold)}
+  .ins-more[open] summary::before{content:"▾ "}
+  .ins-more summary:hover{color:var(--gold-dark)}
+  @media(max-width:560px){
+    .ins-head-px b{font-size:15px}
+    .ins-vis{grid-template-columns:1fr}
+    .ins-story{grid-template-columns:52px minmax(0,1fr);gap:10px}
+    .ins-story-img{width:52px;height:42px}
+  }
+
   /* ---------- Allocation & Risk (full-width card) ---------- */
   .pb-alloc{grid-column:1/-1}
   .pb-alloc .pc-head{align-items:center}
   .pb-alloc .alloc-grid{margin-bottom:18px}
-  .alloc-grid{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(300px,350px);gap:22px 28px;align-items:start;margin-top:4px}
+  .alloc-grid{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(300px,340px);gap:22px 28px;align-items:start;margin-top:4px}
   .alloc-grid > .al-donut{grid-column:1;grid-row:1}
   .alloc-grid > .al-legend{grid-column:2;grid-row:1}
-  .alloc-grid > .al-risk{grid-column:3;grid-row:1/3}
-  .alloc-grid > .al-more{grid-column:1/3;grid-row:2;display:flex;flex-direction:column;gap:14px;min-width:0;padding-top:16px;border-top:1px solid var(--hairline)}
+  .alloc-grid > .al-risk{grid-column:3;grid-row:1}
+  .alloc-grid > .al-more{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);
+                         gap:18px 26px;min-width:0;padding-top:18px;border-top:1px solid var(--hairline)}
+  .alloc-grid > .al-more > .al-mix{grid-column:1}
+  .alloc-grid > .al-more > .al-fwrap{grid-column:2;grid-row:1/4}
+  .alloc-grid > .al-more > .al-stats{grid-column:1}
+  .alloc-grid > .al-more > .al-flags{grid-column:1}
   .al-donut{display:flex;justify-content:center}
   .al-hold{position:relative;width:230px;height:230px}
   .al-hold svg{transform:rotate(-90deg);display:block;overflow:visible}
-  .al-hold svg circle{cursor:pointer;transition:stroke-width .18s ease, opacity .25s, stroke-dasharray .95s cubic-bezier(.2,.8,.2,1)}
+  .al-hold svg circle.al-arc{cursor:pointer;
+    transition:stroke-width .18s ease, opacity .25s, stroke .5s ease, stroke-dasharray .8s cubic-bezier(.2,.8,.2,1), stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
   .al-hold .dc-v{font-size:24px}
   .al-legend{display:flex;flex-direction:column;gap:2px;min-width:0}
   .al-row{display:grid;grid-template-columns:10px minmax(150px,1.5fr) minmax(0,1fr) 54px 92px;align-items:center;gap:12px;padding:9px 10px;border-radius:11px;cursor:pointer;
@@ -1504,23 +1616,67 @@
   .al-pct{font-size:13px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
   .al-val{font-size:12.5px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;line-height:1.25}
   .al-val small{display:block;font-size:10.5px;font-weight:800;opacity:.85}
-  .al-risk{display:flex;flex-direction:column;gap:14px;min-width:0;padding-left:26px;border-left:1px solid var(--hairline)}
+  .al-risk{display:flex;flex-direction:column;gap:16px;min-width:0;padding-left:26px;border-left:1px solid var(--hairline)}
   .al-gauge{display:flex;flex-direction:column;align-items:center;text-align:center}
   .al-gauge svg{width:100%;max-width:250px;display:block;overflow:visible}
   .al-needle{transform-origin:100px 100px;transform-box:view-box;transition:transform 1.1s cubic-bezier(.2,.9,.25,1)}
   .al-score{margin-top:-6px;line-height:1;display:flex;align-items:baseline;gap:5px}
-  .al-score b{font-size:38px;font-weight:900;letter-spacing:-.03em}
+  .al-score b{font-size:42px;font-weight:900;letter-spacing:-.03em}
   .al-score span{font-size:12px;color:var(--muted);font-weight:800}
   .al-band{margin-top:7px;color:#fff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
   .al-read{margin:9px 0 0;font-size:12px;line-height:1.5;color:var(--muted);font-weight:600}
   .al-read b{color:var(--ink)}
-  .al-factors{display:flex;flex-direction:column;gap:9px}
+  /* where the score sits against mixes anyone would recognise */
+  .al-ruler{padding-top:14px;border-top:1px solid var(--hairline)}
+  .al-ruler-bar{position:relative;display:flex;height:9px;border-radius:99px;overflow:visible;margin-bottom:26px}
+  .al-ruler-bar > span{flex:1;height:9px}
+  .al-ruler-bar > span:first-child{border-radius:99px 0 0 99px} .al-ruler-bar > span:last-child{border-radius:0 99px 99px 0}
+  .al-you{position:absolute;top:-4px;transform:translateX(-50%);z-index:3}
+  .al-you b{display:block;transform:translateY(-100%);margin-top:-5px;font-size:10px;font-weight:900;letter-spacing:.04em;
+            background:var(--ink);color:var(--card,#fff);padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .al-you::after{content:"";position:absolute;left:50%;top:-1px;width:3px;height:17px;border-radius:99px;background:var(--ink);transform:translateX(-50%)}
+  .al-refs{position:relative;height:30px;margin-top:-22px}
+  .al-ref{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:68px}
+  .al-ref i{width:1px;height:7px;background:color-mix(in srgb,var(--ink) 28%,transparent)}
+  .al-ref b{font-size:8.5px;font-weight:800;color:var(--muted);text-align:center;line-height:1.25}
+  .al-ruler-cap{margin:2px 0 0;font-size:10px;color:var(--muted);font-weight:600;text-align:center}
+
+  .al-sub{font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-dark);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 9px;padding-bottom:6px;border-bottom:1px solid var(--hairline)}
+  .al-sub span{font-size:9.5px;letter-spacing:.02em;text-transform:none;font-weight:700;color:var(--muted)}
+  .al-mixbar{display:flex;height:22px;border-radius:8px;overflow:hidden;background:var(--hairline)}
+  .al-mixseg{display:block;height:100%;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .al-mixkeys{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:9px}
+  .al-mixkey{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted)}
+  .al-mixkey i{width:9px;height:9px;border-radius:3px}
+  .al-mixkey b{font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+
+  .al-factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:9px}
+  .al-f{appearance:none;font:inherit;text-align:left;cursor:pointer;background:var(--card);
+        border:1px solid var(--hairline);border-radius:12px;padding:10px 11px;transition:border-color .15s,background .15s,transform .15s}
+  .al-f:hover{border-color:color-mix(in srgb,var(--gold) 50%,var(--hairline));transform:translateY(-1px)}
+  .al-f.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
   .al-f-top{display:flex;justify-content:space-between;font-size:11.5px;font-weight:900;letter-spacing:.02em}
   .al-f-top span{color:var(--ink)} .al-f-top b{font-variant-numeric:tabular-nums}
-  .al-f-bar{height:6px;border-radius:99px;background:var(--hairline);overflow:hidden;margin-top:4px}
+  .al-f-bar{height:6px;border-radius:99px;background:var(--hairline);overflow:hidden;margin-top:5px}
   .al-f-bar i{display:block;height:100%;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
-  .al-f small{display:block;margin-top:3px;font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.35}
-  .al-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  .al-f small{display:block;margin-top:4px;font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.35}
+  .al-f-w{display:block;margin-top:6px;font-style:normal;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-dark);opacity:.85}
+  .al-f-w.add{color:var(--muted)}
+  .al-detail{margin-top:11px}
+  .al-detail-in{background:var(--paper);border:1px solid color-mix(in srgb,var(--gold) 40%,var(--hairline));border-radius:13px;padding:13px 14px;animation:fadein .2s ease}
+  .al-detail-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:7px}
+  .al-detail-head b{font-size:14px;font-weight:900;letter-spacing:-.01em}
+  .al-detail-sc{font-size:10px;font-weight:900;color:#fff;padding:3px 9px;border-radius:999px;font-variant-numeric:tabular-nums}
+  .al-detail-w{font-size:10px;font-weight:800;color:var(--muted)}
+  .al-detail-in p{margin:0 0 10px;font-size:12.5px;line-height:1.6;color:var(--ink)}
+  .al-detail-rows{display:flex;flex-direction:column;gap:1px}
+  .al-detail-rows div{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--hairline)}
+  .al-detail-rows div:last-child{border-bottom:none}
+  .al-detail-rows span{color:var(--muted);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .al-detail-rows b{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .al-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
   .al-stat{background:var(--paper);border:1px solid var(--hairline);border-radius:11px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
   .al-stat span{font-size:9.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
   .al-stat b{font-size:15px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
@@ -1532,14 +1688,21 @@
   @media(max-width:1180px){
     .alloc-grid{grid-template-columns:230px minmax(0,1fr)}
     .alloc-grid > .al-risk{grid-column:1/-1;grid-row:2;padding-left:0;border-left:none;border-top:1px solid var(--hairline);padding-top:18px;
-             display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px 26px;align-items:center}
+             display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px 26px;align-items:center}
     .alloc-grid > .al-more{grid-column:1/-1;grid-row:3}
+  }
+  @media(max-width:860px){
+    .alloc-grid > .al-more{grid-template-columns:1fr}
+    .alloc-grid > .al-more > .al-mix,.alloc-grid > .al-more > .al-fwrap,
+    .alloc-grid > .al-more > .al-stats,.alloc-grid > .al-more > .al-flags{grid-column:1;grid-row:auto}
   }
   @media(max-width:720px){
     .alloc-grid{grid-template-columns:1fr}
     .alloc-grid > .al-donut,.alloc-grid > .al-legend,.alloc-grid > .al-risk,.alloc-grid > .al-more{grid-column:1;grid-row:auto}
     .alloc-grid > .al-risk{grid-template-columns:1fr}
     .al-stats{grid-template-columns:1fr 1fr}
+    .al-ref b{font-size:8px}
+    .al-ref{width:58px}
     .pb-alloc .pc-head{flex-wrap:wrap;gap:10px}
     .pb-alloc .seg button{padding:7px 12px;font-size:10.5px}
     .al-row{grid-template-columns:10px minmax(0,1fr) 50px 84px}
@@ -1979,93 +2142,106 @@
   .now-f span{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .now-f input{font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--hairline);border-radius:10px;background:var(--paper);color:var(--ink);width:100%}
   .now-save{background:var(--gold);border-color:var(--gold);color:#fff}
-  /* ---------- Running Outlook + Rate board (Home) ---------- */
+  /* ---------- Running Outlook + market board (Home) ----------
+     Sep 2026 relayout. Eli: "let's work on the layout of this entire tab to make it better /
+     make things larger." The board used to live in a 1fr column next to the topic tiles, which
+     is why nine prices and six yields were unreadable. The card is now three full-width bands:
+     market tiles, the yield ladder, then the topic tiles and their shared panel. */
   #deskCard{position:relative;overflow:hidden}
   #deskCard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--gold),color-mix(in srgb, var(--gold) 15%, transparent))}
   #deskCard .bc-label{display:flex;align-items:center;gap:10px}
   .desk-mood{font-size:10.5px;font-weight:900;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
   .desk-mood.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)} .desk-mood.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
-  .desk-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:26px;margin-top:10px;align-items:start}
-  @media(max-width:900px){.desk-grid{grid-template-columns:1fr;gap:18px}}
-  /* outlook boxes -- Eli, Sep 2026 (round 2): "basically boxes for stocks, bonds, cash, etc,
-     each showing just the quick summary, with a logo, that look nice -- doesn't need to be
-     straight up and down, can be left/right and up/down from each other." So this is a real
-     grid of app-icon-style tiles now (not a stacked list of drop-down rows): tap a box and its
-     full take renders in ONE shared panel below the grid, rather than each row growing in
-     place, which is what let the grid stay a grid instead of collapsing into a list. */
-  .ol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px}
-  .ol-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;
-          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:16px;
-          padding:14px 8px 12px;font:inherit;cursor:pointer;box-shadow:var(--shadow);
-          transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,border-color .16s ease}
-  .ol-box:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline))}
-  .ol-box-ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;
-             background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent)}
-  .ol-box-top{font-size:12.5px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
-  .ol-box-stance{font-size:10px;font-weight:800;letter-spacing:.02em;color:var(--muted);line-height:1.3;min-height:2.4em}
-  .ol-box-dot{position:absolute;top:9px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--oc, var(--muted))}
-  .ol-box.on{background:var(--card);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
-  .ol-box.on .ol-box-top{color:var(--gold-dark)}
-  .ol-panel{margin-top:12px}
-  .ol-panel-empty{font-size:12.5px;color:var(--muted);padding:2px 2px 0}
-  .ol-panel-card{background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 45%, var(--hairline));
-                 border-radius:16px;padding:15px 16px 18px;animation:fadein .2s ease}
-  .ol-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .ol-panel-ic{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;
-               background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent);flex-shrink:0}
-  .ol-panel-tt{font-size:15px;font-weight:900;letter-spacing:-.01em}
-  .ol-panel-hd{font-size:13px;color:var(--muted);line-height:1.4;margin-top:1px}
-  .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:14px}}
-  .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:12px}
-  .ol-col:last-child{border-left-color:color-mix(in srgb, var(--muted) 34%, transparent)}
-  .ol-ck{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
-  .ol-col:last-child .ol-ck{color:var(--muted)}
-  .ol-ck span{font-size:9.5px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.8}
-  .ol-col ol{margin:0;padding:0;list-style:none;counter-reset:olp}
-  .ol-col li{counter-increment:olp;position:relative;padding-left:20px;font-size:13px;line-height:1.55;margin-bottom:8px;color:var(--ink)}
-  .ol-col li:last-child{margin-bottom:0}
-  .ol-col li::before{content:counter(olp);position:absolute;left:0;top:1px;width:14px;height:14px;border-radius:50%;font-size:9px;font-weight:900;
-                     display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--gold) 16%, transparent);color:var(--gold-dark)}
-  .ol-col:last-child li::before{background:color-mix(in srgb, var(--muted) 15%, transparent);color:var(--muted)}
-  .ol-legacy{font-size:14px;line-height:1.6;margin:0}
-  .ol-src{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.4;padding-top:8px;border-top:1px solid var(--hairline)}
-  @media(max-width:560px){.ol-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
-  /* board: two short blocks. YIELDS share one % axis (the comparison is the point);
-     PRICES are just a number and the day's move -- an axis across $4,000 gold and $60
-     crude would say nothing. */
-  .rb{border-left:1px solid var(--hairline);padding-left:20px}
-  @media(max-width:900px){.rb{border-left:none;padding-left:0;border-top:1px solid var(--hairline);padding-top:14px}}
-  .rb-h{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);display:flex;justify-content:space-between;
-        align-items:baseline;gap:8px;margin:0 0 6px;padding-bottom:5px;border-bottom:1px solid var(--hairline)}
-  .rb-h:not(:first-child){margin-top:18px}
-  .rb-h span{font-size:9.5px;letter-spacing:.03em;text-transform:none;opacity:.7;font-weight:700;color:var(--muted)}
-  .rb-row{display:grid;grid-template-columns:86px 1fr 74px;align-items:center;gap:8px;padding:3px 0}
-  .rb-prow{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--hairline)}
-  .rb-prow:last-child{border-bottom:none}
-  /* a permanent row the feed has not answered for yet -- present, but visibly waiting */
-  .rb-wait .rb-pv{color:var(--muted);font-weight:700}
-  .rb-wait .rb-l{opacity:.7}
-  .rb-wait .rb-chip{font-size:9.5px;letter-spacing:.02em}
-  .rb-pv{font-size:14px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .rb-pn{font-size:11px;color:var(--muted);text-align:right;min-width:52px}
-  .rb-chip{font-size:10.5px;font-weight:900;font-variant-numeric:tabular-nums;padding:2px 6px;border-radius:999px;
+  .desk-grid{display:block;margin-top:12px}
+  .desk-board{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px 30px;align-items:start}
+  @media(max-width:1020px){.desk-board{grid-template-columns:1fr;gap:20px}}
+  .bp-block{min-width:0}
+  .bp-block-h{font-size:10.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);
+              display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--hairline)}
+  .bp-block-h span{font-size:10px;letter-spacing:.02em;text-transform:none;font-weight:700;color:var(--muted)}
+  .bp-h{grid-column:1/-1;font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 -2px}
+  .bp-h:first-child{margin-top:0}
+  .bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:9px}
+  .bp-tile{border:1px solid var(--hairline);border-radius:14px;padding:11px 12px 10px;background:var(--card);
+           display:flex;flex-direction:column;gap:5px;min-width:0;box-shadow:var(--shadow);
+           transition:border-color .15s ease, transform .15s ease}
+  .bp-tile:hover{border-color:color-mix(in srgb, var(--gold) 40%, var(--hairline));transform:translateY(-1px)}
+  .bp-t{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted);
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bp-ic{font-size:13px;flex-shrink:0}
+  .bp-v{font-size:21px;font-weight:900;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink)}
+  .bp-f{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
+  .bp-spark{display:block;width:68px;height:22px;flex-shrink:0}
+  .bp-spark svg{width:100%;height:100%;display:block}
+  .bp-wait .bp-v{color:var(--muted);font-weight:800}
+  .bp-wait{opacity:.72}
+  .bp-empty{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+  /* yields: one shared % axis -- this is the only place where the comparison IS the point */
+  .rb{min-width:0}
+  .rb-row{display:grid;grid-template-columns:96px 1fr 88px;align-items:center;gap:10px;padding:6px 0}
+  .rb-l{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+  .rb-track{position:relative;height:20px}
+  .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
+  .rb-fill{position:absolute;left:0;top:50%;height:4px;border-radius:999px;transform:translateY(-50%);
+           background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 18%, transparent),color-mix(in srgb, var(--gold) 62%, transparent))}
+  .rb-dot{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);
+          box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent)}
+  .rb-v{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .rb-v i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rb-axisrow{padding-bottom:2px} .rb-axisrow .rb-track{height:14px}
+  .rb-tick{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rb-chip{font-size:11px;font-weight:900;font-variant-numeric:tabular-nums;padding:3px 8px;border-radius:999px;
            background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
   .rb-chip.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)}
   .rb-chip.down{background:color-mix(in srgb, var(--down) 14%, transparent);color:var(--down)}
-  .rb-fill{position:absolute;left:0;top:50%;height:3px;border-radius:999px;transform:translateY(-50%);
-           background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 18%, transparent),color-mix(in srgb, var(--gold) 62%, transparent))}
-  .rb-l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
-  .rb-ic{font-size:12px;flex-shrink:0}
-  .rb-track{position:relative;height:16px}
-  .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
-  .rb-dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);
-          box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent)}
-  .rb-v{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-  .rb-v i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .rb-axisrow{padding-bottom:2px} .rb-axisrow .rb-track{height:13px}
-  .rb-tick{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
-  .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
+
+  /* outlook tiles -- now the full width of the card, below the board */
+  .desk-outlook{margin-top:24px;padding-top:20px;border-top:1px solid var(--hairline)}
+  .ol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
+  .ol-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:18px;
+          padding:17px 10px 14px;font:inherit;cursor:pointer;box-shadow:var(--shadow);
+          transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,border-color .16s ease}
+  .ol-box:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline))}
+  .ol-box-ic{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:23px;
+             background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent)}
+  .ol-box-top{font-size:13.5px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
+  .ol-box-stance{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:var(--muted);line-height:1.35;min-height:2.6em}
+  .ol-box-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--oc, var(--muted))}
+  .ol-box.on{background:var(--card);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), var(--shadow)}
+  .ol-box.on .ol-box-top{color:var(--gold-dark)}
+  .ol-panel{margin-top:14px}
+  .ol-panel-empty{font-size:12.5px;color:var(--muted);padding:2px 2px 0}
+  .ol-panel-card{background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 45%, var(--hairline));
+                 border-radius:18px;padding:18px 20px 20px;animation:fadein .2s ease}
+  .ol-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .ol-panel-ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;
+               background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent);flex-shrink:0}
+  .ol-panel-tt{font-size:17px;font-weight:900;letter-spacing:-.015em}
+  .ol-panel-hd{font-size:13.5px;color:var(--muted);line-height:1.45;margin-top:2px}
+  .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:16px}}
+  .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:14px}
+  .ol-col:last-child{border-left-color:color-mix(in srgb, var(--muted) 34%, transparent)}
+  .ol-ck{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+  .ol-col:last-child .ol-ck{color:var(--muted)}
+  .ol-ck span{font-size:9.5px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.8}
+  .ol-col ol{margin:0;padding:0;list-style:none;counter-reset:olp}
+  .ol-col li{counter-increment:olp;position:relative;padding-left:22px;font-size:13.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
+  .ol-col li:last-child{margin-bottom:0}
+  .ol-col li::before{content:counter(olp);position:absolute;left:0;top:2px;width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:900;
+                     display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--gold) 16%, transparent);color:var(--gold-dark)}
+  .ol-col:last-child li::before{background:color-mix(in srgb, var(--muted) 15%, transparent);color:var(--muted)}
+  .ol-legacy{font-size:14px;line-height:1.6;margin:0}
+  .ol-src{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.4;padding-top:9px;border-top:1px solid var(--hairline)}
+  @media(max-width:560px){
+    .ol-grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px}
+    .ol-box-ic{width:38px;height:38px;font-size:19px}
+    .bp-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+    .bp-v{font-size:18px}
+    .rb-row{grid-template-columns:78px 1fr 76px;gap:8px}
+  }
+  .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;padding-top:11px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
   .desk-foot a{color:var(--gold-dark);font-weight:900;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer}
   /* ---------- compact weather: the hourly chart is behind a tap ---------- */
   .wx-hero.wx-compact{padding:18px 20px 16px;cursor:pointer;height:100%}
@@ -5423,62 +5599,131 @@ const asList = v => Array.isArray(v) ? v.filter(Boolean).map(String)
                   : (typeof v === "string" && v.trim() ? [v.trim()] : []);
 
 /* ---- Board -------------------------------------------------------------------
-   Eli, Sep 2026: "the rate board has too much irrelevant things. Shrink it to only the
-   main rates / prices I should care about (to also include crude / gold / etc.)."
-   So it is now two short, curated blocks instead of every row the brief happened to send:
+   Rebuilt Sep 2026. Eli: "something is seriously wrong with the rates on the running outlook.
+   It's basically showing none of the live rates."
 
-     YIELDS  -- six rows, every one on ONE shared % axis. This is the only chart on the
-                page where the comparison IS the point: cash here, the 10-year there,
-                a mortgage way out there. Anything not on this list is dropped.
-     PRICES  -- gold, crude, bitcoin, the dollar. No axis: an axis across $4,000 gold and
-                $60 crude is meaningless. Value plus the day's move, nothing else. */
+   It was. The board's numbers came only from data/rates.json.enc, written every half hour by
+   scripts/refresh_rates.py running on GitHub's servers — and the two sources that carry every
+   index and commodity on the board (FRED's graph CSV and Stooq) both block datacenter IPs. The
+   published status file told the story plainly: sources effr, gold, btc, eth, and three prices
+   out of nine. The S&P, Nasdaq, Dow, VTI, Brent and the dollar had been printing an em dash and
+   "awaiting refresh" every single load.
+
+   The fix is to stop depending on that round trip for the prices. The browser already has a
+   working live-quote path — the same two CORS proxies onto Yahoo that the Portfolio tab uses all
+   day — so the board now quotes itself, on the page, from Eli's own connection, and falls back to
+   the published file only for what the browser can't get (fed funds, the mortgage survey) or when
+   the proxies are down. Every row also gets today's intraday shape while we're at it.
+   -------------------------------------------------------------------------------- */
 const BOARD_YIELDS = [
-  { label:"Fed funds",   match:/fed funds|federal funds|target rate/i },
-  { label:"3-mo T-bill", match:/3[ -]?mo|3[ -]month|13[ -]week/i },
-  { label:"2-yr",        match:/^2[ -]?(yr|year)|2[ -]?yr treasury/i },
-  { label:"10-yr",       match:/^10[ -]?(yr|year)|10[ -]?yr treasury/i },
-  { label:"30-yr",       match:/^30[ -]?(yr|year)|30[ -]?yr treasury/i },
+  { label:"Fed funds",      match:/fed funds|federal funds|target rate/i },
+  { label:"3-mo T-bill",    match:/3[ -]?mo|3[ -]month|13[ -]week/i,     live:"^IRX" },
+  { label:"2-yr",           match:/^2[ -]?(yr|year)|2[ -]?yr treasury/i, live:"2YY=F" },
+  { label:"10-yr",          match:/^10[ -]?(yr|year)|10[ -]?yr treasury/i, live:"^TNX" },
+  { label:"30-yr",          match:/^30[ -]?(yr|year)|30[ -]?yr treasury/i, live:"^TYX" },
   { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
 ];
 /* Eli, Sep 2026 (round 4): "under Yields, I would like to see the following prices at all
    times: Gold, Brent Crude, BTC, ETH, all the main Indexes (S&P, VTI, etc.)." So this list is
-   a contract, not a filter -- every row below is rendered on every load. A row the feed has
-   not answered for yet prints an em dash and "awaiting refresh" instead of vanishing, which
-   is the whole point of "at all times": the board's shape never changes under him. */
+   a contract, not a filter -- every row below is rendered on every load. */
 const BOARD_PRICES = [
-  { label:"S&P 500", group:"Indexes", match:/^s&p ?500$|^spx$/i,        icon:"\u{1F4C8}" },
-  { label:"VTI",     group:"Indexes", match:/^vti\b|total us market/i,  icon:"\u{1F310}" },
-  { label:"Nasdaq",  group:"Indexes", match:/^nasdaq/i,                 icon:"\u{1F4BB}" },
-  { label:"Dow",     group:"Indexes", match:/^dow/i,                    icon:"\u{1F3ED}" },
-  { label:"Gold",        group:"Commodities & crypto", match:/^gold|xau/i,             icon:"\u{1F947}" },
-  { label:"Brent Crude", group:"Commodities & crypto", match:/brent|crude|wti|^oil$/i, icon:"\u{1F6E2}\uFE0F" },
-  { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}" },
-  { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}" },
-  { label:"Dollar",      group:"Commodities & crypto", match:/dollar index|^dollar$|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}" }
+  { label:"S&P 500", group:"Indexes", match:/^s&p ?500$|^spx$/i,        icon:"\u{1F4C8}", live:"^GSPC", dec:0 },
+  { label:"Nasdaq",  group:"Indexes", match:/^nasdaq/i,                 icon:"\u{1F4BB}", live:"^IXIC", dec:0 },
+  { label:"Dow",     group:"Indexes", match:/^dow/i,                    icon:"\u{1F3ED}", live:"^DJI",  dec:0 },
+  { label:"VTI",     group:"Indexes", match:/^vti\b|total us market/i,  icon:"\u{1F310}", live:"VTI",   dec:2, pre:"$" },
+  { label:"Gold",        group:"Commodities & crypto", match:/^gold|xau/i,             icon:"\u{1F947}", live:"GC=F",     dec:0, pre:"$" },
+  { label:"Brent Crude", group:"Commodities & crypto", match:/brent|crude|wti|^oil$/i, icon:"\u{1F6E2}️", live:"BZ=F", dec:2, pre:"$" },
+  { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}", live:"BTC-USD",  dec:0, pre:"$" },
+  { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}",  live:"ETH-USD",  dec:0, pre:"$" },
+  { label:"Dollar",      group:"Commodities & crypto", match:/dollar index|^dollar$|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}", live:"DX-Y.NYB", dec:2 }
 ];
 const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
 
-function boardHTML(rates, prices){
+/* Live quotes for the board, straight from the browser. One batched spark request covers every
+   symbol and brings today's 5-minute series back with it, so each row can carry its own shape. */
+const BOARD_LIVE_SYMS = [...new Set(BOARD_PRICES.concat(BOARD_YIELDS).map(s => s.live).filter(Boolean))];
+async function boardLive(force){
+  const fresh = S.boardLive && S.boardLiveAt && (Date.now() - S.boardLiveAt < 180000);
+  if(fresh && !force) return S.boardLive;
+  if(S._boardLivePromise) return S._boardLivePromise;
+  S._boardLivePromise = (async () => {
+    let out = {};
+    try{ out = await pSparkAll(BOARD_LIVE_SYMS); }catch(e){ out = {}; }
+    if(Object.keys(out).length){ S.boardLive = out; S.boardLiveAt = Date.now(); }
+    return S.boardLive || {};
+  })();
+  try{ return await S._boardLivePromise; }
+  finally{ S._boardLivePromise = null; }
+}
+const boardPct = q => (q && q.prev) ? (q.price/q.prev - 1)*100 : null;
+function boardFmt(spec, n){
+  if(n == null || isNaN(n)) return "—";
+  return (spec.pre || "") + Number(n).toLocaleString("en-US", {minimumFractionDigits: spec.dec ?? 2, maximumFractionDigits: spec.dec ?? 2});
+}
+/* Today's session as a 46x18 line -- enough to read the shape of the day at a glance. */
+function boardSpark(q, up){
+  const c = q && q.series && q.series.c ? q.series.c.filter(v => v != null) : [];
+  if(c.length < 3) return `<span class="bp-spark"></span>`;
+  const W = 68, H = 22;
+  const min = Math.min(...c), max = Math.max(...c), span = (max - min) || 1;
+  const d = c.map((v,i) => `${i?"L":"M"} ${(i/(c.length-1)*W).toFixed(1)} ${(H - 2 - (v-min)/span*(H-4)).toFixed(1)}`).join(" ");
+  const col = up ? "var(--up)" : "var(--down)";
+  return `<span class="bp-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg></span>`;
+}
+
+function boardHTML(rates, prices, live){
+  live = live || {};
   const src = (rates || []).filter(r => r && r.label);
-  const ys = [], usedY = new Set();
+  const psrc = (prices || []).filter(p => p && p.label);
+
+  /* ---- prices: live first, published file second, never absent ---- */
+  const usedP = new Set();
+  const ps = BOARD_PRICES.map(spec => {
+    const q = spec.live ? live[spec.live] : null;
+    const row = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
+    if(row) usedP.add(row);
+    if(q && typeof q.price === "number"){
+      const pct = boardPct(q);
+      return { spec, value: boardFmt(spec, q.price), pct, q, live:true,
+               note: quoteIsToday(q.time) ? "live" : "last close" };
+    }
+    if(row) return { spec, value: row.value, pct: typeof row.pct === "number" ? row.pct : null, note: row.note || "published", live:false };
+    return { spec, value:"—", pct:null, note:"awaiting refresh", missing:true, live:false };
+  });
+
+  let lastGroup = null;
+  const priceBlock = ps.map(p => {
+    let head = "";
+    if(p.spec.group !== lastGroup){ lastGroup = p.spec.group; head = `<div class="bp-h">${esc(p.spec.group)}</div>`; }
+    const up = (p.pct || 0) >= 0;
+    const chip = typeof p.pct === "number"
+      ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
+      : `<span class="rb-chip flat">${esc(p.note)}</span>`;
+    return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}">
+        <div class="bp-t"><span class="bp-ic">${p.spec.icon || ""}</span>${esc(p.spec.label)}</div>
+        <div class="bp-v">${esc(p.value)}</div>
+        <div class="bp-f">${chip}${p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`}</div>
+      </div>`;
+  }).join("");
+
+  /* ---- yields: one shared axis, the comparison is the point ---- */
+  const usedY = new Set(), ys = [];
   BOARD_YIELDS.forEach(spec => {
+    const q = spec.live ? live[spec.live] : null;
+    if(q && typeof q.price === "number" && q.price > 0 && q.price < 25){
+      const bp = q.prev ? Math.round((q.price - q.prev)*100) : null;
+      ys.push({ label: spec.label, value: q.price.toFixed(2) + "%", n: q.price,
+                note: bp == null ? "live" : (bp === 0 ? "flat" : (bp > 0 ? "+" : "") + bp + " bp"), live:true });
+      return;
+    }
     const r = pickRow(src, spec, usedY);
     const n = r ? rateNum(r.value) : null;
     /* `used` matters: "30-yr mortgage" also satisfies the plain "30-yr" matcher, so without
        it a missing 30-year Treasury would print the mortgage twice. */
-    if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n }); }
+    if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n, live:false }); }
   });
-  const ps = [], usedP = new Set();
-  const psrc = (prices || []).filter(p => p && p.label);
-  BOARD_PRICES.forEach(spec => {
-    const p = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
-    if(p) usedP.add(p);
-    ps.push({ label: spec.label, group: spec.group, icon: spec.icon,
-              value: p ? p.value : "\u2014", note: p ? (p.note || "") : "",
-              pct: p ? p.pct : undefined, missing: !p });
-  });
-  if(!ys.length && !ps.length) return "";
 
   let yieldBlock = "";
   if(ys.length >= 2){
@@ -5489,26 +5734,30 @@ function boardHTML(rates, prices){
     const ticks = []; for(let t = Math.ceil(lo); t <= hi; t++) ticks.push(t);
     const grid = ticks.map(t => `<span class="rb-grid" style="left:${pos(t).toFixed(2)}%"></span>`).join("");
     yieldBlock =
-      `<div class="rb-h">Yields<span>one shared scale</span></div>` +
       ys.map(r => `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
         <div class="rb-track">${grid}<span class="rb-fill" style="width:${pos(r.n).toFixed(2)}%"></span><span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%"></span></div>
         <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("") +
       `<div class="rb-row rb-axisrow"><div class="rb-l"></div><div class="rb-track">${grid}${
         ticks.map(t => `<span class="rb-tick" style="left:${pos(t).toFixed(2)}%">${t}%</span>`).join("")}</div><div class="rb-v"></div></div>`;
   } else if(ys.length === 1){
-    yieldBlock = `<div class="rb-h">Yields</div>` + ys.map(r =>
-      `<div class="rb-prow"><div class="rb-l">${esc(r.label)}</div><div class="rb-pv">${esc(r.value)}</div>
-       <div class="rb-pn">${esc(r.note || "")}</div></div>`).join("");
+    yieldBlock = ys.map(r => `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div><div class="rb-track"></div>
+       <div class="rb-v">${esc(r.value)}<i>${esc(r.note || "")}</i></div></div>`).join("");
+  } else {
+    yieldBlock = `<p class="bp-empty">Yields publish with the next refresh.</p>`;
   }
-  let lastGroup = null;
-  const priceBlock = ps.length ? ps.map(p => {
-    let head = "";
-    if(p.group !== lastGroup){ lastGroup = p.group; head = `<div class="rb-h">${esc(p.group)}</div>`; }
-    const move = typeof p.pct === "number" ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
-               : (p.note ? `<span class="rb-chip flat">${esc(p.note)}</span>` : "");
-    return head + `<div class="rb-prow${p.missing ? " rb-wait" : ""}"><div class="rb-l"><span class="rb-ic">${p.icon || ""}</span>${esc(p.label)}</div><div class="rb-pv">${esc(p.value)}</div><div class="rb-pn">${p.missing ? `<span class="rb-chip flat">awaiting refresh</span>` : move}</div></div>`;
-  }).join("") : "";
-  return `<div class="rb">${yieldBlock}${priceBlock}</div>`;
+
+  const liveCount = ps.filter(p => p.live).length;
+  const yLive = ys.filter(y => y.live).length;
+  return `<div class="desk-board">
+      <div class="bp-block">
+        <div class="bp-block-h">Markets<span>${liveCount ? liveCount + " of " + ps.length + " quoting live" : "from the published board"}</span></div>
+        <div class="bp-grid">${priceBlock}</div>
+      </div>
+      <div class="bp-block">
+        <div class="bp-block-h">Yields<span>one shared scale${yLive ? " · " + yLive + " live" : ""}</span></div>
+        <div class="rb">${yieldBlock}</div>
+      </div>
+    </div>`;
 }
 /* Live rates published every half hour by scripts/refresh_rates.py; falls back to whatever
    the morning brief wrote, then to the brief's older `stats` block. */
@@ -5533,27 +5782,30 @@ async function renderDesk(){
   const fromBrief = outlookOK(md.outlookBoard) ? md.outlookBoard : (outlookOK(md.outlook) ? md.outlook : null);
   const ol = fromBrief || OUTLOOK_SEED.items;
   const seeded = !fromBrief;
-  // Eli, Sep 2026 (round 2): "boxes for stocks, bonds, cash etc, just the quick summary, with
-  // a logo -- doesn't need to be straight up and down, can be left/right and up/down from each
-  // other" -- so this is a wrapping grid of icon tiles, and tapping one renders its full take
-  // into a single shared panel underneath (rather than each tile growing in place, which is
-  // what turns a grid back into a list).
-  const left = `<div class="ol-grid">` + ol.map((x,i) => `
-    <button type="button" class="ol-box" data-i="${i}" aria-pressed="false" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
-      <span class="ol-box-dot"></span>
-      <span class="ol-box-ic">${x.icon || outlookIcon(x.topic)}</span>
-      <span class="ol-box-top">${esc(x.topic)}</span>
-      <span class="ol-box-stance">${esc(x.stance || "")}</span>
-    </button>`).join("") + `</div>
-    <div class="ol-panel" id="olPanel"><div class="ol-panel-empty">Tap a topic above for the full take.</div></div>`;
 
   const rates = (live && live.rates && live.rates.length) ? live.rates
     : (md.rates && md.rates.length ? md.rates : (md.stats || []));
   const prices = (live && live.prices && live.prices.length) ? live.prices
     : (md.prices && md.prices.length ? md.prices : (md.stats || []));
-  const right = boardHTML(rates, prices) ||
-    `<div class="rb"><div class="rb-h">Board</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Rates publish with the next refresh.</p></div>`;
-  grid.innerHTML = `<div>${left}</div><div>${right}</div>`;
+
+  /* Eli, Sep 2026 (round 4): "let's work on the layout of this entire tab to make it better /
+     make things larger." The board used to be squeezed into a third of the card beside the
+     topic tiles, which is why the rates were unreadable even when they were there. Now the
+     market strip runs the full width of the card at the top, the yield ladder sits under it,
+     and the topic tiles get the whole width below that. */
+  const board = boardHTML(rates, prices, S.boardLive || {});
+  const outlook = `<div class="desk-outlook">
+    <div class="bp-block-h">The read<span>tap a topic for how to talk about it</span></div>
+    <div class="ol-grid">` + ol.map((x,i) => `
+      <button type="button" class="ol-box" data-i="${i}" aria-pressed="false" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
+        <span class="ol-box-dot"></span>
+        <span class="ol-box-ic">${x.icon || outlookIcon(x.topic)}</span>
+        <span class="ol-box-top">${esc(x.topic)}</span>
+        <span class="ol-box-stance">${esc(x.stance || "")}</span>
+      </button>`).join("") + `</div>
+    <div class="ol-panel" id="olPanel"><div class="ol-panel-empty">Tap a topic above for the full take.</div></div></div>`;
+
+  grid.innerHTML = board + outlook;
 
   /* Eli, Sep 2026: "we don't need the random green S&P 500 % change thing at the top left" --
      the board below now carries the S&P (and VTI, Nasdaq, Dow) as permanent rows, so the chip
@@ -5588,8 +5840,34 @@ async function renderDesk(){
 
   let foot = card.querySelector(".desk-foot");
   if(!foot){ foot = document.createElement("div"); foot.className = "desk-foot"; card.appendChild(foot); }
-  const stamp = live && live.updated ? "Board " + relTimeAgo(live.updated) : (md.dateline || (md.date ? niceDate(md.date) : ""));
-  foot.innerHTML = `<span>${esc(stamp)}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>`;
+  const paintFoot = () => {
+    const bits = [];
+    if(S.boardLiveAt) bits.push("Markets quoted " + relTimeAgo(new Date(S.boardLiveAt).toISOString()));
+    if(live && live.updated) bits.push("board file " + relTimeAgo(live.updated));
+    else if(md.dateline) bits.push(md.dateline);
+    foot.innerHTML = `<span>${esc(bits.join(" · "))}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>
+      <a id="deskRefresh" role="button" tabindex="0">Refresh</a>`;
+    const rb = foot.querySelector("#deskRefresh");
+    if(rb) rb.addEventListener("click", async () => {
+      rb.textContent = "Refreshing…";
+      await boardLive(true);
+      const g = $("#deskCard .desk-grid"); if(!g) return;
+      const old = g.querySelector(".desk-board");
+      if(old) old.outerHTML = boardHTML(rates, prices, S.boardLive || {});
+      paintFoot();
+    });
+  };
+  paintFoot();
+
+  /* Quote the board from the browser, then swap the live numbers in without touching the
+     topic tiles (so an open topic panel stays open). */
+  boardLive().then(q => {
+    if(!q || !Object.keys(q).length) return;
+    const g = $("#deskCard .desk-grid"); if(!g) return;
+    const old = g.querySelector(".desk-board"); if(!old) return;
+    old.outerHTML = boardHTML(rates, prices, q);
+    paintFoot();
+  }).catch(() => {});
 }
 
 function renderCalendarBody(p, d){
@@ -6476,10 +6754,10 @@ function renderPortfolio(){
   h += `<section class="pcard pb-pos">
     <header class="pc-head">
       <div><h4>Positions</h4><p>Today's move, size &amp; 30-day trend</p></div>
-      <span class="pc-note">Best → worst today</span>
+      <span class="pc-note" id="pPosNote">Best → worst today</span>
     </header>
     <div class="pc-body pb-pos-body"><div class="ptiles" id="pTiles"></div></div>
-    <p class="pc-cap">One card per holding, best to worst by today's move. The big number is today; underneath it is market value, this position's share of the current view and its all-time gain. The line is the last 30 trading days, the bar across the bottom is position size. Click a card for the full detail view.</p>
+    <p class="pc-cap">One card per priced holding, best to worst by today's move — the cash sweep is left out (it never moves) and shown in the header instead. The big number is today; underneath it is market value, this position's share of the current view and its all-time gain. The line is the last 30 trading days, the bar across the bottom is position size. Click a card for the full detail view.</p>
   </section>`;
 
   /* side stack: portfolio value history over the calendar */
@@ -6514,7 +6792,7 @@ function renderPortfolio(){
       <div class="seg" id="allocSeg">${[["sector","Sector"],["holding","Holding"],["class","Type"]].map(([k,l]) => `<button data-v="${k}" class="${(P.allocView||"sector")===k?"on":""}">${l}</button>`).join("")}</div>
     </header>
     <div class="alloc-grid" id="allocBody"><div class="spinner" style="margin:40px auto"></div></div>
-    <p class="pc-cap">Click any slice or row to filter the Holdings table. Sectors are read from each ticker (ETFs by what they hold — e.g. BAI is an AI &amp; tech fund, so it counts as Technology). The risk score is an educational estimate from the last year of daily prices, your position sizes and how concentrated they are — not a forecast and not investment advice.</p>
+    <p class="pc-cap">Click any slice or row to filter the Holdings table; tap any factor card to see the working behind it. Sectors are read from each ticker (ETFs by what they hold — e.g. BAI is an AI &amp; tech fund, so it counts as Technology). The score weighs how much of the account sits in growth assets rather than bonds and cash, how hard the mix actually swings, how concentrated it is and how much of it is speculative. Volatility and drawdown are measured from the last year of daily closes once they load, and estimated from what each holding is until then. An educational estimate — not a forecast and not investment advice.</p>
   </section>`;
 
   /* AI insight -- renderInsightCard() fills this card in; nothing is pre-generated */
@@ -6570,7 +6848,7 @@ function renderPortfolio(){
   const si = $("#pSearch");
   si.addEventListener("input", e => { P.search = e.target.value; pTable(); });
 
-  drawAlloc();
+  drawAlloc({risk:true});
   drawPTiles(t);
   pHead(); pTable();
   renderHistory();
@@ -6690,7 +6968,7 @@ async function loadHistory(){
   if(cached && syms.every(x => cached[x])){
     P.histData = cached; P.histStamp = Date.now();
     P.histLoading = false; P.histReady = true;
-    if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); }
+    if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc({risk:true}); }
     return;
   }
   P.histData = await pSparkHist(syms);
@@ -6711,7 +6989,7 @@ async function loadHistory(){
   P.histStamp = Date.now();
   if(Object.keys(P.histData).length) pHistCacheSave(P.histData);
   P.histLoading = false; P.histReady = true;
-  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc(); }
+  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc({risk:true}); }
 }
 
 /* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
@@ -7185,7 +7463,7 @@ function insSeries(sym){
   const mean = r.length ? r.reduce((a,b) => a+b, 0)/r.length : 0;
   const sd = r.length ? Math.sqrt(r.reduce((a,b) => a + (b-mean)*(b-mean), 0)/r.length) : 0;
   return { last, ma50: ma(50), ma200: ma(200), r21: ret(21), r63: ret(63), r252: ret(252),
-           hi, lo, rangePos: hi > lo ? (last-lo)/(hi-lo)*100 : 50, dayVol: sd*100, days: c.length };
+           hi, lo, rangePos: hi > lo ? (last-lo)/(hi-lo)*100 : 50, dayVol: sd*100, days: c.length, closes: c };
 }
 /* Anything the last few published market briefs said about this ticker. */
 async function insBriefNotes(ticker){
@@ -7200,6 +7478,207 @@ async function insBriefNotes(ticker){
   }
   return out.slice(0, 2);
 }
+
+/* ---------------------------------------------------------------------------
+   Why it is moving. Eli, Sep 2026: "the whole idea with the AI insight is that I want an
+   explanation for the current trend of the price ... I want the current news snapshot on the
+   stock that I click on to generate real time so that I can potentially get an idea as to why
+   any given stock is moving in one direction."
+
+   So the card leads with live headlines for that ticker, pulled the moment it is clicked:
+   Yahoo Finance's search endpoint first (it is ticker-keyed, carries a publisher, a timestamp
+   and a thumbnail), GDELT second for anything Yahoo is thin on — both through the same two CORS
+   proxies the rest of the page already races. The numbers that used to be the whole card are now
+   a strip of small visuals underneath, with the full written read folded away behind a toggle.
+   --------------------------------------------------------------------------- */
+
+/* A one-word read of what a headline is about, so each story carries a chip instead of a wall
+   of grey text. First match wins, so the specific patterns sit above the generic ones. */
+const INS_TAGS = [
+  [/\bupgrade[sd]?\b|\bdowngrade[sd]?\b|price target|\breiterat|\binitiat(e|es|ed) coverage|\boutperform\b|\bbuy rating\b|\banalyst|\bwall street\b/i, "Analyst", "anl"],
+  [/\bearnings?\b|\bq[1-4]\b|\bquarter(ly)?\b|\brevenue\b|\bbeats?\b|\bmisses?\b|\beps\b/i, "Earnings", "ern"],
+  [/\bguidance\b|\boutlook\b|\bforecast\b|\bwarns?\b|\bcuts? (its )?(view|outlook)/i, "Guidance", "gui"],
+  [/\bmerger\b|\bacquisition\b|\bacquires?\b|\bbuyout\b|\bstake\b|\bdeal\b|\bipo\b|\bspin[- ]?off/i, "Deal", "dea"],
+  [/\blawsuit\b|\bsues?\b|\bprobe\b|\binvestigat|\bantitrust\b|\bsec\b|\bfine[sd]?\b|\bregulat|\brecall\b/i, "Legal", "leg"],
+  [/\bfda\b|\btrial\b|\bapproval\b|\bdrug\b|\bpatient/i, "Regulatory", "leg"],
+  [/\bdividend\b|\bbuyback\b|\brepurchase\b|\bsplit\b/i, "Capital return", "cap"],
+  [/\bceo\b|\bcfo\b|\bresign|\bsteps down\b|\bappoints?\b|\bnames? .* chief/i, "Leadership", "ldr"],
+  [/\bfed\b|\brate cut\b|\brate hike\b|\binflation\b|\bcpi\b|\bjobs report\b|\btariff|\byields?\b/i, "Macro", "mac"],
+  [/\bproduct\b|\blaunch|\bunveils?\b|\bpartnership\b|\bcontract\b|\bwins?\b|\border\b/i, "Business", "biz"]
+];
+function insNewsTag(title){
+  const hit = INS_TAGS.find(([re]) => re.test(title || ""));
+  return hit ? {label:hit[1], cls:hit[2]} : {label:"Coverage", cls:"gen"};
+}
+/* When a ticker's own news is thin — which is normal for a mutual fund — fall back to the fund's
+   theme so the panel still explains the weather the holding is sitting in. */
+const SECTOR_PROXY = {
+  "Broad Market":["S&P 500","SPY"], "Growth Funds":["growth stocks","QQQ"], "Technology":["technology stocks"],
+  "Bonds & Income":["bond market"], "International":["global stocks"], "Dividend & Value":["value stocks"],
+  "Commodities":["gold price"], "Crypto":["bitcoin"], "Financials":["bank stocks"], "Healthcare":["healthcare stocks"],
+  "Energy":["oil prices"], "Industrials":["industrial stocks"], "Consumer Discretionary":["consumer stocks"],
+  "Consumer Staples":["consumer staples"], "Utilities":["utility stocks"], "Real Estate":["REITs"],
+  "Materials":["materials stocks"], "Automotive":["auto stocks"], "Communication Services":["media stocks"]
+};
+const insNorm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+async function insYahooNews(q, count){
+  const target = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(q) +
+    "&lang=en-US&region=US&quotesCount=0&newsCount=" + (count || 12) +
+    "&enableFuzzyQuery=false&newsQueryId=news_cie_vespa&enableCb=false&enableNavLinks=false&_ts=" + Date.now();
+  let j = null;
+  try{ j = await nrFetchJSON(target, 9000); }catch(e){ return []; }
+  const arr = (j && Array.isArray(j.news)) ? j.news : [];
+  return arr.map(n => {
+    const res = ((n.thumbnail || {}).resolutions || []).slice().sort((a,b) => (a.width||0) - (b.width||0));
+    return { title: String(n.title || "").trim(), url: n.link || "",
+             outlet: n.publisher || "", t: n.providerPublishTime ? new Date(n.providerPublishTime*1000) : null,
+             img: (res.find(r => (r.width||0) >= 140) || res[0] || {}).url || "" };
+  }).filter(x => x.title && x.url);
+}
+async function insGdeltNews(q){
+  let arts = [];
+  try{ arts = await nrArticles(q, "3d"); }catch(e){ arts = []; }
+  return arts.map(a => ({ title: nrCleanTitle(a.title), url: a.url || "", outlet: nrOutlet(a),
+                          t: nrDate(a.seendate), img: a.socialimage || "" }))
+             .filter(x => x.title && x.url && !NR_JUNK.test(x.title));
+}
+function insDedupe(items){
+  const seen = new Set(), out = [];
+  for(const it of items){
+    const k = insNorm(it.title).slice(0, 60);
+    if(!k || seen.has(k)) continue;
+    seen.add(k); out.push(it);
+  }
+  return out.sort((a,b) => (b.t ? b.t.getTime() : 0) - (a.t ? a.t.getTime() : 0));
+}
+/* Ticker news first; top it up from the holding's theme only if the ticker itself came back thin. */
+async function insFetchNews(p){
+  const name = String(p.name || "").replace(/\b(inc|corp|corporation|company|co|plc|ltd|holdings|class [a-c])\b\.?/gi, "").trim();
+  let own = await insYahooNews(p.ticker, 12);
+  if(own.length < 4 && name.length > 3) own = own.concat(await insYahooNews(name, 10));
+  own = insDedupe(own);
+  let context = [];
+  if(own.length < 5){
+    const qs = SECTOR_PROXY[sectorOf(p)] || [];
+    for(const q of qs){
+      context = context.concat(await insYahooNews(q, 8));
+      if(context.length >= 6) break;
+    }
+    if(!context.length && !own.length) context = await insGdeltNews(name || p.ticker);
+    context = insDedupe(context).filter(c => !own.some(o => insNorm(o.title) === insNorm(c.title)));
+  }
+  return { own: own.slice(0, 8), context: context.slice(0, 4) };
+}
+
+/* ---- the small visuals that replaced the wall of sentences ---- */
+
+/* 90 trading days of closes as a filled area, with the 52-week band behind it. */
+function insSpark(st, up){
+  if(!st || !st.closes || st.closes.length < 20) return "";
+  const vals = st.closes.slice(-90);
+  const W = 560, H = 96, PAD = 6;
+  const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+  const X = i => (i/(vals.length-1)*W);
+  const Y = v => (H - PAD - (v-min)/span*(H - PAD*2));
+  const line = vals.map((v,i) => `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
+  const col = up ? "var(--up)" : "var(--down)";
+  return `<svg class="ins-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="insGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${col}" stop-opacity=".30"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${line} L ${W} ${H} L 0 ${H} Z" fill="url(#insGrad)"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+/* Headlines per day over the last week — the shape of the coverage next to the shape of the price. */
+function insPulse(items){
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    days.push({ d, n: 0 });
+  }
+  items.forEach(it => {
+    if(!it.t) return;
+    const k = new Date(it.t); k.setHours(0,0,0,0);
+    const slot = days.find(x => x.d.getTime() === k.getTime());
+    if(slot) slot.n++;
+  });
+  const max = Math.max(1, ...days.map(d => d.n));
+  const dow = ["S","M","T","W","T","F","S"];
+  return `<div class="ins-pulse"><div class="ins-pulse-bars">${days.map(d =>
+      `<span class="ins-pb" title="${d.n} stor${d.n===1?"y":"ies"} on ${shortDate(d.d.toLocaleDateString("en-CA"))}">
+        <i style="height:${Math.max(6, d.n/max*100)}%;opacity:${d.n?1:.25}"></i><u>${dow[d.d.getDay()]}</u></span>`).join("")}</div>
+    <div class="ins-pulse-l">Coverage<span>7 days</span></div></div>`;
+}
+function insMeter(label, pct, valTxt, sub, col){
+  const p = Math.max(0, Math.min(100, pct));
+  return `<div class="ins-m"><div class="ins-m-t">${label}<b>${valTxt}</b></div>
+    <div class="ins-m-bar"><i style="width:${p.toFixed(1)}%;background:${col}"></i></div>
+    <small>${sub}</small></div>`;
+}
+/* The strip of visuals that replaced the sentences: range, trend, versus the market, move size,
+   and what the position is worth to you. */
+function insVisuals(p, st, spy){
+  const up = p.dayPct >= 0;
+  const cards = [];
+
+  if(st){
+    const pos = Math.max(0, Math.min(100, st.rangePos));
+    cards.push(`<div class="ins-v ins-v-range">
+      <div class="ins-v-h">52-week range<b>${st.rangePos.toFixed(0)}% up</b></div>
+      <div class="ins-range"><span class="ins-range-fill" style="width:${pos.toFixed(1)}%"></span>
+        <span class="ins-range-dot" style="left:${pos.toFixed(1)}%"></span></div>
+      <div class="ins-range-e"><span>${usd(st.lo)}</span><span>${usd(st.hi)}</span></div>
+      <small>${((st.hi/st.last - 1)*100).toFixed(1)}% below the high · ${((st.last/st.lo - 1)*100).toFixed(1)}% above the low</small>
+    </div>`);
+
+    const a50 = st.ma50 != null && st.last >= st.ma50, a200 = st.ma200 != null && st.last >= st.ma200;
+    const verdict = a50 && a200 ? ["Uptrend", "var(--up)"] : (!a50 && !a200 ? ["Downtrend", "var(--down)"] : ["Mixed", "#E0A100"]);
+    const dot = (on, lab, ma) => `<span class="ins-dot ${on?"on":"off"}"><i></i>${lab}<b>${ma != null ? usd(ma) : "—"}</b></span>`;
+    cards.push(`<div class="ins-v">
+      <div class="ins-v-h">Trend<b style="color:${verdict[1]}">${verdict[0]}</b></div>
+      <div class="ins-dots">${dot(a50, "50-day", st.ma50)}${dot(a200, "200-day", st.ma200)}</div>
+      <div class="ins-rets">${[["1M",st.r21],["3M",st.r63],["1Y",st.r252]].map(([l,v]) =>
+        `<span><u>${l}</u><b class="${v == null ? "" : (v >= 0 ? "pos" : "neg")}">${v == null ? "—" : pctS(v)}</b></span>`).join("")}</div>
+    </div>`);
+
+    if(spy != null && st.r63 != null){
+      const gap = st.r63 - spy, mag = Math.min(50, Math.abs(gap)*2.2);
+      cards.push(`<div class="ins-v">
+        <div class="ins-v-h">Versus the S&amp;P<b class="${gap>=0?"pos":"neg"}">${gap>=0?"+":"−"}${Math.abs(gap).toFixed(1)} pts</b></div>
+        <div class="ins-div"><span class="ins-div-mid"></span>
+          <i class="${gap>=0?"pos":"neg"}" style="${gap>=0?`left:50%;width:${mag}%`:`right:50%;width:${mag}%`}"></i></div>
+        <small>3 months: ${pctS(st.r63)} against ${pctS(spy)} for the index</small>
+      </div>`);
+    }
+
+    if(st.dayVol){
+      const ratio = Math.abs(p.dayPct)/(st.dayVol || 1);
+      const col = ratio >= 2 ? "var(--down)" : ratio >= 1 ? "#E0A100" : "var(--up)";
+      cards.push(`<div class="ins-v">${insMeter("Move size", Math.min(100, ratio*40),
+        ratio.toFixed(1) + "×", `A typical day is ±${st.dayVol.toFixed(2)}% (about ${usd(p.marketValue*st.dayVol/100, 0)} on this position). Today is ${ratio < .6 ? "quiet" : ratio < 1.4 ? "ordinary" : ratio < 2.5 ? "a big day" : "an outlier"}.`, col)}</div>`);
+    }
+  } else {
+    cards.push(`<div class="ins-v"><div class="ins-v-h">Trend<b>—</b></div>
+      <small>Daily price history isn't available from the quote feed for ${esc(p.ticker)}, so the moving-average and range read is skipped for this one.</small></div>`);
+  }
+
+  const gainCol = p.hasCost ? (p.gainDollar >= 0 ? "var(--up)" : "var(--down)") : "var(--muted)";
+  cards.push(`<div class="ins-v">
+    <div class="ins-v-h">Your position<b style="color:${gainCol}">${p.hasCost ? pctS(p.gainPct) : "—"}</b></div>
+    <div class="ins-pos">
+      <div><u>Value</u><b>${usd(p.marketValue,0)}</b></div>
+      <div><u>Cost</u><b>${p.hasCost ? usd(p.costBasis,0) : "—"}</b></div>
+      <div><u>Gain</u><b class="${p.hasCost ? (p.gainDollar>=0?"pos":"neg") : ""}">${p.hasCost ? usdS(p.gainDollar) : "—"}</b></div>
+      <div><u>Weight</u><b>${p.weight != null ? p.weight.toFixed(1) + "%" : "—"}</b></div>
+    </div>
+    <small>${esc(sectorOf(p))} sleeve${p.weight != null ? ` · ${p.weight.toFixed(1)}% of the current view` : ""}</small>
+  </div>`);
+
+  return `<div class="ins-vis">${cards.join("")}</div>`;
+}
+
 function insBuild(p, st, spy){
   const rows = [], tone = { up:"var(--up)", down:"var(--down)", flat:"var(--muted)", note:"var(--gold)" };
   const T = (t, txt) => rows.push({ c: tone[t] || tone.flat, txt });
@@ -7263,6 +7742,7 @@ function insBuild(p, st, spy){
   }
   return { rows, verdict };
 }
+
 function renderInsightCard(){
   const el = $("#hnews"); if(!el) return;
   const list = pViewMerged().filter(p => p.type !== "cash");
@@ -7270,10 +7750,10 @@ function renderInsightCard(){
       <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>${esc(p.ticker)}</button>`).join("");
   el.innerHTML = `<div class="ai-head">
       <span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span>
-      <span class="ai-head-r">On demand · nothing pre-written</span>
+      <span class="ai-head-r">Live headlines · fetched on click</span>
     </div>
     <div class="ins-pick" id="insPick">${chips || `<span class="ins-empty">No holdings in this view.</span>`}</div>
-    <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above and a read is written on the spot — today's move against your cost basis, where the price sits versus its moving averages and 52-week range, how it compares to the S&amp;P, how much it usually moves, and anything your published briefs said about it.</p>`}</div>`;
+    <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above. The headlines around it are pulled live, right then — what has actually been published about it in the last few days — with the price picture underneath and the full written read a click away.</p>`}</div>`;
   el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => {
     if(P.insTicker === b.dataset.ins) insClear(); else insGenerate(b.dataset.ins);   // click the lit chip again = hide the read
   }));
@@ -7286,6 +7766,18 @@ function insClear(){
   document.querySelectorAll("#insPick .ins-chip").forEach(c => c.classList.remove("on"));
   const body = $("#insBody"); if(body) body.innerHTML = "";
 }
+
+function insStoryHTML(it, dim){
+  const tag = insNewsTag(it.title);
+  const img = it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" onerror="this.closest('.ins-story')?.classList.add('nophoto');this.remove()">` : "";
+  return `<a class="ins-story${img?"":" nophoto"}${dim?" ctx":""}" href="${esc(it.url)}" target="_blank" rel="noopener">
+    <span class="ins-story-img">${img}</span>
+    <span class="ins-story-b">
+      <span class="ins-story-m"><i class="ins-tag ${tag.cls}">${tag.label}</i>${esc(it.outlet || "")}${it.t ? ` · ${esc(nrAgo(it.t))}` : ""}</span>
+      <span class="ins-story-t">${esc(it.title)}</span>
+    </span></a>`;
+}
+
 async function insGenerate(ticker){
   P.insTicker = ticker; P.insCleared = false;
   const body = $("#insBody"); if(!body) return;
@@ -7304,23 +7796,61 @@ async function insGenerate(ticker){
   const st = insSeries(p.fetchSymbol || p.ticker);
   const spyS = insSeries("SPY");
   const built = insBuild(p, st, spyS ? spyS.r63 : null);
+  const up = p.dayPct >= 0;
 
-  let notes = [];
-  try{ notes = await insBriefNotes(ticker); }catch(e){}
-  if(token !== P.insToken) return;
-  notes.forEach(n => built.rows.push({ c:"var(--gold)",
-    txt: `<b>From your ${esc(shortDate(n.date))} brief.</b> ${esc(n.lead)} ${esc(n.body)}` }));
-
+  /* Paint everything that needs no network first, then drop the headlines in when they land —
+     the price picture should never sit behind a news request. */
   body.innerHTML = `<div class="ins-head">
       <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>
-      <span class="ins-head-t"><b>${esc(p.ticker)}${p.name ? " · " + esc(p.name) : ""}</b><span>${usd(p.price)} · ${esc(pctS(p.dayPct))} today · ${usd(p.marketValue,0)} held</span></span>
+      <span class="ins-head-t"><b>${esc(p.ticker)}${p.name ? " · " + esc(p.name) : ""}</b><span>${esc(sectorOf(p))} · ${usd(p.marketValue,0)} held</span></span>
+      <span class="ins-head-px"><b class="${up?"pos":"neg"}">${usd(p.price)}</b><span class="${up?"pos":"neg"}">${esc(pctS(p.dayPct))} · ${esc(usdS(p.dayDollar))}</span></span>
       <button class="ins-regen" id="insRegen">⟳ Redo</button>
     </div>
-    <p class="ins-verdict">${esc(built.verdict)}</p>`
-    + built.rows.map(r => `<div class="ins-row"><i style="background:${r.c}"></i><div>${r.txt}</div></div>`).join("")
-    + `<p class="ins-foot">Written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes, your own cost basis and the published briefs. Educational only — not investment advice.</p>`;
+    <div class="ins-hero">${insSpark(st, up)}<div class="ins-hero-cap"><span>Last 90 trading days</span><b>${esc(built.verdict)}</b></div></div>
+    <div class="ins-why" id="insWhy">
+      <div class="ins-why-h">Why it's moving<span class="ins-why-s" id="insWhyS">pulling headlines…</span></div>
+      <div class="ins-news" id="insNews"><div class="ins-sk"></div><div class="ins-sk"></div><div class="ins-sk"></div></div>
+    </div>
+    ${insVisuals(p, st, spyS ? spyS.r63 : null)}
+    <details class="ins-more"><summary>Full written read — every number behind the picture</summary>
+      <div class="ins-more-b" id="insMoreB">
+        ${built.rows.map(r => `<div class="ins-row"><i style="background:${r.c}"></i><div>${r.txt}</div></div>`).join("")}
+      </div></details>
+    <p class="ins-foot">Headlines are fetched live when you click; the price read is written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes and your own cost basis. A story appearing next to a move is not proof it caused it. Educational only — not investment advice.</p>`;
+
   const rb = $("#insRegen");
   if(rb) rb.addEventListener("click", () => insGenerate(ticker));
+
+  /* headlines */
+  let news = { own: [], context: [] };
+  try{ news = await insFetchNews(p); }catch(e){}
+  if(token !== P.insToken) return;
+  const wrap = $("#insNews"), sub = $("#insWhyS"), why = $("#insWhy");
+  if(wrap && why){
+    const all = news.own.concat(news.context);
+    if(!all.length){
+      sub.textContent = "no headlines came back";
+      wrap.innerHTML = `<p class="ins-empty">Nothing published about ${esc(p.ticker)} came back from the news feeds just now — which is itself a read: today's move is more likely the market or the sector than anything specific to this holding. Try the Redo button in a minute, or open the News tab for the wider picture.</p>`;
+    } else {
+      const day = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 864e5).length;
+      const week = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 6048e5).length;
+      sub.textContent = news.own.length
+        ? `${day} ${day === 1 ? "story" : "stories"} in the last 24 hours · ${week} this week`
+        : "no ticker-specific stories — showing the sector backdrop";
+      wrap.innerHTML =
+        (news.own.length ? news.own.map(it => insStoryHTML(it, false)).join("") : "") +
+        (news.context.length ? `<div class="ins-ctx-h">Sector &amp; market backdrop</div>` + news.context.map(it => insStoryHTML(it, true)).join("") : "");
+      if(news.own.length) why.insertAdjacentHTML("beforeend", insPulse(news.own));
+    }
+  }
+
+  /* anything the published briefs already said, folded into the written read */
+  let notes = [];
+  try{ notes = await insBriefNotes(ticker); }catch(e){}
+  if(token !== P.insToken || !notes.length) return;
+  const mb = $("#insMoreB");
+  if(mb) notes.forEach(n => mb.insertAdjacentHTML("beforeend",
+    `<div class="ins-row"><i style="background:var(--gold)"></i><div><b>From your ${esc(shortDate(n.date))} brief.</b> ${esc(n.lead)} ${esc(n.body)}</div></div>`));
 }
 
 /* ---------------------------------------------------------------------------
@@ -7349,15 +7879,84 @@ function allocGroups(list, mode){
   return Object.values(m).filter(g => g.value > 0).sort((a,b) => b.value - a.value);
 }
 
-/* ---- risk model ---- */
+/* ---- risk model -------------------------------------------------------------------
+   Rebuilt Sep 2026. The old model only ever asked "how spread out is this?", so a book made
+   almost entirely of aggressive growth funds scored 23/100 — Conservative — because the funds
+   themselves are diversified. Two things were wrong:
+
+     1. There was no asset-mix axis at all. How much of the money is in growth assets (stocks,
+        crypto, commodities) rather than bonds and cash is the single biggest determinant of how
+        far a portfolio can fall, and it wasn't in the score.
+     2. Volatility and drawdown dropped out of the score entirely until five years of daily
+        closes had loaded — and on the cached-history path drawAlloc() was never re-run, so for
+        most page loads they never came back. That left the score resting on concentration alone.
+
+   Now: every holding gets a risk bucket, each bucket carries an assumed annualized volatility so
+   the score is sane on the very first paint, and measured volatility/drawdown replace the
+   estimates the moment real price history lands.
+   ------------------------------------------------------------------------------------ */
 const RISK_BANDS = [
-  {max:20,  label:"Conservative",          col:"#12855C"},
+  {max:20,  label:"Conservative",            col:"#12855C"},
   {max:40,  label:"Moderately conservative", col:"#6BB04A"},
-  {max:60,  label:"Moderate",              col:"#E0A100"},
-  {max:80,  label:"Aggressive",            col:"#EA7A1F"},
-  {max:101, label:"Very aggressive",       col:"#D2453C"}
+  {max:60,  label:"Moderate",                col:"#E0A100"},
+  {max:80,  label:"Aggressive",              col:"#EA7A1F"},
+  {max:101, label:"Very aggressive",         col:"#D2453C"}
 ];
 const riskBand = sc => RISK_BANDS.find(b => sc < b.max) || RISK_BANDS[RISK_BANDS.length-1];
+
+/* Long-run annualized volatility by kind of holding. Used only where real price history is
+   missing; the measured number always wins when it exists. */
+const ASSUMED_VOL = { cash:.004, bond:.06, commodity:.17, broad:.16, dividend:.14, intl:.18,
+                      growth:.24, sector:.27, stock:.34, crypto:.70 };
+const BUCKET_LABEL = { cash:"Cash", bond:"Bonds & income", commodity:"Commodities", broad:"Broad-market funds",
+                       dividend:"Dividend & value funds", intl:"International funds", growth:"Growth funds",
+                       sector:"Sector funds", stock:"Individual stocks", crypto:"Crypto" };
+function riskBucket(p){
+  if(!p || p.type === "cash") return "cash";
+  const sec = sectorOf(p), cls = assetClass(p);
+  if(cls === "Crypto" || sec === "Crypto") return "crypto";
+  if(sec === "Bonds & Income") return "bond";
+  if(sec === "Commodities") return "commodity";
+  if(cls === "Stocks") return "stock";
+  if(sec === "Broad Market") return "broad";
+  if(sec === "Dividend & Value") return "dividend";
+  if(sec === "International") return "intl";
+  if(sec === "Growth Funds") return "growth";
+  return "sector";
+}
+/* Growth assets = everything that isn't cash or a bond. This is the axis the old model missed. */
+const GROWTH_BUCKETS = new Set(["broad","dividend","intl","growth","sector","stock","crypto","commodity"]);
+/* Coarse mix for the stacked bar. */
+const MIX_ORDER = ["Stocks & stock funds", "Crypto", "Commodities", "Bonds & income", "Cash"];
+const MIX_COLORS = { "Stocks & stock funds":"#0E6CD8", "Crypto":"#D4A017", "Commodities":"#EAB308",
+                     "Bonds & income":"#7C9A6B", "Cash":"#B6C2CF" };
+const mixGroupOf = b => b === "cash" ? "Cash" : b === "bond" ? "Bonds & income"
+                      : b === "crypto" ? "Crypto" : b === "commodity" ? "Commodities" : "Stocks & stock funds";
+
+/* The score, in one place.
+
+   Two groups, because they are different kinds of question and averaging them together is what
+   produced the old nonsense. BASE asks how far this can fall — growth exposure and how hard the
+   mix actually swings — and it is the score. ADD-ONS ask what else could go wrong on top of that
+   (all the eggs in few baskets, one sector, a speculative sleeve); they can only push the number
+   up, never drag it down. A two-fund 60/40 scoring zero on concentration is not a safer 60/40. */
+const riskLin = (x,a,b) => Math.max(0, Math.min(100, (x-a)/(b-a)*100));
+const riskVolScore = v => riskLin(v, .05, .40);
+function riskCombine(mixScore, volScore, ddScore, addOns){
+  const base = ddScore == null ? mixScore*.55 + volScore*.45
+                               : mixScore*.55 + volScore*.35 + ddScore*.10;
+  return { base, score: Math.max(0, Math.min(100, Math.round(base + addOns))) };
+}
+/* Where mixes anyone would recognise land on this exact scale — run through the same base
+   formula rather than typed in, so the ruler under the gauge can never disagree with the needle. */
+const riskRefScore = (growth, vol) => Math.round(growth*100*.55 + riskVolScore(vol)*.45);
+const RISK_REFS = [
+  { at: riskRefScore(.20, .055), label:"20/80" },
+  { at: riskRefScore(.60, .104), label:"60/40" },
+  { at: riskRefScore(1,   .170), label:"S&P 500" },
+  { at: riskRefScore(1,   .700), label:"All crypto" }
+];
+
 function riskModel(list){
   const invPos = list.filter(p => p.type !== "cash" && p.marketValue > 0);
   const cash = list.filter(p => p.type === "cash").reduce((s,p) => s + p.marketValue, 0);
@@ -7366,10 +7965,13 @@ function riskModel(list){
 
   const byT = {};
   invPos.forEach(p => {
-    const g = byT[p.ticker] || (byT[p.ticker] = {ticker:p.ticker, sym:p.fetchSymbol || p.ticker, sector:sectorOf(p), cls:assetClass(p), mv:0});
+    const g = byT[p.ticker] || (byT[p.ticker] = {ticker:p.ticker, name:p.name, sym:p.fetchSymbol || p.ticker,
+      sector:sectorOf(p), cls:assetClass(p), bucket:riskBucket(p), mv:0});
     g.mv += p.marketValue;
   });
-  const H = Object.values(byT).sort((a,b) => b.mv - a.mv).map(g => ({...g, w:g.mv/invTotal}));   // w = share of invested dollars
+  /* w = share of INVESTED dollars (concentration is about the invested book);
+     wT = share of TOTAL dollars including cash (the mix axis has to see the cash). */
+  const H = Object.values(byT).sort((a,b) => b.mv - a.mv).map(g => ({...g, w:g.mv/invTotal, wT:g.mv/total}));
   const isDiv = h => DIVERSIFIED_SECTORS.has(h.sector);
   const hhi = H.reduce((s,h) => s + h.w*h.w * (isDiv(h) ? 0.1 : 1), 0);   // a broad fund counts as ~10 names
   const nEff = hhi > 0 ? 1/hhi : H.length;
@@ -7377,8 +7979,20 @@ function riskModel(list){
   const topSingle = singles[0] || null;
   const sec = {}; singles.forEach(h => { sec[h.sector] = (sec[h.sector] || 0) + h.w; });
   const topSecEntry = Object.entries(sec).sort((a,b) => b[1] - a[1])[0] || null;
-  const cryptoW = H.filter(h => h.cls === "Crypto").reduce((s,h) => s + h.w, 0);
+  const cryptoW = H.filter(h => h.bucket === "crypto").reduce((s,h) => s + h.wT, 0);
   const divW = H.filter(isDiv).reduce((s,h) => s + h.w, 0);
+  const growthW = H.filter(h => GROWTH_BUCKETS.has(h.bucket)).reduce((s,h) => s + h.wT, 0);
+  const bondW = H.filter(h => h.bucket === "bond").reduce((s,h) => s + h.wT, 0);
+  const cashW = cash/total;
+  /* Real ballast is what is expected to hold up when stocks fall: bonds, cash and, at half
+     credit, dividend/value. A total-market fund is not ballast, however diversified it is. */
+  const ballastW = bondW + cashW + H.filter(h => h.bucket === "dividend").reduce((s,h) => s + h.wT, 0)*.5;
+
+  /* asset mix, for the stacked bar */
+  const mixMap = {};
+  H.forEach(h => { const k = mixGroupOf(h.bucket); mixMap[k] = (mixMap[k] || 0) + h.mv; });
+  if(cash > 0) mixMap["Cash"] = (mixMap["Cash"] || 0) + cash;
+  const mix = MIX_ORDER.filter(k => mixMap[k] > 0).map(k => ({key:k, value:mixMap[k], w:mixMap[k]/total}));
 
   /* price-based stats: one year of daily returns, constant weights, aligned on SPY's trading days */
   let vol = null, beta = null, maxDD = null, volBy = {}, badDayPct = null;
@@ -7426,42 +8040,95 @@ function riskModel(list){
       }
     }
   }
-  const specW = cryptoW + H.filter(h => h.cls !== "Crypto" && volBy[h.ticker] != null && volBy[h.ticker] > 0.50).reduce((s,h) => s + h.w, 0);
 
-  const lin = (x,a,b) => Math.max(0, Math.min(100, (x-a)/(b-a)*100));
+  /* Estimated volatility from the buckets. Holdings rarely all fall together, so the weighted
+     sum of single-name vols is scaled by a correlation haircut before it stands in for the
+     portfolio's own number. This is what keeps the score honest before history loads. */
+  const volOf = h => volBy[h.ticker] != null ? volBy[h.ticker] : (ASSUMED_VOL[h.bucket] ?? .22);
+  const wAvgVol = H.reduce((s,h) => s + h.wT * volOf(h), 0);
+  /* Holdings don't all fall on the same days, so the weighted average of single-name volatility
+     overstates the portfolio's own. 0.88 is the haircut for a book of this kind; the measured
+     number replaces the whole estimate as soon as daily closes are in hand. */
+  const volEst = wAvgVol * 0.88;
+  const volEff = vol != null ? vol : volEst;
+  const volMeasured = vol != null;
+  /* The stand-in drawdown: a year's worth of downside at this volatility. Only used for the note,
+     never for the score — the drawdown factor sits out until it is measured. */
+  const ddEff = maxDD != null ? maxDD : -Math.min(.75, volEff * 1.6);
+
+  const specNames = H.filter(h => h.bucket === "crypto" || volOf(h) > .45);
+  const specW = specNames.reduce((s,h) => s + h.wT, 0);
+
+  const lin = riskLin;
   const pc = x => (x*100).toFixed(0) + "%";
+  const pc1 = x => (x*100).toFixed(1) + "%";
+  const top = (arr, n) => arr.slice(0, n);
+
   const F = [];
-  if(vol != null)   F.push({k:"vol",  label:"Volatility",    w:.30, score:lin(vol, .05, .35), note:`swings about ${(vol*100).toFixed(0)}% a year`});
-  if(maxDD != null) F.push({k:"dd",   label:"Drawdown",      w:.15, score:lin(-maxDD, .05, .35), note:`worst peak-to-trough drop of ${(maxDD*100).toFixed(0)}% this year`});
-  F.push({k:"conc", label:"Concentration", w:.25,
+  F.push({ k:"mix", label:"Growth exposure", grp:"base", w:.55, score: growthW*100,
+    note: `${pc(growthW)} of the account is in growth assets, ${pc(bondW + cashW)} in bonds and cash`,
+    why: `How much of the money sits in things that can fall hard — stocks, funds that hold stocks, crypto, commodities — rather than in bonds and cash. It is the largest single determinant of how far an account drops in a bad year, which is why it carries the most weight here.`,
+    rows: mix.map(m => [m.key, pc1(m.w)]) });
+
+  F.push({ k:"vol", label:"Volatility", grp:"base", w:maxDD != null ? .35 : .45, score: riskVolScore(volEff),
+    note: `${volMeasured ? "measured at" : "estimated at"} ±${(volEff*100).toFixed(0)}% a year`,
+    why: volMeasured
+      ? `The actual standard deviation of this exact mix over the last year of daily closes, annualized. Roughly two years in three land inside ±${(volEff*100).toFixed(0)}%; the other one is outside it, in either direction.`
+      : `Estimated from what each holding is, because the five years of daily closes haven't finished loading yet. It is replaced by the measured number the moment they do.`,
+    rows: top(H.slice().sort((a,b) => volOf(b)*b.wT - volOf(a)*a.wT), 6)
+            .map(h => [h.ticker + " · " + BUCKET_LABEL[h.bucket], "±" + (volOf(h)*100).toFixed(0) + "%/yr" + (volBy[h.ticker] != null ? "" : " (est.)")]) });
+
+  if(maxDD != null) F.push({ k:"dd", label:"Drawdown", grp:"base", w:.10, score: lin(-maxDD, .06, .40),
+    note: `worst peak-to-trough drop of ${(maxDD*100).toFixed(0)}% over the past year`,
+    why: `The deepest fall from a high to the following low that this mix actually went through in the last twelve months. A drawdown is what people feel; volatility is only the arithmetic behind it.`,
+    rows: [["Worst 1-year drop", (maxDD*100).toFixed(1) + "%"], ["In dollars, at today's size", "−" + usd(Math.abs(maxDD)*total, 0)]] });
+
+  F.push({ k:"conc", label:"Concentration", grp:"add", w:.10,
     score: .5*lin(16 - nEff, 0, 14) + .5*lin(topSingle ? topSingle.w : 0, .10, .45),
-    note: `≈${nEff.toFixed(1)} effective holdings` + (topSingle ? `, largest single name ${topSingle.ticker} at ${pc(topSingle.w)}` : "")});
-  F.push({k:"sector", label:"Sector tilt", w:.15, score: lin(topSecEntry ? topSecEntry[1] : 0, .25, .70),
-    note: topSecEntry ? `${topSecEntry[0]} is ${pc(topSecEntry[1])} of invested dollars` : "spread across broad funds"});
-  F.push({k:"spec", label:"Speculative",   w:.15, score: lin(specW, 0, .30),
-    note: specW > 0 ? `${pc(specW)} in crypto and very-high-volatility names` : "nothing crypto or very-high-volatility"});
-  const wsum = F.reduce((s,f) => s + f.w, 0);
-  const score = Math.round(F.reduce((s,f) => s + f.w*f.score, 0) / wsum);
-  F.forEach(f => f.score = Math.round(f.score));
-  const driver = F.slice().sort((a,b) => b.w*b.score - a.w*a.score)[0];
+    note: `≈${nEff.toFixed(1)} effective holdings` + (topSingle ? `, biggest concentrated bet ${topSingle.ticker} at ${pc(topSingle.w)} (broad funds don't count as one)` : ""),
+    why: `How much rides on any one decision. A broad fund is counted as roughly ten names, a single stock or a concentrated fund as one. Fewer effective holdings means one wrong call matters more.`,
+    rows: top(H, 6).map(h => [h.ticker, pc1(h.w) + " of invested"]) });
+
+  F.push({ k:"spec", label:"Speculative sleeve", grp:"add", w:.10, score: lin(specW, 0, .25),
+    note: specW > 0 ? `${pc(specW)} in crypto and very-high-volatility holdings` : "nothing crypto or very-high-volatility",
+    why: `The part of the account whose price is set by sentiment and flows rather than by cash flows you could underwrite — crypto, and anything swinging more than 45% a year.`,
+    rows: specNames.length ? specNames.map(h => [h.ticker, pc1(h.wT) + " of total · ±" + (volOf(h)*100).toFixed(0) + "%/yr"])
+                           : [["Nothing in this sleeve", "0.0%"]] });
+
+  F.push({ k:"sector", label:"Sector tilt", grp:"add", w:.05, score: lin(topSecEntry ? topSecEntry[1] : 0, .15, .60),
+    note: topSecEntry ? `${topSecEntry[0]} is ${pc(topSecEntry[1])} of invested dollars` : "spread across broad funds",
+    why: `Holdings inside one sector or one style tend to fall together, so a big tilt is a second concentration on top of the first. Broad-market, bond, international and dividend funds are excluded — they are not a bet on one thing.`,
+    rows: Object.entries(sec).sort((a,b) => b[1]-a[1]).slice(0,6).map(([k,v]) => [k, pc1(v)]) });
+
+  const byK = k => (F.find(f => f.k === k) || {score:0}).score;
+  const addOns = F.filter(f => f.grp === "add").reduce((s,f) => s + f.w*f.score, 0);
+  const combined = riskCombine(byK("mix"), byK("vol"), maxDD != null ? byK("dd") : null, addOns);
+  const score = combined.score;
+  F.forEach(f => { f.pts = f.w*f.score; f.score = Math.round(f.score); });
+  const driver = F.slice().sort((a,b) => b.pts - a.pts)[0];
 
   const flags = [];
+  if(growthW >= .85) flags.push({t:"warn", txt:`<b>${pc(growthW)} growth assets</b> — there is essentially no ballast here. A 2022-style year takes this account down with the market, in full.`});
+  else if(growthW >= .65) flags.push({t:"note", txt:`<b>${pc(growthW)} growth assets</b> against ${pc(bondW + cashW)} in bonds and cash — a growth-tilted mix, which is the point at your stage, but it is not a cushioned one.`});
   if(topSingle && topSingle.w > .25) flags.push({t:"warn", txt:`<b>${esc(topSingle.ticker)}</b> is ${pc(topSingle.w)} of your invested dollars — one position that size can dominate your results.`});
   if(topSecEntry && topSecEntry[1] > .40){
     const names = singles.filter(h => h.sector === topSecEntry[0]).map(h => h.ticker).slice(0,5).join(", ");
     flags.push({t:"warn", txt:`<b>${esc(topSecEntry[0])}</b> is ${pc(topSecEntry[1])} of the portfolio (${esc(names)}) — these tend to fall together.`});
   }
-  if(cryptoW > .10) flags.push({t:"warn", txt:`<b>Crypto</b> is ${pc(cryptoW)} of invested dollars — it can move 5–10% in a day.`});
-  if(beta != null && beta > 1.25) flags.push({t:"note", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move about ${Math.round((beta-1)*100)}% more than the S&amp;P 500 in either direction.`});
-  if(beta != null && beta < .75) flags.push({t:"good", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move noticeably less than the S&amp;P 500.`});
-  const cashW = cash/total;
-  if(cashW < .03) flags.push({t:"note", txt:`Only <b>${(cashW*100).toFixed(1)}% cash</b> — little dry powder for a dip or a surprise expense.`});
+  if(cryptoW > .05) flags.push({t:"warn", txt:`<b>Crypto</b> is ${pc1(cryptoW)} of the account — it can move 5–10% in a day and has drawn down more than 70% twice in ten years.`});
+  if(beta != null && beta > 1.15) flags.push({t:"note", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move about ${Math.round((beta-1)*100)}% more than the S&amp;P 500 in either direction.`});
+  if(beta != null && beta < .85) flags.push({t:"good", txt:`<b>Beta ${beta.toFixed(2)}</b> — you tend to move noticeably less than the S&amp;P 500.`});
+  if(cashW < .03) flags.push({t:"note", txt:`Only <b>${pc1(cashW)} cash</b> — little dry powder for a dip or a surprise expense.`});
   else if(cashW > .25) flags.push({t:"note", txt:`<b>${pc(cashW)} in cash</b> — a safe cushion, but it earns less than being invested over time.`});
-  if(divW >= .30) flags.push({t:"good", txt:`<b>${pc(divW)}</b> sits in broad or income funds — that is real ballast under the single names.`});
+  if(bondW < .05 && growthW > .8) flags.push({t:"note", txt:`<b>No meaningful bond sleeve.</b> Nothing in here is expected to go up when stocks go down.`});
+  if(ballastW >= .25) flags.push({t:"good", txt:`<b>${pc(ballastW)}</b> sits in bonds, cash and dividend funds — real ballast under the growth names.`});
+  else if(divW >= .35) flags.push({t:"note", txt:`<b>${pc(divW)}</b> of the invested book is in broad-market funds — diversified, but still all stock-market risk.`});
   if(!flags.length) flags.push({t:"good", txt:`No red flags: no oversized position, sector or speculative sleeve.`});
 
-  return { score, band:riskBand(score), F, driver, flags:flags.slice(0,4), nEff, topHolding:H[0], top3:H.slice(0,3).reduce((s,h)=>s+h.w,0),
-           cashW, vol, beta, maxDD, badDayPct, badDayUsd: badDayPct != null ? badDayPct*total : null, total };
+  return { score, base:combined.base, band:riskBand(score), F, driver, flags:flags.slice(0,5), nEff, topHolding:H[0], top3:H.slice(0,3).reduce((s,h)=>s+h.w,0),
+           cashW, growthW, bondW, cryptoW, mix, vol:volEff, volMeasured, beta, maxDD, ddEff, badDayPct,
+           badDayUsd: badDayPct != null ? badDayPct*total : (1.645 * volEff / Math.sqrt(252)) * total,
+           badDayEst: badDayPct == null, total, holdings:H };
 }
 
 /* semicircle gauge: five colour bands, the band you're in lit, a needle that sweeps to the score */
@@ -7470,56 +8137,142 @@ function gaugeArc(a0, a1, r){
   const x0 = cx + r*Math.cos(rad(a0)), y0 = cy - r*Math.sin(rad(a0)), x1 = cx + r*Math.cos(rad(a1)), y1 = cy - r*Math.sin(rad(a1));
   return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
 }
-function riskHTML(R){
-  if(!R) return `<div class="al-risk"><p class="pb-empty">No invested positions in this view.</p></div><div class="al-more"></div>`;
+const riskLvlColor = sc => sc < 35 ? "var(--up)" : (sc < 65 ? "#E0A100" : "var(--down)");
+
+function riskGaugeHTML(R){
   const cur = RISK_BANDS.findIndex(b => R.score < b.max);
   const segs = RISK_BANDS.map((b,i) => {
     const lo = i*20, hi = Math.min(100, (i+1)*20);
     return `<path d="${gaugeArc(180 - lo*1.8 - .8, 180 - hi*1.8 + .8, 84)}" fill="none" stroke="${b.col}" stroke-width="15" stroke-linecap="butt" opacity="${i === cur ? 1 : .26}"/>`;
   }).join("");
-  const lvl = sc => sc < 35 ? "var(--up)" : (sc < 65 ? "#E0A100" : "var(--down)");
-  const stat = (l, v, sub) => `<div class="al-stat"><span>${l}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
-  const pcs = x => (x*100).toFixed(1) + "%";
-  const stats = [
-    stat("Effective holdings", R.nEff.toFixed(1), `fund-adjusted count`),
-    stat("Largest holding", esc(R.topHolding.ticker), pcs(R.topHolding.w) + " of invested"),
-    stat("Top 3 holdings", pcs(R.top3), "of invested"),
-    stat("Cash", pcs(R.cashW), "of total"),
-    R.vol != null ? stat("Est. volatility", (R.vol*100).toFixed(1) + "%", "annualized") : "",
-    R.beta != null ? stat("Beta vs S&amp;P 500", R.beta.toFixed(2), R.beta > 1 ? "amplifies the market" : "dampens the market") : "",
-    R.maxDD != null ? stat("Worst drop, 1Y", (R.maxDD*100).toFixed(1) + "%", "peak to trough") : "",
-    R.badDayUsd != null ? stat("Bad day (1 in 20)", "−" + usd(R.badDayUsd, 0), "−" + (R.badDayPct*100).toFixed(1) + "% of total") : ""
-  ].filter(Boolean).join("");
-  return `<div class="al-risk">
-    <div class="al-gauge">
+  const clamp = n => Math.max(9, Math.min(89, n));
+  const refs = RISK_REFS.map(r => `<span class="al-ref" style="left:${clamp(r.at)}%"><i></i><b>${esc(r.label)}</b></span>`).join("");
+  return `<div class="al-gauge">
       <svg viewBox="0 0 200 112" aria-hidden="true">${segs}
         <g class="al-needle" id="alNeedle" style="transform:rotate(-90deg)"><line x1="100" y1="100" x2="100" y2="34" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="100" r="6.5" fill="var(--ink)"/><circle cx="100" cy="100" r="2.5" fill="var(--card, #fff)"/></g>
       </svg>
       <div class="al-score" data-score="${R.score}"><b style="color:${R.band.col}">${R.score}</b><span>/ 100</span></div>
       <div class="al-band" style="background:${R.band.col}">${R.band.label}</div>
-      <p class="al-read">Biggest driver: <b>${esc(R.driver.label.toLowerCase())}</b> — ${esc(R.driver.note)}.${R.vol == null ? ` <i>Volatility &amp; drawdown join the score once price history loads.</i>` : ""}</p>
+      <p class="al-read">Biggest driver: <b>${esc(R.driver.label.toLowerCase())}</b> — ${esc(R.driver.note)}.</p>
     </div>
-    <div class="al-factors">${R.F.map(f => `<div class="al-f" title="${esc(f.note)}">
-        <div class="al-f-top"><span>${f.label}</span><b>${f.score}</b></div>
-        <div class="al-f-bar"><i style="width:${Math.max(3, f.score)}%;background:${lvl(f.score)}"></i></div>
-        <small>${esc(f.note)}</small></div>`).join("")}</div>
-  </div>
-  <div class="al-more">
-    <div class="al-stats">${stats}</div>
-    <div class="al-flags">${R.flags.map(f => `<div class="al-flag ${f.t}"><i></i><div>${f.txt}</div></div>`).join("")}</div>
-  </div>`;
+    <div class="al-ruler">
+      <div class="al-ruler-bar">${RISK_BANDS.map((b,i) => `<span style="background:${b.col};opacity:${i===cur?.95:.3}"></span>`).join("")}
+        <span class="al-you" style="left:${clamp(R.score)}%"><b>You ${R.score}</b></span></div>
+      <div class="al-refs">${refs}</div>
+      <p class="al-ruler-cap">Reference points are stock/bond mixes on this same scale — approximate, for sizing only.</p>
+    </div>`;
 }
 
-function drawAlloc(){
+function riskMoreHTML(R){
+  const pcs = x => (x*100).toFixed(1) + "%";
+  const stat = (l, v, sub) => `<div class="al-stat"><span>${l}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+  const stats = [
+    stat("Growth assets", pcs(R.growthW), "stocks, funds, crypto"),
+    stat("Bonds &amp; cash", pcs(R.bondW + R.cashW), "the ballast"),
+    stat("Effective holdings", R.nEff.toFixed(1), "fund-adjusted count"),
+    stat("Largest holding", esc(R.topHolding.ticker), pcs(R.topHolding.w) + " of invested"),
+    stat("Top 3 holdings", pcs(R.top3), "of invested"),
+    stat(R.volMeasured ? "Volatility" : "Volatility (est.)", (R.vol*100).toFixed(1) + "%", "annualized"),
+    R.beta != null ? stat("Beta vs S&amp;P 500", R.beta.toFixed(2), R.beta > 1 ? "amplifies the market" : "dampens the market") : "",
+    R.maxDD != null ? stat("Worst drop, 1Y", (R.maxDD*100).toFixed(1) + "%", "peak to trough") : "",
+    stat("Bad day (1 in 20)", "−" + usd(R.badDayUsd, 0), (R.badDayEst ? "estimated · " : "") + "−" + ((R.badDayPct != null ? R.badDayPct : 1.645*R.vol/Math.sqrt(252))*100).toFixed(1) + "% of total")
+  ].filter(Boolean).join("");
+
+  const mixBar = R.mix.map(m => `<span class="al-mixseg" data-mix="${esc(m.key)}" style="width:${(m.w*100).toFixed(2)}%;background:${MIX_COLORS[m.key] || "#8C96A3"}" title="${esc(m.key)} — ${pcs(m.w)}"></span>`).join("");
+  const mixKeys = R.mix.map(m => `<span class="al-mixkey"><i style="background:${MIX_COLORS[m.key] || "#8C96A3"}"></i>${esc(m.key)} <b>${pcs(m.w)}</b></span>`).join("");
+
+  const factors = R.F.map(f => `<button type="button" class="al-f" data-f="${f.k}" aria-expanded="false">
+      <div class="al-f-top"><span>${f.label}</span><b>${f.score}</b></div>
+      <div class="al-f-bar"><i style="width:${Math.max(3, f.score)}%;background:${riskLvlColor(f.score)}"></i></div>
+      <small>${esc(f.note)}</small>
+      <em class="al-f-w ${f.grp}">${f.grp === "base" ? `${f.pts.toFixed(0)} of the ${Math.round(R.base)}-pt base` : `+${f.pts.toFixed(1)} pts on top`}</em>
+    </button>`).join("");
+
+  return `<div class="al-mix">
+      <div class="al-sub">Asset mix<span>share of the whole account</span></div>
+      <div class="al-mixbar">${mixBar}</div>
+      <div class="al-mixkeys">${mixKeys}</div>
+    </div>
+    <div class="al-fwrap">
+      <div class="al-sub">What makes up the score<span>${Math.round(R.base)}-point base, +${Math.round(R.score - R.base)} on top · tap any one for the working</span></div>
+      <div class="al-factors">${factors}</div>
+      <div class="al-detail" id="alDetail" hidden></div>
+    </div>
+    <div class="al-stats">${stats}</div>
+    <div class="al-flags">${R.flags.map(f => `<div class="al-flag ${f.t}"><i></i><div>${f.txt}</div></div>`).join("")}</div>`;
+}
+
+/* Risk is independent of the Sector/Holding/Type switch and of the table filter, so it is painted
+   once per data change and then left alone — which is what stops the gauge and the donut from
+   re-animating every time one of those buttons is pressed. */
+function drawRisk(list){
+  const riskEl = $("#alRisk"), moreEl = $("#alMore");
+  if(!riskEl || !moreEl) return;
+  const R = riskModel(list);
+  P.risk = R;
+  if(!R){
+    riskEl.innerHTML = `<p class="pb-empty">No invested positions in this view.</p>`;
+    moreEl.innerHTML = "";
+    return;
+  }
+  riskEl.innerHTML = riskGaugeHTML(R);
+  moreEl.innerHTML = riskMoreHTML(R);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const nd = $("#alNeedle"); if(nd) nd.style.transform = `rotate(${(-90 + R.score*1.8).toFixed(1)}deg)`;
+  }));
+
+  const detail = $("#alDetail");
+  moreEl.querySelectorAll(".al-f").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const f = R.F.find(x => x.k === btn.dataset.f); if(!f) return;
+      const already = btn.classList.contains("on");
+      moreEl.querySelectorAll(".al-f.on").forEach(b => { b.classList.remove("on"); b.setAttribute("aria-expanded","false"); });
+      if(already){ detail.hidden = true; detail.innerHTML = ""; return; }
+      btn.classList.add("on"); btn.setAttribute("aria-expanded","true");
+      detail.hidden = false;
+      detail.innerHTML = `<div class="al-detail-in">
+        <div class="al-detail-head"><b>${esc(f.label)}</b>
+          <span class="al-detail-sc" style="background:${riskLvlColor(f.score)}">${f.score} / 100</span>
+          <span class="al-detail-w">${f.grp === "base" ? `contributes ${f.pts.toFixed(0)} of the ${Math.round(R.base)}-point base` : `adds ${f.pts.toFixed(1)} points on top of the base`}</span></div>
+        <p>${esc(f.why)}</p>
+        <div class="al-detail-rows">${f.rows.map(([a,b]) => `<div><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join("")}</div>
+      </div>`;
+    });
+  });
+}
+
+/* The allocation half: donut + ranked legend. The donut element is created once and then MORPHED
+   between Sector / Holding / Type — Eli, Sep 2026: "the pie chart things weirdly reloading every
+   time you click on a different tab". It was reloading because this function used to blow away
+   #allocBody's innerHTML on every press, which took the risk panel with it and re-ran the whole
+   draw-in animation from zero. Now only what actually changed is rewritten. */
+function drawAlloc(opts){
   const body = $("#allocBody"); if(!body) return;
   const list = pView(), t = pTotals(list);
   const mode = P.allocView || "sector";
   const groups = allocGroups(list, mode);
   const acctLabel = P.acct === "all" ? "all accounts" : ((HOLDINGS.accounts.find(a => a.id === P.acct) || {}).label || "");
   const total = t.value;
-  const R = riskModel(list);
 
-  const rows = groups.map(g => {
+  let fresh = false;
+  if(!body.querySelector(".al-donut")){
+    fresh = true;
+    body.innerHTML = `<div class="al-donut">
+        <div class="al-hold"><svg width="230" height="230" viewBox="0 0 250 250" id="pDonut"></svg>
+          <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV"></div><div class="dc-s" id="dcS"></div></div></div>
+      </div>
+      <div class="al-legend" id="pLegend"></div>
+      <div class="al-risk" id="alRisk"></div>
+      <div class="al-more" id="alMore"></div>`;
+  }
+
+  const center = (l, v, s) => { $("#dcL").textContent = l; $("#dcV").textContent = v; $("#dcS").textContent = s; };
+  const resetCenter = () => center("Total", usd(total,0), acctLabel);
+  resetCenter();
+
+  /* legend */
+  $("#pLegend").innerHTML = groups.map(g => {
     const pct = total > 0 ? g.value/total*100 : 0, col = gcolor(g.key);
     const tk = mode === "holding" ? "" : g.tickers.slice(0,6).join(" · ") + (g.tickers.length > 6 ? ` +${g.tickers.length - 6}` : "");
     return `<div class="al-row${P.filter === g.key ? " active" : ""}${P.filter && P.filter !== g.key ? " dim" : ""}" data-k="${esc(g.key)}">
@@ -7529,52 +8282,65 @@ function drawAlloc(){
       <div class="al-pct">${pct.toFixed(1)}%</div>
       <div class="al-val">${usd(g.value,0)}<small class="${pcls(g.day)}">${usdS(g.day)}</small></div>
     </div>`;
-  }).join("");
+  }).join("") || `<p class="pb-empty">Nothing to show in this view.</p>`;
 
-  body.innerHTML = `<div class="al-donut">
-      <div class="al-hold"><svg width="230" height="230" viewBox="0 0 250 250" id="pDonut"></svg>
-        <div class="donut-center"><div class="dc-l" id="dcL">Total</div><div class="dc-v" id="dcV">${usd(total,0)}</div><div class="dc-s" id="dcS">${esc(acctLabel)}</div></div></div>
-    </div>
-    <div class="al-legend" id="pLegend">${rows || `<p class="pb-empty">Nothing to show in this view.</p>`}</div>
-    ${riskHTML(R)}`;
-
-  /* donut: rounded, animated draw-in; hover a slice OR its row and the centre reads that group */
+  /* donut: reuse the circles so a view change tweens from where it is instead of redrawing */
   const svg = $("#pDonut"), Rr = 97, C = 2*Math.PI*Rr, cx = 125, cy = 125;
-  const center = (l, v, s) => { $("#dcL").textContent = l; $("#dcV").textContent = v; $("#dcS").textContent = s; };
-  const resetCenter = () => center("Total", usd(total,0), acctLabel);
-  const track = document.createElementNS("http://www.w3.org/2000/svg","circle");
-  track.setAttribute("cx",cx); track.setAttribute("cy",cy); track.setAttribute("r",Rr); track.setAttribute("fill","none");
-  track.setAttribute("stroke","var(--hairline)"); track.setAttribute("stroke-width",26); track.setAttribute("opacity",".5");
-  svg.appendChild(track);
-  const arcs = {};
-  let off = 0;
-  groups.forEach(g => {
-    const frac = total > 0 ? g.value/total : 0, len = Math.max(0, frac*C - 3);
-    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",Rr); c.setAttribute("fill","none");
-    c.setAttribute("stroke", gcolor(g.key)); c.setAttribute("stroke-width",26); c.setAttribute("stroke-linecap","butt");
-    c.setAttribute("stroke-dasharray", `0 ${C}`); c.setAttribute("stroke-dashoffset", -off*C);
-    if(P.filter && P.filter !== g.key) c.setAttribute("opacity",".28");
-    c.dataset.len = len;
-    c.addEventListener("mouseenter", () => hi(g, true));
-    c.addEventListener("mouseleave", () => hi(g, false));
-    c.addEventListener("click", () => pSetFilter(g.key));
-    svg.appendChild(c); arcs[g.key] = c; off += frac;
-  });
-  function hi(g, on){
-    const c = arcs[g.key]; if(c) c.setAttribute("stroke-width", on ? 33 : 26);
-    if(on) center(g.key, usd(g.value,0), (total > 0 ? (g.value/total*100).toFixed(1) : 0) + "% of view"); else resetCenter();
+  const NS = "http://www.w3.org/2000/svg";
+  if(!svg.querySelector(".al-track")){
+    const track = document.createElementNS(NS, "circle");
+    track.setAttribute("class","al-track");
+    track.setAttribute("cx",cx); track.setAttribute("cy",cy); track.setAttribute("r",Rr); track.setAttribute("fill","none");
+    track.setAttribute("stroke","var(--hairline)"); track.setAttribute("stroke-width",26); track.setAttribute("opacity",".5");
+    svg.appendChild(track);
   }
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    Object.values(arcs).forEach(c => c.setAttribute("stroke-dasharray", `${c.dataset.len} ${C}`));
-    const nd = $("#alNeedle"); if(nd && R) nd.style.transform = `rotate(${(-90 + R.score*1.8).toFixed(1)}deg)`;
-  }));
+  let arcs = Array.from(svg.querySelectorAll(".al-arc"));
+  while(arcs.length > groups.length) arcs.pop().remove();
+  while(arcs.length < groups.length){
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("class","al-arc");
+    c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",Rr); c.setAttribute("fill","none");
+    c.setAttribute("stroke-width",26); c.setAttribute("stroke-linecap","butt");
+    c.setAttribute("stroke-dasharray", `0 ${C}`); c.setAttribute("stroke-dashoffset", 0);
+    svg.appendChild(c); arcs.push(c);
+  }
+
+  const hi = (g, on) => {
+    const c = arcs[groups.indexOf(g)];
+    if(c) c.setAttribute("stroke-width", on ? 33 : 26);
+    if(on) center(g.key, usd(g.value,0), (total > 0 ? (g.value/total*100).toFixed(1) : 0) + "% of view");
+    else resetCenter();
+  };
+
+  let off = 0;
+  const targets = [];
+  groups.forEach((g, i) => {
+    const c = arcs[i];
+    const frac = total > 0 ? g.value/total : 0, len = Math.max(0, frac*C - 3);
+    c.setAttribute("stroke", gcolor(g.key));
+    c.setAttribute("stroke-dashoffset", -off*C);
+    c.setAttribute("opacity", P.filter && P.filter !== g.key ? ".28" : "1");
+    c.dataset.k = g.key;
+    c.onmouseenter = () => hi(g, true);
+    c.onmouseleave = () => hi(g, false);
+    c.onclick = () => pSetFilter(g.key);
+    targets.push([c, len]);
+    off += frac;
+  });
+  if(fresh){
+    requestAnimationFrame(() => requestAnimationFrame(() => targets.forEach(([c,len]) => c.setAttribute("stroke-dasharray", `${len} ${C}`))));
+  } else {
+    targets.forEach(([c,len]) => c.setAttribute("stroke-dasharray", `${len} ${C}`));
+  }
+
   body.querySelectorAll(".al-row").forEach(r => {
     const g = groups.find(x => x.key === r.dataset.k);
     r.addEventListener("mouseenter", () => hi(g, true));
     r.addEventListener("mouseleave", () => hi(g, false));
     r.addEventListener("click", () => pSetFilter(r.dataset.k));
   });
+
+  if(fresh || (opts && opts.risk)) drawRisk(list);
 }
 
 /* ---------------------------------------------------------------------------
@@ -7605,39 +8371,40 @@ function pSparkSvg(p){
   </svg></div>`;
 }
 
+/* Eli, Sep 2026: "we can do away with SPAXX on the positions tab, since that's cash and never
+   moves." So the cash sweep no longer takes a card here -- it is a dead tile in a grid sorted by
+   today's move. It still counts everywhere it should (allocation, the risk model, every total),
+   and its balance rides in the card header so the numbers still reconcile at a glance. */
 function drawPTiles(t){
   const el = $("#pTiles"); if(!el) return;
-  const rank = p => p.type === "cash" ? -Infinity : (p.dayPct || 0);
-  const list = pViewMerged().slice().sort((a,b) => rank(b) - rank(a));
+  const all = pViewMerged();
+  const list = all.filter(p => p.type !== "cash").sort((a,b) => (b.dayPct || 0) - (a.dayPct || 0));
+  const cash = all.filter(p => p.type === "cash").reduce((s,p) => s + p.marketValue, 0);
+  const note = $("#pPosNote");
+  if(note) note.innerHTML = `Best → worst today${cash > 0 ? ` · <b>${usd(cash,0)}</b> cash held aside` : ""}`;
   el.innerHTML = "";
   list.forEach(p => {
-    const isCash = p.type === "cash";
     const share = t.value > 0 ? p.marketValue/t.value*100 : 0;
-    const col = isCash ? "var(--topbar-muted)" : (p.dayPct >= 0 ? "var(--up)" : "var(--down)");
+    const col = p.dayPct >= 0 ? "var(--up)" : "var(--down)";
     const tile = document.createElement("div");
-    tile.className = "ptile" + (isCash ? " cash" : "");
+    tile.className = "ptile";
     tile.style.setProperty("--tile-accent", col);
-    const logo = isCash
-      ? `<div class="ptile-logo" style="background:var(--topbar-muted);font-size:20px">$</div>`
-      : `<div class="ptile-logo" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,4))}${logoImg(p.ticker)}</div>`;
-    const chg = isCash
-      ? `<div class="ptile-chg" style="color:var(--muted);font-size:13px">Cash<small>no daily move</small></div>`
-      : `<div class="ptile-chg" style="color:${col}">${esc(pctS(p.dayPct))}<small>${esc(usdS(p.dayDollar))}</small></div>`;
+    const logo = `<div class="ptile-logo" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,4))}${logoImg(p.ticker)}</div>`;
+    const chg = `<div class="ptile-chg" style="color:${col}">${esc(pctS(p.dayPct))}<small>${esc(usdS(p.dayDollar))}</small></div>`;
     // deliberate two-line stack: at tile width this wrapped anyway, and a forced break
     // keeps every card's value block the same height instead of wrapping at random.
-    const sub = isCash
-      ? `${share.toFixed(1)}% of view<br>money market`
-      : `${share.toFixed(1)}% of view<br>` + (p.hasCost ? `${pctS(p.gainPct)} all-time` : `no cost basis`);
+    const sub = `${share.toFixed(1)}% of view<br>` + (p.hasCost ? `${pctS(p.gainPct)} all-time` : `no cost basis`);
     tile.innerHTML = `<div class="ptile-top">${logo}
-        <div class="ptile-id"><b>${esc(p.ticker)}</b><span>${esc(p.name || "")}</span>${isCash ? "" : `<em class="ptile-px">${usd(p.price)}</em>`}</div>${chg}</div>
+        <div class="ptile-id"><b>${esc(p.ticker)}</b><span>${esc(p.name || "")}</span><em class="ptile-px">${usd(p.price)}</em></div>${chg}</div>
       <div class="ptile-foot">
         <div class="ptile-val"><b>${usd(p.marketValue,0)}</b><span>${sub}</span></div>
-        ${isCash ? `<div class="ptile-spark"></div>` : pSparkSvg(p)}
+        ${pSparkSvg(p)}
       </div>
       <div class="ptile-w"><i style="width:${Math.max(2, Math.min(100, share)).toFixed(1)}%"></i></div>`;
-    if(!isCash) tile.addEventListener("click", () => openStockModal(p.ticker));
+    tile.addEventListener("click", () => openStockModal(p.ticker));
     el.appendChild(tile);
   });
+  if(!list.length) el.innerHTML = `<p class="pb-empty">No priced positions in this view.</p>`;
   if(!P.histReady) loadHistory();     // sparklines fill in when the daily closes land
 }
 /* Repaint the tiles in place (keeps scroll position) once daily history arrives. */

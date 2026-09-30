@@ -2169,6 +2169,9 @@
   .bp-t{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted);
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bp-ic{font-size:13px;flex-shrink:0}
+  .bp-logo{width:20px;height:20px;border-radius:6px;background:#fff;display:inline-flex;align-items:center;justify-content:center;
+    overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+  .bp-logo img,.bp-logo svg{width:16px;height:16px;display:block;object-fit:contain}
   .bp-v{font-size:21px;font-weight:900;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink)}
   .bp-f{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
   .bp-spark{display:block;width:68px;height:22px;flex-shrink:0}
@@ -2212,28 +2215,32 @@
   .ol-box.on .ol-box-top{color:var(--gold-dark)}
   .ol-panel{margin-top:14px}
   .ol-panel-empty{font-size:12.5px;color:var(--muted);padding:2px 2px 0}
-  .ol-panel-card{background:var(--card);border:1px solid color-mix(in srgb, var(--gold) 45%, var(--hairline));
-                 border-radius:18px;padding:18px 20px 20px;animation:fadein .2s ease}
-  .ol-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-  .ol-panel-ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;
+  /* The read, round 5: headline up front and big, then two tinted blocks -- Current state / Future outlook */
+  .ol-panel-card{background:var(--card);border:1px solid color-mix(in srgb, var(--oc, var(--gold)) 40%, var(--hairline));
+                 border-radius:18px;padding:18px 20px 16px;animation:fadein .2s ease;position:relative;overflow:hidden}
+  .ol-panel-card::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--oc, var(--gold))}
+  .ol-panel-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .ol-panel-ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;
                background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent);flex-shrink:0}
-  .ol-panel-tt{font-size:17px;font-weight:900;letter-spacing:-.015em}
-  .ol-panel-hd{font-size:13.5px;color:var(--muted);line-height:1.45;margin-top:2px}
-  .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-  @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:16px}}
-  .ol-col{border-left:2px solid color-mix(in srgb, var(--gold) 40%, transparent);padding-left:14px}
-  .ol-col:last-child{border-left-color:color-mix(in srgb, var(--muted) 34%, transparent)}
-  .ol-ck{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
-  .ol-col:last-child .ol-ck{color:var(--muted)}
-  .ol-ck span{font-size:9.5px;letter-spacing:.04em;text-transform:none;font-weight:700;opacity:.8}
-  .ol-col ol{margin:0;padding:0;list-style:none;counter-reset:olp}
-  .ol-col li{counter-increment:olp;position:relative;padding-left:22px;font-size:13.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
+  .ol-panel-tt{font-size:15px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .ol-panel-st{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;
+               color:var(--oc, var(--muted));background:color-mix(in srgb, var(--oc, var(--muted)) 14%, transparent)}
+  .ol-panel-hd{font-size:21px;font-weight:900;letter-spacing:-.022em;line-height:1.25;color:var(--ink);margin:2px 0 16px;text-wrap:balance}
+  .ol-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.ol-cols{grid-template-columns:1fr;gap:10px}.ol-panel-hd{font-size:18px}}
+  .ol-col{border-radius:14px;padding:13px 15px 14px;background:color-mix(in srgb, var(--oc, var(--gold)) 9%, transparent)}
+  .ol-col.ol-next{background:color-mix(in srgb, var(--gold) 10%, transparent)}
+  .ol-ck{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px;
+         color:var(--oc, var(--gold-dark))}
+  .ol-ck::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .ol-col.ol-next .ol-ck{color:var(--gold-dark)}
+  .ol-col.ol-next .ol-ck::before{border-radius:2px;transform:rotate(45deg)}
+  .ol-col ul{margin:0;padding:0;list-style:none}
+  .ol-col li{position:relative;padding-left:14px;font-size:13.5px;line-height:1.5;margin-bottom:7px;color:var(--ink);font-weight:600}
   .ol-col li:last-child{margin-bottom:0}
-  .ol-col li::before{content:counter(olp);position:absolute;left:0;top:2px;width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:900;
-                     display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--gold) 16%, transparent);color:var(--gold-dark)}
-  .ol-col:last-child li::before{background:color-mix(in srgb, var(--muted) 15%, transparent);color:var(--muted)}
+  .ol-col li::before{content:"";position:absolute;left:0;top:.62em;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb, var(--ink) 40%, transparent)}
   .ol-legacy{font-size:14px;line-height:1.6;margin:0}
-  .ol-src{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.4;padding-top:9px;border-top:1px solid var(--hairline)}
+  .ol-src{font-size:10.5px;color:var(--muted);margin-top:12px;line-height:1.4}
   @media(max-width:560px){
     .ol-grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px}
     .ol-box-ic{width:38px;height:38px;font-size:19px}
@@ -5489,107 +5496,94 @@ function eventStartMinutes(lead){
    no topic, no stance and no headline. The card looked empty. Anything read off the brief
    now has to pass shapeOK() before it is trusted, and the new field is `outlookBoard` so the
    two can never collide again. */
+/* Eli, Sep 2026 (round 5): "The read should be slightly more brief / should pop more. It should
+   solely focus on these two things: the current state, and the future outlook. There doesn't
+   need to be any specific 'short term' vs 'long term'." So each topic is now a punchy headline,
+   two lines on where it stands (`now`) and two on where it's headed (`next`). Brief-published
+   entries still in the old short/long shape are mapped onto now/next and trimmed to two each. */
 const OUTLOOK_SEED = {
   asOf: "2026-09-10",
   items: [
     { topic:"Stocks", stance:"Constructive, but stretched", tone:"up",
-      headline:"Earnings are carrying this market, not valuation — and the gains are narrow.",
-      short:[
-        "Profits are growing about 24% this year and roughly half of that is AI infrastructure spend, so the index is expensive for a reason (Goldman Sachs Research, Ben Snider).",
-        "Breadth is the real risk: fewer than a fifth of S&P names beat the index last month, so a wobble in a handful of megacaps is a wobble in the whole account.",
-        "Goldman's year-end target of 8,000 is about 21x forward earnings — priced for the earnings to actually show up, with little cushion if they don't."],
-      long:[
-        "Schwab's Liz Ann Sonders' framing is the one to borrow: over a decade, returns track earnings growth, and starting valuations mostly decide the first few years, not the last.",
-        "Vanguard and others have run 10-year U.S. equity return expectations in the mid single digits for a while — lower than the last decade, still ahead of cash.",
-        "The practical conclusion is diversification, not an exit: the cure for a narrow market is owning the parts that haven't run, including international."],
-      source:"Goldman Sachs Research (Ben Snider) · Charles Schwab (Liz Ann Sonders, Kevin Gordon)" },
+      headline:"Earnings are carrying this market — and the gains are narrow.",
+      now:[
+        "Profits are up ~24% this year, about half of it AI spend — expensive, but for a reason.",
+        "Fewer than a fifth of S&P names beat the index last month: a megacap wobble hits everything."],
+      next:[
+        "Goldman's 8,000 year-end target needs the earnings to show up — little cushion if they don't.",
+        "Decade returns track earnings, not today's price. The fix for a narrow market is diversifying, not exiting."],
+      source:"Goldman Sachs Research · Charles Schwab (Liz Ann Sonders)" },
     { topic:"Bonds", stance:"Higher for longer", tone:"up",
-      headline:"The 10-year near 4.8% pays you to wait — the income is the part you can count on.",
-      short:[
-        "Yields in the high 4s do the work on their own: no one has to bet on a price rally to earn a decent return this year.",
-        "Morgan Stanley's Vishy Tirupattur sees the 10-year drifting toward ~4.25% by year-end; J.P. Morgan's Jay Barry says ~4.35%. Price gains are a bonus, not the plan.",
-        "Short and intermediate maturities are the sweet spot right now — most of the yield, a fraction of the interest-rate risk."],
-      long:[
-        "The single best predictor of a bond fund's next-decade return is the yield you buy it at, which is why starting near 5% matters more than any forecast.",
-        "Bigger deficits argue for a steeper curve over time — that's an argument for owning the middle of the curve rather than reaching for 30-year paper.",
-        "Bonds earn their keep as the ballast that lets someone stay invested in stocks; that job doesn't change with the level of rates."],
-      source:"Morgan Stanley (Vishy Tirupattur, Martin Tobias) · J.P. Morgan (Jay Barry)" },
+      headline:"A 10-year near 4.8% pays you to wait.",
+      now:[
+        "Yields in the high 4s earn a decent return without betting on a rally.",
+        "Short and intermediate maturities give most of the yield for a fraction of the risk."],
+      next:[
+        "Morgan Stanley and J.P. Morgan see the 10-year drifting to ~4.25–4.35% — price gains are a bonus.",
+        "Starting yield is the best predictor of a decade's return, and starting near 5% is a good place to be."],
+      source:"Morgan Stanley (Vishy Tirupattur) · J.P. Morgan (Jay Barry)" },
     { topic:"Cash", stance:"Good yield, on a clock", tone:"warn",
-      headline:"Cash now yields less than bonds — 3-month bills 3.95%, the 10-year 4.83%.",
-      short:[
-        "The curve is upward-sloping again, so cash is the lowest yield on the board — and it reprices the day the Fed moves.",
-        "Money-market funds are still near 4% (Bankrate survey), which is why nobody feels the cost. The cost is the reinvestment, not the coupon.",
-        "Keep the emergency fund and anything needed inside two years; ladder the rest so the yield is locked past one statement cycle."],
-      long:[
-        "Every easing cycle in the last forty years ended with cash yields far below where they started, and the money that stayed in cash never got the bond rally.",
-        "After inflation, cash has historically returned close to zero over long stretches — it protects the number, not the purchasing power.",
-        "The right long-run role for cash is a defined liquidity bucket sized in months of spending, not a market view."],
-      source:"U.S. Treasury par yield curve · Bankrate money-market survey · Morgan Stanley (no 2026 cuts, two in 2027)" },
+      headline:"Cash now yields less than bonds — and reprices the day the Fed moves.",
+      now:[
+        "3-month bills ~3.95% vs. the 10-year ~4.83%; money funds still near 4%.",
+        "Right-sized: emergency fund plus anything needed inside two years."],
+      next:[
+        "Every easing cycle in 40 years ended with cash far below where it started.",
+        "After inflation, cash protects the number, not the purchasing power — ladder the rest."],
+      source:"U.S. Treasury yield curve · Bankrate money-market survey" },
     { topic:"The Fed", stance:"On hold, being tested", tone:"flat",
-      headline:"A new chair, a market testing him, and no cuts priced until 2027.",
-      short:[
-        "Kevin Warsh is new in the chair, and new chairs reliably get an early test of their inflation credibility.",
-        "Morgan Stanley's Michael Gapen expects policy on hold through this year, with two cuts in 2027; the market has at times flirted with pricing a hike instead.",
-        "Practical translation: don't build a plan that needs rate cuts to work."],
-      long:[
-        "Most FOMC participants have put the longer-run neutral rate near 3%, so the destination is lower than today even if the path is slow.",
-        "Fed independence is the live structural question; the bond market prices doubt about it in the term premium, not in the funds rate.",
-        "Over a full cycle the Fed sets the price of cash, and almost nothing else in a client's plan — that's the sentence that ends most of these conversations."],
-      source:"Charles Schwab 2026 mid-year outlook · Morgan Stanley (Michael Gapen)" },
+      headline:"A new chair, a market testing him, no cuts until 2027.",
+      now:[
+        "Kevin Warsh is new in the chair — new chairs get an early inflation-credibility test.",
+        "Morgan Stanley expects a hold through year-end; don't build a plan that needs cuts."],
+      next:[
+        "Two cuts pencilled in for 2027, toward a neutral rate near 3%.",
+        "Fed independence is the structural question — watch the term premium, not the funds rate."],
+      source:"Charles Schwab mid-year outlook · Morgan Stanley (Michael Gapen)" },
     { topic:"Inflation", stance:"Sticky, not spiraling", tone:"warn",
-      headline:"The last mile is the slow one — services and shelter are doing the sticking.",
-      short:[
-        "Goods disinflation has mostly played out; what's left is services, where wages set the pace.",
-        "Tariffs show up as a one-time level shift in prices rather than an ongoing inflation rate — worth saying out loud when a client sees a scary headline.",
-        "Watch the CPI print before each meeting: it's the number that decides whether 'on hold' holds."],
-      long:[
-        "BlackRock and others have argued the structural forces — deglobalization, energy transition, demographics — leave inflation averaging above the pre-2020 norm.",
-        "That's the case for owning real assets in small size and for not treating 2% as a permanent gravity.",
-        "For a household, the durable defense is income that grows: equities and TIPS, not cash."],
-      source:"BlackRock Investment Institute · Bureau of Labor Statistics CPI releases" },
+      headline:"The last mile is the slow one — services and shelter are sticking.",
+      now:[
+        "Goods disinflation is done; wages now set the pace in services.",
+        "Tariffs are a one-time price bump, not an ongoing inflation rate."],
+      next:[
+        "Deglobalization and demographics likely keep inflation above the pre-2020 norm.",
+        "The household defense is income that grows — equities and TIPS, not cash."],
+      source:"BlackRock Investment Institute · BLS CPI releases" },
     { topic:"Mortgage rates", stance:"Drifting higher", tone:"warn",
       headline:"30-year fixed at 6.76%, up from 6.35% a year ago.",
-      short:[
-        "Rates are higher than this time last year; the 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment.",
-        "The spread between mortgages and the 10-year Treasury is still wide by history — that spread, not the Fed, is where the next relief comes from.",
-        "You refinance when the math works, not when rates hit a number someone picked."],
-      long:[
-        "Freddie Mac and the MBA have both pointed at a structural housing shortage: affordability improves through income and supply far more slowly than through rates.",
-        "A 30-year fixed is a free option to refinance — the loan someone takes today is a ceiling, not a life sentence.",
-        "Over a decade the purchase-price decision matters more to net worth than the starting rate does."],
-      source:"Freddie Mac Primary Mortgage Market Survey · Mortgage Bankers Association" },
+      now:[
+        "The 15-year at 6.09% is the quiet opportunity for anyone who can carry the payment.",
+        "The mortgage-to-Treasury spread is still wide — that's where relief comes from, not the Fed."],
+      next:[
+        "The housing shortage means affordability improves slowly, through income and supply.",
+        "A 30-year fixed is a free option to refinance — today's rate is a ceiling, not a sentence."],
+      source:"Freddie Mac PMMS · Mortgage Bankers Association" },
     { topic:"Gold", stance:"Structural bid", tone:"up",
       headline:"Central banks keep buying; the Street sees $5,000 an ounce.",
-      short:[
-        "J.P. Morgan's Natasha Kaneva has a $5,000/oz Q4 2026 target and a ~$4,753 average — driven by official-sector buying, not retail fear.",
-        "Central banks have been net buyers for years running, which is a steadier bid than any panic trade.",
-        "It pays no income, so it never replaces bonds in a plan."],
-      long:[
-        "The World Gold Council's long-run case is reserve diversification away from a single currency — a decade-long trend, not a trade.",
-        "Sized at a few percent it's a diversifier; sized larger it's a bet on a specific monetary outcome.",
-        "Real yields are still the main long-run driver: if bonds pay well after inflation, gold has to work harder."],
+      now:[
+        "Official-sector buying — not retail fear — is driving it, and that bid is steady.",
+        "It pays no income, so it never replaces bonds."],
+      next:[
+        "J.P. Morgan targets $5,000/oz by Q4 2026 on continued reserve diversification.",
+        "A few percent is a diversifier; more is a bet on one monetary outcome."],
       source:"J.P. Morgan Commodities (Natasha Kaneva) · World Gold Council" },
     { topic:"Crypto", stance:"Flow-driven, high beta", tone:"flat",
-      headline:"Spot-ETF flows now set the tone week to week.",
-      short:[
-        "Price is being set by fund flows and macro risk appetite, not by anything you can underwrite from fundamentals (IG's Axel Rudolph).",
-        "It trades like the highest-beta thing in the account — it falls with tech, only more.",
-        "If a client wants exposure, size it so a 50% drawdown doesn't change the plan."],
-      long:[
-        "Regulated wrappers made it an allocation decision rather than an access problem; that's the real change of the last two years.",
-        "Fidelity and BlackRock research both frame it as a small satellite sleeve, rebalanced on a schedule — the discipline matters more than the thesis.",
-        "There is still no consensus valuation model, so honesty about that is the professional answer."],
-      source:"IG market analysis (Axel Rudolph) · BlackRock and Fidelity digital-asset research" },
+      headline:"Spot-ETF flows set the tone week to week.",
+      now:[
+        "Priced by fund flows and risk appetite, not fundamentals — it falls with tech, only harder.",
+        "Size it so a 50% drawdown doesn't change the plan."],
+      next:[
+        "Regulated wrappers made it an allocation decision; expect a small satellite sleeve to become normal.",
+        "Still no consensus valuation model — saying so is the professional answer."],
+      source:"IG (Axel Rudolph) · BlackRock and Fidelity digital-asset research" },
     { topic:"The dollar", stance:"Softer, but capped", tone:"flat",
-      headline:"Bearish consensus, but solid U.S. growth caps how far it falls.",
-      short:[
-        "J.P. Morgan's Meera Chandan has been on the soft-dollar side; a weaker dollar quietly boosts returns on international funds.",
-        "That currency tailwind is usually the whole explanation when a client asks why their foreign fund suddenly looks good.",
-        "It is a reason to hold a real international allocation, not a reason to trade currencies."],
-      long:[
-        "Reserve-currency status erodes slowly if at all; the sensible long-run view is a smaller share, not a replacement.",
-        "Valuation measures have had the dollar rich for years — mean reversion is a decade-scale story.",
-        "Unhedged international equity is how most households should express it, because the hedge costs the tailwind."],
+      headline:"Bearish consensus, but solid U.S. growth caps the fall.",
+      now:[
+        "A softer dollar is quietly boosting international funds — usually the whole explanation.",
+        "A reason to hold international, not to trade currencies."],
+      next:[
+        "Reserve status erodes slowly if at all: a smaller share, not a replacement.",
+        "Unhedged international equity is how most households should express it."],
       source:"J.P. Morgan FX (Meera Chandan)" }
   ]
 };
@@ -5638,17 +5632,36 @@ const BOARD_YIELDS = [
 /* Eli, Sep 2026 (round 4): "under Yields, I would like to see the following prices at all
    times: Gold, Brent Crude, BTC, ETH, all the main Indexes (S&P, VTI, etc.)." So this list is
    a contract, not a filter -- every row below is rendered on every load. */
+/* Eli, Sep 2026 (round 5): "Remove the dollar. it's irrelevant", "get actual logos for the
+   different indexes", "remove the indexes subheading". So: no Dollar row, the four index rows
+   carry no group header (group:null), and each row names a real logo -- the index owner's own
+   icon fetched at load (Google's favicon service, DuckDuckGo's as the backup), or the official
+   Bitcoin / Ethereum marks inline. If every logo source fails, the emoji is the last resort. */
 const BOARD_PRICES = [
-  { label:"S&P 500", group:"Indexes", match:/^s&p ?500$|^spx$/i,        icon:"\u{1F4C8}", live:"^GSPC", dec:0 },
-  { label:"Nasdaq",  group:"Indexes", match:/^nasdaq/i,                 icon:"\u{1F4BB}", live:"^IXIC", dec:0 },
-  { label:"Dow",     group:"Indexes", match:/^dow/i,                    icon:"\u{1F3ED}", live:"^DJI",  dec:0 },
-  { label:"VTI",     group:"Indexes", match:/^vti\b|total us market/i,  icon:"\u{1F310}", live:"VTI",   dec:2, pre:"$" },
+  { label:"S&P 500", group:null, match:/^s&p ?500$|^spx$/i,        icon:"\u{1F4C8}", logo:"spglobal.com",          live:"^GSPC", dec:0 },
+  { label:"Nasdaq",  group:null, match:/^nasdaq/i,                 icon:"\u{1F4BB}", logo:"nasdaq.com",            live:"^IXIC", dec:0 },
+  { label:"Dow",     group:null, match:/^dow/i,                    icon:"\u{1F3ED}", logo:"dowjones.com",          live:"^DJI",  dec:0 },
+  { label:"VTI",     group:null, match:/^vti\b|total us market/i,  icon:"\u{1F310}", logo:"investor.vanguard.com", live:"VTI",   dec:2, pre:"$" },
   { label:"Gold",        group:"Commodities & crypto", match:/^gold|xau/i,             icon:"\u{1F947}", live:"GC=F",     dec:0, pre:"$" },
-  { label:"Brent Crude", group:"Commodities & crypto", match:/brent|crude|wti|^oil$/i, icon:"\u{1F6E2}️", live:"BZ=F", dec:2, pre:"$" },
-  { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}", live:"BTC-USD",  dec:0, pre:"$" },
-  { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}",  live:"ETH-USD",  dec:0, pre:"$" },
-  { label:"Dollar",      group:"Commodities & crypto", match:/dollar index|^dollar$|^dxy|^u\.?s\.? dollar/i, icon:"\u{1F4B5}", live:"DX-Y.NYB", dec:2 }
+  { label:"Brent Crude", group:"Commodities & crypto", match:/brent|crude|wti|^oil$/i, icon:"\u{1F6E2}\uFE0F", live:"BZ=F", dec:2, pre:"$" },
+  { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}", svg:{ col:"#F7931A", d:"M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.548v-.002zm-6.35-4.613c.24-1.59-.974-2.45-2.64-3.03l.54-2.153-1.315-.33-.525 2.107c-.345-.087-.705-.167-1.064-.25l.526-2.127-1.32-.33-.54 2.165c-.285-.067-.565-.132-.84-.2l-1.815-.45-.35 1.407s.975.225.955.236c.535.136.63.486.615.766l-1.477 5.92c-.075.166-.24.406-.614.314.015.02-.96-.24-.96-.24l-.66 1.51 1.71.426.93.242-.54 2.19 1.32.327.54-2.17c.36.1.705.19 1.05.273l-.51 2.154 1.32.33.545-2.19c2.24.427 3.93.257 4.64-1.774.57-1.637-.03-2.58-1.217-3.196.854-.193 1.5-.76 1.68-1.93h.01zm-3.01 4.22c-.404 1.64-3.157.75-4.05.53l.72-2.9c.896.23 3.757.67 3.33 2.37zm.41-4.24c-.37 1.49-2.662.735-3.405.55l.654-2.64c.744.18 3.137.524 2.75 2.084v.006z" }, live:"BTC-USD",  dec:0, pre:"$" },
+  { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}",  svg:{ col:"#627EEA", d:"M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" }, live:"ETH-USD",  dec:0, pre:"$" }
 ];
+function bpLogo(spec){
+  if(spec.svg) return `<span class="bp-ic bp-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${spec.svg.col}" d="${spec.svg.d}"/></svg></span>`;
+  if(spec.logo){
+    const a = `https://www.google.com/s2/favicons?domain=${spec.logo}&sz=64`;
+    const b = `https://icons.duckduckgo.com/ip3/${spec.logo}.ico`;
+    return `<span class="bp-ic bp-logo"><img src="${a}" data-fallback="${b}" data-emoji="${spec.icon || ""}" alt="" referrerpolicy="no-referrer" onerror="bpLogoErr(this)"></span>`;
+  }
+  return `<span class="bp-ic">${spec.icon || ""}</span>`;
+}
+function bpLogoErr(img){
+  const next = img.dataset.fallback;
+  if(next){ img.dataset.fallback = ""; img.src = next; return; }
+  const box = img.parentNode; if(!box) return;
+  box.classList.remove("bp-logo"); box.textContent = img.dataset.emoji || "";
+}
 const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
 
@@ -5708,13 +5721,13 @@ function boardHTML(rates, prices, live){
   let lastGroup = null;
   const priceBlock = ps.map(p => {
     let head = "";
-    if(p.spec.group !== lastGroup){ lastGroup = p.spec.group; head = `<div class="bp-h">${esc(p.spec.group)}</div>`; }
+    if(p.spec.group !== lastGroup){ lastGroup = p.spec.group; if(p.spec.group) head = `<div class="bp-h">${esc(p.spec.group)}</div>`; }
     const up = (p.pct || 0) >= 0;
     const chip = typeof p.pct === "number"
       ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
       : `<span class="rb-chip flat">${esc(p.note)}</span>`;
     return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}">
-        <div class="bp-t"><span class="bp-ic">${p.spec.icon || ""}</span>${esc(p.spec.label)}</div>
+        <div class="bp-t">${bpLogo(p.spec)}${esc(p.spec.label)}</div>
         <div class="bp-v">${esc(p.value)}</div>
         <div class="bp-f">${chip}${p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`}</div>
       </div>`;
@@ -5826,18 +5839,20 @@ async function renderDesk(){
 
   const panel = grid.querySelector("#olPanel");
   const paintOutlook = x => {
-    const short = asList(x.short || x.shortTerm), long = asList(x.long || x.longTerm);
-    const legacy = !short.length && !long.length && x.explain;
-    const col = (kicker, when, arr) => `<div class="ol-col"><div class="ol-ck">${kicker}<span>${when}</span></div><ol>${
-      arr.map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>`;
-    panel.innerHTML = `<div class="ol-panel-card">
+    const now  = asList(x.now  || x.current || x.state || x.short || x.shortTerm).slice(0, 2);
+    const next = asList(x.next || x.future  || x.ahead || x.long  || x.longTerm).slice(0, 2);
+    const legacy = !now.length && !next.length && x.explain;
+    const col = (cls, kicker, arr) => `<div class="ol-col ${cls}"><div class="ol-ck">${kicker}</div><ul>${
+      arr.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`;
+    panel.innerHTML = `<div class="ol-panel-card" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
       <div class="ol-panel-head">
-        <span class="ol-panel-ic" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">${x.icon || outlookIcon(x.topic)}</span>
-        <div><div class="ol-panel-tt">${esc(x.topic)}</div><div class="ol-panel-hd">${esc(x.headline || "")}</div></div>
+        <span class="ol-panel-ic">${x.icon || outlookIcon(x.topic)}</span>
+        <div><div class="ol-panel-tt">${esc(x.topic)}${x.stance ? `<span class="ol-panel-st">${esc(x.stance)}</span>` : ""}</div></div>
       </div>
+      ${x.headline ? `<div class="ol-panel-hd">${esc(x.headline)}</div>` : ""}
       ${legacy ? `<p class="ol-legacy">${esc(x.explain)}</p>` : `<div class="ol-cols">
-        ${short.length ? col("Short term", "next 6–12 months", short) : ""}
-        ${long.length ? col("Long term", "3–5 years", long) : ""}
+        ${now.length ? col("ol-now", "Current state", now) : ""}
+        ${next.length ? col("ol-next", "Future outlook", next) : ""}
       </div>`}
       ${x.source ? `<div class="ol-src">${esc(x.source)}</div>` : ""}
     </div>`;
@@ -9465,7 +9480,7 @@ async function renderBrainFoodDeck(gate){
         <div class="bf-dots">${cards.map((_,k) => `<span class="${k===i?"on":k<i?"seen":""}"></span>`).join("")}</div>
         <button class="bf-arrow bf-next" id="bfNext" ${i === cards.length-1 ? "disabled" : ""}>→</button>
       </div>
-      <div class="bf-hint">${i < cards.length-1 ? "Swipe or tap the card for the next one" : ""}</div>
+      <div class="bf-hint">${i < cards.length-1 ? "Swipe or tap the card for the next one" : "Tap the card for the games"}</div>
     </div>`;
     /* the card reads its own words and dresses itself: palette + motion motif */
     const scene = bfScene(c.kind, [c.text, c.subject, c.kicker, c.sub, c.word && c.word.definition, c.word && c.word.term].filter(Boolean).join(" "));
@@ -9484,7 +9499,8 @@ async function renderBrainFoodDeck(gate){
     const go = (k, d) => { if(k < 0 || k >= cards.length) return; i = k; paint(d); };
     $("#bfNext").addEventListener("click", () => go(i+1, "next"));
     $("#bfPrev").addEventListener("click", () => go(i-1, "prev"));
-    $("#bfCard").addEventListener("click", e => { if(e.target.closest("button")) return; if(i < cards.length-1) go(i+1, "next"); });
+    /* Eli, Sep 2026: on the last card, tapping anywhere on it goes to the games -- not just the button. */
+    $("#bfCard").addEventListener("click", e => { if(e.target.closest("button")) return; if(i < cards.length-1) go(i+1, "next"); else if(c.kind === "done") $("#bfGames")?.click(); });
     let sx = null; const card = $("#bfCard");
     card.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, {passive:true});
     card.addEventListener("touchend", e => { if(sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if(dx < -40) go(i+1, "next"); else if(dx > 40) go(i-1, "prev"); }, {passive:true});

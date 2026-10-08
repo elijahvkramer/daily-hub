@@ -742,32 +742,6 @@
   .cal-tip .ct-time{color:var(--gold-soft);font-weight:900;font-size:11px}
 
   /* ---------- Today as a day view (Google Calendar day mode) ---------- */
-  .dv-allday{display:flex;align-items:flex-start;gap:9px;padding:8px 2px 10px;border-bottom:1px solid var(--hairline);margin-bottom:4px}
-  .dv-ak{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:4px;flex-shrink:0}
-  .dv-allday > div{display:flex;flex-wrap:wrap;gap:5px}
-  .dv-chip{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:color-mix(in srgb, var(--accent, var(--gold)) 14%, transparent);
-           color:var(--accent-dark, var(--gold-dark));border:1px solid color-mix(in srgb, var(--accent, var(--gold)) 28%, transparent)}
-  .dv-scroll{position:relative;flex:1 1 0;min-height:392px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;margin:0 -4px;padding:10px 0 10px}  /* top padding = room for the first hour label (was clipped) */
-  .dv-sub{display:inline-flex;align-items:center;gap:5px}
-  .dv-sub .tc-empty-check{width:15px;height:15px;font-size:9px;margin-right:0}
-  .dv-scroll::-webkit-scrollbar{width:6px} .dv-scroll::-webkit-scrollbar-thumb{background:var(--hairline);border-radius:3px}
-  .dv-grid{position:relative;padding-left:46px}
-  .dv-hr{position:absolute;left:0;right:0;height:0;border-top:1px solid var(--hairline)}
-  .dv-hr span{position:absolute;left:0;top:-7px;width:42px;text-align:right;font-size:10px;font-weight:800;color:var(--muted);
-              font-variant-numeric:tabular-nums;background:transparent}
-  .dv-body{position:absolute;left:46px;right:2px;top:0;bottom:0}
-  .dv-ev{position:absolute;border-radius:8px;padding:4px 8px;overflow:hidden;font-size:12.5px;line-height:1.3;
-         background:color-mix(in srgb, var(--accent, var(--gold)) 15%, transparent);
-         border-left:3px solid var(--accent, var(--gold));color:var(--ink);
-         box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .15s}
-  .dv-ev:hover{transform:translateX(1px);background:color-mix(in srgb, var(--accent, var(--gold)) 24%, transparent)}
-  .dv-ev b{display:block;font-weight:800;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .dv-ev i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .dv-ev.tiny{padding:2px 8px;display:flex;align-items:center;gap:6px}
-  .dv-ev.tiny b{font-size:11.5px} .dv-ev.tiny i{margin-top:0;font-size:10px}
-  .dv-now{position:absolute;left:-4px;right:0;height:0;border-top:2px solid var(--down);z-index:3;pointer-events:none}
-  .dv-now span{position:absolute;left:-4px;top:-5px;width:9px;height:9px;border-radius:50%;background:var(--down)}
-  @media(max-width:600px){.dv-scroll{min-height:340px}}
   .agenda-card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
   .todo-today-row .agenda-card{flex:1;display:flex;flex-direction:column;min-width:0}
   .todo-today-row .agenda-card .tc-head{flex:0 0 auto}
@@ -2411,6 +2385,152 @@
   html.glass .gate-box input::placeholder{color:var(--muted)}
   html.glass .gate-bio{border-radius:999px}
   @media (prefers-reduced-transparency: reduce){ html.glass .card,html.glass .bento-card,html.glass .chart-card,html.glass .todos{background:rgba(255,255,255,.92)} }
+
+  /* =====================================================================
+     Home: Today agenda + To-Dos, redesigned (Eli, Oct 2026)
+     Today = a calm agenda list in the Echo Show spirit (tinted from the theme accent, so it follows
+     whatever color is picked). To-Dos = the same features, quieter chrome: round checks, a labeled
+     Urgent/Chill split, one-dot urgency toggle, and the row tools appear on hover (or via the "more"
+     button on touch). Placed last so it wins over the earlier base rules.
+     ===================================================================== */
+
+  /* ---------- Today agenda ---------- */
+  .agenda-card.ag-card,html.glass .agenda-card.ag-card{
+    --ag-a:var(--accent, var(--gold));
+    position:relative;overflow:hidden;color:#fff;padding:22px 24px 18px;border:1px solid rgba(255,255,255,.18);
+    background:
+      radial-gradient(120% 70% at 0% 0%,rgba(255,255,255,.16),transparent 58%),
+      linear-gradient(162deg,
+        color-mix(in srgb,var(--ag-a) 52%,#06121c) 0%,
+        color-mix(in srgb,var(--ag-a) 64%,#0a1a24) 48%,
+        color-mix(in srgb,var(--ag-a) 70%,#2fb7a6) 100%);
+    box-shadow:0 1px 2px rgba(6,18,28,.18),0 18px 40px -16px color-mix(in srgb,var(--ag-a) 55%,#06121c);
+    min-height:320px;
+  }
+  .ag-card .ag-scroll{flex:1 1 0;min-height:0;max-height:520px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;margin:0 -6px;padding:0 6px 26px;
+    -webkit-mask-image:linear-gradient(#000 calc(100% - 34px),transparent);mask-image:linear-gradient(#000 calc(100% - 34px),transparent)}
+  .ag-card .ag-scroll::-webkit-scrollbar{display:none}
+  .ag-group + .ag-group{margin-top:22px}
+  .ag-gl{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600;letter-spacing:.01em;color:rgba(255,255,255,.78);margin-bottom:6px}
+  .ag-gl em{font-style:normal;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.5)}
+  .ag-row{position:relative;padding:12px 0 13px 20px;border-bottom:1px solid rgba(255,255,255,.12);transition:opacity .2s}
+  .ag-row:last-child{border-bottom:none}
+  .ag-time{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+  .ag-name{position:relative;margin-top:2px;font-size:25px;line-height:1.14;font-weight:400;letter-spacing:-.012em;color:#fff;overflow-wrap:anywhere}
+  .ag-name::before{content:"";position:absolute;left:-20px;top:.46em;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55)}
+  .ag-where{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.58);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ag-row.past{opacity:.42}
+  .ag-row.now .ag-name::before{background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
+  .ag-row.now .ag-name{font-weight:500}
+  .ag-nowpill{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);color:color-mix(in srgb,var(--ag-a) 55%,#06121c)}
+  .ag-row.is-todo .ag-name{font-size:19px}
+  .ag-row.is-todo .ag-name::before{border-radius:2px;width:5px;height:5px;top:.58em}
+  .ag-empty{display:flex;align-items:center;gap:10px;padding:10px 0 4px 2px;font-size:15px;color:rgba(255,255,255,.72)}
+  .ag-check{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.2);display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0}
+  .todo-today-row .agenda-card.ag-card{flex:1;display:flex;flex-direction:column;min-width:0}
+  html.glass[data-mode="dark"] .agenda-card.ag-card{--ag-a:color-mix(in srgb,var(--accent, var(--gold)) 62%,#000)}
+  @media(max-width:900px){.ag-card .ag-scroll{flex:0 1 auto;max-height:460px}}
+  @media(max-width:600px){.agenda-card.ag-card,html.glass .agenda-card.ag-card{min-height:240px;padding:18px 18px 14px}.ag-name{font-size:22px}}
+
+  /* ---------- To-Dos ---------- */
+  .todo-card{display:flex;flex-direction:column;padding:20px 20px 16px}
+  .todo-card .tc-head{margin-bottom:12px;gap:12px;flex-wrap:wrap}
+  .todo-card .tc-head .h{font-size:22px;font-weight:800;letter-spacing:-.02em;text-transform:none;color:var(--ink)}
+  .todo-card .tc-sub{font-size:11.5px;font-weight:600;letter-spacing:0}
+  .todo-card .tc-badge{border:none;min-width:26px;height:26px;background:color-mix(in srgb,var(--accent, var(--gold)) 15%,transparent);color:var(--gold-dark);font-size:12.5px}
+  .todo-card .tc-badge.clear{background:var(--up);color:#fff}
+  .todo-card .tc-list-toggle{border:none;background:color-mix(in srgb,var(--ink) 7%,transparent);padding:3px}
+  .todo-card .tc-list-slider{box-shadow:0 2px 10px color-mix(in srgb,var(--accent, var(--gold)) 45%,transparent)}
+  .todo-card .tc-list-btn{font-size:10.5px;padding:4px 12px}
+  .todo-card #todosInlineWrap{flex:1 1 auto;min-height:0}
+
+  .todo-card .todo-item{border-bottom:none;margin:1px -8px;border-radius:14px;padding:0 8px;transition:opacity .35s ease,transform .35s ease,background .15s}
+  .todo-card .todo-item::before{left:0;top:13px;bottom:13px;width:3px;border-radius:3px}
+  .todo-card .todo-item.tk-urgent::before{background:linear-gradient(var(--gold),var(--gold-dark));opacity:.9}
+  .todo-card .todo-item.tk-chill::before{background:transparent}
+  .todo-card .todo-item:hover,.todo-card .todo-item.ti-tools-open{background:color-mix(in srgb,var(--ink) 4.5%,transparent)}
+  .todo-card .ti-main{position:relative;gap:10px;padding:11px 4px 11px 6px;font-size:15px;font-weight:550;line-height:1.35;background:none!important;border-radius:12px}
+  .todo-card .todo-item.ti-checked .ti-main{background:color-mix(in srgb,var(--up) 9%,transparent)!important}
+  .todo-card .ti-drag{width:8px;padding:2px 0;margin-left:-4px;font-size:13px;opacity:0}
+  .todo-card .todo-item:hover .ti-drag{opacity:.4}
+  .todo-card .ti-drag:hover{opacity:.85!important}
+
+  /* round check; ring colour says urgent vs chill */
+  .todo-card .ti-main .ti-check{width:21px;height:21px;border-radius:50%;border:2px solid color-mix(in srgb,var(--gold) 80%,transparent);font-size:11px;font-weight:900;transition:background .18s,border-color .18s,color .18s,transform .18s}
+  .todo-card .tk-chill .ti-main .ti-check{border-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+  .todo-card .ti-main .ti-check:hover{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold-dark);transform:scale(1.08)}
+  .todo-card .todo-item.ti-checked .ti-check{transform:scale(1.04)}
+  .todo-card .ti-main .ti-text{border-radius:6px;padding:1px 0}
+  .todo-card .ti-main .ti-text:hover{background:none;color:var(--gold-dark)}
+  .todo-card .tk-chill .ti-text{color:color-mix(in srgb,var(--ink) 80%,var(--muted))}
+  .todo-card .ti-main .ti-text-input{background:var(--modal-solid,#fff);color:var(--ink);border-radius:8px;padding:4px 9px;margin:-5px 0}
+
+  /* quiet inline meta: due chip, note / checklist badges, one-dot urgency toggle */
+  .todo-card .ti-chip{font-size:11px;font-weight:700;padding:3px 9px;background:color-mix(in srgb,var(--ink) 6%,transparent);border:none;color:var(--muted)}
+  .todo-card .ti-chip.overdue{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
+  .ti-badge{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--gold-dark);cursor:pointer;padding:2px 6px;border-radius:999px;background:color-mix(in srgb,var(--gold) 12%,transparent);font-variant-numeric:tabular-nums}
+  .ti-badge svg{width:12px;height:12px}
+  .todo-card .ti-kind{padding:6px 7px;border:none;background:transparent;gap:0;border-radius:999px;color:var(--muted)}
+  .todo-card .ti-kind i{width:8px;height:8px}
+  .todo-card .ti-kind-urgent{background:transparent;border:none}
+  .todo-card .ti-kind-urgent i{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent)}
+  .todo-card .ti-kind-chill{background:transparent;border:none}
+  .todo-card .ti-kind span{max-width:0;opacity:0;overflow:hidden;transition:max-width .2s,opacity .15s,margin .2s;font-size:9.5px}
+  .todo-card .ti-main:hover .ti-kind span,.todo-card .ti-kind:focus-visible span{max-width:54px;opacity:1;margin-left:6px}
+  .todo-card .ti-main:hover .ti-kind{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .todo-card .ti-due-input{background:var(--modal-solid,#fff);color:var(--ink)}
+
+  /* row tools: a small floating pill on hover / focus, or opened by the more button on touch */
+  .ti-tools{position:absolute;right:6px;top:50%;transform:translateY(-50%) scale(.96);display:flex;align-items:center;gap:1px;padding:3px 4px;border-radius:999px;
+    background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--hairline);box-shadow:0 6px 18px -6px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:opacity .14s,transform .14s;z-index:2}
+  .todo-card .todo-item:hover .ti-tools,.todo-card .ti-main:focus-within .ti-tools,.todo-card .todo-item.ti-tools-open .ti-tools{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
+  .ti-tools .ti-icon-btn{width:28px;height:28px;padding:0;justify-content:center;border-radius:50%;color:var(--muted)}
+  .ti-tools .ti-icon-btn svg{width:15px;height:15px}
+  .ti-tools .ti-icon-btn.ti-due-btn{width:auto;padding:0 9px;border-radius:999px;font-size:11px;font-weight:800}
+  .ti-tools .ti-icon-btn:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
+  .ti-tools .ti-icon-btn.active{color:var(--gold-dark)}
+  .ti-tools .ti-del{opacity:1;width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--muted)}
+  .ti-tools .ti-del svg{width:14px;height:14px}
+  .ti-tools .ti-del:hover{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
+  .ti-more{display:none;flex-shrink:0;appearance:none;border:none;background:none;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;place-items:center;padding:0}
+  .ti-more svg{width:18px;height:18px}
+  @media(hover:none){
+    .ti-more{display:inline-grid}
+    .ti-tools{position:static;transform:none;opacity:1;display:none;flex-basis:100%;justify-content:flex-end;box-shadow:none;border:none;background:none;backdrop-filter:none;pointer-events:auto;padding:0}
+    .todo-card .ti-main{flex-wrap:wrap}
+    .todo-card .todo-item.ti-tools-open .ti-tools{display:flex;transform:none}
+    .todo-card .ti-drag{opacity:.35}
+  }
+
+  /* group labels (Urgent / Chill) */
+  .todo-card .ti-divider{display:flex;align-items:center;gap:10px;height:auto;background:none;margin:14px 0 4px;border-radius:0;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .todo-card .ti-divider:first-child{margin-top:2px}
+  .todo-card .ti-divider::after{content:"";flex:1;height:1px;background:var(--hairline)}
+
+  /* undo bar, notes, checklist */
+  .todo-card .ti-undo-bar{height:3px;border-radius:3px;margin:0 6px 6px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+  .todo-card .ti-undo-bar span{border-radius:3px}
+  .todo-card .ti-note-wrap,.todo-card .ti-sub-wrap{padding:0 6px 12px 38px}
+  .todo-card .ti-note textarea{background:color-mix(in srgb,var(--paper) 80%,transparent);border-radius:12px;padding:10px 12px;line-height:1.45}
+  .todo-card .ti-sub-item{padding:6px 2px;font-size:14px}
+  .todo-card .ti-sub-item .box{width:16px;height:16px;border-radius:50%}
+  .todo-card .ti-sub-add input{border-radius:999px;padding:6px 12px;background:color-mix(in srgb,var(--paper) 80%,transparent)}
+  .todo-card .ti-sub-add button{border-radius:50%;width:28px;height:28px;color:#fff}
+
+  /* add field: pinned to the bottom, so the card always lines up with Today beside it */
+  .todo-card .todo-add{margin-top:auto;padding:14px 0 0;gap:10px;align-items:center}
+  .todo-card .todo-add input{border-radius:999px;padding:12px 18px;font-size:14.5px;background:color-mix(in srgb,var(--paper) 78%,transparent);border:1px solid var(--hairline);transition:border-color .15s,box-shadow .15s,background .15s}
+  .todo-card .todo-add input:focus{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 16%,transparent);background:color-mix(in srgb,var(--paper) 95%,transparent)}
+  .todo-card .todo-add button{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,var(--gold),var(--gold-dark));color:#fff;font-size:22px;font-weight:600;line-height:1;box-shadow:0 8px 18px -8px var(--gold);transition:transform .15s,filter .15s}
+  .todo-card .todo-add button:hover{transform:scale(1.07) rotate(90deg);filter:brightness(1.05)}
+
+  /* history + empty state */
+  .todo-card .tc-hist-wrap{border-bottom:1px solid var(--hairline);border-radius:0;margin:0 0 10px;padding:0 2px 10px}
+  .todo-card .tc-hist-item{padding:6px 2px}
+  .todo-card .tc-empty{flex-direction:column;justify-content:center;gap:12px;padding:34px 0 30px;font-size:15px;font-weight:600;text-align:center}
+  .todo-card .tc-empty .tc-empty-check{width:42px;height:42px;font-size:19px;box-shadow:0 10px 22px -8px var(--up)}
+  .todo-card .todo-item.dragging{background:var(--gold-soft)}
 </style>
 </head>
 <body>
@@ -4541,143 +4661,75 @@ function renderEventsList(arr, fallbackDate, opts){
 }
 
 /* today's schedule — the right-hand column beside the to-do list */
-/* ---------- Today, as a day view ----------
-   Eli, Sep 2026: "make the today tab more like what google calendar looks like when you
-   select day mode. It should fill a pre-determined height and show when it is happening
-   pegged to that hour. If it's an all day event, have that be annotated another way."
-
-   So: a fixed-height hour grid, events absolutely positioned by their start and end minute
-   and sized by duration, overlapping events packed into side-by-side columns, a live "now"
-   line, and all-day items in their own band above the grid where they belong. */
-const DAY_HOUR_PX = 46;                 // one hour of grid
-const DAY_WIN_LO = 6*60, DAY_WIN_HI = 22*60;   // default visible window: 6am-10pm
-function dayViewLayout(events){
-  /* Cluster overlapping events, then give each cluster as many columns as it needs -- the
-     same thing Google does, and the reason two 9am meetings sit beside each other rather
-     than on top of each other. */
-  const sorted = events.slice().sort((a,b) => a.start - b.start || b.end - a.end);
-  const out = [];
-  let cluster = [], clusterEnd = -1;
-  const flush = () => {
-    if(!cluster.length) return;
-    const cols = [];
-    cluster.forEach(ev => {
-      let ci = cols.findIndex(c => c <= ev.start);
-      if(ci === -1){ cols.push(ev.end); ci = cols.length - 1; } else cols[ci] = ev.end;
-      ev.col = ci;
-    });
-    cluster.forEach(ev => { ev.cols = cols.length; out.push(ev); });
-    cluster = []; clusterEnd = -1;
-  };
-  sorted.forEach(ev => {
-    if(cluster.length && ev.start >= clusterEnd) flush();
-    cluster.push(ev);
-    clusterEnd = Math.max(clusterEnd, ev.end);
-  });
-  flush();
-  return out;
+/* ---------- Today, as an agenda list ----------
+   Eli, Oct 2026: wanted Today to feel like the Echo Show agenda -- a short, calm list of what is
+   actually coming ("Today" / "Tomorrow", the time range in small type, the title big) instead of an
+   hour grid with sixteen empty hours in it. No grid, no scrolling to find the first event: the list
+   IS the events. Finished events fade, the one happening now gets a pill, all-day items and to-dos
+   that fall due lead their day. Tomorrow is read from the same two-week radar the mini calendar uses. */
+function fmtClock(m){
+  const h = Math.floor(m/60) % 24, mm = m % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(mm).padStart(2,"0")} ${h < 12 ? "AM" : "PM"}`;
 }
-function buildTodayScheduleHTML(todayList, todayDate){
-  const list = todayList || [];
-  const timed = [], allDay = [];
-  list.forEach((ev, i) => {
-    const p = parseEventLead(ev.lead, ev.body, todayDate);
+function agendaItems(list, dateStr){
+  const out = [];
+  (list || []).forEach((ev, i) => {
+    const p = parseEventLead(ev.lead, ev.body, dateStr);
     const title = (p.title || (ev.body || "").split(" · ")[0] || ev.lead || "Event").replace(/\s*—\s*$/, "");
     const where = (ev.body || "").split(" · ").slice(1).join(" · ");
-    if(p.startMin == null){ allDay.push({ i, title, where }); return; }
-    const start = p.startMin;
-    const end = Math.max(start + 25, p.endMin != null && p.endMin > start ? p.endMin : start + 50);
-    timed.push({ i, title, where, start, end, label: p.timeLine || fmtMinLabel(start) });
+    out.push({
+      i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo,
+      start: p.startMin,
+      end: (p.endMin != null && p.startMin != null && p.endMin > p.startMin) ? p.endMin : null
+    });
   });
-
+  // all-day / due items first, then by start time
+  return out.sort((a, b) => (a.start == null ? -1 : a.start) - (b.start == null ? -1 : b.start) || a.i - b.i);
+}
+function agendaRowHTML(a, state){
+  const time = a.start == null
+    ? (a.isTodo ? "Due" : "All day")
+    : fmtClock(a.start) + (a.end != null ? " – " + fmtClock(a.end) : "");
+  return `<div class="ag-row${state ? " " + state : ""}${a.isTodo ? " is-todo" : ""}" title="${esc(a.where || a.title)}">
+      <div class="ag-time">${time}${state === "now" ? `<span class="ag-nowpill">Now</span>` : ""}</div>
+      <div class="ag-name">${esc(a.title)}</div>${a.where ? `<div class="ag-where">${esc(a.where)}</div>` : ""}
+    </div>`;
+}
+function agendaGroupHTML(label, dateTxt, items, nowMin, live){
+  const rows = items.map(a => {
+    let state = "";
+    if(live && a.start != null){
+      const end = a.end != null ? a.end : a.start + 30;
+      state = nowMin >= end ? "past" : (nowMin >= a.start ? "now" : "");
+    }
+    return agendaRowHTML(a, state);
+  }).join("");
+  return `<section class="ag-group">
+      <div class="ag-gl"><span>${label}</span><em>${esc(dateTxt)}</em></div>
+      ${rows || `<div class="ag-empty"><span class="ag-check">✓</span>Nothing scheduled</div>`}
+    </section>`;
+}
+function buildTodayScheduleHTML(todayList, todayDate, radarList){
   const nowMin = (() => {
     const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
     return +t.slice(0,2)*60 + +t.slice(3,5);
   })();
   const isToday = !todayDate || todayDate === todayCT();
+  const base = todayDate ? new Date(todayDate + "T12:00:00") : new Date();
+  const short = d => d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  const tmw = new Date(base.getTime() + 864e5);
+  const tmwStr = `${tmw.getFullYear()}-${String(tmw.getMonth()+1).padStart(2,"0")}-${String(tmw.getDate()).padStart(2,"0")}`;
 
-  // Eli, Oct 2026: "make that always open up to the first event of the day instead of always starting
-  // at 12 am ... I'm basically never going to have any events between 12 am and 6 am, or after 9 pm."
-  // So the grid is a working-day window (6am-10pm) that only grows when an event actually falls outside
-  // it (an early flight, a late dinner), plus one spare hour either side. wireDayView() opens it on the
-  // first event of the day.
-  let lo = DAY_WIN_LO, hi = DAY_WIN_HI;
-  const firstStart = timed.length ? Math.min(...timed.map(e => e.start)) : null;
-  if(timed.length){
-    const lastEnd = Math.max(...timed.map(e => e.end));
-    lo = Math.min(lo, Math.max(0, Math.floor(firstStart / 60) * 60 - 60));
-    hi = Math.max(hi, Math.min(24*60, Math.ceil(lastEnd / 60) * 60 + 60));
+  const todayItems = agendaItems(todayList, todayDate);
+  let h = agendaGroupHTML("Today", short(base), todayItems, nowMin, isToday);
+  if(radarList){
+    const tomorrow = agendaItems(radarList, todayDate).filter(a => a.dateStr === tmwStr);
+    h += agendaGroupHTML("Tomorrow", short(tmw), tomorrow, nowMin, false);
   }
-  const span = hi - lo;
-  const y = m => (m - lo) / 60 * DAY_HOUR_PX;
-
-  let hours = "";
-  for(let m = lo; m <= hi; m += 60){
-    const h = Math.floor(m / 60) % 24;
-    hours += `<div class="dv-hr" style="top:${y(m)}px"><span>${m === 24*60 ? "" : (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "am" : "pm")}</span></div>`;
-  }
-  const blocks = dayViewLayout(timed).map(ev => {
-    const top = y(ev.start), h = Math.max(22, y(ev.end) - y(ev.start) - 2);
-    const w = 100 / ev.cols, left = ev.col * w;
-    return `<div class="dv-ev${h < 34 ? " tiny" : ""}" style="top:${top}px;height:${h}px;left:calc(${left}% + 2px);width:calc(${w}% - 5px)"
-      title="${esc(ev.label)} · ${esc(ev.title)}">
-      <b>${esc(ev.title)}</b><i>${esc(ev.label)}${ev.where ? " · " + esc(ev.where) : ""}</i></div>`;
-  }).join("");
-  const nowLine = isToday && nowMin >= lo && nowMin <= hi
-    ? `<div class="dv-now" style="top:${y(nowMin)}px"><span></span></div>` : "";
-
-  const allDayBand = allDay.length
-    ? `<div class="dv-allday"><span class="dv-ak">All day</span><div>${allDay.map(a =>
-        `<span class="dv-chip" title="${esc(a.where || a.title)}">${esc(a.title)}</span>`).join("")}</div></div>`
-    : "";
-
-  // Eli, Sep 2026: "the Today tab should always show a timeline, like the day view of Google
-  // Calendar -- if there's nothing on the calendar you can still show the green check, but it
-  // should still show the timing throughout the day." So the hour grid always renders; an
-  // empty day just gets the check banner above it instead of replacing it.
-  const dateTxt = todayDate ? new Date(todayDate + "T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}) : "";
-  const countTxt = list.length
-    ? `${list.length} ${list.length===1?"item":"items"}`
-    : `<span class="tc-empty-check">✓</span>Nothing scheduled`;
-  return `<div class="bento-card agenda-card">
-    <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub dv-sub">${dateTxt ? esc(dateTxt) + (countTxt ? " · " : "") : ""}${countTxt}</span></span></div>
-    ${allDayBand}
-    <div class="dv-scroll" id="dvScroll"><div class="dv-grid" data-lo="${lo}" data-first="${firstStart == null ? "" : firstStart}" data-now="${isToday && nowMin >= lo && nowMin <= hi ? nowMin : ""}" style="height:${span/60*DAY_HOUR_PX}px">
-      ${hours}<div class="dv-body">${blocks}${nowLine}</div>
-    </div></div>
-  </div>`;
+  return `<div class="bento-card agenda-card ag-card"><div class="ag-scroll">${h}</div></div>`;
 }
-function fmtMinLabel(m){
-  const h = Math.floor(m/60) % 24, mm = m % 60;
-  return `${h % 12 === 0 ? 12 : h % 12}${mm ? ":" + String(mm).padStart(2,"0") : ""}${h < 12 ? "am" : "pm"}`;
-}
-/* Open the day on its first event (Eli, Oct 2026) -- or, with nothing scheduled, an hour before the
-   now line. The position is worked out from minutes, not from measured element positions, and it
-   waits until the card is actually on screen: a scrollTop written while the Today tab is hidden is
-   silently ignored, which is how this used to land on 12am and stay there. Snapped to a whole hour
-   so the top hour label is never sliced; the grid has 10px of top padding, so an hour line sits at
-   10 + hours*DAY_HOUR_PX and we land 12px above it. */
-function dvOpen(sc){
-  const grid = sc.querySelector(".dv-grid"); if(!grid) return;
-  const lo = +grid.dataset.lo || 0;
-  const first = grid.dataset.first, now = grid.dataset.now;
-  const anchor = first !== "" && first != null ? +first : (now !== "" && now != null ? +now - 60 : lo);
-  const hourStart = Math.max(lo, Math.floor(anchor / 60) * 60);
-  sc.scrollTop = Math.max(0, 10 + (hourStart - lo) / 60 * DAY_HOUR_PX - 12);
-  sc.dataset.scrolled = "1";
-}
-function wireDayView(root){
-  const sc = (root || document).querySelector("#dvScroll");
-  if(!sc || sc.dataset.scrolled) return;
-  if(sc.clientHeight > 0){ dvOpen(sc); return; }
-  if(sc._dvWait || !("ResizeObserver" in window)) return;
-  sc._dvWait = new ResizeObserver(() => {
-    if(!sc.clientHeight) return;
-    sc._dvWait.disconnect(); sc._dvWait = null;
-    if(!sc.dataset.scrolled) dvOpen(sc);
-  });
-  sc._dvWait.observe(sc);
-}
+/* kept as a no-op: the old hour grid needed to be scrolled to the first event once on screen */
+function wireDayView(){}
 
 /* ---- to-do item extras: expand/collapse state is a pure client-side UI
    concern (not synced across devices — a fresh tab visit starts collapsed),
@@ -4770,7 +4822,17 @@ function todoRowsHTML(items){
       ? `<input type="date" class="ti-due-input" data-action="due-input" value="${esc(t.due||"")}">`
       : (t.due
           ? `<span class="ti-chip${overdue?" overdue":""}" data-action="due-edit">${esc(dueChipLabel(t.due))}<span class="ti-chip-x" data-action="due-clear" title="Clear due date">×</span></span>`
-          : `<button type="button" class="ti-icon-btn" data-action="due-add" title="Set due date">+ due</button>`);
+          : "");
+    const IC = {
+      move:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>`,
+      note:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>`,
+      list:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 1.6 1.6L8.5 4.5M4 13l1.6 1.6 2.9-3.1M11 6.5h9M11 14h9M11 19.5h9"/></svg>`,
+      del:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+      more:`<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>`
+    };
+    const badges = (hasNote ? `<span class="ti-badge" data-action="note-toggle" title="Notes">${IC.note}</span>` : "")
+      + (subitems.length ? `<span class="ti-badge" data-action="sub-toggle" title="Checklist">${IC.list}${subDone}/${subitems.length}</span>` : "");
+    const moveTo = (t.list==="work"?"work":"personal")==="work" ? "personal" : "work";
     const pending = pendingComplete.get(t.id);
     const checkedPending = !!pending;
     // Eli, Sep 2026: "the green bar starts to go right to left, but it gets removed from the
@@ -4783,7 +4845,9 @@ function todoRowsHTML(items){
     // correct visual position (already-elapsed time) no matter how many times the row gets
     // rebuilt, so it always finishes exactly when the row actually disappears.
     const undoElapsedMs = pending ? Math.max(0, Date.now() - pending.startedAt) : 0;
-    const divider = (i === firstChillIdx && firstChillIdx > 0) ? `<div class="ti-divider"></div>` : "";
+    const divider = firstChillIdx > 0
+      ? (i === 0 ? `<div class="ti-divider"><span>Urgent</span></div>` : (i === firstChillIdx ? `<div class="ti-divider"><span>Chill</span></div>` : ""))
+      : "";
     const arriving = todoMoving.get(t.id) === kind;
     if(arriving) setTimeout(() => todoMoving.delete(t.id), 900);
     return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}${arriving?" ti-arriving":""}" data-id="${esc(t.id)}" data-kind="${kind}">
@@ -4793,12 +4857,17 @@ function todoRowsHTML(items){
         ${textEditing.has(t.id)
           ? `<input type="text" class="ti-text-input" maxlength="140" value="${esc(t.text)}">`
           : `<span class="ti-text" data-action="text-edit" title="Click to rename">${esc(t.text)}</span>`}
-        <button type="button" class="ti-kind ti-kind-${kind}" data-action="kind-toggle" title="Switch between urgent and chill"><i></i><span>${kind==="chill"?"Chill":"Urgent"}</span></button>
-        <button type="button" class="ti-icon-btn" data-action="list-move" data-to="${(t.list==="work"?"work":"personal")==="work"?"personal":"work"}" title="Move to ${(t.list==="work"?"work":"personal")==="work"?"Personal":"Work"}">&#8646;</button>
         ${dueField}
-        <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">✎</button>
-        <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">☰${subitems.length?` ${subDone}/${subitems.length}`:""}</button>
-        <span class="ti-del" data-action="remove" title="Remove">✕</span>
+        ${badges}
+        <button type="button" class="ti-kind ti-kind-${kind}" data-action="kind-toggle" title="Switch between urgent and chill"><i></i><span>${kind==="chill"?"Chill":"Urgent"}</span></button>
+        <span class="ti-tools">
+          <button type="button" class="ti-icon-btn" data-action="list-move" data-to="${moveTo}" title="Move to ${moveTo==="work"?"Work":"Personal"}">${IC.move}</button>
+          <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">${IC.note}</button>
+          <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">${IC.list}</button>
+          ${(!t.due && !dueOn) ? `<button type="button" class="ti-icon-btn ti-due-btn" data-action="due-add" title="Set due date">+ due</button>` : ""}
+          <span class="ti-del" data-action="remove" title="Remove">${IC.del}</span>
+        </span>
+        <button type="button" class="ti-more" data-action="tools-toggle" title="More">${IC.more}</button>
       </div>
       ${checkedPending ? `<div class="ti-undo-bar"><span style="animation-delay:-${undoElapsedMs}ms"></span></div>` : ""}
       <div class="ti-note-wrap" style="display:${noteOn?"block":"none"}"><div class="ti-note"><textarea placeholder="Add a note…">${esc(t.note||"")}</textarea></div></div>
@@ -4886,6 +4955,8 @@ function wireTodoRows(root){
     if(action === "remove"){
       if(pendingComplete.has(id)){ clearTimeout(pendingComplete.get(id).timer); pendingComplete.delete(id); }
       if(window.__todosApi) window.__todosApi.remove(id);
+    } else if(action === "tools-toggle"){
+      item.classList.toggle("ti-tools-open");
     } else if(action === "kind-toggle"){
       /* Eli, Sep 2026: "I would like toggling from urgent to chill on the to dos to have a
          better animation where it like slides down / up, instead of snapping." The write
@@ -5258,10 +5329,9 @@ function refreshCalendarDueOverlay(root, d, todosState){
   const mergedToday = [...(d.today||[]), ...dueToday];
   const mergedRadar = [...(d.radar||[]), ...dueRadar];
   if(todaySlot){
-    const oldSc = todaySlot.querySelector("#dvScroll"), keep = (oldSc && oldSc.dataset.scrolled) ? oldSc.scrollTop : null;
-    todaySlot.innerHTML = buildTodayScheduleHTML(mergedToday, d.date);
-    if(keep != null){ const nsc = todaySlot.querySelector("#dvScroll"); if(nsc){ nsc.scrollTop = keep; nsc.dataset.scrolled = "1"; } }
-    else wireDayView(todaySlot);
+    const oldSc = todaySlot.querySelector(".ag-scroll"), keep = oldSc ? oldSc.scrollTop : null;
+    todaySlot.innerHTML = buildTodayScheduleHTML(mergedToday, d.date, mergedRadar);
+    if(keep){ const nsc = todaySlot.querySelector(".ag-scroll"); if(nsc) nsc.scrollTop = keep; }
   }
   if(triple){
     triple.innerHTML = `<div class="bento-card cal-card cal-full">${buildMiniCal(mergedToday, mergedRadar, d.date)}</div>`;
@@ -6134,7 +6204,7 @@ function renderCalendarBody(p, d){
      across devices) instead of the daily-reset localStorage/JSON fields — see
      the to-do sync module script near the end of <body>. Slots get filled in
      by refreshTodoCards() below, and again on every live snapshot update. ---- */
-  h += `<div class="todo-today-row"><div id="todosCardSlot"></div><div id="todayCardSlot">${buildTodayScheduleHTML(todayList, d.date)}</div></div>`;
+  h += `<div class="todo-today-row"><div id="todosCardSlot"></div><div id="todayCardSlot">${buildTodayScheduleHTML(todayList, d.date, radarList)}</div></div>`;
 
   /* ---- Two-Week View (matches Google Calendar's month-view detail). Data comes from the
      today/radar fields published by the daily-calendar-report scheduled task and kept fresh

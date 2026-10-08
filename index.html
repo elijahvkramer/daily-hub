@@ -2161,38 +2161,44 @@
   .bp-block-h span{font-size:10px;letter-spacing:.02em;text-transform:none;font-weight:700;color:var(--muted)}
   .bp-h{grid-column:1/-1;font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 -2px}
   .bp-h:first-child{margin-top:0}
-  .bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:9px}
-  .bp-tile{border:1px solid var(--hairline);border-radius:14px;padding:11px 12px 10px;background:var(--card);
-           display:flex;flex-direction:column;gap:5px;min-width:0;box-shadow:var(--shadow);
+  .bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:10px}
+  .bp-tile{position:relative;overflow:hidden;border:1px solid var(--hairline);border-radius:16px;padding:13px 14px 0;background:var(--card);
+           display:flex;flex-direction:column;gap:6px;min-width:0;box-shadow:var(--shadow);
            transition:border-color .15s ease, transform .15s ease}
-  .bp-tile:hover{border-color:color-mix(in srgb, var(--gold) 40%, var(--hairline));transform:translateY(-1px)}
-  .bp-t{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted);
-        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bp-ic{font-size:13px;flex-shrink:0}
-  .bp-logo{width:20px;height:20px;border-radius:6px;background:#fff;display:inline-flex;align-items:center;justify-content:center;
-    overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
-  .bp-logo img,.bp-logo svg{width:16px;height:16px;display:block;object-fit:contain}
-  .bp-v{font-size:21px;font-weight:900;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink)}
-  .bp-f{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
-  .bp-spark{display:block;width:68px;height:22px;flex-shrink:0}
+  .bp-tile:hover{border-color:color-mix(in srgb, var(--tc, var(--gold)) 45%, var(--hairline));transform:translateY(-1px)}
+  .bp-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+  .bp-ic{flex-shrink:0;width:40px;height:40px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;
+         background:color-mix(in srgb, var(--tc, var(--gold)) 14%, transparent)}
+  .bp-ic .glyph{width:24px;height:24px;display:block}
+  .bp-id{min-width:0}
+  .bp-t{font-size:13px;font-weight:900;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bp-sub{font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .bp-v{font-size:23px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05;color:var(--ink);margin-top:-2px}
+  .bp-f{display:flex;align-items:center;gap:8px;min-height:22px}
+  .bp-spark{display:block;height:38px;margin:2px -14px 0;flex-shrink:0}
   .bp-spark svg{width:100%;height:100%;display:block}
   .bp-wait .bp-v{color:var(--muted);font-weight:800}
   .bp-wait{opacity:.72}
   .bp-empty{font-size:12.5px;color:var(--muted);margin:8px 0 0}
   /* yields: one shared % axis -- this is the only place where the comparison IS the point */
   .rb{min-width:0}
+  .yc{display:block;width:100%;height:auto;overflow:visible}
+  .yc-gl{stroke:color-mix(in srgb, var(--ink) 9%, transparent);stroke-width:1}
+  .yc-ax{font-size:10px;font-weight:800;fill:var(--muted);font-variant-numeric:tabular-nums}
+  .yc-line{fill:none;stroke:var(--gold);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .yc-st{stroke:color-mix(in srgb, var(--gold) 35%, transparent);stroke-width:1;stroke-dasharray:2 3}
+  .yc-dot{fill:var(--card);stroke:var(--gold);stroke-width:2.6}
+  .yc-val{font-size:13px;font-weight:900;fill:var(--ink);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+  .yc-lab{font-size:11px;font-weight:900;fill:var(--ink)}
+  .yc-note{font-size:9.5px;font-weight:700;fill:var(--muted)}
+  .yc-mort{display:flex;align-items:center;gap:11px;margin-top:6px;padding:11px 14px;border:1px solid var(--hairline);border-radius:16px;background:var(--card);box-shadow:var(--shadow)}
+  .yc-mort .bp-id{flex:1}
+  .yc-mv{font-size:23px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:right;line-height:1.05}
+  .yc-mv i{display:block;font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:0;color:var(--muted);margin-top:2px}
   .rb-row{display:grid;grid-template-columns:96px 1fr 88px;align-items:center;gap:10px;padding:6px 0}
-  .rb-l{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
-  .rb-track{position:relative;height:20px}
-  .rb-grid{position:absolute;top:0;bottom:0;width:1px;background:color-mix(in srgb, var(--ink) 9%, transparent)}
-  .rb-fill{position:absolute;left:0;top:50%;height:4px;border-radius:999px;transform:translateY(-50%);
-           background:linear-gradient(90deg,color-mix(in srgb, var(--gold) 18%, transparent),color-mix(in srgb, var(--gold) 62%, transparent))}
-  .rb-dot{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);
-          box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent)}
+  .rb-l{font-size:12px;font-weight:800;color:var(--ink)}
   .rb-v{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-  .rb-v i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .rb-axisrow{padding-bottom:2px} .rb-axisrow .rb-track{height:14px}
-  .rb-tick{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rb-v i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--muted)}
   .rb-chip{font-size:11px;font-weight:900;font-variant-numeric:tabular-nums;padding:3px 8px;border-radius:999px;
            background:color-mix(in srgb, var(--muted) 12%, transparent);color:var(--muted)}
   .rb-chip.up{background:color-mix(in srgb, var(--up) 14%, transparent);color:var(--up)}
@@ -2202,12 +2208,14 @@
   .desk-outlook{margin-top:24px;padding-top:20px;border-top:1px solid var(--hairline)}
   .ol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
   .ol-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
-          appearance:none;border:1px solid var(--hairline);background:var(--paper);border-radius:18px;
+          appearance:none;color:var(--ink);border:1px solid var(--hairline);background:var(--paper);border-radius:18px;
           padding:17px 10px 14px;font:inherit;cursor:pointer;box-shadow:var(--shadow);
           transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,border-color .16s ease}
   .ol-box:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--gold) 45%, var(--hairline))}
-  .ol-box-ic{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:23px;
-             background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent)}
+  .ol-box-ic{width:62px;height:62px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+             background:color-mix(in srgb, currentColor 0%, var(--paper));box-shadow:inset 0 0 0 1px var(--hairline)}
+  .ol-box-ic .glyph{width:34px;height:34px;display:block}
+  .ol-box:hover .ol-box-ic{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--gold) 45%, var(--hairline))}
   .ol-box-top{font-size:13.5px;font-weight:900;letter-spacing:-.01em;line-height:1.2}
   .ol-box-stance{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:var(--muted);line-height:1.35;min-height:2.6em}
   .ol-box-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--oc, var(--muted))}
@@ -2220,8 +2228,9 @@
                  border-radius:18px;padding:18px 20px 16px;animation:fadein .2s ease;position:relative;overflow:hidden}
   .ol-panel-card::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--oc, var(--gold))}
   .ol-panel-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
-  .ol-panel-ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;
-               background:color-mix(in srgb, var(--oc, var(--muted)) 16%, transparent);flex-shrink:0}
+  .ol-panel-ic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+               background:var(--paper);box-shadow:inset 0 0 0 1px var(--hairline);flex-shrink:0}
+  .ol-panel-ic .glyph{width:26px;height:26px;display:block}
   .ol-panel-tt{font-size:15px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
   .ol-panel-st{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;
                color:var(--oc, var(--muted));background:color-mix(in srgb, var(--oc, var(--muted)) 14%, transparent)}
@@ -2243,10 +2252,10 @@
   .ol-src{font-size:10.5px;color:var(--muted);margin-top:12px;line-height:1.4}
   @media(max-width:560px){
     .ol-grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px}
-    .ol-box-ic{width:38px;height:38px;font-size:19px}
-    .bp-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
-    .bp-v{font-size:18px}
-    .rb-row{grid-template-columns:78px 1fr 76px;gap:8px}
+    .ol-box-ic{width:50px;height:50px;border-radius:16px}
+    .ol-box-ic .glyph{width:28px;height:28px}
+    .bp-grid{grid-template-columns:repeat(auto-fill,minmax(124px,1fr))}
+    .bp-v{font-size:21px}
   }
   .desk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;padding-top:11px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--muted)}
   .desk-foot a{color:var(--gold-dark);font-weight:900;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer}
@@ -4531,6 +4540,7 @@ function renderEventsList(arr, fallbackDate, opts){
    and sized by duration, overlapping events packed into side-by-side columns, a live "now"
    line, and all-day items in their own band above the grid where they belong. */
 const DAY_HOUR_PX = 46;                 // one hour of grid
+const DAY_WIN_LO = 6*60, DAY_WIN_HI = 22*60;   // default visible window: 6am-10pm
 function dayViewLayout(events){
   /* Cluster overlapping events, then give each cluster as many columns as it needs -- the
      same thing Google does, and the reason two 9am meetings sit beside each other rather
@@ -4576,17 +4586,25 @@ function buildTodayScheduleHTML(todayList, todayDate){
   })();
   const isToday = !todayDate || todayDate === todayCT();
 
-  // Eli, Sep 2026: "I should still be able to scroll basically the whole day even if there's only
-  // one event" -- so the grid is always the full 12am-12am day (it used to shrink to a window around
-  // the events, and clipped the first hour label). wireDayView() opens it on the now line / first event.
-  const lo = 0, hi = 24*60;
+  // Eli, Oct 2026: "make that always open up to the first event of the day instead of always starting
+  // at 12 am ... I'm basically never going to have any events between 12 am and 6 am, or after 9 pm."
+  // So the grid is a working-day window (6am-10pm) that only grows when an event actually falls outside
+  // it (an early flight, a late dinner), plus one spare hour either side. wireDayView() opens it on the
+  // first event of the day.
+  let lo = DAY_WIN_LO, hi = DAY_WIN_HI;
+  const firstStart = timed.length ? Math.min(...timed.map(e => e.start)) : null;
+  if(timed.length){
+    const lastEnd = Math.max(...timed.map(e => e.end));
+    lo = Math.min(lo, Math.max(0, Math.floor(firstStart / 60) * 60 - 60));
+    hi = Math.max(hi, Math.min(24*60, Math.ceil(lastEnd / 60) * 60 + 60));
+  }
   const span = hi - lo;
   const y = m => (m - lo) / 60 * DAY_HOUR_PX;
 
   let hours = "";
   for(let m = lo; m <= hi; m += 60){
     const h = Math.floor(m / 60) % 24;
-    hours += `<div class="dv-hr" style="top:${y(m)}px"><span>${m === hi ? "" : (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "am" : "pm")}</span></div>`;
+    hours += `<div class="dv-hr" style="top:${y(m)}px"><span>${m === 24*60 ? "" : (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "am" : "pm")}</span></div>`;
   }
   const blocks = dayViewLayout(timed).map(ev => {
     const top = y(ev.start), h = Math.max(22, y(ev.end) - y(ev.start) - 2);
@@ -4614,7 +4632,7 @@ function buildTodayScheduleHTML(todayList, todayDate){
   return `<div class="bento-card agenda-card">
     <div class="tc-head"><span class="h">Today</span><span class="tc-head-ctrl"><span class="tc-sub dv-sub">${dateTxt ? esc(dateTxt) + (countTxt ? " · " : "") : ""}${countTxt}</span></span></div>
     ${allDayBand}
-    <div class="dv-scroll" id="dvScroll"><div class="dv-grid" style="height:${span/60*DAY_HOUR_PX}px">
+    <div class="dv-scroll" id="dvScroll"><div class="dv-grid" data-lo="${lo}" data-first="${firstStart == null ? "" : firstStart}" data-now="${isToday && nowMin >= lo && nowMin <= hi ? nowMin : ""}" style="height:${span/60*DAY_HOUR_PX}px">
       ${hours}<div class="dv-body">${blocks}${nowLine}</div>
     </div></div>
   </div>`;
@@ -4623,19 +4641,32 @@ function fmtMinLabel(m){
   const h = Math.floor(m/60) % 24, mm = m % 60;
   return `${h % 12 === 0 ? 12 : h % 12}${mm ? ":" + String(mm).padStart(2,"0") : ""}${h < 12 ? "am" : "pm"}`;
 }
-/* Open the day where the day actually is: on the now line, or on the first event. */
+/* Open the day on its first event (Eli, Oct 2026) -- or, with nothing scheduled, an hour before the
+   now line. The position is worked out from minutes, not from measured element positions, and it
+   waits until the card is actually on screen: a scrollTop written while the Today tab is hidden is
+   silently ignored, which is how this used to land on 12am and stay there. Snapped to a whole hour
+   so the top hour label is never sliced; the grid has 10px of top padding, so an hour line sits at
+   10 + hours*DAY_HOUR_PX and we land 12px above it. */
+function dvOpen(sc){
+  const grid = sc.querySelector(".dv-grid"); if(!grid) return;
+  const lo = +grid.dataset.lo || 0;
+  const first = grid.dataset.first, now = grid.dataset.now;
+  const anchor = first !== "" && first != null ? +first : (now !== "" && now != null ? +now - 60 : lo);
+  const hourStart = Math.max(lo, Math.floor(anchor / 60) * 60);
+  sc.scrollTop = Math.max(0, 10 + (hourStart - lo) / 60 * DAY_HOUR_PX - 12);
+  sc.dataset.scrolled = "1";
+}
 function wireDayView(root){
   const sc = (root || document).querySelector("#dvScroll");
   if(!sc || sc.dataset.scrolled) return;
-  sc.dataset.scrolled = "1";
-  /* Open on a whole hour so the top hour label is never sliced in half: an hour before the now line
-     (today), else an hour before the first event, else 7am. The grid has 10px of top padding, so an hour
-     line sits at 10 + hour*DAY_HOUR_PX; land 12px above it so its label is fully visible. */
-  const nowEl = sc.querySelector(".dv-now"), evEl = sc.querySelector(".dv-ev");
-  const yOf = el => el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
-  const anchorPx = nowEl ? yOf(nowEl) : (evEl ? yOf(evEl) : 8 * DAY_HOUR_PX + 10);
-  const hour = Math.max(0, Math.floor((anchorPx - 10) / DAY_HOUR_PX) - 1);
-  sc.scrollTop = Math.max(0, 10 + hour * DAY_HOUR_PX - 12);
+  if(sc.clientHeight > 0){ dvOpen(sc); return; }
+  if(sc._dvWait || !("ResizeObserver" in window)) return;
+  sc._dvWait = new ResizeObserver(() => {
+    if(!sc.clientHeight) return;
+    sc._dvWait.disconnect(); sc._dvWait = null;
+    if(!sc.dataset.scrolled) dvOpen(sc);
+  });
+  sc._dvWait.observe(sc);
 }
 
 /* ---- to-do item extras: expand/collapse state is a pure client-side UI
@@ -5217,7 +5248,7 @@ function refreshCalendarDueOverlay(root, d, todosState){
   const mergedToday = [...(d.today||[]), ...dueToday];
   const mergedRadar = [...(d.radar||[]), ...dueRadar];
   if(todaySlot){
-    const oldSc = todaySlot.querySelector("#dvScroll"), keep = oldSc ? oldSc.scrollTop : null;
+    const oldSc = todaySlot.querySelector("#dvScroll"), keep = (oldSc && oldSc.dataset.scrolled) ? oldSc.scrollTop : null;
     todaySlot.innerHTML = buildTodayScheduleHTML(mergedToday, d.date);
     if(keep != null){ const nsc = todaySlot.querySelector("#dvScroll"); if(nsc){ nsc.scrollTop = keep; nsc.dataset.scrolled = "1"; } }
     else wireDayView(todaySlot);
@@ -5588,16 +5619,47 @@ const OUTLOOK_SEED = {
   ]
 };
 const OUTLOOK_TONE = { up:"var(--up)", warn:"#D08A2C", down:"var(--down)", flat:"var(--muted)" };
-/* "a couple word summary before it drops down ... with a logo" -- an emoji badge per topic so
-   each box reads at a glance, matched loosely by name so a brief-sourced topic that isn't in
-   this exact list (or gets renamed) still gets something sensible instead of a blank icon. */
+/* Oct 2026, Eli: "I'm not a big fan of the emojis ... it should be more of a visual representation of
+   what it is instead of a tiny icon that I need to squint at." So every topic and every market tile now
+   carries a drawn glyph -- one stroke weight, one 32px grid, a colour per subject -- instead of an
+   emoji. Matched loosely by name so a brief-sourced topic that gets renamed still lands on the right
+   picture. Glyphs inherit currentColor, so they follow whichever theme is active. */
+const GLYPHS = {
+  stocks:   '<path d="M4 26h24"/><path d="M5 20l7-7 5 4.5L27 7"/><path d="M20 7h7v7"/>',
+  bonds:    '<rect x="4.5" y="6" width="23" height="16" rx="2.5"/><path d="M9.5 11h13M9.5 15h6"/><circle cx="21.5" cy="18" r="3.4"/><path d="M19.8 21.2L18.8 27l2.7-1.7 2.7 1.7-1-5.8"/>',
+  cash:     '<rect x="3.5" y="8.5" width="25" height="15" rx="2.5"/><circle cx="16" cy="16" r="3.6"/><path d="M8 13v.01M24 19v.01"/>',
+  fed:      '<path d="M16 4.5L28 10.5H4z"/><path d="M8.5 14v9M13.5 14v9M18.5 14v9M23.5 14v9"/><path d="M4.5 26.5h23"/>',
+  inflation:'<path d="M8 24L24 8"/><circle cx="10" cy="10" r="3.2"/><circle cx="22" cy="22" r="3.2"/>',
+  mortgage: '<path d="M4.5 15.5L16 5l11.5 10.5"/><path d="M8 13v13.5h16V13"/><path d="M13.2 26.5V19h5.6v7.5"/>',
+  gold:     '<path d="M2.5 25.5l2.6-6.5h9.8l2.6 6.5z"/><path d="M17 25.5l2.6-6.5h8.8l2.6 6.5z"/><path d="M9.5 19l2.6-6.5h8l2.6 6.5z"/>',
+  crypto:   '<circle cx="16" cy="16" r="11.5"/><path d="M12.8 10.5v11M12.8 10.5h4.6a2.75 2.75 0 010 5.5h-4.6M12.8 16h5.2a2.75 2.75 0 010 5.5h-5.2"/><path d="M15.2 8.3v2.2M18 8.3v2.2M15.2 21.5v2.2M18 21.5v2.2"/>',
+  dollar:   '<circle cx="16" cy="16" r="11.5"/><path d="M19.6 12.4c-.8-1.2-2.1-1.8-3.6-1.8-2 0-3.6 1-3.6 2.7 0 3.7 7.3 1.8 7.3 5.5 0 1.7-1.6 2.8-3.7 2.8-1.6 0-3-.7-3.8-1.9M16 8v2.6M16 21.4V24"/>',
+  ai:       '<path d="M14 5l2.7 7.3L24 15l-7.3 2.7L14 25l-2.7-7.3L4 15l7.3-2.7z"/><path d="M25 21v6M22 24h6"/><path d="M24.5 5v3M23 6.5h3"/>',
+  labor:    '<rect x="4.5" y="10" width="23" height="16" rx="2.5"/><path d="M12 10V7.5A1.5 1.5 0 0113.5 6h5A1.5 1.5 0 0120 7.5V10"/><path d="M4.5 17.5h23"/><path d="M14 17.5V20h4v-2.5"/>',
+  generic:  '<circle cx="16" cy="16" r="11.5"/><path d="M16 15v6M16 11v.01"/>',
+  /* market-board marks */
+  sp500:    '<path d="M7 7v18M16 5v21M25 9v15"/><rect x="4.5" y="11" width="5" height="8" rx="1" fill="currentColor" fill-opacity=".18"/><rect x="13.5" y="9" width="5" height="11" rx="1" fill="currentColor" fill-opacity=".18"/><rect x="22.5" y="13" width="5" height="7" rx="1" fill="currentColor" fill-opacity=".18"/>',
+  nasdaq:   '<rect x="9" y="9" width="14" height="14" rx="2.5"/><rect x="13" y="13" width="6" height="6" rx="1" fill="currentColor" fill-opacity=".2"/><path d="M13 4.5V9M19 4.5V9M13 23v4.5M19 23v4.5M4.5 13H9M4.5 19H9M23 13h4.5M23 19h4.5"/>',
+  dow:      '<path d="M4 27V15l7.5 4.5V15l7.5 4.5V15l9 5.3V27z"/><path d="M22 20V6.5h4.5V21"/><path d="M9 27v-3.5M15 27v-3.5M21 27v-3.5"/>',
+  vti:      '<circle cx="16" cy="16" r="11.5"/><path d="M16 4.5V16h11.5"/><path d="M16 16l-8.1 8.1"/>',
+  barrel:   '<ellipse cx="16" cy="8" rx="8" ry="3"/><path d="M8 8v16c0 1.7 3.6 3 8 3s8-1.3 8-3V8"/><path d="M8 13.3c0 1.7 3.6 3 8 3s8-1.3 8-3M8 18.7c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'
+};
+const glyphSVG = (key, color, extra) =>
+  `<svg class="glyph${extra ? " " + extra : ""}" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${color ? ` style="color:${color}"` : ""}>${GLYPHS[key] || GLYPHS.generic}</svg>`;
 const OUTLOOK_ICONS = [
-  [/stock|equit|s&p|nasdaq/i, "\u{1F4C8}"], [/bond|treasury|yield/i, "\u{1F4DC}"],
-  [/cash|money.?market/i, "\u{1F4B0}"], [/fed\b|federal reserve/i, "\u{1F3E6}"],
-  [/inflation|cpi/i, "\u{1F4CA}"], [/mortgage|housing/i, "\u{1F3E0}"],
-  [/gold/i, "\u{1F947}"], [/crypto|bitcoin|btc/i, "\u{1FA99}"], [/dollar|currency|fx/i, "\u{1F4B5}"]
+  [/stock|equit|s&p|nasdaq/i, "stocks", "#2F80ED"], [/bond|treasury|yield/i, "bonds", "#8B6BD9"],
+  [/cash|money.?market/i, "cash", "#2EA66F"],      [/fed\b|federal reserve/i, "fed", "#5B6B85"],
+  [/inflation|cpi/i, "inflation", "#E0573F"],       [/mortgage|housing/i, "mortgage", "#E0567F"],
+  [/gold/i, "gold", "#D4A72C"],                     [/crypto|bitcoin|btc/i, "crypto", "#F7931A"],
+  [/dollar|currency|fx/i, "dollar", "#4C9A6A"],
+  [/\bai\b|artificial|concentration|mega.?cap|semiconductor|tech/i, "ai", "#12A5A5"],
+  [/labor|jobs|employ|payroll|wage|unemploy/i, "labor", "#9A7B52"],
+  [/oil|energy|crude|brent/i, "barrel", "#5B6572"]
 ];
-const outlookIcon = topic => (OUTLOOK_ICONS.find(([re]) => re.test(topic || "")) || [])[1] || "\u{1F4CC}";
+const outlookIcon = topic => {
+  const hit = OUTLOOK_ICONS.find(([re]) => re.test(topic || ""));
+  return hit ? glyphSVG(hit[1], hit[2]) : glyphSVG("generic", "#7A8591");
+};
 /* An outlook entry off the brief is only trusted if it actually looks like one. */
 const outlookOK = a => Array.isArray(a) && a.length > 0 &&
   a.every(x => x && typeof x === "object" && x.topic && x.headline);
@@ -5647,20 +5709,25 @@ const BOARD_PRICES = [
   { label:"Bitcoin",     group:"Commodities & crypto", match:/bitcoin|^btc/i,          icon:"\u{1FA99}", svg:{ col:"#F7931A", d:"M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.548v-.002zm-6.35-4.613c.24-1.59-.974-2.45-2.64-3.03l.54-2.153-1.315-.33-.525 2.107c-.345-.087-.705-.167-1.064-.25l.526-2.127-1.32-.33-.54 2.165c-.285-.067-.565-.132-.84-.2l-1.815-.45-.35 1.407s.975.225.955.236c.535.136.63.486.615.766l-1.477 5.92c-.075.166-.24.406-.614.314.015.02-.96-.24-.96-.24l-.66 1.51 1.71.426.93.242-.54 2.19 1.32.327.54-2.17c.36.1.705.19 1.05.273l-.51 2.154 1.32.33.545-2.19c2.24.427 3.93.257 4.64-1.774.57-1.637-.03-2.58-1.217-3.196.854-.193 1.5-.76 1.68-1.93h.01zm-3.01 4.22c-.404 1.64-3.157.75-4.05.53l.72-2.9c.896.23 3.757.67 3.33 2.37zm.41-4.24c-.37 1.49-2.662.735-3.405.55l.654-2.64c.744.18 3.137.524 2.75 2.084v.006z" }, live:"BTC-USD",  dec:0, pre:"$" },
   { label:"Ethereum",    group:"Commodities & crypto", match:/ethereum|^eth\b/i,       icon:"\u{26A1}",  svg:{ col:"#627EEA", d:"M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" }, live:"ETH-USD",  dec:0, pre:"$" }
 ];
+/* Per-asset picture, colour and one-line descriptor for the board tiles. Bitcoin and Ethereum keep
+   their official marks (spec.svg); everything else is drawn from GLYPHS. */
+const BOARD_META = {
+  "S&P 500":     { g:"sp500",  c:"#2F80ED", sub:"US large caps" },
+  "Nasdaq":      { g:"nasdaq", c:"#12A5C4", sub:"Tech-heavy" },
+  "Dow":         { g:"dow",    c:"#6E7BD6", sub:"30 blue chips" },
+  "VTI":         { g:"vti",    c:"#C0392B", sub:"Total US market" },
+  "Gold":        { g:"gold",   c:"#D4A72C", sub:"Spot, per oz" },
+  "Brent Crude": { g:"barrel", c:"#5B6572", sub:"Per barrel" },
+  "Bitcoin":     { c:"#F7931A", sub:"BTC" },
+  "Ethereum":    { c:"#627EEA", sub:"ETH" }
+};
 function bpLogo(spec){
-  if(spec.svg) return `<span class="bp-ic bp-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${spec.svg.col}" d="${spec.svg.d}"/></svg></span>`;
-  if(spec.logo){
-    const a = `https://www.google.com/s2/favicons?domain=${spec.logo}&sz=64`;
-    const b = `https://icons.duckduckgo.com/ip3/${spec.logo}.ico`;
-    return `<span class="bp-ic bp-logo"><img src="${a}" data-fallback="${b}" data-emoji="${spec.icon || ""}" alt="" referrerpolicy="no-referrer" onerror="bpLogoErr(this)"></span>`;
-  }
-  return `<span class="bp-ic">${spec.icon || ""}</span>`;
-}
-function bpLogoErr(img){
-  const next = img.dataset.fallback;
-  if(next){ img.dataset.fallback = ""; img.src = next; return; }
-  const box = img.parentNode; if(!box) return;
-  box.classList.remove("bp-logo"); box.textContent = img.dataset.emoji || "";
+  const m = BOARD_META[spec.label] || {};
+  const col = m.c || "var(--gold)";
+  const inner = spec.svg
+    ? `<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="${spec.svg.col}" d="${spec.svg.d}"/></svg>`
+    : glyphSVG(m.g || "generic", col);
+  return `<span class="bp-ic" style="--tc:${col}">${inner}</span>`;
 }
 const rateNum = v => { const m = String(v).replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && spec.match.test(String(r.label || "").trim()));
@@ -5686,16 +5753,22 @@ function boardFmt(spec, n){
   if(n == null || isNaN(n)) return "—";
   return (spec.pre || "") + Number(n).toLocaleString("en-US", {minimumFractionDigits: spec.dec ?? 2, maximumFractionDigits: spec.dec ?? 2});
 }
-/* Today's session as a 46x18 line -- enough to read the shape of the day at a glance. */
+/* Today's session as a soft area chart across the whole tile -- the shape of the day at a glance. */
+let _gradN = 0;
 function boardSpark(q, up){
   const c = q && q.series && q.series.c ? q.series.c.filter(v => v != null) : [];
   if(c.length < 3) return `<span class="bp-spark"></span>`;
-  const W = 68, H = 22;
+  const W = 120, H = 38, pad = 3;
   const min = Math.min(...c), max = Math.max(...c), span = (max - min) || 1;
-  const d = c.map((v,i) => `${i?"L":"M"} ${(i/(c.length-1)*W).toFixed(1)} ${(H - 2 - (v-min)/span*(H-4)).toFixed(1)}`).join(" ");
+  const pts = c.map((v,i) => [i/(c.length-1)*W, H - pad - (v-min)/span*(H-pad*2)]);
+  const d = pts.map((pt,i) => `${i?"L":"M"}${pt[0].toFixed(1)} ${pt[1].toFixed(1)}`).join(" ");
   const col = up ? "var(--up)" : "var(--down)";
+  const id = "bsg" + (++_gradN);
+  const last = pts[pts.length-1];
   return `<span class="bp-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg></span>`;
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#${id})"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></span>`;
 }
 
 function boardHTML(rates, prices, live){
@@ -5726,10 +5799,12 @@ function boardHTML(rates, prices, live){
     const chip = typeof p.pct === "number"
       ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
       : `<span class="rb-chip flat">${esc(p.note)}</span>`;
-    return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}">
-        <div class="bp-t">${bpLogo(p.spec)}${esc(p.spec.label)}</div>
+    const m = BOARD_META[p.spec.label] || {};
+    return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}" style="--tc:${m.c || "var(--gold)"}">
+        <div class="bp-top">${bpLogo(p.spec)}${chip}</div>
+        <div class="bp-id"><div class="bp-t">${esc(p.spec.label)}</div><div class="bp-sub">${esc(m.sub || "")}</div></div>
         <div class="bp-v">${esc(p.value)}</div>
-        <div class="bp-f">${chip}${p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`}</div>
+        ${p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`}
       </div>`;
   }).join("");
 
@@ -5750,21 +5825,53 @@ function boardHTML(rates, prices, live){
     if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n, live:false }); }
   });
 
+  /* Oct 2026: the dot-on-a-bar ladder was hard to read at a glance. Treasuries and the policy rate are
+     the same thing -- a rate by maturity -- so they are drawn as the yield curve itself (shape =
+     the story: inverted, flat, steep). The mortgage rate is a different animal, so it gets its own
+     card with its spread over the 10-year. */
+  const mort = ys.find(r => /mortgage/i.test(r.label));
+  const curve = ys.filter(r => r !== mort);
+  const curveSVG = pts => {
+    const W = 340, H = 214, L = 30, R = 12, T = 38, B = 56;
+    const ns = pts.map(r => r.n);
+    const lo = Math.floor(Math.min(...ns) - 0.35), hi = Math.ceil(Math.max(...ns) + 0.3);
+    const yP = n => T + (hi - n) / (hi - lo) * (H - T - B);
+    const x0 = L + 16, x1 = W - R - 16;
+    const xP = i => pts.length === 1 ? (x0 + x1) / 2 : x0 + i * (x1 - x0) / (pts.length - 1);
+    const P = pts.map((r,i) => [xP(i), yP(r.n)]);
+    let d = `M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+    for(let i = 0; i < P.length - 1; i++){
+      const [ax, ay] = P[i], [bx, by] = P[i+1], dx = (bx - ax) / 3;
+      const sa = i ? (by - P[i-1][1]) / (bx - P[i-1][0]) : (by - ay) / (bx - ax);
+      const sb = i + 2 < P.length ? (P[i+2][1] - ay) / (P[i+2][0] - ax) : (by - ay) / (bx - ax);
+      const clamp = v => Math.min(Math.max(v, Math.min(ay, by)), Math.max(ay, by));
+      d += ` C${(ax+dx).toFixed(1)} ${clamp(ay + sa*dx).toFixed(1)} ${(bx-dx).toFixed(1)} ${clamp(by - sb*dx).toFixed(1)} ${bx.toFixed(1)} ${by.toFixed(1)}`;
+    }
+    const base = H - B + 4, id = "ycg" + (++_gradN);
+    let g = "";
+    for(let t = Math.ceil(lo); t <= hi; t++) g += `<line class="yc-gl" x1="${L}" x2="${W - R}" y1="${yP(t).toFixed(1)}" y2="${yP(t).toFixed(1)}"/><text class="yc-ax" x="${L - 7}" y="${(yP(t) + 3.5).toFixed(1)}" text-anchor="end">${t}%</text>`;
+    const dots = pts.map((r,i) => `<g>
+        <line class="yc-st" x1="${P[i][0].toFixed(1)}" x2="${P[i][0].toFixed(1)}" y1="${P[i][1].toFixed(1)}" y2="${base}"/>
+        <circle class="yc-dot" cx="${P[i][0].toFixed(1)}" cy="${P[i][1].toFixed(1)}" r="5.5"/>
+        <text class="yc-val" x="${P[i][0].toFixed(1)}" y="${(P[i][1] - 12).toFixed(1)}" text-anchor="middle">${esc(r.value)}</text>
+        <text class="yc-lab" x="${P[i][0].toFixed(1)}" y="${H - B + 22}" text-anchor="middle">${esc(r.label)}</text>
+        <text class="yc-note" x="${P[i][0].toFixed(1)}" y="${H - B + 37}" text-anchor="middle">${esc(r.note || "")}</text></g>`).join("");
+    return `<svg class="yc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Yield curve by maturity">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)" stop-opacity=".30"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+      ${g}
+      <path d="${d} L${P[P.length-1][0].toFixed(1)} ${base} L${P[0][0].toFixed(1)} ${base} Z" fill="url(#${id})"/>
+      <path class="yc-line" d="${d}"/>${dots}</svg>`;
+  };
+  const tenYr = curve.find(r => /^10/.test(r.label));
+  const mortCard = !mort ? "" : `<div class="yc-mort" style="--tc:#E0567F">
+      <span class="bp-ic">${glyphSVG("mortgage", "#E0567F")}</span>
+      <div class="bp-id"><div class="bp-t">30-yr mortgage</div><div class="bp-sub">${tenYr ? (mort.n - tenYr.n).toFixed(2) + " pts over the 10-yr" : "Freddie Mac weekly"}</div></div>
+      <div class="yc-mv">${esc(mort.value)}<i>${esc(mort.note || "")}</i></div></div>`;
+
   let yieldBlock = "";
-  if(ys.length >= 2){
-    const lo = Math.floor(Math.min(...ys.map(r => r.n)) * 2) / 2 - 0.25;
-    const hi = Math.ceil(Math.max(...ys.map(r => r.n)) * 2) / 2 + 0.25;
-    const span = Math.max(0.5, hi - lo);
-    const pos = n => ((n - lo) / span * 100);
-    const ticks = []; for(let t = Math.ceil(lo); t <= hi; t++) ticks.push(t);
-    const grid = ticks.map(t => `<span class="rb-grid" style="left:${pos(t).toFixed(2)}%"></span>`).join("");
-    yieldBlock =
-      ys.map(r => `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div>
-        <div class="rb-track">${grid}<span class="rb-fill" style="width:${pos(r.n).toFixed(2)}%"></span><span class="rb-dot" style="left:${pos(r.n).toFixed(2)}%"></span></div>
-        <div class="rb-v">${esc(r.value)}${r.note ? `<i>${esc(r.note)}</i>` : ""}</div></div>`).join("") +
-      `<div class="rb-row rb-axisrow"><div class="rb-l"></div><div class="rb-track">${grid}${
-        ticks.map(t => `<span class="rb-tick" style="left:${pos(t).toFixed(2)}%">${t}%</span>`).join("")}</div><div class="rb-v"></div></div>`;
-  } else if(ys.length === 1){
+  if(curve.length >= 2){
+    yieldBlock = curveSVG(curve) + mortCard;
+  } else if(ys.length){
     yieldBlock = ys.map(r => `<div class="rb-row"><div class="rb-l">${esc(r.label)}</div><div class="rb-track"></div>
        <div class="rb-v">${esc(r.value)}<i>${esc(r.note || "")}</i></div></div>`).join("");
   } else {
@@ -5779,7 +5886,7 @@ function boardHTML(rates, prices, live){
         <div class="bp-grid">${priceBlock}</div>
       </div>
       <div class="bp-block">
-        <div class="bp-block-h">Yields<span>one shared scale${yLive ? " · " + yLive + " live" : ""}</span></div>
+        <div class="bp-block-h">Yields<span>by maturity${yLive ? " · " + yLive + " live" : ""}</span></div>
         <div class="rb">${yieldBlock}</div>
       </div>
     </div>`;
@@ -5824,7 +5931,7 @@ async function renderDesk(){
     <div class="ol-grid">` + ol.map((x,i) => `
       <button type="button" class="ol-box" data-i="${i}" aria-pressed="false" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
         <span class="ol-box-dot"></span>
-        <span class="ol-box-ic">${x.icon || outlookIcon(x.topic)}</span>
+        <span class="ol-box-ic">${outlookIcon(x.topic)}</span>
         <span class="ol-box-top">${esc(x.topic)}</span>
         <span class="ol-box-stance">${esc(x.stance || "")}</span>
       </button>`).join("") + `</div>
@@ -5846,7 +5953,7 @@ async function renderDesk(){
       arr.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`;
     panel.innerHTML = `<div class="ol-panel-card" style="--oc:${OUTLOOK_TONE[x.tone] || OUTLOOK_TONE.flat}">
       <div class="ol-panel-head">
-        <span class="ol-panel-ic">${x.icon || outlookIcon(x.topic)}</span>
+        <span class="ol-panel-ic">${outlookIcon(x.topic)}</span>
         <div><div class="ol-panel-tt">${esc(x.topic)}${x.stance ? `<span class="ol-panel-st">${esc(x.stance)}</span>` : ""}</div></div>
       </div>
       ${x.headline ? `<div class="ol-panel-hd">${esc(x.headline)}</div>` : ""}

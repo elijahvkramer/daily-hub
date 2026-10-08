@@ -512,6 +512,217 @@
   .friend-log-btn:hover{border-color:var(--gold);background:color-mix(in srgb, var(--gold) 12%, transparent)}
   .friend-remove{appearance:none;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px 7px;border-radius:6px;transition:all .15s}
   .friend-remove:hover{color:var(--down);background:rgba(220,75,67,.08)}
+  /* ================= Friends v2 (Oct 2026 rework) =================
+     Eli: "I don't want to click in and see a big list of names." Default view is one person
+     at a time (who to reach out to, why, one-tap log), with the full roster one tap away. */
+  #panel-friends{--fr-ok:var(--up);--fr-soon:#E09A2B;--fr-over:var(--down);--fr-radius:22px}
+  .fr2{display:flex;flex-direction:column;gap:18px;padding-bottom:40px}
+  .fr2-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .fr2-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--fr-radius);box-shadow:var(--shadow)}
+  html.glass .fr2-card{border-color:var(--glass-edge);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  html.glass[data-mode="dark"] .fr2-card{border-color:rgba(255,255,255,.09)}
+
+  /* toolbar */
+  .fr2-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .fr2-seg{display:inline-flex;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent);gap:2px}
+  .fr2-seg button{appearance:none;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .2s,color .2s,box-shadow .2s}
+  .fr2-seg button .fr2-ic{width:16px;height:16px}
+  .fr2-seg button.on{background:var(--modal-solid,var(--card));color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px -6px rgba(0,0,0,.18)}
+  .fr2-btn{appearance:none;font:inherit;font-size:13.5px;font-weight:700;border:1px solid var(--hairline);background:var(--modal-solid,var(--card));color:var(--ink);border-radius:999px;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s;white-space:nowrap}
+  .fr2-btn:hover{border-color:color-mix(in srgb,var(--gold) 55%,transparent);transform:translateY(-1px)}
+  .fr2-btn:active{transform:translateY(0) scale(.98)}
+  .fr2-btn.primary{background:var(--gold);border-color:var(--gold);color:#fff;box-shadow:0 6px 18px -8px color-mix(in srgb,var(--gold) 80%,transparent)}
+  :root[data-theme="night"] .fr2-btn.primary{color:#16181D}
+  .fr2-btn.primary:hover{background:var(--gold-dark);border-color:var(--gold-dark)}
+  .fr2-btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+  .fr2-btn.ghost:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .fr2-btn.danger{color:var(--down);border-color:color-mix(in srgb,var(--down) 35%,transparent);background:none}
+  .fr2-btn.danger.armed{background:var(--down);color:#fff;border-color:var(--down)}
+
+  /* avatars */
+  .fr2-av{--av-h:210;width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    font-weight:800;font-size:14px;letter-spacing:.02em;color:hsl(var(--av-h) 42% 28%);
+    background:linear-gradient(145deg,hsl(var(--av-h) 75% 90%),hsl(calc(var(--av-h) + 25) 70% 82%));
+    box-shadow:0 0 0 2.5px var(--modal-solid,var(--card)),0 0 0 4.5px var(--av-ring,transparent)}
+  :root[data-theme="night"] .fr2-av,html.glass[data-mode="dark"] .fr2-av{color:hsl(var(--av-h) 75% 86%);background:linear-gradient(145deg,hsl(var(--av-h) 38% 30%),hsl(calc(var(--av-h) + 25) 40% 22%))}
+  .fr2-av.s-over{--av-ring:var(--fr-over)} .fr2-av.s-soon{--av-ring:var(--fr-soon)} .fr2-av.s-ok{--av-ring:color-mix(in srgb,var(--fr-ok) 55%,transparent)}
+  .fr2-av.sm{width:34px;height:34px;font-size:12.5px}
+  .fr2-av.md{width:46px;height:46px;font-size:16px}
+  .fr2-av.xl{width:84px;height:84px;font-size:29px;box-shadow:0 0 0 4px var(--modal-solid,var(--card)),0 0 0 7px var(--av-ring,transparent),0 14px 30px -12px hsl(var(--av-h) 50% 40% / .45)}
+
+  /* channel rings */
+  .fr2-ring{position:relative;width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .fr2-ring svg:first-child{position:absolute;inset:0;width:100%;height:100%}
+  .fr2-ring .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent);stroke-width:3.5}
+  .fr2-ring .val{fill:none;stroke-width:3.5;stroke-linecap:round;transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)}
+  .fr2-ring.s-ok .val{stroke:var(--fr-ok)} .fr2-ring.s-soon .val{stroke:var(--fr-soon)} .fr2-ring.s-over .val{stroke:var(--fr-over)}
+  .fr2-ring.s-none .trk{stroke-dasharray:3 4}
+  .fr2-ring .fr2-ic{width:19px;height:19px;color:var(--ink)}
+  .fr2-ring.s-over .fr2-ic{color:var(--fr-over)}
+  .fr2-ring.s-none .fr2-ic{color:var(--muted)}
+
+  /* ---- focus view ---- */
+  .fr2-focus{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:900px){.fr2-focus{grid-template-columns:minmax(0,1fr)}}
+  .fr2-hero{padding:26px 28px 24px;position:relative;overflow:hidden}
+  .fr2-hero::before{content:"";position:absolute;inset:-40% -20% auto auto;width:70%;height:120%;pointer-events:none;
+    background:radial-gradient(closest-side,hsl(var(--av-h,210) 80% 70% / .16),transparent);transition:background .4s}
+  .fr2-hero > *{position:relative}
+  .fr2-hero.is-entering{animation:fr2In .45s cubic-bezier(.2,.8,.2,1)}
+  .fr2-hero.is-leaving{animation:fr2Out .28s ease-in forwards}
+  @keyframes fr2In{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+  @keyframes fr2Out{to{opacity:0;transform:translateX(-26px) scale(.98)}}
+  .fr2-hero-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:20px}
+  .fr2-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:8px}
+  .fr2-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--fr-over);box-shadow:0 0 0 4px color-mix(in srgb,var(--fr-over) 18%,transparent)}
+  .fr2-eyebrow .dot.soon{background:var(--fr-soon);box-shadow:0 0 0 4px color-mix(in srgb,var(--fr-soon) 18%,transparent)}
+  .fr2-eyebrow .dot.ok{background:var(--fr-ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--fr-ok) 18%,transparent)}
+  .fr2-id{display:flex;align-items:center;gap:22px;margin-bottom:24px}
+  .fr2-name{font-size:clamp(26px,3.4vw,36px);font-weight:800;letter-spacing:-.025em;line-height:1.05;margin-bottom:8px;color:var(--ink)}
+  .fr2-why{font-size:15px;color:var(--muted);line-height:1.45}
+  .fr2-why b{color:var(--ink);font-weight:800}
+  .fr2-chans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:22px}
+  .fr2-chan{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);border:1px solid transparent;min-width:0}
+  .fr2-chan.sugg{border-color:color-mix(in srgb,var(--fr-over) 40%,transparent);background:color-mix(in srgb,var(--fr-over) 6%,transparent)}
+  .fr2-chan-t{min-width:0}
+  .fr2-chan-t b{display:block;font-size:13.5px;font-weight:800;color:var(--ink)}
+  .fr2-chan-t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:560px){
+    .fr2-hero{padding:20px 16px}.fr2-id{gap:16px;margin-bottom:18px}.fr2-av.xl{width:66px;height:66px;font-size:23px}
+    .fr2-chans{gap:8px;margin-bottom:18px}.fr2-chan{flex-direction:column;text-align:center;gap:8px;padding:12px 6px}
+    .fr2-chan-t span{white-space:normal;font-size:11.5px}
+    .fr2-logs{flex-wrap:nowrap;gap:8px}.fr2-logs .fr2-btn{flex:1 1 0;padding:12px 6px;font-size:13.5px;gap:6px;min-width:0}
+    .fr2-bar .lbl{display:none}.fr2-bar .fr2-btn{padding:9px 11px}
+  }
+  .fr2-log-h{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .fr2-logs{display:flex;gap:10px}
+  .fr2-logs .fr2-btn{flex:1 1 0;min-width:0;padding:13px 16px;font-size:14.5px;border-radius:14px}
+  .fr2-hero-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap}
+  .fr2-progress{display:flex;gap:5px;align-items:center}
+  .fr2-progress i{width:22px;height:4px;border-radius:4px;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+  .fr2-progress i.on{background:var(--gold)}
+  .fr2-progress span{font-size:12px;color:var(--muted);font-weight:700;margin-left:6px}
+
+  /* caught up */
+  .fr2-done{text-align:center;padding:42px 28px 34px}
+  .fr2-done-badge{width:84px;height:84px;margin:0 auto 18px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;
+    background:linear-gradient(145deg,color-mix(in srgb,var(--fr-ok) 80%,#fff),var(--fr-ok));box-shadow:0 14px 34px -12px var(--fr-ok)}
+  .fr2-done-badge .fr2-ic{width:38px;height:38px;stroke-width:2.4}
+  .fr2-done h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+  .fr2-done p{color:var(--muted);font-size:14.5px;margin-bottom:18px}
+
+  /* side column */
+  .fr2-side{display:flex;flex-direction:column;gap:18px}
+  .fr2-box{padding:18px 20px}
+  .fr2-box-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .fr2-box-h h3{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .fr2-box-h button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--gold);cursor:pointer}
+  .fr2-pulse-top{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .fr2-pulse-n{font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .fr2-pulse-l{font-size:14px;color:var(--muted);line-height:1.3}
+  .fr2-meter{display:flex;height:10px;border-radius:10px;overflow:hidden;gap:3px;margin-bottom:12px}
+  .fr2-meter i{display:block;border-radius:10px;min-width:6px;transition:flex-grow .5s}
+  .fr2-meter .o{background:var(--fr-over)} .fr2-meter .s{background:var(--fr-soon)} .fr2-meter .k{background:var(--fr-ok)}
+  .fr2-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+  .fr2-legend span{display:inline-flex;align-items:center;gap:6px}
+  .fr2-legend b{color:var(--ink);font-weight:800}
+  .fr2-legend i{width:8px;height:8px;border-radius:50%}
+  .fr2-q{list-style:none;display:flex;flex-direction:column;gap:2px;margin:0 -8px}
+  .fr2-qrow{appearance:none;border:0;background:none;font:inherit;color:inherit;width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;cursor:pointer;transition:background .15s}
+  .fr2-qrow:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+  .fr2-qrow .t{flex:1;min-width:0}
+  .fr2-qrow .t b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr2-qrow .t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr2-qrow > .fr2-ic{width:16px;height:16px;color:var(--muted);opacity:.6}
+  .fr2-more{font-size:12.5px;color:var(--muted);padding:8px 8px 0}
+  .fr2-search{position:relative}
+  .fr2-search .fr2-ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--muted);pointer-events:none}
+  .fr2-search input{width:100%;font:inherit;font-size:14px;color:var(--ink);background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--hairline);border-radius:12px;padding:11px 14px 11px 40px;outline:none;transition:border-color .15s,box-shadow .15s}
+  .fr2-search input:focus{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 16%,transparent)}
+  .fr2-find-res{margin-top:8px}
+  .fr2-empty{font-size:13px;color:var(--muted);padding:6px 2px}
+
+  /* ---- everyone view ---- */
+  .fr2-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fr2-tools .fr2-search{flex:1 1 220px}
+  .fr2-chipset{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .fr2-chip{appearance:none;font:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--hairline);background:none;color:var(--muted);border-radius:999px;padding:7px 12px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;transition:all .15s}
+  .fr2-chip b{font-weight:800;color:var(--ink);opacity:.75}
+  .fr2-chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .fr2-chip.on b{color:inherit;opacity:.8}
+  .fr2-sort{font:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--hairline);background:var(--modal-solid,var(--card));color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
+  .fr2-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .fr2-pc{appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;padding:16px;display:flex;flex-direction:column;gap:14px;transition:transform .18s,box-shadow .18s,border-color .18s;animation:fr2Fade .35s both}
+  .fr2-pc:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+  @keyframes fr2Fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .fr2-pc-top{display:flex;align-items:center;gap:12px;min-width:0}
+  .fr2-pc-top .t{flex:1;min-width:0}
+  .fr2-pc-top b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr2-pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;margin-top:4px}
+  .fr2-pill.s-over{color:var(--fr-over);background:color-mix(in srgb,var(--fr-over) 11%,transparent)}
+  .fr2-pill.s-soon{color:color-mix(in srgb,var(--fr-soon) 80%,var(--ink));background:color-mix(in srgb,var(--fr-soon) 14%,transparent)}
+  .fr2-pill.s-ok{color:var(--fr-ok);background:color-mix(in srgb,var(--fr-ok) 11%,transparent)}
+  .fr2-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .fr2-mini > div{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .fr2-mini .top{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:11.5px;color:var(--muted);font-weight:700}
+  .fr2-mini .top .fr2-ic{width:14px;height:14px}
+  .fr2-mini .bar{height:5px;border-radius:5px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+  .fr2-mini .bar i{display:block;height:100%;border-radius:5px}
+  .fr2-mini .s-ok i{background:var(--fr-ok)} .fr2-mini .s-soon i{background:var(--fr-soon)} .fr2-mini .s-over i{background:var(--fr-over)}
+  .fr2-mini .s-over .top{color:var(--fr-over)}
+  .fr2-foot{font-size:12.5px;color:var(--muted);text-align:center;padding-top:4px}
+
+  /* ---- sheet (person detail / add) ---- */
+  .fr2-back{position:fixed;inset:0;z-index:900;background:rgba(10,14,22,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px}
+  .fr2-back.anim{animation:fr2BgIn .2s ease}
+  .fr2-sheet{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;background:var(--modal-solid,var(--card));color:var(--ink);border-radius:26px;padding:26px 26px 22px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45);position:relative}
+  .fr2-back.anim .fr2-sheet{animation:fr2SheetIn .32s cubic-bezier(.2,.8,.2,1)}
+  @keyframes fr2BgIn{from{opacity:0}}
+  @keyframes fr2SheetIn{from{opacity:0;transform:translateY(24px) scale(.97)}}
+  @media(max-width:600px){.fr2-back{align-items:flex-end;padding:0}.fr2-sheet{border-radius:26px 26px 0 0;max-height:92vh}}
+  .fr2-x{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;border:0;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fr2-x:hover{background:color-mix(in srgb,var(--ink) 12%,transparent)}
+  .fr2-sh-id{display:flex;align-items:center;gap:18px;margin:2px 40px 20px 0}
+  .fr2-sh-id .nm{display:flex;align-items:center;gap:8px}
+  .fr2-sh-id h2{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .fr2-icon-btn{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;display:inline-flex}
+  .fr2-icon-btn:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .fr2-icon-btn .fr2-ic{width:16px;height:16px}
+  .fr2-rename{display:flex;gap:8px;margin-bottom:6px}
+  .fr2-rename input,.fr2-add-in{flex:1;font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--hairline);border-radius:12px;padding:10px 14px;outline:none;min-width:0}
+  .fr2-rename input:focus,.fr2-add-in:focus{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 16%,transparent)}
+  .fr2-sec{margin-top:22px}
+  .fr2-sec-h{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .fr2-sec-h small{text-transform:none;letter-spacing:0;font-weight:600;margin-left:6px}
+  .fr2-crow{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--hairline)}
+  .fr2-crow:first-of-type{border-top:0}
+  .fr2-crow .t{flex:1;min-width:0}
+  .fr2-crow .t b{display:block;font-size:14.5px;font-weight:800}
+  .fr2-crow .t span{display:block;font-size:12.5px;color:var(--muted)}
+  .fr2-crow .fr2-btn{padding:8px 14px;font-size:13px}
+  .fr2-rhythm{display:flex;gap:6px;flex-wrap:wrap}
+  .fr2-rhythm button{appearance:none;font:inherit;font-size:13px;font-weight:700;padding:8px 13px;border-radius:999px;border:1px solid var(--hairline);background:none;color:var(--ink);cursor:pointer;transition:all .15s}
+  .fr2-rhythm button:hover{border-color:var(--gold)}
+  .fr2-rhythm button.on{background:var(--gold);border-color:var(--gold);color:#fff}
+  :root[data-theme="night"] .fr2-rhythm button.on{color:#16181D}
+  .fr2-hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+  .fr2-tl{list-style:none;position:relative;margin-left:6px}
+  .fr2-tl::before{content:"";position:absolute;left:13px;top:8px;bottom:8px;width:2px;background:var(--hairline);border-radius:2px}
+  .fr2-tl li{display:flex;align-items:center;gap:12px;padding:6px 0;position:relative;font-size:13.5px}
+  .fr2-tl li .b{width:28px;height:28px;border-radius:50%;background:var(--modal-solid,var(--card));border:1.5px solid var(--hairline);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+  .fr2-tl li .b .fr2-ic{width:14px;height:14px}
+  .fr2-tl li b{font-weight:800}
+  .fr2-tl li .d{color:var(--muted);margin-left:auto;font-size:12.5px;white-space:nowrap}
+  .fr2-sh-foot{display:flex;justify-content:space-between;align-items:center;margin-top:26px;padding-top:16px;border-top:1px solid var(--hairline);gap:10px;flex-wrap:wrap}
+
+  /* toast */
+  .fr2-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:950;display:flex;width:max-content;white-space:nowrap;align-items:center;gap:14px;background:#16181D;color:#fff;padding:11px 12px 11px 18px;border-radius:999px;box-shadow:0 18px 40px -12px rgba(0,0,0,.45);font-size:14px;font-weight:600;animation:fr2Toast .3s cubic-bezier(.2,.8,.2,1);max-width:calc(100vw - 32px)}
+  .fr2-toast .fr2-ic{width:18px;height:18px;color:#5BD6A0}
+  .fr2-toast button{appearance:none;border:0;font:inherit;font-size:13px;font-weight:800;background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:7px 14px;cursor:pointer}
+  .fr2-toast button:hover{background:rgba(255,255,255,.24)}
+  .fr2-toast.out{opacity:0;transform:translate(-50%,10px);transition:all .25s}
+  @keyframes fr2Toast{from{opacity:0;transform:translate(-50%,16px)}}
+  @media (prefers-reduced-motion: reduce){.fr2 *,.fr2-back,.fr2-sheet,.fr2-toast{animation:none!important;transition:none!important}}
   .tc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .tc-head .h{font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   /* stylish count badge, replacing the old completion ring — flips to a green
@@ -2779,7 +2990,7 @@ const todayCT = () => new Date().toLocaleDateString("en-CA", { timeZone: "Americ
 const esc = t => String(t??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
 const cls = v => v>0?"up":v<0?"down":"neutral";
-const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Home · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers", friends:"Friends · Check-In", weather:"Weather · Franklin, TN" };
+const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Home · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers", friends:"Friends", weather:"Weather · Franklin, TN" };
 
 function niceDate(d){
   const dt = new Date(d+"T12:00:00");
@@ -6737,93 +6948,384 @@ function refreshFriendsCard(root, state){
   wireFriendsCard(root);
 }
 
-function friendRowHTML(f){
-  const st = friendStatus(f);
-  const dotClass = st.state === "overdue" ? "overdue" : st.state === "soon" ? "soon" : st.state === "never" ? "never" : "ok";
-  const freqOptions = [7,14,21,30,90,180].map(d => `<option value="${d}"${Number(f.freqDays)===d?" selected":""}>${esc(freqLabel(d))}</option>`).join("");
-  const nudge = st.state === "ok" ? `All caught up · ${esc(st.because)}` : `<b>${esc(st.suggestion)}</b> — ${esc(st.because)}`;
-  return `<div class="friend-row" data-id="${f.id}">
-    <div class="friend-row-main">
-      <span class="friend-dot ${dotClass}" title="${esc(st.state)}"></span>
-      <span class="friend-name">${esc(f.name)}</span>
-      <span class="friend-chips">${st.chans.map(friendChannelChip).join("")}</span>
-      <span class="friend-meta">${nudge}</span>
+/* ================= Friends v2 (Eli, Oct 2026) =================
+   "I don't want to click in just to see a large list of names... it should be more simple
+   when I first open it up. If I really want to see everyone, there should still be an option."
+   So the page opens on ONE person: who to reach out to, which channel, why, and one tap to log
+   it (with Undo). The roster lives behind the "Everyone" toggle, and a tap on anyone opens a
+   detail sheet with everything the old row had (log, rhythm, remove) plus rename and history.
+   Same Firestore data (friends doc, people[]) and the same per-channel urgency math above --
+   nothing about anyone is changed or migrated. */
+const FR_SVG = {
+  text:'<path d="M4.5 5h15A1.5 1.5 0 0 1 21 6.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17h-1A1.5 1.5 0 0 1 3 15.5v-9A1.5 1.5 0 0 1 4.5 5z"/><path d="M7.5 10h9M7.5 13h5.5"/>',
+  call:'<path d="M6.8 3.5h2.5l1.5 4.3-2.1 1.4a12.5 12.5 0 0 0 6.1 6.1l1.4-2.1 4.3 1.5v2.5a2 2 0 0 1-2.2 2A17 17 0 0 1 4.8 5.7a2 2 0 0 1 2-2.2z"/>',
+  hangout:'<path d="M4.5 9.5h11.5v4.5a5 5 0 0 1-5 5h-1.5a5 5 0 0 1-5-5V9.5z"/><path d="M16 11h1.3a2.5 2.5 0 0 1 0 5H16"/><path d="M8.3 3.5c-.7.9-.7 1.8 0 2.7M12.2 3.5c-.7.9-.7 1.8 0 2.7"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  chev:'<path d="M9 5l7 7-7 7"/>',
+  focus:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/>',
+  grid:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
+  pencil:'<path d="M15.5 4.5l4 4L8 20H4v-4z"/>',
+  skip:'<path d="M5 6l7 6-7 6zM13 6l7 6-7 6z"/>'
+};
+function frIcon(k){ return `<svg class="fr2-ic" viewBox="0 0 24 24" aria-hidden="true">${FR_SVG[k]||""}</svg>`; }
+const FR_RHYTHMS = [[7,"Weekly"],[14,"Every 2 weeks"],[21,"Every 3 weeks"],[30,"Monthly"],[90,"Every 3 months"],[180,"Every 6 months"]];
+const FR_DONE = { text:"Texted", call:"Called", hangout:"Hung out" };
+const FR_NOUN = { text:"Text", call:"Call", hangout:"Hangout" };
+const FR_LOGGED = { text:"a text", call:"a call", hangout:"a hangout" };
+
+const FR = (() => {
+  let view = "focus", skipped = [];
+  try{ view = localStorage.getItem("dh-friends-view") === "all" ? "all" : "focus"; }catch(e){}
+  try{ skipped = JSON.parse(sessionStorage.getItem("dh-friends-skip") || "[]"); }catch(e){}
+  return { view, skipped:new Set(skipped), focusId:null, find:"", q:"", filter:"all", sort:"due",
+           openId:null, adding:false, addFreq:21, editing:false, armRemove:null, shownId:null, sheetShown:false };
+})();
+function frSaveView(){ try{ localStorage.setItem("dh-friends-view", FR.view); }catch(e){} }
+function frSaveSkip(){ try{ sessionStorage.setItem("dh-friends-skip", JSON.stringify([...FR.skipped])); }catch(e){} }
+const frReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function frHue(name){ let h = 7; for(const ch of String(name||"")) h = (Math.imul(h, 31) + ch.charCodeAt(0)) >>> 0; return h % 360; }
+function frInitials(name){
+  const parts = String(name||"?").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length-1][0] : "")).toUpperCase();
+}
+function frFirst(name){ return String(name||"").trim().split(/\s+/)[0] || name; }
+function frAge(days){
+  if(days == null) return "never";
+  if(days <= 0) return "today";
+  if(days === 1) return "yesterday";
+  if(days < 7) return `${days} days ago`;
+  if(days < 14) return "a week ago";
+  if(days < 60) return `${Math.round(days/7)} weeks ago`;
+  if(days < 365) return `${Math.round(days/30)} months ago`;
+  const y = Math.round(days/365); return `${y} year${y===1?"":"s"} ago`;
+}
+function frAgeShort(days){
+  if(days == null) return "—";
+  if(days <= 0) return "today";
+  if(days < 7) return days + "d";
+  if(days < 60) return Math.round(days/7) + "w";
+  if(days < 365) return Math.round(days/30) + "mo";
+  return Math.round(days/365) + "y";
+}
+function frSpan(d){
+  const u = d < 7 ? [d,"day"] : d < 60 ? [Math.round(d/7),"week"] : d < 365 ? [Math.round(d/30),"month"] : [Math.round(d/365),"year"];
+  return `${u[0]} ${u[1]}${u[0]===1?"":"s"}`;
+}
+function frEvery(days){ const d = Number(days); if(d % 30 === 0 && d >= 60) return `every ${d/30} months`; if(d % 7 === 0 && d >= 14) return `every ${d/7} weeks`; if(d === 7) return "weekly"; return `every ${d} days`; }
+function frChanState(c){ return c.days == null ? "none" : c.ratio >= 1 ? "over" : c.ratio >= 0.8 ? "soon" : "ok"; }
+function frState(st){ return (st.state === "never" || st.state === "overdue") ? "over" : st.state; }
+function frAvatar(p, size, st){
+  st = st || friendStatus(p);
+  return `<span class="fr2-av ${size||""} s-${frState(st)}" style="--av-h:${frHue(p.name)}" aria-hidden="true">${esc(frInitials(p.name))}</span>`;
+}
+function frRing(c){
+  const R = 21, C = 2 * Math.PI * R, s = frChanState(c);
+  const fill = s === "none" ? 0 : s === "over" ? 1 : Math.max(.06, 1 - c.ratio);
+  return `<span class="fr2-ring s-${s}"><svg viewBox="0 0 48 48"><circle class="trk" cx="24" cy="24" r="${R}"/><circle class="val" cx="24" cy="24" r="${R}" stroke-dasharray="${(fill*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 24 24)"/></svg>${frIcon(c.key)}</span>`;
+}
+function frPill(st){
+  const s = frState(st);
+  const txt = st.state === "never" ? "New · say hi" : s === "over" ? `${FR_NOUN[st.worst.key]} due` : s === "soon" ? `${FR_NOUN[st.worst.key]} soon` : "On track";
+  return `<span class="fr2-pill s-${s}">${esc(txt)}</span>`;
+}
+/* one plain-English line on why this person is up */
+function frWhy(p, st){
+  const first = esc(frFirst(p.name)), w = st.worst;
+  if(st.state === "never") return `You haven't logged anything with ${first} yet.`;
+  if(st.state === "ok") return `You're in a good spot with ${first}. Last contact ${frAge(st.days)}.`;
+  if(w.days == null) return `No ${w.label} with ${first} logged yet — you usually ${w.key==="hangout"?"see":w.key} them ${frEvery(w.cadence)}.`;
+  const lateBy = w.days - w.cadence;
+  return `Last ${w.label} was <b>${frAge(w.days)}</b>` + (lateBy > 0 ? ` — about ${frSpan(lateBy)} past your usual rhythm.` : ", right around when you'd usually reach back out.");
+}
+
+function frModel(){
+  const people = (window.__friendsApi ? window.__friendsApi.getState().people : []) || [];
+  const all = people.map(p => ({ p, st: friendStatus(p) }));
+  const due = all.filter(x => x.st.state === "overdue" || x.st.state === "never").sort((a,b) => b.st.ratio - a.st.ratio);
+  const feat = people.length ? pickFeaturedFriend(people) : null;
+  if(feat){ const i = due.findIndex(x => x.p.id === feat.p.id); if(i > 0) due.unshift(due.splice(i, 1)[0]); }
+  const soon = all.filter(x => x.st.state === "soon"), ok = all.filter(x => x.st.state === "ok");
+  // whoever's up: a person picked by hand, else the first due person not set aside this session
+  let cur = FR.focusId ? all.find(x => x.p.id === FR.focusId) : null;
+  if(!cur && FR.focusId) FR.focusId = null;
+  let fresh = due.filter(x => !FR.skipped.has(x.p.id));
+  if(!cur && due.length && !fresh.length){ FR.skipped.clear(); frSaveSkip(); fresh = due; }
+  if(!cur) cur = fresh[0] || null;
+  return { people, all, due, soon, ok, cur, picked: !!FR.focusId };
+}
+
+/* ---------- Focus view ---------- */
+function frHeroHTML(m){
+  const x = m.cur;
+  if(!x){
+    const next = m.all.filter(y => y.st.state !== "overdue" && y.st.state !== "never").sort((a,b) => b.st.ratio - a.st.ratio)[0];
+    const inDays = next ? Math.max(1, Math.round(next.st.worst.cadence - (next.st.worst.days ?? 0))) : 0;
+    return `<section class="fr2-card fr2-done">
+      <div class="fr2-done-badge">${frIcon("check")}</div>
+      <h2>Everyone's heard from you</h2>
+      <p>${next ? `Next up: ${esc(next.st.suggestion)} in about ${inDays} day${inDays===1?"":"s"}.` : "Add a few friends to get started."}</p>
+      ${next ? `<button class="fr2-btn" data-act="focus" data-id="${next.p.id}">Reach out to ${esc(frFirst(next.p.name))} early</button>` : `<button class="fr2-btn primary" data-act="add">${frIcon("plus")}Add a friend</button>`}
+    </section>`;
+  }
+  const { p, st } = x;
+  const enter = FR.shownId !== p.id; FR.shownId = p.id;
+  const s = frState(st);
+  const eyebrow = m.picked ? "Catching up" : st.state === "never" ? "Say hi" : "Reach out next";
+  const pos = m.due.findIndex(y => y.p.id === p.id);
+  const dots = m.due.length > 1 && pos >= 0 ? `<div class="fr2-progress">${m.due.slice(0, 6).map((_, i) => `<i class="${i===pos?"on":""}"></i>`).join("")}<span>${pos+1} of ${m.due.length}</span></div>` : `<span></span>`;
+  return `<section class="fr2-card fr2-hero ${enter && !frReduced() ? "is-entering" : ""}" data-id="${p.id}" style="--av-h:${frHue(p.name)}">
+    <div class="fr2-hero-top">
+      <span class="fr2-eyebrow"><span class="dot ${s}"></span>${eyebrow}</span>
+      <button class="fr2-btn ghost" data-act="open" data-id="${p.id}">Details ${frIcon("chev")}</button>
     </div>
-    <div class="friend-row-actions">
-      <select class="friend-freq-select" data-id="${f.id}" title="Base rhythm — calls and hangouts are spaced off this">${freqOptions}</select>
-      ${FRIEND_CHANNELS.map(c => `<button type="button" class="friend-log-btn" data-id="${f.id}" data-method="${c.key}" title="Log a ${c.label}">${c.icon}</button>`).join("")}
-      <button type="button" class="friend-remove" data-id="${f.id}" title="Remove">✕</button>
+    <div class="fr2-id">
+      ${frAvatar(p, "xl", st)}
+      <div><div class="fr2-name">${esc(st.state === "ok" ? p.name : st.suggestion + (p.name.trim().includes(" ") ? " " + p.name.trim().split(/\s+/).slice(1).join(" ") : ""))}</div>
+      <div class="fr2-why">${frWhy(p, st)}</div></div>
     </div>
+    <div class="fr2-chans">${st.chans.map(c => `<div class="fr2-chan ${c.key===st.worst.key && s!=="ok" ? "sugg" : ""}">${frRing(c)}<div class="fr2-chan-t"><b>${FR_NOUN[c.key]}</b><span>${c.days==null ? "never logged" : frAge(c.days)}</span></div></div>`).join("")}</div>
+    <div class="fr2-log-h">Done? Log it</div>
+    <div class="fr2-logs">${FRIEND_CHANNELS.map(c => `<button class="fr2-btn ${c.key===st.worst.key ? "primary" : ""}" data-act="log" data-hero="1" data-id="${p.id}" data-ch="${c.key}">${frIcon(c.key)}${FR_DONE[c.key]}</button>`).join("")}</div>
+    <div class="fr2-hero-foot">${dots}
+      ${m.picked ? `<button class="fr2-btn ghost" data-act="unpick">Back to suggestions</button>` : m.due.length > 1 ? `<button class="fr2-btn ghost" data-act="skip" data-id="${p.id}">Not now ${frIcon("skip")}</button>` : ""}
+    </div>
+  </section>`;
+}
+function frQRow(x, sub){
+  return `<li><button class="fr2-qrow" data-act="focus" data-id="${x.p.id}">${frAvatar(x.p, "sm", x.st)}<span class="t"><b>${esc(x.p.name)}</b><span>${esc(sub || (x.st.state==="never" ? "Nothing logged yet" : `${x.st.suggestion} · ${x.st.because}`))}</span></span>${frIcon("chev")}</button></li>`;
+}
+function frFindHTML(m){
+  const q = FR.find.trim().toLowerCase();
+  if(!q) return "";
+  const hits = m.all.filter(x => x.p.name.toLowerCase().includes(q)).slice(0, 6);
+  return hits.length ? `<ul class="fr2-q">${hits.map(x => frQRow(x, x.st.days==null ? "Nothing logged yet" : `Last contact ${frAge(x.st.days)}`)).join("")}</ul>`
+                     : `<div class="fr2-empty">No one named “${esc(FR.find.trim())}”. <button class="fr2-btn ghost" data-act="add" data-name="${esc(FR.find.trim())}">${frIcon("plus")}Add them</button></div>`;
+}
+function frFocusHTML(m){
+  const n = m.people.length;
+  const up = m.due.filter(x => !m.cur || x.p.id !== m.cur.p.id);
+  const soonSorted = m.soon.slice().sort((a,b) => b.st.ratio - a.st.ratio);
+  const list = up.length ? up : soonSorted;
+  const pct = k => n ? (k / n * 100) : 0;
+  return `<div class="fr2-focus">
+    <div>${frHeroHTML(m)}</div>
+    <aside class="fr2-side">
+      <section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>Your circle</h3><button data-act="view" data-view="all">See all ${n}</button></div>
+        <div class="fr2-pulse-top"><div class="fr2-pulse-n">${m.due.length}</div><div class="fr2-pulse-l">${m.due.length === 1 ? "friend is" : "friends are"}<br>waiting to hear from you</div></div>
+        <div class="fr2-meter">${m.due.length?`<i class="o" style="flex-grow:${pct(m.due.length)}"></i>`:""}${m.soon.length?`<i class="s" style="flex-grow:${pct(m.soon.length)}"></i>`:""}${m.ok.length?`<i class="k" style="flex-grow:${pct(m.ok.length)}"></i>`:""}</div>
+        <div class="fr2-legend"><span><i style="background:var(--fr-over)"></i><b>${m.due.length}</b> due</span><span><i style="background:var(--fr-soon)"></i><b>${m.soon.length}</b> soon</span><span><i style="background:var(--fr-ok)"></i><b>${m.ok.length}</b> on track</span></div>
+      </section>
+      ${list.length ? `<section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>${up.length ? "Also due" : "Coming up"}</h3></div>
+        <ul class="fr2-q">${list.slice(0, 4).map(x => frQRow(x)).join("")}</ul>
+        ${list.length > 4 ? `<div class="fr2-more">+${list.length - 4} more · <button class="fr2-btn ghost" style="padding:4px 8px" data-act="view" data-view="all" data-filter="due">see them</button></div>` : ""}
+      </section>` : ""}
+      <section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>Caught up with someone?</h3></div>
+        <label class="fr2-search">${frIcon("search")}<input id="fr2Find" type="search" placeholder="Type a name…" autocomplete="off" value="${esc(FR.find)}"></label>
+        <div class="fr2-find-res" id="fr2FindRes">${frFindHTML(m)}</div>
+      </section>
+    </aside>
   </div>`;
 }
 
+/* ---------- Everyone view ---------- */
+function frGridHTML(m){
+  const q = FR.q.trim().toLowerCase();
+  let rows = m.all.filter(x => !q || x.p.name.toLowerCase().includes(q));
+  if(FR.filter === "due") rows = rows.filter(x => frState(x.st) === "over");
+  if(FR.filter === "soon") rows = rows.filter(x => x.st.state === "soon");
+  if(FR.filter === "ok") rows = rows.filter(x => x.st.state === "ok");
+  const lastOf = x => x.p.lastContact ? new Date(x.p.lastContact).getTime() : 0;
+  if(FR.sort === "name") rows.sort((a,b) => a.p.name.localeCompare(b.p.name));
+  else if(FR.sort === "recent") rows.sort((a,b) => lastOf(b) - lastOf(a));
+  else rows.sort((a,b) => b.st.ratio - a.st.ratio);
+  if(!rows.length) return `<div class="fr2-card fr2-box fr2-empty" style="text-align:center;padding:30px">${q ? `No one matches “${esc(FR.q.trim())}”.` : "Nobody here right now."}</div>`;
+  return `<div class="fr2-grid">${rows.map((x, i) => `<button class="fr2-card fr2-pc" data-act="open" data-id="${x.p.id}" style="animation-delay:${Math.min(i, 14) * 18}ms">
+      <div class="fr2-pc-top">${frAvatar(x.p, "md", x.st)}<div class="t"><b>${esc(x.p.name)}</b>${frPill(x.st)}</div></div>
+      <div class="fr2-mini">${x.st.chans.map(c => { const s = frChanState(c); const w = s==="none" ? 0 : s==="over" ? 100 : Math.max(6, (1 - c.ratio) * 100); return `<div class="s-${s}"><div class="top">${frIcon(c.key)}<span>${frAgeShort(c.days)}</span></div><div class="bar"><i style="width:${w.toFixed(0)}%"></i></div></div>`; }).join("")}</div>
+    </button>`).join("")}</div>`;
+}
+function frAllHTML(m){
+  const chip = (k, label, n) => `<button class="fr2-chip ${FR.filter===k?"on":""}" data-act="filter" data-f="${k}">${label} <b>${n}</b></button>`;
+  return `<div class="fr2-tools">
+      <label class="fr2-search">${frIcon("search")}<input id="fr2Q" type="search" placeholder="Search ${m.people.length} friends" autocomplete="off" value="${esc(FR.q)}"></label>
+      <div class="fr2-chipset">${chip("all","All",m.people.length)}${chip("due","Due",m.due.length)}${chip("soon","Soon",m.soon.length)}${chip("ok","On track",m.ok.length)}</div>
+      <select class="fr2-sort" id="fr2Sort" aria-label="Sort">
+        <option value="due"${FR.sort==="due"?" selected":""}>Most overdue</option>
+        <option value="name"${FR.sort==="name"?" selected":""}>Name A–Z</option>
+        <option value="recent"${FR.sort==="recent"?" selected":""}>Recently talked</option>
+      </select>
+    </div>
+    <div id="fr2Grid">${frGridHTML(m)}</div>
+    <div class="fr2-foot">Bars fill back up each time you log a text, call, or hangout, and drain toward that person's rhythm.</div>`;
+}
+
+/* ---------- sheets ---------- */
+function frSheetHTML(m){
+  if(FR.adding){
+    return `<div class="fr2-back ${FR.sheetShown ? "" : "anim"}" data-act="close-bg"><div class="fr2-sheet" role="dialog" aria-modal="true" aria-label="Add a friend">
+      <button class="fr2-x" data-act="close" aria-label="Close">${frIcon("x")}</button>
+      <h2 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px">Add a friend</h2>
+      <form id="fr2AddForm"><div class="fr2-rename"><input class="fr2-add-in" id="fr2AddName" maxlength="60" placeholder="Their name" autocomplete="off" value="${esc(FR.addName||"")}"></div>
+      <div class="fr2-sec"><div class="fr2-sec-h">How often do you want to text?</div>
+        <div class="fr2-rhythm">${FR_RHYTHMS.map(([d,l]) => `<button type="button" class="${FR.addFreq===d?"on":""}" data-act="add-freq" data-days="${d}">${l}</button>`).join("")}</div>
+        <div class="fr2-hint">Calls are spaced about 2½× that, hangouts about 5×.</div></div>
+      <div class="fr2-sh-foot"><span></span><button type="submit" class="fr2-btn primary">${frIcon("plus")}Add friend</button></div></form>
+    </div></div>`;
+  }
+  const x = FR.openId ? m.all.find(y => y.p.id === FR.openId) : null;
+  if(!x){ FR.openId = null; return ""; }
+  const { p, st } = x;
+  const fd = Number(p.freqDays) || 21;
+  const rhythms = FR_RHYTHMS.some(([d]) => d === fd) ? FR_RHYTHMS : [...FR_RHYTHMS, [fd, frEvery(fd)]];
+  const hist = (p.history || []).filter(h => h && h.date);
+  const fmt = iso => new Date(iso).toLocaleDateString("en-US", { month:"short", day:"numeric", year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
+  return `<div class="fr2-back ${FR.sheetShown ? "" : "anim"}" data-act="close-bg"><div class="fr2-sheet" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
+    <button class="fr2-x" data-act="close" aria-label="Close">${frIcon("x")}</button>
+    <div class="fr2-sh-id">${frAvatar(p, "xl", st)}<div style="min-width:0;flex:1">
+      ${FR.editing ? `<form class="fr2-rename" id="fr2RenameForm"><input id="fr2RenameIn" maxlength="60" value="${esc(p.name)}"><button class="fr2-btn primary" type="submit">Save</button></form>`
+                   : `<div class="nm"><h2>${esc(p.name)}</h2><button class="fr2-icon-btn" data-act="rename" title="Rename">${frIcon("pencil")}</button></div>`}
+      ${frPill(st)}
+    </div></div>
+    <div class="fr2-why">${frWhy(p, st)}</div>
+    <div class="fr2-sec"><div class="fr2-sec-h">Log a catch-up</div>
+      <div class="fr2-logs">${FRIEND_CHANNELS.map(c => `<button class="fr2-btn ${c.key===st.worst.key && frState(st)!=="ok" ? "primary" : ""}" data-act="log" data-id="${p.id}" data-ch="${c.key}">${frIcon(c.key)}${FR_DONE[c.key]}</button>`).join("")}</div></div>
+    <div class="fr2-sec"><div class="fr2-sec-h">By channel</div>
+      ${st.chans.map(c => `<div class="fr2-crow">${frRing(c)}<div class="t"><b>${FR_NOUN[c.key]}</b><span>${c.last ? `Last ${fmt(c.last)} · ${frAge(c.days)}` : "Never logged"} · aim ${frEvery(c.cadence)}</span></div></div>`).join("")}
+    </div>
+    <div class="fr2-sec"><div class="fr2-sec-h">Rhythm <small>how often you want to text ${esc(frFirst(p.name))}</small></div>
+      <div class="fr2-rhythm">${rhythms.map(([d,l]) => `<button class="${fd===d?"on":""}" data-act="freq" data-id="${p.id}" data-days="${d}">${esc(l)}</button>`).join("")}</div>
+      <div class="fr2-hint">Calls are spaced about 2½× that, hangouts about 5×.</div></div>
+    <div class="fr2-sec"><div class="fr2-sec-h">History</div>
+      ${hist.length ? `<ul class="fr2-tl">${hist.map(h => { const ch = friendChannelOf(h.method); return `<li><span class="b">${ch ? frIcon(ch) : frIcon("check")}</span><b>${ch ? FR_DONE[ch] : (esc(h.method) || "Reached out")}</b><span class="d">${fmt(h.date)} · ${frAge(daysSince(h.date))}</span></li>`; }).join("")}</ul>`
+                  : `<div class="fr2-empty">Nothing logged yet${p.lastContact ? ` · last contact set ${fmt(p.lastContact)}` : ""}.</div>`}
+    </div>
+    <div class="fr2-sh-foot">
+      <button class="fr2-btn danger ${FR.armRemove===p.id?"armed":""}" data-act="remove" data-id="${p.id}">${FR.armRemove===p.id ? `Tap again to remove ${esc(frFirst(p.name))}` : "Remove friend"}</button>
+      <button class="fr2-btn" data-act="focus" data-id="${p.id}">Make ${esc(frFirst(p.name))} my focus</button>
+    </div>
+  </div></div>`;
+}
+
+/* ---------- toast with undo ---------- */
+let frToastTimer = null;
+function frToast(msg, undo){
+  document.querySelectorAll(".fr2-toast").forEach(t => t.remove());
+  clearTimeout(frToastTimer);
+  const t = document.createElement("div");
+  t.className = "fr2-toast"; t.setAttribute("role", "status");
+  t.innerHTML = `${frIcon("check")}<span>${esc(msg)}</span>${undo ? `<button type="button">Undo</button>` : ""}`;
+  document.body.appendChild(t);
+  const close = () => { t.classList.add("out"); setTimeout(() => t.remove(), 260); };
+  if(undo) t.querySelector("button").addEventListener("click", () => { undo(); close(); });
+  frToastTimer = setTimeout(close, 6500);
+}
+function frLog(id, ch, fromHero){
+  const api = window.__friendsApi; if(!api) return;
+  const p = (api.getState().people || []).find(x => x.id === id); if(!p) return;
+  const prev = JSON.parse(JSON.stringify(p));
+  const go = () => {
+    api.logContact(id, ch);
+    if(fromHero){ FR.skipped.add(id); frSaveSkip(); if(FR.focusId === id) FR.focusId = null; }
+    frToast(`Logged ${FR_LOGGED[ch]} with ${frFirst(p.name)}`, api.replace ? () => { FR.skipped.delete(id); frSaveSkip(); api.replace(prev); } : null);
+  };
+  const card = fromHero && document.querySelector(`.fr2-hero[data-id="${id}"]`);
+  if(card && !frReduced()){ card.classList.remove("is-entering"); card.classList.add("is-leaving"); setTimeout(go, 260); }
+  else go();
+}
+
+/* ---------- render + events ---------- */
 function renderFriendsBody(){
   const panel = $("#panel-friends"); if(!panel) return;
-  const state = window.__friendsApi ? window.__friendsApi.getState() : { people: [] };
-  const rank = s => s.state === "overdue" ? 0 : s.state === "never" ? 0.5 : s.state === "soon" ? 1 : 2;
-  const people = (state.people || []).slice().sort((a,b) => {
-    const sa = friendStatus(a), sb = friendStatus(b);
-    const ra = rank(sa), rb = rank(sb);
-    if(ra !== rb) return ra - rb;
-    return sb.overdueBy - sa.overdueBy;
+  const m = frModel();
+  $("#heroTitle").textContent = "Friends";
+  $("#heroSub").textContent = m.people.length
+    ? (m.due.length ? `${m.due.length} ${m.due.length===1?"person":"people"} to reach out to · ${m.people.length} in your circle` : `You're caught up with all ${m.people.length}`)
+    : "Keep up with the people who matter";
+  $("#heroDateline").textContent = "One person at a time · tap Everyone for the full roster";
+
+  // keep typing focus/caret through live re-renders
+  const ae = document.activeElement, aeId = ae && ae.id && panel.contains(ae) ? ae.id : null;
+  const caret = aeId && typeof ae.selectionStart === "number" ? ae.selectionStart : null;
+
+  panel.innerHTML = `<div class="fr2">
+    <div class="fr2-bar">
+      <div class="fr2-seg" role="tablist">
+        <button class="${FR.view==="focus"?"on":""}" data-act="view" data-view="focus" role="tab">${frIcon("focus")}Focus</button>
+        <button class="${FR.view==="all"?"on":""}" data-act="view" data-view="all" role="tab">${frIcon("grid")}Everyone</button>
+      </div>
+      <button class="fr2-btn" data-act="add" aria-label="Add friend">${frIcon("plus")}<span class="lbl">Add friend</span></button>
+    </div>
+    ${FR.view === "all" ? frAllHTML(m) : frFocusHTML(m)}
+    ${frSheetHTML(m)}
+  </div>`;
+  FR.sheetShown = !!(FR.openId || FR.adding);
+
+  if(aeId){ const el = document.getElementById(aeId); if(el){ el.focus(); if(caret != null) try{ el.setSelectionRange(caret, caret); }catch(e){} } }
+  frWire(panel);
+}
+function frCloseSheet(){ FR.openId = null; FR.adding = false; FR.editing = false; FR.armRemove = null; FR.addName = ""; renderFriendsBody(); }
+function frWire(panel){
+  if(panel.dataset.fr2) return;
+  panel.dataset.fr2 = "1";
+  panel.addEventListener("click", e => {
+    const el = e.target.closest("[data-act]"); if(!el || !panel.contains(el)) return;
+    const act = el.dataset.act, id = el.dataset.id, api = window.__friendsApi;
+    if(act === "close-bg"){ if(e.target === el) frCloseSheet(); return; }
+    if(act === "close"){ frCloseSheet(); return; }
+    if(act === "view"){ FR.view = el.dataset.view; if(el.dataset.filter) FR.filter = el.dataset.filter; frSaveView(); renderFriendsBody(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+    if(act === "filter"){ FR.filter = el.dataset.f; renderFriendsBody(); return; }
+    if(act === "add"){ FR.adding = true; FR.addName = el.dataset.name || ""; FR.openId = null; renderFriendsBody(); setTimeout(() => { const i = $("#fr2AddName"); if(i) i.focus(); }, 60); return; }
+    if(act === "add-freq"){ FR.addName = ($("#fr2AddName")||{}).value || ""; FR.addFreq = Number(el.dataset.days); renderFriendsBody(); return; }
+    if(act === "skip"){ FR.skipped.add(id); frSaveSkip(); const c = panel.querySelector(".fr2-hero"); if(c && !frReduced()){ c.classList.add("is-leaving"); setTimeout(renderFriendsBody, 240); } else renderFriendsBody(); return; }
+    if(act === "unpick"){ FR.focusId = null; renderFriendsBody(); return; }
+    if(act === "focus"){ FR.focusId = id; FR.view = "focus"; frSaveView(); FR.find = ""; FR.openId = null; FR.adding = false; renderFriendsBody(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+    if(act === "open"){ FR.openId = id; FR.editing = false; FR.armRemove = null; renderFriendsBody(); return; }
+    if(act === "log"){ frLog(id, el.dataset.ch, el.dataset.hero === "1"); return; }
+    if(act === "freq"){ if(api) api.setFreq(id, el.dataset.days); return; }
+    if(act === "rename"){ FR.editing = true; renderFriendsBody(); setTimeout(() => { const i = $("#fr2RenameIn"); if(i){ i.focus(); i.select(); } }, 30); return; }
+    if(act === "remove"){
+      if(FR.armRemove !== id){ FR.armRemove = id; renderFriendsBody(); setTimeout(() => { if(FR.armRemove === id){ FR.armRemove = null; if(FR.openId) renderFriendsBody(); } }, 4000); return; }
+      const p = api && (api.getState().people || []).find(x => x.id === id);
+      if(p){ const prev = JSON.parse(JSON.stringify(p)); const idx = api.getState().people.indexOf(p);
+        api.remove(id); FR.openId = null; FR.armRemove = null; if(FR.focusId === id) FR.focusId = null;
+        frToast(`Removed ${p.name}`, api.restore ? () => api.restore(prev, idx) : null); }
+      return;
+    }
   });
-  const overdueCount = people.filter(p => { const s = friendStatus(p); return s.state === "overdue" || s.state === "never"; }).length;
-
-  $("#heroTitle").textContent = "Friends Check-In";
-  $("#heroSub").textContent = `${people.length} friend${people.length===1?"":"s"} tracked · ${overdueCount} due for a catch-up`;
-  $("#heroDateline").textContent = "Weighted weekly reminder on the Today dashboard · log a contact any time here";
-
-  let h = `<button class="pbtn game-back" id="friendsBackToday">← Back to Today</button>`;
-  h += `<div class="kicker">Add a Friend</div>
-    <form class="todo-add friends-add" id="friendsAddForm">
-      <input type="text" placeholder="Name" maxlength="60" autocomplete="off" id="friendsAddName">
-      <select id="friendsAddFreq">
-        <option value="7">Weekly</option>
-        <option value="14">Every 2 weeks</option>
-        <option value="21" selected>Every 3 weeks</option>
-        <option value="30">Monthly</option>
-        <option value="90">Every 3 months</option>
-        <option value="180">Every 6 months</option>
-      </select>
-      <button type="submit" aria-label="Add">+</button>
-    </form>`;
-  h += `<div class="kicker">Everyone (${people.length}) · most overdue first</div>`;
-  h += people.length
-    ? `<div class="todos friends-list" id="friendsList">${people.map(friendRowHTML).join("")}</div>`
-    : `<div class="empty">No friends tracked yet — add one above.</div>`;
-
-  panel.innerHTML = h;
-
-  const backBtn = $("#friendsBackToday");
-  if(backBtn) backBtn.addEventListener("click", () => animatedTabSwitch(async () => {
-    S.tab = "calendar"; localStorage.setItem("dh-tab","calendar");
-    markTab("calendar");
-    document.querySelectorAll(".panel").forEach(pn => pn.classList.toggle("active", pn.id==="panel-calendar"));
-    fillDates(); await show(); window.scrollTo({top:0,behavior:"smooth"});
-  }));
-
-  const addForm = $("#friendsAddForm");
-  if(addForm) addForm.addEventListener("submit", e => {
-    e.preventDefault();
-    const nameInput = $("#friendsAddName");
-    const freqSelect = $("#friendsAddFreq");
-    if(window.__friendsApi) window.__friendsApi.add(nameInput.value, freqSelect.value);
-    nameInput.value = "";
+  panel.addEventListener("submit", e => {
+    const api = window.__friendsApi;
+    if(e.target.id === "fr2AddForm"){
+      e.preventDefault();
+      const name = ($("#fr2AddName").value || "").trim(); if(!name || !api) return;
+      api.add(name, FR.addFreq); FR.adding = false; FR.addName = ""; FR.find = "";
+      frToast(`Added ${name}`); renderFriendsBody();
+    }
+    if(e.target.id === "fr2RenameForm"){
+      e.preventDefault();
+      const v = ($("#fr2RenameIn").value || "").trim();
+      if(v && api) api.rename(FR.openId, v);
+      FR.editing = false; renderFriendsBody();
+    }
   });
-
-  const list = $("#friendsList");
-  if(list){
-    list.addEventListener("click", e => {
-      const logBtn = e.target.closest(".friend-log-btn");
-      if(logBtn){ if(window.__friendsApi) window.__friendsApi.logContact(logBtn.dataset.id, logBtn.dataset.method); return; }
-      const rmBtn = e.target.closest(".friend-remove");
-      if(rmBtn){ if(window.__friendsApi) window.__friendsApi.remove(rmBtn.dataset.id); return; }
-    });
-    list.addEventListener("change", e => {
-      const sel = e.target.closest(".friend-freq-select");
-      if(sel && window.__friendsApi) window.__friendsApi.setFreq(sel.dataset.id, sel.value);
-    });
-  }
+  panel.addEventListener("input", e => {
+    if(e.target.id === "fr2Find"){ FR.find = e.target.value; const r = $("#fr2FindRes"); if(r) r.innerHTML = frFindHTML(frModel()); }
+    if(e.target.id === "fr2Q"){ FR.q = e.target.value; const g = $("#fr2Grid"); if(g) g.innerHTML = frGridHTML(frModel()); }
+  });
+  panel.addEventListener("change", e => {
+    if(e.target.id === "fr2Sort"){ FR.sort = e.target.value; const g = $("#fr2Grid"); if(g) g.innerHTML = frGridHTML(frModel()); }
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape" && (FR.openId || FR.adding) && S.tab === "friends"){ frCloseSheet(); }
+    if(e.key === "Enter" && e.target && e.target.id === "fr2Find"){ const first = $("#fr2FindRes .fr2-qrow"); if(first){ e.preventDefault(); first.click(); } }
+  });
 }
 
 /* ================= portfolio ================= */
@@ -13329,7 +13831,7 @@ gateInit();
       try{ window.__onNowSnapshot(nowState); }catch(e){ console.error("Daily Hub: now-strip render callback failed", e); }
     }
   }
-  const FRIEND_HISTORY_CAP = 8;
+  const FRIEND_HISTORY_CAP = 40; // per-channel "last call / last hangout" needs a deeper log than 8
   const DEFAULT_FRIEND_FREQ = 21; // days — a sensible "every few weeks" default
   const FRIEND_SEED = [
     "Hayden Miller","Jack Reynolds","Caleb Ronningen","Bo Nordberg","Max Halpern",
@@ -13598,6 +14100,18 @@ gateInit();
         const fd = Number(freqDays) > 0 ? Number(freqDays) : DEFAULT_FRIEND_FREQ;
         const next = { people: friendsState.people.map(p => p.id === id ? { ...p, freqDays: fd } : p) };
         setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to update friend frequency", err));
+      },
+      // Undo support for the Friends page: put one person back exactly as they were
+      replace(person){
+        if(!person || !person.id) return;
+        const next = { people: friendsState.people.map(p => p.id === person.id ? person : p) };
+        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to restore friend", err));
+      },
+      restore(person, index){
+        if(!person || !person.id || friendsState.people.some(p => p.id === person.id)) return;
+        const people = friendsState.people.slice();
+        people.splice(Math.max(0, Math.min(Number(index) || 0, people.length)), 0, person);
+        setDoc(friendsDocRef, { people }).catch(err => console.error("Daily Hub: failed to re-add friend", err));
       },
       logContact(id, method){
         const nowIso = new Date().toISOString();

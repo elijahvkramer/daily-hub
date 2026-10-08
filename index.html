@@ -52,7 +52,7 @@
 <link rel="apple-touch-startup-image" href="splash-750x1334.png"  media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Outfit:wght@400;500;600;700&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Outfit:wght@400;500;600;700&family=Figtree:wght@400;500;600;700;800&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --dh-font:'Plus Jakarta Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -2872,6 +2872,161 @@
   .theme-panel{width:236px}
   html.glass body{letter-spacing:-.003em}
 </style>
+<style id="mb-style">
+/* ================= Morning Brief =================
+   Eli, Oct 2026: a chief-of-staff welcome before the real page, once per day on first open.
+   The one memorable thing is the sky: the day drawn as the sun's path from 6am to 9pm, with
+   every event pinned to that arc and the sun sitting at the current time. Everything under it
+   (markets, portfolio, headlines, inbox) is deliberately quiet. Sky colors follow the clock,
+   not the site theme, so it always reads as a sunrise. */
+#mb{position:fixed;inset:0;z-index:9000;display:none;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  color:#F4F7FB;font-family:var(--dh-font,'Plus Jakarta Sans',system-ui,sans-serif);
+  --mb-top:#0B1630;--mb-mid:#2A2A5E;--mb-low:#7A4E7E;--mb-hz:#F09A7C;--mb-sun:#FFD08A;
+  --mb-up:#6FE3B0;--mb-down:#FF9488;--mb-dim:rgba(244,247,251,.62);--mb-faint:rgba(244,247,251,.14);
+  background:var(--mb-top);
+  transition:transform .9s cubic-bezier(.7,0,.2,1),opacity .9s ease}
+#mb.on{display:block}
+#mb .mb-sky{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,var(--mb-top) 0%,var(--mb-mid) 34%,var(--mb-low) 66%,var(--mb-hz) 100%)}
+#mb .mb-shade{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 40%,rgba(6,12,30,.0) 60%,rgba(6,12,30,.35) 100%);opacity:0;transition:opacity .9s ease}
+#mb.s2 .mb-shade{opacity:1}
+#mb.leaving{transform:translateY(-104%);opacity:.6}
+#mb[data-sky="morning"]{--mb-top:#0E2A55;--mb-mid:#1F5C93;--mb-low:#4E8DBB;--mb-hz:#F2C58E;--mb-sun:#FFE2A8}
+#mb[data-sky="day"]{--mb-top:#0C3266;--mb-mid:#1C64A8;--mb-low:#3F8FCB;--mb-hz:#A9D4EE;--mb-sun:#FFF1C9}
+#mb[data-sky="evening"]{--mb-top:#140F2E;--mb-mid:#3A2358;--mb-low:#8A3F62;--mb-hz:#F08C5A;--mb-sun:#FFB86B}
+#mb .mb-stars{position:fixed;inset:0 0 auto 0;height:60vh;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(1px 1px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 33% 8%,#fff 50%,transparent 51%),
+  radial-gradient(1.5px 1.5px at 58% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 76% 12%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 88% 30%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 46% 36%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 6% 40%,#fff 50%,transparent 51%);transition:opacity 2s ease}
+#mb[data-sky="morning"] .mb-stars,#mb[data-sky="day"] .mb-stars{opacity:0}
+#mb .mb-glow{position:absolute;left:50%;top:var(--glow-y,62vh);width:130vmax;height:60vmax;transform:translate(-50%,-50%);pointer-events:none;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--mb-sun) 55%,transparent),transparent 70%);opacity:.55;filter:blur(10px)}
+#mb .mb-in{position:relative;max-width:1180px;margin:0 auto;padding:max(28px,env(safe-area-inset-top)) 28px 48px}
+
+/* ---- greeting ---- */
+#mb .mb-greet{font-family:'Sora',var(--dh-font),sans-serif;font-weight:300;font-size:clamp(40px,7.2vw,92px);letter-spacing:-.035em;line-height:1;margin:6vh 0 0;
+  transition:font-size .9s cubic-bezier(.6,0,.2,1),margin .9s cubic-bezier(.6,0,.2,1)}
+#mb .mb-greet span{display:inline-block;opacity:0;filter:blur(14px);transform:translateY(.25em)}
+#mb.played .mb-greet span,#mb .mb-greet.go span{animation:mbLetter .9s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes mbLetter{to{opacity:1;filter:blur(0);transform:none}}
+#mb .mb-date{margin-top:12px;font-size:15px;color:var(--mb-dim);opacity:0;transition:opacity .8s ease .9s}
+#mb.s1 .mb-date{opacity:1}
+#mb.s2 .mb-greet{font-size:clamp(30px,4.2vw,50px);margin-top:1vh}
+
+/* ---- the sky arc ---- */
+#mb .mb-arc{position:relative;margin:4vh -8px 0;transition:margin .9s cubic-bezier(.6,0,.2,1)}
+#mb.s2 .mb-arc{margin-top:8px}
+#mb .mb-arc svg{display:block;width:100%;height:auto;overflow:visible}
+#mb .arc-path{fill:none;stroke:var(--mb-faint);stroke-width:2;stroke-dasharray:2 7;stroke-linecap:round}
+#mb .arc-trav{fill:none;stroke:rgba(255,255,255,.55);stroke-width:2.2;stroke-linecap:round}
+#mb .arc-hz{stroke:rgba(255,255,255,.28);stroke-width:1}
+#mb .arc-tick{fill:var(--mb-dim);font-size:13px;font-family:'Sora',sans-serif}
+#mb .arc-ev{fill:none;stroke:var(--mb-sun);stroke-width:7;stroke-linecap:round;opacity:0;transition:opacity .5s ease}
+#mb .arc-ev.past{stroke:rgba(255,255,255,.4)}
+#mb .arc-ev.on{opacity:1}
+#mb .arc-dot{fill:#fff;opacity:0;transition:opacity .5s ease}
+#mb .arc-dot.on{opacity:1}
+#mb .arc-lbl{fill:#fff;font-size:15px;font-weight:600;opacity:0;transition:opacity .5s ease}
+#mb .arc-lbl.on{opacity:.92}
+#mb .arc-lbl.past{fill:var(--mb-dim)}
+#mb .sun-core{fill:var(--mb-sun)}
+#mb .sun-halo{fill:var(--mb-sun);opacity:.22}
+
+/* ---- next up ---- */
+#mb .mb-next{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;margin-top:-6px;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}
+#mb.s1 .mb-next{opacity:1;transform:none}
+#mb .mb-next .nx-time{font-family:'Sora',sans-serif;font-size:clamp(34px,4.6vw,54px);font-weight:300;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+#mb .mb-next .nx-title{font-size:clamp(19px,2.2vw,26px);font-weight:700;letter-spacing:-.01em}
+#mb .mb-next .nx-in{font-size:15px;color:var(--mb-sun);font-weight:600}
+#mb .mb-next .nx-sub{flex-basis:100%;font-size:14px;color:var(--mb-dim);margin-top:2px}
+
+/* ---- lower deck (arrives after the intro) ---- */
+#mb .mb-deck{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;margin-top:34px;opacity:0;transform:translateY(26px);
+  transition:opacity .8s ease,transform .9s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+#mb.s2 .mb-deck{opacity:1;transform:none;pointer-events:auto}
+#mb .mb-p{background:rgba(8,18,42,.32);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:20px 22px;
+  -webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);min-width:0}
+#mb .mb-p h3{margin:0 0 14px;font-size:15px;font-weight:700;letter-spacing:-.005em;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+#mb .mb-p h3 small{font-size:12.5px;font-weight:500;color:var(--mb-dim)}
+#mb .up{color:var(--mb-up)} #mb .down{color:var(--mb-down)}
+
+/* markets */
+#mb .mk-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 74px;align-items:center;gap:12px;padding:9px 0;border-top:1px solid rgba(255,255,255,.08)}
+#mb .mk-row:first-of-type{border-top:0}
+#mb .mk-n{font-weight:700;font-size:15px}
+#mb .mk-n small{display:block;font-weight:500;font-size:12.5px;color:var(--mb-dim);margin-top:1px;font-variant-numeric:tabular-nums}
+#mb .mk-sp{width:92px;height:32px}
+#mb .mk-sp path{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:var(--len,400);stroke-dashoffset:var(--len,400);animation:mbDraw 1.4s .2s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes mbDraw{to{stroke-dashoffset:0}}
+#mb .mk-c{text-align:right;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+#mb .mk-rates{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#mb .mk-rate{font-size:12.5px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--mb-dim)}
+#mb .mk-rate b{color:#fff;font-weight:700;margin-left:4px}
+
+/* portfolio */
+#mb .pf-val{font-family:'Sora',sans-serif;font-size:clamp(34px,4vw,46px);font-weight:300;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05}
+#mb .pf-chg{margin-top:6px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+#mb .pf-chg span{color:var(--mb-dim);font-weight:500}
+#mb .pf-sp{display:block;width:100%;height:64px;margin:14px 0 6px}
+#mb .pf-sp path.ln{fill:none;stroke-width:2;stroke-linecap:round;stroke-dasharray:var(--len,900);stroke-dashoffset:var(--len,900);animation:mbDraw 1.6s .3s cubic-bezier(.4,0,.2,1) forwards}
+#mb .pf-sp path.ar{opacity:0;animation:mbFade 1s 1.2s ease forwards}
+@keyframes mbFade{to{opacity:1}}
+#mb .pf-movers{display:grid;gap:6px;margin-top:8px}
+#mb .pf-mv{display:grid;grid-template-columns:58px 1fr 64px;align-items:center;gap:10px;font-size:13.5px;font-variant-numeric:tabular-nums}
+#mb .pf-mv b{font-weight:700}
+#mb .pf-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+#mb .pf-bar i{display:block;height:100%;border-radius:3px;width:0;transition:width 1.1s cubic-bezier(.2,.7,.2,1) .5s}
+#mb .pf-mv span:last-child{text-align:right;font-weight:700}
+
+/* headlines */
+#mb .hl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#mb .hl{all:unset;cursor:pointer;display:block;border-radius:16px;overflow:hidden;background:rgba(0,0,0,.18);transition:transform .25s ease}
+#mb .hl:hover{transform:translateY(-3px)}
+#mb .hl:focus-visible{outline:2px solid #fff;outline-offset:3px}
+#mb .hl-ph{aspect-ratio:16/10;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03));position:relative;overflow:hidden}
+#mb .hl-ph img{width:100%;height:100%;object-fit:cover;object-position:center 35%;display:block;opacity:0;transform:scale(1.06);transition:opacity .8s ease,transform 1.6s ease}
+#mb .hl-ph img.in{opacity:1;transform:none}
+#mb .hl-b{padding:10px 12px 13px}
+#mb .hl-k{font-size:12px;color:var(--mb-sun);font-weight:600}
+#mb .hl-t{font-size:14.5px;font-weight:700;line-height:1.3;margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* inbox */
+#mb .ib{all:unset;cursor:pointer;display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 8px;margin:0 -8px;border-radius:12px;transition:background .2s ease}
+#mb .ib:hover{background:rgba(255,255,255,.07)}
+#mb .ib:focus-visible{outline:2px solid #fff}
+#mb .ib-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff}
+#mb .ib-f{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mb .ib-s{font-size:14px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mb .ib-n{font-size:12.5px;color:var(--mb-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mb .ib-t{font-size:12px;color:var(--mb-dim);white-space:nowrap}
+#mb .mb-empty{font-size:14px;color:var(--mb-dim);padding:6px 0;line-height:1.5}
+
+/* go */
+#mb .mb-go{display:flex;justify-content:center;margin-top:30px;opacity:0;transition:opacity .8s ease .5s}
+#mb.s2 .mb-go{opacity:1}
+#mb .mb-go button{all:unset;cursor:pointer;padding:15px 34px;border-radius:999px;background:#fff;color:#0E1A33;font-weight:800;font-size:16px;
+  box-shadow:0 10px 40px -8px rgba(255,208,138,.55);transition:transform .2s ease,box-shadow .2s ease}
+#mb .mb-go button:hover{transform:translateY(-2px);box-shadow:0 14px 48px -8px rgba(255,208,138,.75)}
+#mb .mb-go button:focus-visible{outline:3px solid var(--mb-sun);outline-offset:4px}
+#mb .mb-skip{all:unset;position:absolute;top:max(18px,env(safe-area-inset-top));right:22px;cursor:pointer;font-size:13.5px;color:var(--mb-dim);padding:8px 12px;border-radius:999px;z-index:2}
+#mb .mb-skip:hover{color:#fff;background:rgba(255,255,255,.08)}
+#mb .mb-skip:focus-visible{outline:2px solid #fff}
+#mb .mb-ld{display:inline-block;width:46px;height:12px;border-radius:6px;background:rgba(255,255,255,.12);animation:mbPulse 1.2s ease infinite}
+@keyframes mbPulse{50%{opacity:.4}}
+
+@media (max-width:860px){
+  #mb .mb-in{padding-left:18px;padding-right:18px}
+  #mb .mb-deck{grid-template-columns:1fr}
+  #mb .hl-grid{grid-template-columns:1fr}
+  #mb .hl:has(.hl-ph){display:grid;grid-template-columns:110px 1fr}
+  #mb .hl-ph{aspect-ratio:auto;height:100%;min-height:82px}
+  #mb .arc-tick{font-size:28px} #mb .arc-lbl{font-size:34px} #mb .arc-ev{stroke-width:11} #mb .arc-dot{r:6}
+  #mb .mb-in{padding-top:max(58px,calc(env(safe-area-inset-top) + 40px))}
+}
+@media (prefers-reduced-motion:reduce){
+  #mb,#mb *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
+}
+</style>
 </head>
 <body>
 
@@ -2914,6 +3069,7 @@
     <div class="top-right">
       <span class="netpill" id="netPill"><i></i>Offline</span>
       <select class="date-select" id="dateSelect" aria-label="Choose date"></select>
+      <button class="lock-btn" id="briefBtn" title="Replay this morning's brief">Brief</button>
       <div class="theme-picker" id="themePicker">
         <button class="lock-btn" id="themeBtn" title="Change theme" aria-haspopup="true" aria-expanded="false">Theme</button>
         <div class="theme-panel" id="themePanel"></div>
@@ -13575,7 +13731,7 @@ async function tryUnlock(pass){
   HOLDINGS = h; PASS = pass;
 }
 
-function gateOpen(){ $("#gate").style.display = "none"; boot(); }
+function gateOpen(){ $("#gate").style.display = "none"; boot(); if(typeof mbOnUnlock === "function") mbOnUnlock(); }   // Morning Brief: once per day, on the first open
 
 async function gateInit(){
   const rec = pkRead();
@@ -13777,6 +13933,397 @@ themeApply(themeSaved(), themeIsNight());
 themePickerInit();
 
 gateInit();
+</script>
+<script>
+/* ================= Morning Brief (chief of staff) =================
+   Eli, Oct 2026: "Whenever I refresh my website at the beginning of the day, I want it to give
+   me a morning brief summarizing all the things I should know to start the day ... like a
+   greeting or a welcome before I get to my real page."
+
+   His answers: today's agenda, markets + portfolio, top headlines, Gmail "Important" unread
+   (last 24h); shown once per day on the first open (any hour); data shown visually rather than
+   narrated; hybrid presentation -- a short cinematic intro that settles into a dashboard.
+
+   The day is drawn as the sun's path from 6am to 9pm (he never has events outside that window),
+   every timed event is pinned to the arc, and the sun rises to the current time. Everything
+   else reuses the site's own pipelines: fetchDay() for the calendar/news editions, the
+   portfolio's P.live quotes and paint hooks, pSparkAll() for futures, rates.json for the rate
+   chips, and data/inbox.json.enc (scripts/refresh_inbox.py) for the inbox.
+
+   Replay any time from the "Brief" button in the top bar, or open the site with ?brief=1. */
+const MB_KEY = "dh-brief-day";
+const MB_START = 6*60, MB_END = 21*60;
+const MB = { timers:[], tick:null, stage:0, raf:0 };
+const MB_W = 1000, MB_BASE = 250, MB_RX = 450, MB_RY = 205, MB_CX = 500;
+const mbReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const mbLater = (fn, ms) => { MB.timers.push(setTimeout(fn, ms)); };
+
+function mbNowMin(){
+  const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
+  return (+t.slice(0,2) % 24)*60 + +t.slice(3,5);
+}
+function mbSky(m){ return m < 7*60 ? "dawn" : m < 11*60 ? "morning" : m < 17*60 ? "day" : "evening"; }
+const mbT = m => (m - MB_START) / (MB_END - MB_START);
+function mbPt(t){ const a = Math.PI * Math.max(0, Math.min(1, t)); return [MB_CX - MB_RX*Math.cos(a), MB_BASE - MB_RY*Math.sin(a)]; }
+function mbArcD(t1, t2){
+  const [x1,y1] = mbPt(t1), [x2,y2] = mbPt(t2);
+  return `M${x1.toFixed(1)} ${y1.toFixed(1)} A${MB_RX} ${MB_RY} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+}
+function mbClockShort(m){ const h = Math.floor(m/60)%24, mm = m%60; return `${h%12===0?12:h%12}${mm?":"+String(mm).padStart(2,"0"):""}${h<12?"a":"p"}`; }
+function mbIn(mins){
+  if(mins < 1) return "starting now";
+  const h = Math.floor(mins/60), m = mins % 60;
+  return "in " + (h ? h + "h " : "") + (m || !h ? m + "m" : "").trim();
+}
+async function mbWait(test, ms){
+  const t0 = Date.now();
+  while(!test()){ if(Date.now() - t0 > ms) return false; await new Promise(r => setTimeout(r, 120)); }
+  return true;
+}
+
+/* ---- entry points ---- */
+function mbOnUnlock(){
+  let seen = null; try{ seen = localStorage.getItem(MB_KEY); }catch(e){}
+  if(/[?&]brief=1\b/.test(location.search) || seen !== todayCT()) mbOpen();
+}
+function mbOpen(){
+  let root = document.getElementById("mb");
+  if(!root){ root = document.createElement("div"); root.id = "mb"; root.setAttribute("role","dialog"); root.setAttribute("aria-label","Morning brief"); document.body.appendChild(root); }
+  MB.timers.forEach(clearTimeout); MB.timers = []; cancelAnimationFrame(MB.raf); clearInterval(MB.tick); MB.stage = 0;
+  const now = mbNowMin(), hr = Math.floor(now/60);
+  const greet = hr < 12 ? "Good morning, Eli" : hr < 18 ? "Good afternoon, Eli" : "Good evening, Eli";
+  const dateTxt = new Date().toLocaleDateString("en-US",{timeZone:"America/Chicago",weekday:"long",month:"long",day:"numeric"});
+  const letters = [...greet].map((c,i) => `<span style="animation-delay:${(i*38)}ms">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("");
+  root.className = ""; root.dataset.sky = mbSky(now);
+  root.innerHTML = `<div class="mb-sky"></div><div class="mb-shade"></div><div class="mb-stars"></div><div class="mb-glow" id="mbGlow"></div>
+    <button class="mb-skip" id="mbSkip">Skip to my day</button>
+    <div class="mb-in">
+      <h1 class="mb-greet" id="mbGreet">${letters}</h1>
+      <div class="mb-date">${esc(dateTxt)}</div>
+      <div class="mb-arc" id="mbArc"></div>
+      <div class="mb-next" id="mbNext"><span class="mb-ld"></span></div>
+      <div class="mb-deck">
+        <section class="mb-p" id="mbMk"><h3>Markets <small id="mbMkS"></small></h3><div id="mbMkB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbPf"><h3>Your portfolio <small id="mbPfS"></small></h3><div id="mbPfB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbHl" style="grid-column:1/-1"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbIb" style="grid-column:1/-1"><h3>Important email <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
+      </div>
+      <div class="mb-go"><button id="mbGo">Start the day</button></div>
+    </div>`;
+  root.classList.add("on");
+  document.documentElement.style.overflow = "hidden";
+  root.scrollTop = 0;
+
+  $("#mbSkip").addEventListener("click", () => mbClose());
+  $("#mbGo").addEventListener("click", () => mbClose());
+  root.addEventListener("click", e => { if(MB.stage < 2 && !e.target.closest("button,a")) mbStage(2); });
+  document.addEventListener("keydown", mbKey);
+
+  mbArcSkeleton(now);
+  const fast = mbReduced();
+  if(fast){ mbStage(2); }
+  else{
+    requestAnimationFrame(() => $("#mbGreet") && $("#mbGreet").classList.add("go"));
+    mbLater(() => mbStage(1), 900);
+    mbLater(() => mbStage(2), 3300);
+  }
+  mbLoadAgenda(now, fast);
+  mbLoadMarkets(); mbLoadPortfolio(); mbLoadNews(); mbLoadInbox();
+}
+function mbStage(n){
+  const root = document.getElementById("mb"); if(!root || n <= MB.stage && MB.stage) return;
+  MB.stage = n;
+  if(n >= 1) root.classList.add("s1");
+  if(n >= 2){ root.classList.add("s2"); root.querySelectorAll(".mb-greet span").forEach(s => { s.style.animationDelay = "0ms"; }); $("#mbGreet").classList.add("go"); mbRevealAllPins(); }
+}
+function mbKey(e){
+  const root = document.getElementById("mb"); if(!root || !root.classList.contains("on")) return;
+  if(e.key === "Escape" || (e.key === "Enter" && MB.stage >= 2 && !e.target.closest("button,a"))){ e.preventDefault(); mbClose(); }
+  else if((e.key === "Enter" || e.key === " ") && MB.stage < 2){ e.preventDefault(); mbStage(2); }
+}
+function mbClose(after){
+  const root = document.getElementById("mb"); if(!root || !root.classList.contains("on")) return;
+  try{ localStorage.setItem(MB_KEY, todayCT()); }catch(e){}
+  document.removeEventListener("keydown", mbKey);
+  MB.timers.forEach(clearTimeout); MB.timers = []; cancelAnimationFrame(MB.raf); clearInterval(MB.tick);
+  root.classList.add("leaving");
+  document.documentElement.style.overflow = "";
+  if(after) after();
+  setTimeout(() => { root.classList.remove("on","leaving","s1","s2"); root.innerHTML = ""; MB.stage = 0; }, mbReduced() ? 0 : 900);
+}
+
+/* ---- the sky arc ---- */
+function mbArcSkeleton(now){
+  const ticks = [[6*60,"6a"],[9*60,"9a"],[12*60,"noon"],[15*60,"3p"],[18*60,"6p"],[21*60,"9p"]].map(([m,l]) => {
+    const [x] = mbPt(mbT(m));
+    return `<line class="arc-hz" x1="${x.toFixed(1)}" y1="${MB_BASE}" x2="${x.toFixed(1)}" y2="${MB_BASE+8}"/><text class="arc-tick" x="${x.toFixed(1)}" y="${MB_BASE+30}" text-anchor="middle">${l}</text>`;
+  }).join("");
+  $("#mbArc").innerHTML = `<svg viewBox="0 -30 ${MB_W} 320" aria-hidden="true">
+    <defs><clipPath id="mbClip"><rect x="-50" y="-60" width="${MB_W+100}" height="${MB_BASE+62}"/></clipPath>
+      <radialGradient id="mbSunG"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="var(--mb-sun)"/><stop offset="1" stop-color="var(--mb-sun)" stop-opacity="0"/></radialGradient></defs>
+    <line class="arc-hz" x1="0" y1="${MB_BASE}" x2="${MB_W}" y2="${MB_BASE}"/>
+    ${ticks}
+    <path class="arc-path" d="${mbArcD(0,1)}"/>
+    <path class="arc-trav" id="mbTrav" d="${mbArcD(0,0)}"/>
+    <g id="mbEv"></g>
+    <g clip-path="url(#mbClip)"><g id="mbSun" transform="translate(${mbPt(0)[0]} ${MB_BASE+40})">
+      <circle r="46" fill="url(#mbSunG)" opacity=".55"/><circle class="sun-halo" r="22"/><circle class="sun-core" r="12"/></g></g>
+  </svg>`;
+  MB.nowT = mbT(now);
+}
+function mbSunTo(t, below){
+  const [x,y] = mbPt(t);
+  const sun = $("#mbSun"); if(sun) sun.setAttribute("transform", `translate(${x.toFixed(1)} ${(below ? MB_BASE + 14 : y).toFixed(1)})`);
+  const tr = $("#mbTrav"); if(tr) tr.setAttribute("d", mbArcD(0, Math.max(0.0001, Math.min(1, t))));
+  document.querySelectorAll("#mbEv [data-t]").forEach(el => { if(+el.dataset.t <= t + 0.002) el.classList.add("on"); });
+}
+function mbRevealAllPins(){
+  const els = [...document.querySelectorAll("#mbEv [data-t]:not(.on)")];
+  els.forEach((el, i) => mbLater(() => el.classList.add("on"), mbReduced() ? 0 : 120 + i*90));
+  // set the warm glow behind the sun's real screen position
+  mbLater(() => {
+    const sun = $("#mbSun"), root = document.getElementById("mb"), g = $("#mbGlow");
+    if(!sun || !root || !g) return;
+    const r = sun.getBoundingClientRect(), rr = root.getBoundingClientRect();
+    g.style.left = (r.left + r.width/2 - rr.left) + "px"; g.style.top = (r.top + r.height/2 - rr.top + root.scrollTop) + "px";
+  }, 950);
+}
+function mbAnimateSun(){
+  const target = MB.nowT, below = target < 0 || target > 1;
+  const end = Math.max(0, Math.min(1, target));
+  if(mbReduced()){ mbSunTo(end, below); return; }
+  const t0 = performance.now(), dur = 1500 + 900*end;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    mbSunTo(end * e, below && k >= 1);
+    if(k < 1) MB.raf = requestAnimationFrame(step);
+  };
+  MB.raf = requestAnimationFrame(step);
+}
+
+/* ---- agenda ---- */
+async function mbLoadAgenda(now, fast){
+  let d = null;
+  try{ d = await fetchDay("calendar", todayCT()); }
+  catch(e){
+    await mbWait(() => S.manifest, 8000);
+    const latest = (S.manifest && (S.manifest.calendar||[])[0]);
+    if(latest){ try{ d = await fetchDay("calendar", latest); }catch(e2){} }
+  }
+  if(!document.getElementById("mbArc")) return;
+  const today = d ? agendaItems(d.today || [], d.date).filter(a => !a.isTodo) : [];
+  const timed = today.filter(a => a.start != null);
+  const allDay = today.filter(a => a.start == null).map(a => ({...a, title: String(a.title).replace(/^all[ -]day\s*[—–:-]?\s*/i, "")}));
+
+  // pins on the arc
+  let pins = "", lastLbl = -999;
+  timed.forEach(a => {
+    if(a.start > MB_END || (a.end || a.start) < MB_START) return;
+    const s = Math.max(MB_START, a.start), en = Math.min(MB_END, a.end != null ? a.end : a.start + 30);
+    const t1 = mbT(s), t2 = Math.max(mbT(en), t1 + 0.004);
+    const past = (a.end != null ? a.end : a.start + 30) <= now;
+    const [x,y] = mbPt(t1), ang = Math.PI * t1;
+    pins += `<path class="arc-ev${past?" past":""}" data-t="${t1.toFixed(4)}" d="${mbArcD(t1,t2)}"><title>${esc(fmtClock(a.start))} ${esc(a.title)}</title></path>`;
+    pins += `<circle class="arc-dot" data-t="${t1.toFixed(4)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>`;
+    if(a.start - lastLbl >= 40){
+      const lx = x - Math.cos(ang)*30, ly = y - Math.sin(ang)*30 - 2;
+      const anchor = Math.cos(ang) > .35 ? "end" : Math.cos(ang) < -.35 ? "start" : "middle";
+      pins += `<text class="arc-lbl${past?" past":""}" data-t="${t1.toFixed(4)}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}">${mbClockShort(a.start)}</text>`;
+      lastLbl = a.start;
+    }
+  });
+  $("#mbEv").innerHTML = pins;
+  mbAnimateSun();
+  if(fast) mbRevealAllPins();
+
+  // tomorrow's first item, from the two-week radar
+  let tmwFirst = null;
+  if(d && d.radar){
+    const base = new Date((d.date || todayCT()) + "T12:00:00"), t = new Date(base.getTime() + 864e5);
+    const ts = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+    tmwFirst = agendaItems(d.radar, d.date).filter(a => a.dateStr === ts && !a.isTodo && a.start != null)[0] || null;
+  }
+  const paint = () => {
+    const el = $("#mbNext"); if(!el) return;
+    const m = mbNowMin();
+    const live = timed.find(a => a.start <= m && m < (a.end != null ? a.end : a.start + 30));
+    const next = timed.find(a => a.start > m);
+    const later = timed.filter(a => a.start > m && a !== next).slice(0, 3);
+    const sub = [];
+    if(later.length) sub.push("Then " + later.map(a => `${fmtClock(a.start)} ${a.title}`).join(", "));
+    if(allDay.length) sub.push("All day: " + allDay.map(a => a.title).join(", "));
+    if(tmwFirst) sub.push(`Tomorrow opens with ${fmtClock(tmwFirst.start)} ${tmwFirst.title}`);
+    let h;
+    if(!d) h = `<span class="nx-title">Today's calendar hasn't synced yet</span>`;
+    else if(live) h = `<span class="nx-time">Now</span><span class="nx-title">${esc(live.title)}</span><span class="nx-in">until ${esc(fmtClock(live.end != null ? live.end : live.start + 30))}</span>`;
+    else if(next) h = `<span class="nx-time">${esc(fmtClock(next.start))}</span><span class="nx-title">${esc(next.title)}</span><span class="nx-in">${esc(mbIn(next.start - m))}</span>`;
+    else if(timed.length) h = `<span class="nx-title">Nothing else on the calendar today</span>`;
+    else h = `<span class="nx-title">Nothing scheduled today. The day is yours.</span>`;
+    if(live && next) sub.unshift(`Next ${fmtClock(next.start)} ${next.title}, ${mbIn(next.start - m)}`);
+    el.innerHTML = h + (sub.length ? `<div class="nx-sub">${sub.map(esc).join("<br>")}</div>` : "");
+  };
+  paint();
+  MB.tick = setInterval(() => { MB.nowT = mbT(mbNowMin()); paint(); }, 30000);
+}
+
+/* ---- markets ---- */
+const MB_MK = [["ES=F","S&P 500","S&P 500"],["NQ=F","Nasdaq","Nasdaq"],["YM=F","Dow","Dow"],["BTC-USD","Bitcoin","Bitcoin"]];
+function mbMarketState(){
+  const s = new Date().toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit",hour12:false});
+  const m = s.match(/^(\w{3})[, ]+(\d{1,2}):(\d{2})/); if(!m) return "";
+  if(m[1] === "Sat" || m[1] === "Sun") return "Closed for the weekend";
+  const mins = (+m[2] % 24)*60 + +m[3];
+  return mins < 570 ? "Futures, before the bell" : mins < 960 ? "Market open" : "After the close";
+}
+function mbSpark(vals, w, h, color){
+  const v = (vals||[]).filter(x => x != null && isFinite(x));
+  if(v.length < 3) return "";
+  const lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1;
+  const d = v.map((y,i) => `${i?"L":"M"}${(i/(v.length-1)*(w-2)+1).toFixed(1)} ${(h-2-(y-lo)/rg*(h-4)).toFixed(1)}`).join(" ");
+  return `<svg class="mk-sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}" stroke="${color}"/></svg>`;
+}
+function mbSetLens(root){ root.querySelectorAll("svg path").forEach(p => { try{ p.style.setProperty("--len", Math.ceil(p.getTotalLength()) + 1); }catch(e){} }); }
+async function mbLoadMarkets(){
+  $("#mbMkS").textContent = mbMarketState();
+  const [spark, rates] = await Promise.all([
+    pSparkAll(MB_MK.map(x => x[0]), "1d", "15m").catch(() => ({})),
+    fetchRates().catch(() => null)
+  ]);
+  const body = $("#mbMkB"); if(!body) return;
+  const prices = (rates && rates.prices) || [];
+  let rows = "";
+  MB_MK.forEach(([sym, name, fallbackLabel]) => {
+    const q = spark[sym];
+    let pct = null, val = "", vals = null;
+    if(q && q.prev){ pct = (q.price - q.prev) / q.prev * 100; val = q.price.toLocaleString("en-US",{maximumFractionDigits: q.price > 1000 ? 0 : 2}); vals = q.series && q.series.c; }
+    else{ const f = prices.find(p => (p.label||"").toLowerCase() === fallbackLabel.toLowerCase()); if(f){ pct = f.pct; val = String(f.value).replace(/^\$/,""); } }
+    if(pct == null && !val) return;
+    const c = pct == null ? "" : pct >= 0 ? "up" : "down";
+    const col = pct == null ? "rgba(255,255,255,.6)" : pct >= 0 ? "var(--mb-up)" : "var(--mb-down)";
+    const kind = sym.endsWith("=F") && q ? "Futures " : "";
+    rows += `<div class="mk-row"><div class="mk-n">${esc(name)}<small>${kind}${esc(val)}</small></div>${mbSpark(vals, 92, 32, col) || "<span></span>"}<div class="mk-c ${c}">${pct == null ? "" : (pct>=0?"+":"−") + Math.abs(pct).toFixed(2) + "%"}</div></div>`;
+  });
+  const want = [/^10-yr/i, /^30-yr mortgage/i, /^fed funds/i, /^gold/i, /crude/i];
+  const pool = [...((rates && rates.rates) || []), ...prices];
+  const chips = want.map(rx => pool.find(r => rx.test(r.label || ""))).filter(Boolean)
+    .map(r => `<span class="mk-rate">${esc(r.label)}<b>${esc(r.value)}</b></span>`).join("");
+  body.innerHTML = (rows || `<div class="mb-empty">Market prices aren't reachable right now. They'll be on your Home page once they load.</div>`) + (chips ? `<div class="mk-rates">${chips}</div>` : "");
+  mbSetLens(body);
+}
+
+/* ---- portfolio ---- */
+async function mbLoadPortfolio(){
+  await mbWait(() => typeof HOLDINGS !== "undefined" && HOLDINGS, 6000);
+  const body = $("#mbPfB"); if(!body) return;
+  if(!HOLDINGS){ body.innerHTML = `<div class="mb-empty">Holdings didn't load. Open the Portfolio page to retry.</div>`; return; }
+  let first = true;
+  const paint = () => {
+    const b = $("#mbPfB"); if(!b) return false;
+    pCompute();
+    const t = pTotals(P.pos);
+    // Pre-open the site zeroes "today" (nothing has traded yet). The brief shows the last
+    // completed session instead, which is what you want to know before the bell.
+    const nonCash = P.pos.filter(p => p.type !== "cash");
+    const anyToday = nonCash.some(p => { const q = P.live[p.fetchSymbol||p.ticker]; return q && q.time && quoteIsToday(q.time) && !(p.fetchSymbol||p.ticker).includes("-"); });
+    let day = t.day, label = "today", lastT = 0;
+    const mv = {};
+    nonCash.forEach(p => {
+      const q = P.live[p.fetchSymbol||p.ticker]; if(!q || !q.prev) return;
+      lastT = Math.max(lastT, (p.fetchSymbol||p.ticker).includes("-") ? 0 : (q.time||0));
+      const k = p.ticker; mv[k] = mv[k] || {tk:k, pct:(q.price - q.prev)/q.prev*100, usd:0};
+      mv[k].usd += p.shares * (q.price - q.prev);
+    });
+    if(!anyToday){
+      day = Object.values(mv).reduce((s,x) => s + x.usd, 0);
+      label = lastT ? new Date(lastT*1000).toLocaleDateString("en-US",{weekday:"long",timeZone:"America/New_York"}) + "'s session" : "last session";
+    }
+    const prev = t.value - day, pct = prev > 0 ? day/prev*100 : 0;
+    const movers = Object.values(mv).sort((a,b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 3);
+    const maxAbs = Math.max(0.5, ...movers.map(m => Math.abs(m.pct)));
+    let spark = "";
+    const ser = intradaySeries();
+    if(ser && ser.pts.length > 3){
+      const v = ser.pts.map(p => p.v), lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1, W = 400, H = 64;
+      const pts = v.map((y,i) => [(i/(v.length-1))*W, H - 3 - (y-lo)/rg*(H-8)]);
+      const ln = pts.map((p,i) => `${i?"L":"M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+      const col = day >= 0 ? "var(--mb-up)" : "var(--mb-down)";
+      spark = `<svg class="pf-sp" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="mbPfG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".35"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+        <path class="ar" d="${ln} L${W} ${H} L0 ${H} Z" fill="url(#mbPfG)"/><path class="ln" d="${ln}" stroke="${col}"/></svg>`;
+    }
+    $("#mbPfS").textContent = P.liveSrc === "live" ? "Live prices" : P.liveAt ? "As of " + new Date(P.liveAt).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) : "";
+    const c = day >= 0 ? "up" : "down";
+    b.innerHTML = `<div class="pf-val" id="mbPfV">${usd(first ? 0 : t.value, 0)}</div>
+      ${Object.keys(mv).length ? `<div class="pf-chg ${c}">${day>=0?"+":"−"}${usd(Math.abs(day),0)} (${pctS(pct)}) <span>${esc(label)}</span></div>` : `<div class="pf-chg"><span>Live prices are loading</span></div>`}
+      ${spark}
+      ${movers.length ? `<div class="pf-movers">${movers.map(m => `<div class="pf-mv"><b>${esc(m.tk)}</b><div class="pf-bar"><i style="background:${m.pct>=0?"var(--mb-up)":"var(--mb-down)"}" data-w="${(Math.abs(m.pct)/maxAbs*100).toFixed(0)}"></i></div><span class="${m.pct>=0?"up":"down"}">${pctS(m.pct)}</span></div>`).join("")}</div>` : ""}`;
+    mbSetLens(b);
+    requestAnimationFrame(() => b.querySelectorAll(".pf-bar i").forEach(i => { i.style.width = i.dataset.w + "%"; }));
+    if(first){
+      first = false;
+      const target = t.value, el = $("#mbPfV"), t0 = performance.now(), dur = mbReduced() ? 1 : 1400;
+      const step = n => { const k = Math.min(1,(n-t0)/dur), e = 1-Math.pow(1-k,4); if(el && document.contains(el)) el.textContent = usd(target*e, 0); if(k<1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    } else { const el = $("#mbPfV"); if(el) el.textContent = usd(t.value, 0); }
+    return true;
+  };
+  pLoadQuoteCache();
+  paint();
+  P.paintHooks.push(() => paint());
+  pAutoFetch();
+}
+
+/* ---- headlines ---- */
+async function mbLoadNews(){
+  await mbWait(() => S.manifest, 8000);
+  const body = $("#mbHlB"); if(!body) return;
+  const date = S.manifest && (S.manifest.news||[])[0];
+  if(!date){ body.innerHTML = `<div class="mb-empty">No news edition has published yet.</div>`; return; }
+  let d; try{ d = await fetchDay("news", date); }catch(e){ body.innerHTML = `<div class="mb-empty">Today's headlines didn't load. They're on the News page.</div>`; return; }
+  if(!$("#mbHlB")) return;
+  $("#mbHlS").textContent = date === todayCT() ? "Today's edition" : shortDate(date) + " edition, today's is still being written";
+  const sections = (d.sections||[]).filter(s => (s.items||[]).length);
+  const picks = [];
+  sections.forEach((s, si) => { if(picks.length >= 3) return; let ii = s.items.findIndex(it => it.img); if(ii < 0) ii = 0; picks.push({s, si, ii, it:s.items[ii]}); });
+  body.innerHTML = `<div class="hl-grid">${picks.map(p => `<button class="hl" data-open="${p.si}:${p.ii}">
+      ${p.it.img ? `<div class="hl-ph"><img alt="" referrerpolicy="no-referrer" data-src="${esc(p.it.img)}"></div>` : ""}
+      <div class="hl-b"><div class="hl-k">${esc(secShort(p.s.title))}</div><div class="hl-t">${esc(headline(p.it.lead))}</div></div></button>`).join("")}</div>`;
+  body.querySelectorAll("img[data-src]").forEach(img => {
+    img.onload = () => img.classList.add("in");
+    img.onerror = () => { const ph = img.closest(".hl-ph"); if(ph) ph.remove(); };
+    img.src = img.dataset.src;
+  });
+  body.querySelectorAll(".hl").forEach(b => b.addEventListener("click", () => {
+    S.date.news = date; S.pendingNewsView = "article:" + b.dataset.open;
+    mbClose(() => switchTab("news"));
+  }));
+}
+
+/* ---- inbox (Gmail Important + unread, last 24h) ---- */
+async function mbLoadInbox(){
+  const body = $("#mbIbB"); if(!body) return;
+  let j = null, missing = false;
+  try{ j = await decryptEntry(await fetchDataFile("data/inbox.json.enc"), PASS); }
+  catch(e){ missing = true; }
+  if(!$("#mbIbB")) return;
+  if(missing || !j || !j.connected){
+    body.innerHTML = `<div class="mb-empty">Gmail isn't connected to the Hub yet. Once it is, unread mail Gmail marks Important shows up here each morning.</div>`;
+    return;
+  }
+  const items = j.items || [];
+  const age = j.updated ? Date.now() - Date.parse(j.updated) : 0;
+  $("#mbIbS").textContent = (items.length ? `${j.total > items.length ? j.total : items.length} unread` : "") + (age > 3*3600e3 ? (items.length ? ", " : "") + "checked " + relTimeAgo(j.updated) : "");
+  if(!items.length){ body.innerHTML = `<div class="mb-empty">No important unread mail since yesterday.</div>`; return; }
+  const hue = s => { let x = 0; for(const c of String(s)) x = (x*31 + c.charCodeAt(0)) >>> 0; return x % 360; };
+  body.innerHTML = items.slice(0, 5).map(m => `<a class="ib" href="https://mail.google.com/mail/u/0/#inbox/${encodeURIComponent(m.threadId||m.id)}" target="_blank" rel="noopener">
+      <span class="ib-av" style="background:hsl(${hue(m.email||m.from)} 55% 46%)">${esc((m.from||"?").trim().charAt(0).toUpperCase())}</span>
+      <span style="min-width:0"><div class="ib-f">${esc(m.from)}</div><div class="ib-s">${esc(m.subject)}</div><div class="ib-n">${esc(m.snippet)}</div></span>
+      <span class="ib-t">${esc(relTimeAgo(m.date))}</span></a>`).join("");
+}
+
+(function(){
+  const b = document.getElementById("briefBtn");
+  if(b) b.addEventListener("click", () => { if(typeof PASS !== "undefined" && PASS) mbOpen(); });
+})();
 </script>
 <script type="module">
   // ---- Firebase-backed to-do sync (Urgent + Chill), live across devices ----

@@ -52,6 +52,15 @@ jobs:
       - name: Refresh rate board
         run: python3 scripts/refresh_rates.py "$RUNNER_TEMP/passphrase.txt" .
 
+      # Morning Brief inbox (Oct 2026): Gmail "Important + unread, last 24h", metadata only,
+      # encrypted like everything else. No-ops cleanly until the three GMAIL_* secrets exist.
+      - name: Refresh inbox snapshot
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+        run: python3 scripts/refresh_inbox.py "$RUNNER_TEMP/passphrase.txt" .
+
       - name: Commit and push
         run: |
           git config user.email "elijahvkramer@gmail.com"

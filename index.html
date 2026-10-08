@@ -16,7 +16,21 @@
     var sat = parseFloat(localStorage.getItem("dh-sat"));
     r.style.setProperty("--h", isFinite(h) ? h : 212);
     r.style.setProperty("--sat", isFinite(sat) ? sat : 1);
-    if(localStorage.getItem("dh-night") === "1") r.setAttribute("data-mode", "dark");
+    /* Sky (Oct 2026): the page follows the clock -- dawn, morning, day, evening, night -- unless a
+       sky is locked in the Theme panel. Evening and night run the site's dark mode. Each day gets
+       a slightly different sky (a small hue drift and a different sun position). Kept in sync
+       with skyAuto()/skyApply() in the main script. */
+    var pref = localStorage.getItem("dh-sky");
+    if(!pref) pref = localStorage.getItem("dh-night") === "1" ? "night" : "auto";
+    var t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
+    var m = (+t.slice(0,2) % 24)*60 + +t.slice(3,5);
+    var st = pref !== "auto" ? pref : (m < 300 || m >= 1170) ? "night" : m < 480 ? "dawn" : m < 660 ? "morning" : m < 990 ? "day" : "evening";
+    r.classList.add("sky"); r.setAttribute("data-sky", st);
+    if(st === "evening" || st === "night") r.setAttribute("data-mode", "dark");
+    var day = new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"}), hs = 0;
+    for(var i = 0; i < day.length; i++) hs = (hs * 31 + day.charCodeAt(i)) >>> 0;
+    r.style.setProperty("--sky-shift", ((hs % 19) - 9) + "deg");
+    r.style.setProperty("--sun-x", (58 + (hs >> 5) % 31) + "%");
     var fnt = localStorage.getItem("dh-font");
     if(fnt && /^[A-Za-z0-9 ]+$/.test(fnt)) r.style.setProperty("--dh-font", "'" + fnt + "'," + "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif");
   }catch(e){ document.documentElement.classList.add("glass"); }
@@ -2889,9 +2903,18 @@
 #mb .mb-sky{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,var(--mb-top) 0%,var(--mb-mid) 34%,var(--mb-low) 66%,var(--mb-hz) 100%)}
 #mb .mb-shade{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 40%,rgba(6,12,30,.0) 60%,rgba(6,12,30,.35) 100%);opacity:0;transition:opacity .9s ease}
 #mb.s2 .mb-shade{opacity:1}
-#mb.leaving{transform:translateY(-104%);opacity:.6}
+/* hand-off to Home: the deck sinks away, the sky dissolves into the page's own sky band, and the
+   greeting and sun arc glide into their places in the Home hero */
+#mb.closing{background:transparent;pointer-events:none}
+#mb .mb-sky,#mb .mb-shade,#mb .mb-stars,#mb .mb-glow{transition:opacity .9s ease .15s}
+#mb.closing .mb-sky,#mb.closing .mb-shade,#mb.closing .mb-stars,#mb.closing .mb-glow{opacity:0!important}
+#mb.closing :is(.mb-deck,.mb-next,.mb-go,.mb-skip,.mb-date){opacity:0!important;transform:translateY(40px) scale(.98)!important;transition:opacity .4s ease,transform .5s cubic-bezier(.4,0,.2,1)!important}
+#mb.closing .fly{transition:transform .95s cubic-bezier(.65,0,.15,1);transform-origin:0 0}
+#mb.closing.solo :is(.mb-greet,.mb-arc){opacity:0;transform:translateY(-30px);transition:opacity .5s ease,transform .6s ease}
 #mb[data-sky="morning"]{--mb-top:#0E2A55;--mb-mid:#1F5C93;--mb-low:#4E8DBB;--mb-hz:#F2C58E;--mb-sun:#FFE2A8}
 #mb[data-sky="day"]{--mb-top:#0C3266;--mb-mid:#1C64A8;--mb-low:#3F8FCB;--mb-hz:#A9D4EE;--mb-sun:#FFF1C9}
+#mb[data-sky="night"]{--mb-top:#040918;--mb-mid:#0A1634;--mb-low:#132A5C;--mb-hz:#2A4B86;--mb-sun:#E8EEFF}
+#mb[data-sky="night"] .mb-stars{opacity:.8}
 #mb[data-sky="evening"]{--mb-top:#140F2E;--mb-mid:#3A2358;--mb-low:#8A3F62;--mb-hz:#F08C5A;--mb-sun:#FFB86B}
 #mb .mb-stars{position:fixed;inset:0 0 auto 0;height:60vh;pointer-events:none;opacity:.55;
   background-image:radial-gradient(1px 1px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 33% 8%,#fff 50%,transparent 51%),
@@ -3027,8 +3050,368 @@
   #mb,#mb *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
 }
 </style>
+<style id="sky-style">
+/* =====================================================================
+   SKY — the site-wide look (Eli, Oct 2026)
+   "Carry this same kind of vibe into the style of the website ... I really like what you did
+   with the brief." The whole site now lives under a sky that follows the clock (dawn, morning,
+   day, evening, night), with a lock in the Theme panel and a little day-to-day variation.
+   - One sky band at the top of every page; the sidebar is cut from the same sky.
+   - Light skies use frosted white panels; evening and night switch the site to its dark mode.
+   - Type: Sora for headings and numbers (as in the brief); body text stays the chosen font.
+   - The accent color picker still drives buttons, toggles and highlights.
+   Everything is scoped to html.sky so it layers over the Glass rules without removing any.
+   ===================================================================== */
+html.sky{
+  --sky-top:#0F4C9C;--sky-mid:#2F7FD0;--sky-low:#8CC2F0;--sky-hz:#E4F1FB;--sun:#FFF1C9;
+  --sky-paper:#EEF4FA;--sky-ink:#fff;--band-h:470px;--sky-shift:0deg;--sun-x:78%;
+  --disp:'Sora',var(--dh-font),sans-serif;
+  --r-card:24px;
+}
+html.sky[data-sky="dawn"]   {--sky-top:#262A66;--sky-mid:#5B4F9C;--sky-low:#D696AE;--sky-hz:#FFD9BC;--sun:#FFC98A;--sky-paper:#F6F0F3}
+html.sky[data-sky="morning"]{--sky-top:#174F9B;--sky-mid:#3F86D2;--sky-low:#9CC8EE;--sky-hz:#F7E6C8;--sun:#FFE2A8;--sky-paper:#F0F4F9}
+html.sky[data-sky="day"]    {--sky-top:#0D4794;--sky-mid:#2878C8;--sky-low:#82BCEB;--sky-hz:#E2F0FB;--sun:#FFF4D2;--sky-paper:#EDF3F9}
+html.sky[data-sky="evening"]{--sky-top:#15103A;--sky-mid:#3A2563;--sky-low:#8E4468;--sky-hz:#E9885A;--sun:#FFB46B;--sky-paper:#120E22}
+html.sky[data-sky="night"]  {--sky-top:#040918;--sky-mid:#0A1634;--sky-low:#132A5C;--sky-hz:#1E3C74;--sun:#E8EEFF;--sky-paper:#060A17}
+
+/* page ground: pale (or deep) paper warmed by the horizon color */
+html.glass.sky{
+  --paper:var(--sky-paper);
+  --mesh:radial-gradient(70% 40% at var(--sun-x) 0%,color-mix(in srgb,var(--sky-hz) 55%,transparent) 0,transparent 70%),
+         radial-gradient(60% 50% at 0% 100%,color-mix(in srgb,var(--sky-low) 16%,transparent) 0,transparent 70%),
+         var(--sky-paper);
+  --card:rgba(255,255,255,.86);
+  --glass-edge:rgba(255,255,255,.92);
+  --shadow:0 1px 1px rgba(12,34,74,.04),0 22px 46px -30px rgba(12,34,74,.34);
+}
+html.glass.sky[data-mode="dark"]{
+  --card:color-mix(in srgb,var(--sky-mid) 22%,rgba(10,14,32,.72));
+  --panel:color-mix(in srgb,var(--sky-mid) 18%,rgba(10,14,32,.6));
+  --modal-solid:color-mix(in srgb,var(--sky-mid) 20%,#0B1022);
+  --glass-edge:rgba(255,255,255,.09);
+  --hairline:rgba(255,255,255,.12);
+  --shadow:0 1px 1px rgba(0,0,0,.3),0 26px 50px -30px rgba(0,0,0,.8);
+}
+html.sky body{background:var(--sky-paper)}
+
+/* ---- the band ---- */
+.skyband{display:none}
+html.sky .skyband{display:block;position:absolute;left:0;right:0;top:0;height:var(--band-h);z-index:0;pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 38%,color-mix(in srgb,var(--sky-low) 80%,var(--sky-paper)) 70%,var(--sky-paper) 100%);
+  filter:hue-rotate(var(--sky-shift))}
+html.sky .skyband .sb-sun{position:absolute;left:var(--sun-x);top:var(--sun-y,62%);width:620px;height:620px;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--sun) 70%,transparent),color-mix(in srgb,var(--sun) 18%,transparent) 45%,transparent 72%);opacity:.75}
+html.sky[data-sky="night"] .skyband .sb-sun{opacity:.22;width:360px;height:360px}
+html.sky .skyband .sb-stars{position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease;
+  background-image:radial-gradient(1px 1px at 9% 14%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 36%,#fff 50%,transparent 51%),
+  radial-gradient(1.4px 1.4px at 37% 10%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 51% 27%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 63% 8%,#fff 50%,transparent 51%),radial-gradient(1.4px 1.4px at 74% 33%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 86% 16%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 95% 40%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 44% 46%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 15% 52%,#fff 50%,transparent 51%)}
+html.sky[data-sky="night"] .skyband .sb-stars{opacity:.75}
+html.sky[data-sky="dawn"] .skyband .sb-stars,html.sky[data-sky="evening"] .skyband .sb-stars{opacity:.3}
+html.sky .skyband .sb-wisp{position:absolute;height:60px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(18px);animation:sbDrift 140s linear infinite}
+html.sky .skyband .sb-wisp.w1{width:520px;top:18%;left:-10%}
+html.sky .skyband .sb-wisp.w2{width:380px;top:40%;left:30%;animation-duration:190s;animation-delay:-60s;opacity:.7}
+html.sky .skyband .sb-wisp.w3{width:640px;top:8%;left:60%;animation-duration:230s;animation-delay:-120s;opacity:.55}
+html.sky[data-sky="night"] .skyband .sb-wisp{opacity:.12}
+@keyframes sbDrift{from{transform:translateX(-30vw)}to{transform:translateX(70vw)}}
+html.sky .hero,html.sky main,html.sky footer{position:relative;z-index:1}
+
+/* ---- hero: white type on the sky ---- */
+html.sky .hero-in{padding-top:34px}
+html.sky .hero .eyebrow{color:rgba(255,255,255,.78)!important;letter-spacing:0!important;text-transform:none!important;font-size:14px!important;font-weight:600}
+html.sky .hero h1,html.sky #heroTitle{font-family:var(--disp);font-weight:300!important;letter-spacing:-.035em!important;color:#fff;font-size:clamp(34px,3.3vw,52px);line-height:1.05}
+html.sky .hero .subtitle,html.sky .hero .dateline{color:rgba(255,255,255,.82)}
+html.sky .hero .gold-rule{display:none}
+html.sky .stale-note{background:rgba(255,255,255,.16)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important}
+
+/* Home hero: greeting + the day's sun arc */
+html.sky .hero-in.has-arc{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,560px);align-items:end;column-gap:28px}
+html.sky .hero-in.has-arc > :not(.hero-arc){grid-column:1}
+html.sky .hero-arc{grid-column:2;grid-row:1 / span 6;align-self:end;margin-bottom:-8px;cursor:pointer}
+html.sky .hero-arc svg{display:block;width:100%;height:auto;overflow:visible}
+html.sky .hero-arc .arc-path{fill:none;stroke:rgba(255,255,255,.3);stroke-width:2;stroke-dasharray:2 7;stroke-linecap:round}
+html.sky .hero-arc .arc-trav{fill:none;stroke:rgba(255,255,255,.7);stroke-width:2.4;stroke-linecap:round}
+html.sky .hero-arc .arc-hz{stroke:rgba(255,255,255,.3);stroke-width:1}
+html.sky .hero-arc .arc-tick{fill:rgba(255,255,255,.75);font:500 26px var(--disp)}
+html.sky .hero-arc .arc-ev{fill:none;stroke:var(--sun);stroke-width:8;stroke-linecap:round}
+html.sky .hero-arc .arc-ev.past{stroke:rgba(255,255,255,.45)}
+html.sky .hero-arc .arc-dot{fill:#fff}
+html.sky .hero-arc .arc-lbl{fill:#fff;font:600 28px var(--disp)}
+html.sky .hero-arc .arc-lbl.past{fill:rgba(255,255,255,.6)}
+html.sky .hero-arc .sun-core{fill:var(--sun)} html.sky .hero-arc .sun-halo{fill:var(--sun);opacity:.25}
+html.sky .hero-next{margin-top:10px;font-size:15px;color:rgba(255,255,255,.86);font-weight:500}
+html.sky .hero-next b{font-family:var(--disp);font-weight:600;color:#fff}
+html.sky .hero-next span{color:var(--sun);font-weight:700}
+@media(max-width:899px){
+  html.sky .hero-in.has-arc{grid-template-columns:1fr}
+  html.sky .hero-arc{grid-column:1;grid-row:auto;margin:14px 0 0}
+}
+
+/* ---- sidebar cut from the same sky ---- */
+@media(min-width:900px){
+  html.glass.sky .topbar{background:linear-gradient(180deg,var(--sky-top) 0%,color-mix(in srgb,var(--sky-top) 45%,var(--sky-mid)) 100%);border-right:none;
+    box-shadow:inset -1px 0 0 rgba(255,255,255,.08)}
+  html.glass.sky .topbar::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(90% 30% at 20% 0%,rgba(255,255,255,.12),transparent 70%),radial-gradient(120% 40% at 50% 100%,color-mix(in srgb,var(--sky-hz) 22%,transparent),transparent 70%)}
+  html.glass.sky .topbar-in{position:relative}
+  html.glass.sky .topbar-in .tabs,html.glass.sky[data-mode="dark"] .topbar-in .tabs{background:transparent;border:none}
+  html.glass.sky .wordmark,html.glass.sky .wordmark .name{color:#fff}
+  html.glass.sky .wordmark .name{font-family:var(--disp);font-weight:600;letter-spacing:-.02em}
+  html.glass.sky .wordmark .diamond{color:var(--sun)}
+  html.glass.sky .topbar-in .tab,html.glass.sky .tab-sub{color:rgba(255,255,255,.74)}
+  html.glass.sky .topbar-in .tab:hover{color:#fff;background:rgba(255,255,255,.07)}
+  html.glass.sky .topbar-in .tab.active{background:rgba(255,255,255,.16);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+  html.glass.sky .tab-ic,html.glass.sky[data-mode="dark"] .tab-ic{background:rgba(255,255,255,.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+  html.glass.sky .tab.active .tab-ic,html.glass.sky[data-mode="dark"] .tab.active .tab-ic{background:#fff;color:var(--sky-top);box-shadow:0 6px 16px -6px rgba(0,0,0,.4)}
+  html.glass.sky .tab-rule{background:rgba(255,255,255,.14)}
+  html.glass.sky .tab-sub-v{color:rgba(255,255,255,.6)}
+  html.glass.sky .date-select,html.glass.sky .lock-btn,html.glass.sky[data-mode="dark"] .date-select,html.glass.sky[data-mode="dark"] .lock-btn{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff}
+  html.glass.sky .lock-btn:hover,html.glass.sky .date-select:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
+  html.glass.sky .date-select option{color:#111}
+  html.glass.sky .netpill{color:#fff}
+}
+
+/* ---- panels ---- */
+html.glass.sky :is(.card,.chart-card,.bento-card,.todos,.event,.qcard,.pz-box,.pz-link,.cf-panel,.cw-banner,.cw-board-panel,.cw-clues-panel,.bb-card,.ptable-wrap,.lockbox,.np-body,.np-masthead){
+  border-radius:var(--r-card);border:1px solid var(--glass-edge);box-shadow:var(--shadow)}
+html.glass.sky .np-masthead{border-radius:var(--r-card) var(--r-card) 0 0} html.glass.sky .np-body{border-radius:0 0 var(--r-card) var(--r-card)}
+html.glass.sky :is(.bento-card,.todos,.card,.chart-card){transition:box-shadow .3s ease,transform .3s ease}
+
+/* card titles and big numbers in the brief's display face */
+html.sky :is(h1,h2,h3,.cal-head .cm,.tc-head .h,.fr2-box-h h3):not(#panel-news *){font-family:var(--disp);letter-spacing:-.02em}
+html.sky :is(.cal-head .cm,.tc-head .h){font-size:20px!important}
+html.sky .bc-label{font-size:18px!important}
+html.sky :is(.cal-head .cm,.tc-head .h){font-weight:600}
+html.sky .bc-label{font-family:var(--disp);font-size:16px!important;font-weight:600!important;color:var(--ink)!important;letter-spacing:-.01em!important}
+html.sky :is(.ps-val,.wx-temp,.pz-num,.qbig){font-family:var(--disp);font-weight:300!important;letter-spacing:-.035em}
+html.sky :is(.ps-val){font-size:44px}
+
+/* ticker wall keeps its layout; it just takes the night sky's ink */
+html.glass.sky .ticker-wall{background:linear-gradient(90deg,var(--sky-top),color-mix(in srgb,var(--sky-top) 70%,var(--sky-mid)));border:1px solid rgba(255,255,255,.1)}
+html.glass.sky[data-sky="day"] .ticker-wall,html.glass.sky[data-sky="morning"] .ticker-wall{background:linear-gradient(90deg,#0A2347,#12305E)}
+
+/* Today agenda cut from the sky */
+html.glass.sky .agenda-card.ag-card{
+  background:radial-gradient(70% 50% at 100% 0%,color-mix(in srgb,var(--sun) 40%,transparent),transparent 70%),
+             linear-gradient(170deg,var(--sky-top) 0%,var(--sky-mid) 62%,color-mix(in srgb,var(--sky-low) 70%,var(--sky-mid)) 100%);
+  border:1px solid rgba(255,255,255,.14);box-shadow:0 26px 50px -28px color-mix(in srgb,var(--sky-top) 80%,#000)}
+html.glass.sky .ag-name{font-family:var(--disp);font-weight:300;letter-spacing:-.025em}
+html.glass.sky .ag-nowpill{color:var(--sky-top)}
+
+/* loose controls that sit on the band */
+html.glass.sky .pbtn{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* footer */
+html.sky footer{border-top:none!important}
+html.sky .foot-in{color:var(--muted);opacity:.8}
+
+/* page entrance after the brief hands off */
+@keyframes skyRise{from{opacity:0;transform:translateY(26px) scale(.985)}to{opacity:1;transform:none}}
+html.sky.arriving .panel.active > *{animation:skyRise .8s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + 120ms)}
+html.sky.arriving .hero-in > :not(.hero-arc){animation:skyRise .7s cubic-bezier(.2,.7,.2,1) both}
+
+/* ---- theme panel: sky picker ---- */
+.sky-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.sky-seg button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 4px;border-radius:12px;font-size:11.5px;font-weight:600;color:var(--ink);border:1px solid var(--hairline)}
+.sky-seg button i{display:block;width:100%;height:22px;border-radius:8px}
+.sky-seg button.active{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.sky-seg button:focus-visible{outline:2px solid var(--accent)}
+
+/* ---- Games: Arcade ---- */
+html.sky .arc-wrap{max-width:1180px;margin:0 auto}
+html.sky .ar-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;color:#fff;margin:8px 0 22px}
+html.sky .ar-head h2{margin:0;font:300 clamp(34px,3.3vw,52px)/1.05 var(--disp);letter-spacing:-.035em;color:#fff}
+html.sky .ar-head p{margin:8px 0 0;color:rgba(255,255,255,.82);font-size:15px}
+html.sky .ar-ring{display:flex;align-items:center;gap:12px;color:#fff;font-size:14px;font-weight:600}
+html.sky .ar-ring svg{width:54px;height:54px;transform:rotate(-90deg)}
+html.sky .ar-ring circle{fill:none;stroke-width:6}
+html.sky .ar-feat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+html.sky .ar-card{all:unset;cursor:pointer;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:230px;border-radius:var(--r-card);overflow:hidden;color:#fff;
+  padding:20px;box-shadow:0 26px 50px -28px rgba(8,20,50,.6);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s ease;isolation:isolate}
+html.sky .ar-card:hover{transform:translateY(-4px);box-shadow:0 34px 60px -28px rgba(8,20,50,.7)}
+html.sky .ar-card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+html.sky .ar-card .ar-art{position:absolute;inset:0;z-index:-1}
+html.sky .ar-card .ar-art svg{position:absolute;right:-4%;top:2%;width:66%;height:auto;opacity:.95;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+html.sky .ar-card:hover .ar-art svg{transform:scale(1.05) rotate(-2deg)}
+html.sky .ar-card .ar-nm{font:600 21px/1.15 var(--disp);letter-spacing:-.02em}
+html.sky .ar-card .ar-st{margin-top:5px;font-size:13px;color:rgba(255,255,255,.82);font-weight:500}
+html.sky .ar-card .ar-done{position:absolute;top:16px;left:16px;display:none;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 10px 5px 8px;border-radius:999px;background:rgba(255,255,255,.22);backdrop-filter:blur(8px)}
+html.sky .ar-card.played .ar-done{display:inline-flex}
+html.sky .ar-sec{margin-top:34px}
+html.sky .ar-sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+html.sky .ar-sec-h b{font:600 18px var(--disp);letter-spacing:-.015em;color:var(--ink)}
+html.sky .ar-sec-h span{font-size:13px;color:var(--muted)}
+html.sky .ar-sec-h em{margin-left:auto;font-style:normal;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+html.sky .ar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+html.sky .ar-tile > span:nth-child(2){min-width:0}
+html.sky .ar-tile .ar-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.sky .ar-tile{all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--card);border:1px solid var(--glass-edge);
+  backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:var(--shadow);position:relative;transition:transform .2s ease,border-color .2s ease}
+html.sky .ar-tile:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+html.sky .ar-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html.sky .ar-tile .ar-ic{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;overflow:hidden;background:var(--gcol);color:#fff;font:700 16px var(--disp)}
+html.sky .ar-tile .ar-ic{position:relative}
+html.sky .ar-tile .ar-ic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+html.sky .ar-tile .ar-t{font-weight:700;font-size:14px;color:var(--ink);line-height:1.2}
+html.sky .ar-tile .ar-s{font-size:12px;color:var(--muted);margin-top:2px}
+html.sky .ar-tile .ar-chk{position:absolute;top:8px;right:9px;width:18px;height:18px;border-radius:50%;background:var(--up);color:#fff;display:none;place-items:center;font-size:11px;font-weight:900}
+html.sky .ar-tile.played .ar-chk{display:grid}
+html.sky .ar-tile.played .ar-t{opacity:.7}
+@media(max-width:1100px){html.sky .ar-feat{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){html.sky .ar-feat{grid-template-columns:1fr 1fr;gap:10px} html.sky .ar-card{min-height:170px;padding:14px} html.sky .ar-card .ar-nm{font-size:17px} html.sky .ar-head{flex-direction:column;align-items:flex-start}}
+
+/* Games, Brain Food and the game screens sit on the band: their loose header text goes white */
+html.sky #panel-quiz .bf-top,html.sky #panel-quiz .bf-date,html.sky #panel-quiz .bf-count{color:#fff}
+
+@media (prefers-reduced-motion:reduce){
+  html.sky .skyband .sb-wisp{animation:none}
+  html.sky.arriving .panel.active > *,html.sky.arriving .hero-in > *{animation:none}
+}
+</style>
+<style id="sky-caps">
+/* Sky: sentence case everywhere (generated from every all-caps rule above) */
+html.sky :is(.wordmark .name){text-transform:none;letter-spacing:-.003em}
+html.sky :is(.tab){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.portfolio-link){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.eyebrow){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.kicker){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.card .lbl){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.mover-col h4){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.callout .lbl){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.np-masthead .np-tagline){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.np-masthead .np-edition){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.np-nav button){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.nr-kick){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.nr-go){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.nr-curve-h){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.nr-src-o){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.np-kick){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.np-rail .np-rail-h){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.np-rail-item .rs){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.np-sec-title .np-count){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.np-group-h){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.np-more){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.mkt-banner .mb-l .mb-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.np-src){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.np-mkt .ms-open){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ms-tile .mt-n){text-transform:none;letter-spacing:-.003em;font-size:10.5px}
+html.sky :is(.lockbox button){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.event .tile .tw){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.event .etime){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.wx-loc){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.wx-meta .mk){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.wx-hour-badge){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.wx-chart-lbl){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.ag-head){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.bc-label){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.ti-kind){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.fr2-eyebrow){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.fr2-log-h){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.fr2-box-h h3){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.fr2-sec-h){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.tc-head .h){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.tc-list-btn){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.psnap .ps-open){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.cal-head .cm){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.cal-dow){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.evt-todo-tag){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.ct-todo-tag){text-transform:none;letter-spacing:-.003em;font-size:10px}
+html.sky :is(.cal-tip .ct-day){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.lock-btn){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.theme-panel-title){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.qbig){text-transform:none;letter-spacing:-.003em}
+html.sky :is(.qmeta){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.qprompt-label){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.shelf-h){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.dc-tab){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.dc-pip){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.dc-k){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.dc-count){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.dc-go){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.dc-balance){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.dc-yn button){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.dc-bar-l){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.dc-tbl th){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.dc-rev-a){text-transform:none;letter-spacing:-.003em;font-size:13px}
+html.sky :is(.dc-stats){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.game-cat){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.pz-masthead .pz-sub){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.pz-box .pz-st){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.brainfood .bf-hd .bf-tag){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.bf-item .bf-k){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.bf-quiz-link){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.pz-link.played .pl-done){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.cf-tab .cf-no){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.cf-tab .cf-stamp){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.cf-ph){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.cfs-progress){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.cf-q-asked){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(table.cf-grid th.cf-cat){text-transform:none;letter-spacing:-.003em;font-size:10px}
+html.sky :is(table.cf-grid th.cf-catr){text-transform:none;letter-spacing:-.003em;font-size:10px}
+html.sky :is(.cf-tool){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.cf-acc .cf-ah){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.cf-arow label){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.cf-submit){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.cf-stats){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(input.cw-cell){text-transform:none;letter-spacing:-.003em}
+html.sky :is(.mini-best){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.cw-progress){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.cw-cluegrp-h){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.cw-stats){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.bb-score){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.seg button){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.pbtn){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.donut-center .dc-l){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.ptable th){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.pc-note){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-regen){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.ins-hero-cap span){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-why-h){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.ins-tag){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.ins-ctx-h){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-pulse-l){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-v-h){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-m-t){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ins-pos u){text-transform:none;letter-spacing:-.003em;font-size:10.5px}
+html.sky :is(.ins-more summary){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.al-band){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.al-sub){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.al-f-w){text-transform:none;letter-spacing:-.003em;font-size:10.5px}
+html.sky :is(.al-stat span){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.tabbar button){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.netpill){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.biobar button){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.cf-scrollnote){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.wxp-loc){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.wxp-k){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.wxt-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.wxm-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.wxm-tip b){text-transform:none;letter-spacing:-.003em;font-size:10.5px}
+html.sky :is(.bf-top){text-transform:none;letter-spacing:-.003em;font-size:13.5px}
+html.sky :is(.bf-kick){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.bf-btn){text-transform:none;letter-spacing:-.003em;font-size:14px}
+html.sky :is(.bf-hint){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.nw-card-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.nw-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.nw-row-k){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.now-chip .nc-k){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.now-f span){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.bp-block-h){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.bp-h){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.ol-panel-st){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ol-ck){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.desk-foot a){text-transform:none;letter-spacing:-.003em;font-size:12.5px}
+html.sky :is(.wx-hero.wx-compact .wx-hint){text-transform:none;letter-spacing:-.003em;font-size:12px}
+html.sky :is(.ag-nowpill){text-transform:none;letter-spacing:-.003em;font-size:11px}
+html.sky :is(.todo-card .ti-divider){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
+html.sky :is(.ti-note-label){text-transform:none;letter-spacing:-.003em;font-size:11px}
+</style>
 </head>
 <body>
+<div class="skyband" aria-hidden="true"><div class="sb-stars"></div><div class="sb-sun"></div><div class="sb-wisp w1"></div><div class="sb-wisp w2"></div><div class="sb-wisp w3"></div></div>
 
 <div id="gate">
   <div class="gate-box">
@@ -3345,6 +3728,7 @@ async function show(){
   const kind = S.tab, date = S.date[kind];
   const my = ++showToken;   // a newer tab/date change wins; a slow fetch must not paint over it
   const panel = $("#panel-"+kind);
+  if(typeof skyHeroArcClear === "function") skyHeroArcClear();
   // News and Games carry their own mastheads — hide the global compact header there so content fills the space
   const heroEl = document.querySelector(".hero");
   if(heroEl) heroEl.style.display = (kind==="news" || kind==="quiz") ? "none" : "block";
@@ -3374,6 +3758,7 @@ async function show(){
       $("#heroSub").textContent = "";
       $("#heroDateline").textContent = "";
       renderCalendarBody($("#panel-calendar"), d);
+      if(typeof skyHeroArc === "function") skyHeroArc(d);
     }
   }catch(e){
     if(my !== showToken) return;
@@ -10842,63 +11227,77 @@ const GAME_SHELVES = [
   ]}
 ];
 
+/* Arcade (Sky redesign, Oct 2026): the four built-in games are big illustrated cards with drawn
+   art instead of emoji icons (Eli doesn't like emoji as icons); every outside game stays, as
+   compact tiles grouped by publisher, with a count of what's been played today. Same click
+   handlers as before: built-ins carry .app[data-game], outside links .app-ext[data-game]. */
+const ARCADE_ART = {
+  brainfood:{ bg:"linear-gradient(150deg,#0B6E58 0%,#0E9F6E 55%,#7EE0B5 100%)", sub:() => "Today's fact, story and word",
+    svg:`<svg viewBox="0 0 200 200"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M100 32c-26 0-44 19-44 42 0 15 7 25 15 33 6 6 9 12 9 20v9h40v-9c0-8 3-14 9-20 8-8 15-18 15-33 0-23-18-42-44-42z" stroke-width="6" opacity=".95"/>
+      <path d="M82 150h36M86 164h28" stroke-width="6"/><path d="M100 64v30M86 80h28" stroke-width="5" opacity=".7"/>
+      <path d="M40 46l8 8M160 46l-8 8M28 92h12M160 92h12" stroke-width="5" opacity=".55"/></g></svg>` },
+  case:{ bg:"linear-gradient(150deg,#3B2363 0%,#7A4E8C 55%,#D9A5C8 100%)", sub:() => (typeof dcStatLabel === "function" ? dcStatLabel() : ""),
+    svg:`<svg viewBox="0 0 200 200"><g fill="none" stroke="#fff" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M36 70h48l12 14h68v78a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8z" stroke-width="6"/>
+      <path d="M58 60h84a6 6 0 0 1 6 6v18" stroke-width="5" opacity=".6"/>
+      <circle cx="104" cy="124" r="20" stroke-width="6"/><path d="M119 139l18 18" stroke-width="7"/></g></svg>` },
+  crossword:{ bg:"linear-gradient(150deg,#123B82 0%,#378ADD 55%,#9FD0FF 100%)", sub:() => (typeof cwStatLabel === "function" ? cwStatLabel() : ""),
+    svg:`<svg viewBox="0 0 200 200"><g stroke="#fff" stroke-width="4">
+      ${[0,1,2,3,4].map(r => [0,1,2,3,4].map(c => {
+        const blk = [[0,3],[1,1],[2,4],[3,0],[3,2],[4,3]].some(([a,b]) => a===r && b===c);
+        return `<rect x="${40+c*24}" y="${40+r*24}" width="24" height="24" fill="${blk ? "#fff" : "rgba(255,255,255,.12)"}"/>`;
+      }).join("")).join("")}</g>
+      <g fill="#fff" font-family="Sora,sans-serif" font-weight="600" font-size="15" text-anchor="middle">
+        <text x="52" y="58">S</text><text x="76" y="58">K</text><text x="100" y="58">Y</text><text x="52" y="82">U</text><text x="52" y="106">N</text></g></svg>` },
+  quiz:{ bg:"linear-gradient(150deg,#8A3B12 0%,#C2703B 55%,#F6C795 100%)", sub:() => (typeof qBestLabel === "function" ? qBestLabel() : ""),
+    svg:`<svg viewBox="0 0 200 200"><g fill="none" stroke="#fff" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M40 48h120a10 10 0 0 1 10 10v66a10 10 0 0 1-10 10H92l-30 24v-24H40a10 10 0 0 1-10-10V58a10 10 0 0 1 10-10z" stroke-width="6"/></g>
+      <text x="100" y="108" fill="#fff" font-family="Sora,sans-serif" font-weight="300" font-size="46" text-anchor="middle">Aa</text></svg>` }
+};
 function renderGamesLauncher(){
   if(!bfSeenToday()){ renderBrainFoodGate(); return; }
   const panel = $("#panel-quiz");
-  $("#heroEyebrow").textContent = "";
-  $("#heroTitle").textContent = "";
-  $("#heroSub").textContent = "";
-  $("#heroDateline").textContent = "";
+  $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
   const played = getPlayedGames();
+  const built = GAME_SHELVES.find(sh => sh.built) || {games:[]};
+  const outside = GAME_SHELVES.filter(sh => !sh.built);
+  const all = built.games.length + outside.reduce((n, sh) => n + sh.games.length, 0);
+  const done = built.games.filter(g => played.has(g.id)).length + outside.reduce((n, sh) => n + sh.games.filter(g => played.has(g.name)).length, 0);
+  const C = 2 * Math.PI * 22, frac = all ? done / all : 0;
 
-  const tile = (g, built) => {
-    const key = built ? g.id : g.name;
-    const on = played.has(key) ? " played" : "";
-    const icInner = g.logo ? `<img src="${esc(g.logo)}" alt="" loading="lazy">` : g.ic;
-    const inner = `<span class="app-ic${g.logo ? " has-logo" : ""}" style="--gcol:${g.col}">${icInner}</span><span class="app-tick">✓</span>
-        <span class="app-nm">${esc(g.name)}</span>`;
-    return built
-      ? `<button type="button" class="app${on}" data-game="${esc(g.id)}" title="${esc(g.name)}">${inner}</button>`
-      : `<a class="app app-ext${on}" data-game="${esc(g.name)}" title="${esc(g.name)}" href="${g.url}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-  };
+  const feat = built.games.map(g => {
+    const art = ARCADE_ART[g.id] || { bg:g.col, svg:"", sub:() => "" };
+    let sub = ""; try{ sub = art.sub() || ""; }catch(e){}
+    return `<button type="button" class="ar-card app${played.has(g.id) ? " played" : ""}" data-game="${esc(g.id)}" style="background:${art.bg}">
+      <span class="ar-art">${art.svg}</span>
+      <span class="ar-done"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.5l2.6 2.5L10 3.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Played today</span>
+      <span class="ar-nm">${esc(g.name)}</span><span class="ar-st">${esc(sub)}</span></button>`;
+  }).join("");
 
-  const shelves = GAME_SHELVES.map((sh, si) => `
-    <div class="shelf-h">${esc(sh.n)}${sh.note ? `<span class="shelf-n">${esc(sh.note)}</span>` : ""}</div>
-    <div class="shelf" data-shelf="${si}">
-      <button type="button" class="shelf-ar l" data-dir="-1" aria-label="Scroll left">‹</button>
-      <div class="shelf-track">${sh.games.map(g => tile(g, !!sh.built)).join("")}</div>
-      <button type="button" class="shelf-ar r" data-dir="1" aria-label="Scroll right">›</button>
-    </div>`).join("");
+  const secs = outside.map(sh => {
+    const n = sh.games.filter(g => played.has(g.name)).length;
+    return `<section class="ar-sec"><div class="ar-sec-h"><b>${esc(sh.n)}</b>${sh.note ? `<span>${esc(sh.note.charAt(0).toUpperCase() + sh.note.slice(1))}</span>` : ""}<em>${n ? `${n} of ${sh.games.length} played` : `${sh.games.length} games`}</em></div>
+      <div class="ar-grid">${sh.games.map(g => {
+        const host = (() => { try{ return new URL(g.url).hostname.replace(/^www\./, ""); }catch(e){ return ""; } })();
+        return `<a class="ar-tile app app-ext${played.has(g.name) ? " played" : ""}" data-game="${esc(g.name)}" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" style="--gcol:${g.col}">
+          <span class="ar-ic">${g.logo ? `<img src="${esc(g.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span>${esc(g.name.charAt(0))}</span></span>
+          <span><div class="ar-t">${esc(g.name)}</div><div class="ar-s">${esc(host)}</div></span><span class="ar-chk">✓</span></a>`;
+      }).join("")}</div></section>`;
+  }).join("");
 
-  panel.innerHTML = `<div class="games-wrap">
-    <div class="ga-title">Arcade</div>
-    <div class="ga-sub">Tap a game. A check means you already played it today.</div>
-    ${shelves}
+  panel.innerHTML = `<div class="arc-wrap">
+    <div class="ar-head"><div><h2>Arcade</h2><p>Four to play here, plus the daily puzzles you like elsewhere.</p></div>
+      <div class="ar-ring"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" stroke="rgba(255,255,255,.25)"/><circle cx="27" cy="27" r="22" stroke="#fff" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C.toFixed(1)}"/></svg><span>${done} of ${all}<br><small style="font-weight:500;opacity:.8">played today</small></span></div></div>
+    <div class="ar-feat">${feat}</div>
+    ${secs}
     <div id="gamesClose"></div>
   </div>`;
 
   const open = id => { if(id === "brainfood"){ renderBrainFoodDeck(false); return; } markGamePlayed(id); gamesView = id; renderGamesTab(); };
   panel.querySelectorAll(".app[data-game]:not(.app-ext)").forEach(el => el.addEventListener("click", () => open(el.dataset.game)));
   panel.querySelectorAll(".app-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
-
-  /* Arrows only exist when a shelf actually overflows -- on a wide screen the short shelves
-     fit whole, and a dead arrow floating over them looks broken. */
-  panel.querySelectorAll(".shelf").forEach(sh => {
-    const track = sh.querySelector(".shelf-track");
-    const sync = () => {
-      const over = track.scrollWidth - track.clientWidth > 8;
-      sh.querySelector(".shelf-ar.l").classList.toggle("on", over && track.scrollLeft > 4);
-      sh.querySelector(".shelf-ar.r").classList.toggle("on", over && track.scrollLeft < track.scrollWidth - track.clientWidth - 4);
-    };
-    sh.querySelectorAll(".shelf-ar").forEach(b => b.addEventListener("click", () => {
-      track.scrollBy({ left: (+b.dataset.dir) * Math.max(220, track.clientWidth * 0.8), behavior:"smooth" });
-      setTimeout(sync, 420);
-    }));
-    track.addEventListener("scroll", sync, {passive:true});
-    requestAnimationFrame(sync);
-    window.addEventListener("resize", sync, {passive:true});
-  });
 }
 
 function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }
@@ -13843,7 +14242,41 @@ function themeSaved(){
   if(!isFinite(sat)) sat = THEME_DEFAULT.sat;
   return { h, sat, hex: hex || THEME_DEFAULT.hex };
 }
-const themeIsNight = () => { try{ return localStorage.getItem("dh-night") === "1"; }catch(e){ return false; } };
+/* ---------- Sky (Oct 2026) ----------
+   Eli: "Follow the clock with the ability to lock in daylight sky / night / etc. and slight
+   further variability." The sky state decides the band, the sidebar and whether the site runs
+   its dark mode; the accent color above still drives buttons and highlights. "Night mode" is
+   now the Night sky (an old dh-night=1 setting migrates to it). */
+const SKY_STATES = [
+  { id:"auto",    name:"Auto",    g:"linear-gradient(90deg,#262A66,#3F86D2,#82BCEB,#8E4468,#040918)" },
+  { id:"dawn",    name:"Dawn",    g:"linear-gradient(180deg,#262A66,#D696AE 70%,#FFD9BC)" },
+  { id:"morning", name:"Morning", g:"linear-gradient(180deg,#174F9B,#9CC8EE 70%,#F7E6C8)" },
+  { id:"day",     name:"Day",     g:"linear-gradient(180deg,#0D4794,#82BCEB 70%,#E2F0FB)" },
+  { id:"evening", name:"Evening", g:"linear-gradient(180deg,#15103A,#8E4468 70%,#E9885A)" },
+  { id:"night",   name:"Night",   g:"linear-gradient(180deg,#040918,#132A5C 70%,#1E3C74)" }
+];
+function skyPref(){
+  try{ const p = localStorage.getItem("dh-sky"); if(p) return p; return localStorage.getItem("dh-night") === "1" ? "night" : "auto"; }catch(e){ return "auto"; }
+}
+function skyAuto(){
+  const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
+  const m = (+t.slice(0,2) % 24)*60 + +t.slice(3,5);
+  return (m < 300 || m >= 1170) ? "night" : m < 480 ? "dawn" : m < 660 ? "morning" : m < 990 ? "day" : "evening";
+}
+const skyNow = () => { const p = skyPref(); return p === "auto" ? skyAuto() : p; };
+const skyIsDark = st => st === "evening" || st === "night";
+function skySetPref(p){
+  try{ localStorage.setItem("dh-sky", p); localStorage.setItem("dh-night", skyIsDark(p === "auto" ? skyAuto() : p) ? "1" : "0"); }catch(e){}
+  skyApply();
+}
+function skyApply(){
+  const r = document.documentElement, st = skyNow();
+  r.classList.add("sky");
+  if(r.getAttribute("data-sky") !== st) r.setAttribute("data-sky", st);
+  themeApply(themeSaved(), skyIsDark(st));
+}
+setInterval(() => { if(skyPref() === "auto" && document.documentElement.getAttribute("data-sky") !== skyAuto()) skyApply(); }, 5*60*1000);
+const themeIsNight = () => skyIsDark(skyNow());
 function themeApply(t, night){
   const r = document.documentElement;
   r.classList.add("glass");
@@ -13895,10 +14328,9 @@ function themePickerInit(){
       </label>
       <div class="theme-panel-title" style="margin-top:12px">Font</div>
       <div class="font-list">${DH_FONTS.map(f => `<button class="font-opt${f===curFont?" active":""}" data-font="${f}" style="font-family:'${f}',sans-serif">${f}<small>Aa 0123</small></button>`).join("")}</div>
-      <div class="theme-shuffle-row"><span>Night mode</span>
-        <button class="theme-toggle${night ? " on" : ""}" id="themeNightToggle" role="switch" aria-checked="${night}"><span class="theme-toggle-knob"></span></button>
-      </div>
-      <div class="theme-shuffle-note">${night ? "The night version of the color you picked." : "Daylight version. Everything follows the color."}</div>`;
+      <div class="theme-panel-title" style="margin-top:12px">Sky</div>
+      <div class="sky-seg">${SKY_STATES.map(k => `<button type="button" data-sky="${k.id}" class="${skyPref() === k.id ? "active" : ""}"><i style="background:${k.g}"></i>${k.name}</button>`).join("")}</div>
+      <div class="theme-shuffle-note">${skyPref() === "auto" ? "Follows the clock: dawn, morning, day, evening and night." : "Locked to " + SKY_STATES.find(k => k.id === skyPref()).name.toLowerCase() + ". Pick Auto to follow the clock again."}${night ? " Evening and night use the dark panels." : ""}</div>`;
     const dot = $("#themeCustomDot"); if(dot) dot.style.background = saved.hex;
 
     panel.querySelectorAll(".theme-chip").forEach(el => el.addEventListener("click", () => {
@@ -13911,9 +14343,7 @@ function themePickerInit(){
       inp.addEventListener("change", () => { themeSet(inp.value, themeIsNight()); render(); });
     }
     panel.querySelectorAll(".font-opt").forEach(el => el.addEventListener("click", () => { fontSet(el.dataset.font); render(); }));
-    $("#themeNightToggle").addEventListener("click", () => {
-      themeSet(themeSaved().hex, !themeIsNight()); render();
-    });
+    panel.querySelectorAll(".sky-seg button").forEach(el => el.addEventListener("click", () => { skySetPref(el.dataset.sky); render(); }));
   }
   render();
 
@@ -13994,7 +14424,7 @@ function mbOpen(){
   const greet = hr < 12 ? "Good morning, Eli" : hr < 18 ? "Good afternoon, Eli" : "Good evening, Eli";
   const dateTxt = new Date().toLocaleDateString("en-US",{timeZone:"America/Chicago",weekday:"long",month:"long",day:"numeric"});
   const letters = [...greet].map((c,i) => `<span style="animation-delay:${(i*38)}ms">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("");
-  root.className = ""; root.dataset.sky = mbSky(now);
+  root.className = ""; root.dataset.sky = typeof skyNow === "function" ? skyNow() : mbSky(now);
   root.innerHTML = `<div class="mb-sky"></div><div class="mb-shade"></div><div class="mb-stars"></div><div class="mb-glow" id="mbGlow"></div>
     <button class="mb-skip" id="mbSkip">Skip to my day</button>
     <div class="mb-in">
@@ -14005,8 +14435,8 @@ function mbOpen(){
       <div class="mb-deck">
         <section class="mb-p" id="mbMk"><h3>Markets <small id="mbMkS"></small></h3><div id="mbMkB"><span class="mb-ld"></span></div></section>
         <section class="mb-p" id="mbPf"><h3>Your portfolio <small id="mbPfS"></small></h3><div id="mbPfB"><span class="mb-ld"></span></div></section>
-        <section class="mb-p" id="mbHl" style="grid-column:1/-1"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
         <section class="mb-p" id="mbIb" style="grid-column:1/-1"><h3>Important email <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbHl" style="grid-column:1/-1"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
       </div>
       <div class="mb-go"><button id="mbGo">Start the day</button></div>
     </div>`;
@@ -14042,14 +14472,45 @@ function mbKey(e){
   else if((e.key === "Enter" || e.key === " ") && MB.stage < 2){ e.preventDefault(); mbStage(2); }
 }
 function mbClose(after){
-  const root = document.getElementById("mb"); if(!root || !root.classList.contains("on")) return;
+  const root = document.getElementById("mb"); if(!root || !root.classList.contains("on") || root.classList.contains("closing")) return;
   try{ localStorage.setItem(MB_KEY, todayCT()); }catch(e){}
   document.removeEventListener("keydown", mbKey);
   MB.timers.forEach(clearTimeout); MB.timers = []; cancelAnimationFrame(MB.raf); clearInterval(MB.tick);
-  root.classList.add("leaving");
+  const finish = () => { root.classList.remove("on","closing","solo","s1","s2"); root.innerHTML = ""; MB.stage = 0; root.scrollTop = 0; };
   document.documentElement.style.overflow = "";
+  if(mbReduced()){ finish(); if(after) after(); return; }
+
+  /* Magic move: fly the brief's greeting and sun arc onto their twins in the Home hero, while
+     the rest of the brief sinks away and its sky dissolves into the page's own sky band. */
+  const pairs = [];
+  if(!after && S.tab === "calendar"){
+    const tT = document.getElementById("heroTitle"), tA = document.querySelector("#heroArc svg");
+    const sT = root.querySelector("#mbGreet"), sA = root.querySelector("#mbArc svg");
+    if(tT && sT) pairs.push([sT, tT]);
+    if(tA && sA) pairs.push([sA, tA]);
+  }
+  if(!pairs.length) root.classList.add("solo");
+  root.classList.add("closing");   // transitions must exist before the transforms are set
+  const zoom = parseFloat(document.documentElement.style.zoom) || 1;   // big-screen fit scales CSS px
+  pairs.forEach(([src, dst]) => {
+    const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
+    if(!a.width || !b.width) return;
+    // the greeting is matched on its text box (its block is wider than the words)
+    const aw = src.id === "mbGreet" ? mbTextWidth(src) : a.width, bw = dst.id === "heroTitle" ? mbTextWidth(dst) : b.width;
+    const sc = bw / aw;
+    src.classList.add("fly"); void src.offsetWidth;
+    requestAnimationFrame(() => { src.style.transform = `translate(${(b.left - a.left)/zoom}px, ${(b.top - a.top)/zoom}px) scale(${sc})`; });
+    dst.style.visibility = "hidden";
+    setTimeout(() => { dst.style.visibility = ""; }, 960);
+  });
   if(after) after();
-  setTimeout(() => { root.classList.remove("on","leaving","s1","s2"); root.innerHTML = ""; MB.stage = 0; }, mbReduced() ? 0 : 900);
+  setTimeout(() => { if(typeof skyArrive === "function") skyArrive(); }, pairs.length ? 260 : 120);
+  setTimeout(finish, 1150);
+}
+function mbTextWidth(el){
+  const r = document.createRange(); r.selectNodeContents(el);
+  const w = r.getBoundingClientRect().width;
+  return w || el.getBoundingClientRect().width;
 }
 
 /* ---- the sky arc ---- */
@@ -14318,6 +14779,89 @@ async function mbLoadInbox(){
       <span class="ib-av" style="background:hsl(${hue(m.email||m.from)} 55% 46%)">${esc((m.from||"?").trim().charAt(0).toUpperCase())}</span>
       <span style="min-width:0"><div class="ib-f">${esc(m.from)}</div><div class="ib-s">${esc(m.subject)}</div><div class="ib-n">${esc(m.snippet)}</div></span>
       <span class="ib-t">${esc(relTimeAgo(m.date))}</span></a>`).join("");
+}
+
+
+/* ================= Sky: Home hero arc, big-screen fit, brief hand-off =================
+   The Home hero carries the brief's sun arc: the day from 6a to 9p, every timed event pinned on
+   it, the sun at the current time. Tapping it replays the Morning Brief. */
+function skyHeroArcHTML(items, now){
+  const ticks = [[6*60,"6a"],[12*60,"noon"],[18*60,"6p"],[21*60,"9p"]].map(([m,l]) => {
+    const [x] = mbPt(mbT(m));
+    return `<line class="arc-hz" x1="${x.toFixed(1)}" y1="${MB_BASE}" x2="${x.toFixed(1)}" y2="${MB_BASE+8}"/><text class="arc-tick" x="${x.toFixed(1)}" y="${MB_BASE+30}" text-anchor="middle">${l}</text>`;
+  }).join("");
+  let pins = "", lastLbl = -999;
+  items.forEach(a => {
+    if(a.start > MB_END || (a.end || a.start) < MB_START) return;
+    const s = Math.max(MB_START, a.start), en = Math.min(MB_END, a.end != null ? a.end : a.start + 30);
+    const t1 = mbT(s), t2 = Math.max(mbT(en), t1 + 0.004), past = (a.end != null ? a.end : a.start + 30) <= now;
+    const [x,y] = mbPt(t1), ang = Math.PI * t1;
+    pins += `<path class="arc-ev${past?" past":""}" d="${mbArcD(t1,t2)}"><title>${esc(fmtClock(a.start))} ${esc(a.title)}</title></path><circle class="arc-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>`;
+    if(a.start - lastLbl >= 40){
+      const lx = x - Math.cos(ang)*30, ly = y - Math.sin(ang)*30 - 2;
+      const anchor = Math.cos(ang) > .35 ? "end" : Math.cos(ang) < -.35 ? "start" : "middle";
+      pins += `<text class="arc-lbl${past?" past":""}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}">${mbClockShort(a.start)}</text>`;
+      lastLbl = a.start;
+    }
+  });
+  const tn = mbT(now), below = tn < 0 || tn > 1, tc = Math.max(0, Math.min(1, tn)), [sx, sy] = mbPt(tc);
+  return `<svg viewBox="0 -40 ${MB_W} 345" role="img" aria-label="Today's schedule along the sun's path">
+    <defs><clipPath id="skyClip"><rect x="-50" y="-60" width="${MB_W+100}" height="${MB_BASE+62}"/></clipPath>
+      <radialGradient id="skySunG"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="var(--sun)"/><stop offset="1" stop-color="var(--sun)" stop-opacity="0"/></radialGradient></defs>
+    <line class="arc-hz" x1="0" y1="${MB_BASE}" x2="${MB_W}" y2="${MB_BASE}"/>${ticks}
+    <path class="arc-path" d="${mbArcD(0,1)}"/><path class="arc-trav" d="${mbArcD(0, Math.max(.0001, tc))}"/>${pins}
+    <g clip-path="url(#skyClip)"><g transform="translate(${sx.toFixed(1)} ${(below ? MB_BASE + 14 : sy).toFixed(1)})">
+      <circle r="46" fill="url(#skySunG)" opacity=".55"/><circle class="sun-halo" r="22"/><circle class="sun-core" r="12"/></g></g>
+  </svg>`;
+}
+function skyHeroArc(d){
+  const heroIn = document.querySelector(".hero-in"); if(!heroIn) return;
+  skyHeroArcClear();
+  if(!d || (d.date && d.date !== todayCT())) return;   // only for today's edition
+  const items = agendaItems(d.today || [], d.date).filter(a => !a.isTodo && a.start != null);
+  const now = mbNowMin();
+  const wrap = document.createElement("div");
+  wrap.className = "hero-arc"; wrap.id = "heroArc"; wrap.title = "Replay this morning's brief";
+  wrap.innerHTML = skyHeroArcHTML(items, now);
+  wrap.addEventListener("click", () => mbOpen());
+  const next = items.find(a => a.start > now), live = items.find(a => a.start <= now && now < (a.end != null ? a.end : a.start + 30));
+  const nx = document.createElement("div"); nx.className = "hero-next"; nx.id = "heroNext";
+  if(live) nx.innerHTML = `Now: <b>${esc(live.title)}</b> <span>until ${esc(fmtClock(live.end != null ? live.end : live.start + 30))}</span>`;
+  else if(next) nx.innerHTML = `Next: <b>${esc(fmtClock(next.start))} ${esc(next.title)}</b> <span>${esc(mbIn(next.start - now))}</span>`;
+  else nx.textContent = items.length ? "That's everything on the calendar today." : "Nothing on the calendar today.";
+  heroIn.querySelector("#heroTitle").after(nx);
+  heroIn.appendChild(wrap);
+  heroIn.classList.add("has-arc");
+}
+function skyHeroArcClear(){
+  const heroIn = document.querySelector(".hero-in"); if(!heroIn) return;
+  heroIn.classList.remove("has-arc");
+  ["#heroArc","#heroNext"].forEach(sel => { const el = document.querySelector(sel); if(el) el.remove(); });
+}
+/* keep the arc's sun moving while the page stays open */
+setInterval(() => {
+  if(S.tab !== "calendar" || !document.getElementById("heroArc") || document.hidden) return;
+  const d = S.cache["calendar/" + S.date.calendar]; if(d) skyHeroArc(d);
+}, 5*60*1000);
+
+/* ---- big-screen fit ----
+   Eli, Oct 2026: on his 24" 1080p monitor the site looked zoomed out (everything small, wide empty
+   margins) while his laptop looked right. The layout was designed around a ~1500-1600px-wide
+   window, so on anything wider the whole page is scaled up to match, the way a laptop shows it. */
+function skyFit(){
+  const w = window.innerWidth;
+  const z = w >= 1660 ? Math.min(1.45, w / 1600) : 1;
+  document.documentElement.style.zoom = z === 1 ? "" : z.toFixed(3);
+}
+skyFit();
+window.addEventListener("resize", () => { cancelAnimationFrame(skyFit._r); skyFit._r = requestAnimationFrame(skyFit); });
+
+/* ---- page entrance (after the brief hands off) ---- */
+function skyArrive(){
+  const r = document.documentElement;
+  document.querySelectorAll(".panel.active > *").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 10)));
+  r.classList.remove("arriving"); void r.offsetWidth; r.classList.add("arriving");
+  clearTimeout(skyArrive._t); skyArrive._t = setTimeout(() => r.classList.remove("arriving"), 2200);
 }
 
 (function(){

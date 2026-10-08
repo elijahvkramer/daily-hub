@@ -2531,6 +2531,123 @@
   .todo-card .tc-empty{flex-direction:column;justify-content:center;gap:12px;padding:34px 0 30px;font-size:15px;font-weight:600;text-align:center}
   .todo-card .tc-empty .tc-empty-check{width:42px;height:42px;font-size:19px;box-shadow:0 10px 22px -8px var(--up)}
   .todo-card .todo-item.dragging{background:var(--gold-soft)}
+
+  /* =====================================================================
+     To-Dos, round 2 (Eli, Oct 2026): notes, checklist, text editing, hover fix; Two-Week View polish
+     ===================================================================== */
+  /* row = [drag][check][title + meta line][urgency dot], tools float over the title line only,
+     so the due date and note/checklist badges underneath stay visible while you hover */
+  .todo-card .ti-main{align-items:flex-start}
+  .todo-card .ti-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+  .todo-card .ti-line{min-width:0}
+  .todo-card .ti-main .ti-text{display:block;flex:none}
+  .todo-card .ti-drag{margin-top:3px}
+  .todo-card .ti-kind{margin-top:-2px}
+  .todo-card .ti-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .todo-card .ti-meta .ti-due-input{margin:0}
+  .todo-card .ti-tools{top:4px;right:34px;transform:scale(.96);transform-origin:right center}
+  .todo-card .todo-item:hover .ti-tools,.todo-card .ti-main:focus-within .ti-tools,.todo-card .todo-item.ti-tools-open .ti-tools{opacity:1;pointer-events:auto;transform:none}
+  .todo-card .ti-more{margin-top:-2px}
+  @media(hover:none){
+    .todo-card .ti-tools{top:auto;right:auto;transform:none;order:10}
+    .todo-card .ti-body{flex:1 1 0}
+  }
+
+  /* badges that open the note / checklist -- a caret says "this expands" */
+  .todo-card .ti-badge{gap:5px;padding:3px 8px 3px 7px;font-size:11px;font-weight:800;transition:background .15s,color .15s}
+  .todo-card .ti-badge:hover{background:color-mix(in srgb,var(--gold) 22%,transparent)}
+  .ti-badge .ti-caret{width:11px;height:11px;opacity:.65;transition:transform .22s}
+  .todo-card .todo-item.note-open .ti-badge-note .ti-caret,.todo-card .todo-item.sub-open .ti-badge-sub .ti-caret{transform:rotate(180deg);opacity:1}
+  .todo-card .todo-item.note-open .ti-badge-note,.todo-card .todo-item.sub-open .ti-badge-sub{background:color-mix(in srgb,var(--gold) 24%,transparent)}
+  .todo-card .ti-badge-sub.all{background:color-mix(in srgb,var(--up) 15%,transparent);color:var(--up)}
+
+  /* panels slide open instead of snapping */
+  .ti-fold{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s cubic-bezier(.4,0,.2,1)}
+  .ti-fold.open{grid-template-rows:1fr}
+  .ti-fold-in{overflow:hidden;min-height:0}
+  .ti-fold:not(.open) .ti-fold-in{visibility:hidden;transition:visibility 0s .3s}
+  @media(prefers-reduced-motion:reduce){.ti-fold,.ti-fold:not(.open) .ti-fold-in{transition:none}}
+
+  /* note */
+  .todo-card .ti-note-wrap{padding:2px 6px 14px 38px}
+  .todo-card .ti-note{position:relative;display:flex;flex-direction:column;gap:5px;padding:11px 15px 13px;border-radius:14px;
+    border:1px solid color-mix(in srgb,var(--gold) 22%,transparent);box-shadow:inset 3px 0 0 var(--gold);
+    background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 11%,transparent),color-mix(in srgb,var(--gold) 3%,transparent));
+    transition:border-color .15s,box-shadow .15s}
+  .todo-card .ti-note:focus-within{border-color:color-mix(in srgb,var(--gold) 55%,transparent);box-shadow:inset 3px 0 0 var(--gold),0 0 0 4px color-mix(in srgb,var(--gold) 14%,transparent)}
+  .ti-note-label{font-size:9.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark)}
+  .todo-card .ti-note textarea,.todo-card .ti-note textarea:focus{width:100%;box-sizing:border-box;border:none;outline:none;border-radius:0;padding:0;background:transparent;
+    font:inherit;font-size:14.5px;font-weight:450;line-height:1.55;color:var(--ink);resize:none;min-height:46px;field-sizing:content}
+  .todo-card .ti-note textarea::placeholder{color:var(--muted);opacity:.75}
+
+  /* checklist */
+  .todo-card .ti-sub-wrap{padding:2px 6px 14px 38px}
+  .ti-sub-head{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--muted);margin:0 0 6px;font-variant-numeric:tabular-nums}
+  .ti-sub-bar{flex:1;height:4px;border-radius:4px;background:color-mix(in srgb,var(--ink) 9%,transparent);overflow:hidden}
+  .ti-sub-bar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .todo-card .ti-sub-list{display:flex;flex-direction:column;gap:1px}
+  .todo-card .ti-sub-item{gap:11px;padding:6px 8px;margin:0 -8px;border-radius:10px;cursor:default;font-size:14.5px;font-weight:500;transition:background .12s}
+  .todo-card .ti-sub-item:hover{background:color-mix(in srgb,var(--ink) 4.5%,transparent)}
+  .todo-card .ti-sub-item .box{width:19px;height:19px;border-radius:50%;cursor:pointer;border:2px solid color-mix(in srgb,var(--gold) 75%,transparent);font-size:10px;font-weight:900;
+    transition:background .16s,border-color .16s,color .16s,transform .16s}
+  .todo-card .ti-sub-item .box:hover{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold-dark);transform:scale(1.08)}
+  .todo-card .ti-sub-item.done .box{background:var(--gold);border-color:var(--gold);color:#fff}
+  .todo-card .ti-sub-item .txt{cursor:text;border-radius:6px;transition:color .12s}
+  .todo-card .ti-sub-item .txt:hover{color:var(--gold-dark)}
+  .todo-card .ti-sub-item.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 55%,transparent)}
+  .ti-sub-input{flex:1;min-width:0;font:inherit;font-size:14.5px;color:var(--ink);background:var(--modal-solid,#fff);border:1.5px solid var(--gold);border-radius:9px;padding:3px 9px;outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 16%,transparent)}
+  .todo-card .ti-sub-item .ti-sub-del{width:22px;height:22px;border-radius:50%;cursor:pointer}
+  .todo-card .ti-sub-item .ti-sub-del svg{width:12px;height:12px}
+  .todo-card .ti-sub-item .ti-sub-del:hover{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
+  .todo-card .ti-sub-add{padding:8px 0 0}
+  .todo-card .ti-sub-add input{padding:7px 14px;font-size:13.5px}
+
+  /* editing a to-do's title: a roomy field that grows with the text */
+  .todo-card .ti-main .ti-text-input{display:block;width:100%;box-sizing:border-box;resize:none;overflow:hidden;font:inherit;line-height:1.35;min-height:32px;field-sizing:content;
+    margin:-6px 0 0;padding:6px 11px;border:1.5px solid var(--gold);border-radius:11px;background:var(--modal-solid,#fff);color:var(--ink);outline:none;
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 16%,transparent)}
+  .ti-edit-hint{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:1px}
+  .ti-edit-hint kbd{font:inherit;font-weight:800;padding:0 5px;border-radius:5px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+
+  /* urgency dot: tooltip only (the label used to slide out from under the tools pill) */
+  .todo-card .ti-main:hover .ti-kind span,.todo-card .ti-main .ti-kind:hover span,.todo-card .ti-kind:focus-visible span{max-width:0;opacity:0;margin-left:0}
+  .todo-card .ti-main:hover .ti-kind{background:transparent}
+  .todo-card .ti-main .ti-kind:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+  /* no floating tools while the title is being edited */
+  .todo-card .todo-item:has(.ti-text-input) .ti-tools,.todo-card .todo-item:has(.ti-text-input) .ti-more{display:none}
+  .cal-card .cal-ev{padding:2px 5px}
+
+  /* ---------- Two-Week View: same grid and sizes, nicer skin ---------- */
+  .cal-card .cal-head{margin-bottom:14px}
+  .cal-card .cal-head .cm{font-size:20px;font-weight:800;letter-spacing:-.02em;text-transform:none;color:var(--ink)}
+  .cal-card .cal-head .cl{font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .cal-card .cal-refresh-btn{background:color-mix(in srgb,var(--paper) 80%,transparent)}
+  .cal-card .cal-grid{border:1px solid var(--hairline);border-radius:16px;background:color-mix(in srgb,var(--paper) 35%,transparent)}
+  .cal-card .cal-dow{background:color-mix(in srgb,var(--ink) 4%,transparent);font-size:10px;font-weight:800;letter-spacing:.11em;padding:9px 0 8px}
+  .cal-card .cal-dow:nth-child(1),.cal-card .cal-dow:nth-child(7){color:color-mix(in srgb,var(--muted) 62%,var(--gold))}
+  .cal-card .cal-dow:nth-child(7){border-right:none}
+  .cal-card .cal-cell[style*="grid-column:7;"]{border-right:none}
+  .cal-card .cal-cell[style*="grid-row:3"]{border-bottom:none}
+  .cal-card .cal-cell{padding:6px 6px 7px;scrollbar-width:none}
+  .cal-card .cal-cell::-webkit-scrollbar{display:none}
+  .cal-card .cal-cell[style*="grid-column:1;"],.cal-card .cal-cell[style*="grid-column:7;"]{background:color-mix(in srgb,var(--ink) 2.5%,transparent)}
+  .cal-card .cal-cell.dim{background:color-mix(in srgb,var(--ink) 4.5%,transparent)}
+  .cal-card .cal-cell.dim .cal-ev{opacity:.72}
+  .cal-card .cal-cell.has:hover,.cal-card .cal-cell.today.has:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  .cal-card .cal-cell .cn{font-size:12.5px;font-weight:800}
+  .cal-card .cal-cell.today,html.glass .cal-card .cal-cell.today{background:color-mix(in srgb,var(--gold) 11%,transparent);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--gold) 50%,transparent)}
+  .cal-card .cal-cell.today .cn{background:linear-gradient(145deg,var(--gold),var(--gold-dark));box-shadow:0 4px 10px -3px var(--gold)}
+  .cal-card .cal-ev{padding:2px 6px;margin-bottom:3px;border-radius:7px;background:color-mix(in srgb,var(--gold) 9%,transparent);box-shadow:inset 2px 0 0 var(--gold);line-height:1.4}
+  .cal-card .cal-ev i{display:none}
+  .cal-card .cal-cell.has:hover .cal-ev{background:color-mix(in srgb,var(--gold) 17%,transparent)}
+  .cal-card .cal-rem{border-radius:7px}
+  .cal-card .cal-more{align-self:flex-start;border-radius:999px;padding:1px 8px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+  .cal-card .cal-cell-bar{font-weight:800;background:linear-gradient(90deg,#3A6EA5,#4A82BE)}
+  @media(max-width:640px){
+    .cal-card .cal-cell{padding:3px}
+    .cal-card .cal-ev{padding:1px 3px;border-radius:5px;margin-bottom:2px}
+    .cal-card .cal-head .cm{font-size:17px}
+  }
 </style>
 </head>
 <body>
@@ -4737,6 +4854,8 @@ function wireDayView(){}
    plain string interpolation into selectors/attributes is always safe. ---- */
 const expandedNotes = new Set();
 const expandedSubs = new Set();
+const subEditing = new Set();      // "todoId:subId" of checklist items currently being renamed
+function todoGrow(el){ el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
 const dueEditing = new Set();
 const textEditing = new Set();     // to-do ids whose title is currently an editable input
 const expandedHistory = new Set();     // which kinds ("urgent"/"chill") have their Recently Completed panel open
@@ -4790,10 +4909,22 @@ function dueChipLabel(due){
   return dt.toLocaleDateString("en-US", { month:"short", day:"numeric" });
 }
 
-function subChecklistHTML(subitems){
-  const list = subitems || [];
-  const rows = list.map(s => `<div class="ti-sub-item${s.done?" done":""}" data-action="sub-check" data-sub="${esc(s.id)}"><span class="box">✓</span><span class="txt">${esc(s.text)}</span><span class="ti-sub-del" data-action="sub-remove" data-sub="${esc(s.id)}" title="Remove">✕</span></div>`).join("");
-  return `<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
+function subChecklistHTML(subitems, itemId){
+  /* Unchecked items always sit above checked ones (Eli, Oct 2026); each group keeps its own order.
+     data-idx is the position in the stored list, so the in-place slide when you tick something
+     lands exactly where the next render will put it. */
+  const list = (subitems||[]).map((s,i) => ({...s, _i:i})).sort((a,b) => (a.done?1:0) - (b.done?1:0) || a._i - b._i);
+  const done = list.filter(s => s.done).length;
+  const head = list.length
+    ? `<div class="ti-sub-head"><span>${done} of ${list.length} done</span><div class="ti-sub-bar"><span style="width:${Math.round(done/list.length*100)}%"></span></div></div>` : "";
+  const rows = list.map(s => {
+    const editing = subEditing.has(itemId + ":" + s.id);
+    return `<div class="ti-sub-item${s.done?" done":""}" data-sub="${esc(s.id)}" data-idx="${s._i}"><span class="box" data-action="sub-check" data-sub="${esc(s.id)}" title="Check off">✓</span>${
+      editing ? `<input type="text" class="ti-sub-input" maxlength="140" value="${esc(s.text)}" data-sub="${esc(s.id)}">`
+              : `<span class="txt" data-action="sub-edit" data-sub="${esc(s.id)}" title="Click to rename">${esc(s.text)}</span>`
+    }<span class="ti-sub-del" data-action="sub-remove" data-sub="${esc(s.id)}" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span></div>`;
+  }).join("");
+  return `${head}<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
 }
 
 /* id -> the list it is moving into, set for the length of one urgent/chill transition */
@@ -4830,8 +4961,9 @@ function todoRowsHTML(items){
       del:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
       more:`<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>`
     };
-    const badges = (hasNote ? `<span class="ti-badge" data-action="note-toggle" title="Notes">${IC.note}</span>` : "")
-      + (subitems.length ? `<span class="ti-badge" data-action="sub-toggle" title="Checklist">${IC.list}${subDone}/${subitems.length}</span>` : "");
+    const CARET = `<svg class="ti-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+    const badges = (hasNote ? `<span class="ti-badge ti-badge-note" data-action="note-toggle" title="Show note">${IC.note}Note${CARET}</span>` : "")
+      + (subitems.length ? `<span class="ti-badge ti-badge-sub${subDone===subitems.length?" all":""}" data-action="sub-toggle" title="Show checklist">${IC.list}${subDone}/${subitems.length}${CARET}</span>` : "");
     const moveTo = (t.list==="work"?"work":"personal")==="work" ? "personal" : "work";
     const pending = pendingComplete.get(t.id);
     const checkedPending = !!pending;
@@ -4850,19 +4982,22 @@ function todoRowsHTML(items){
       : "";
     const arriving = todoMoving.get(t.id) === kind;
     if(arriving) setTimeout(() => todoMoving.delete(t.id), 900);
-    return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}${arriving?" ti-arriving":""}" data-id="${esc(t.id)}" data-kind="${kind}">
+    const metaHTML = (dueField || badges) ? `<div class="ti-meta">${dueField}${badges}</div>` : "";
+    return `${divider}<div class="todo-item tk-${kind}${checkedPending?" ti-checked":""}${arriving?" ti-arriving":""}${noteOn?" note-open":""}${subOn?" sub-open":""}" data-id="${esc(t.id)}" data-kind="${kind}">
       <div class="ti-main">
         <span class="ti-drag" title="Drag to reorder">⠿</span>
         <span class="ti-check">✓</span>
-        ${textEditing.has(t.id)
-          ? `<input type="text" class="ti-text-input" maxlength="140" value="${esc(t.text)}">`
-          : `<span class="ti-text" data-action="text-edit" title="Click to rename">${esc(t.text)}</span>`}
-        ${dueField}
-        ${badges}
+        <div class="ti-body">
+          <div class="ti-line">${textEditing.has(t.id)
+            ? `<textarea class="ti-text-input" rows="1" maxlength="140">${esc(t.text)}</textarea>`
+            : `<span class="ti-text" data-action="text-edit" title="Click to rename">${esc(t.text)}</span>`}</div>
+          ${textEditing.has(t.id) ? `<div class="ti-edit-hint"><kbd>Enter</kbd> save · <kbd>Esc</kbd> cancel</div>` : ""}
+          ${metaHTML}
+        </div>
         <button type="button" class="ti-kind ti-kind-${kind}" data-action="kind-toggle" title="Switch between urgent and chill"><i></i><span>${kind==="chill"?"Chill":"Urgent"}</span></button>
         <span class="ti-tools">
           <button type="button" class="ti-icon-btn" data-action="list-move" data-to="${moveTo}" title="Move to ${moveTo==="work"?"Work":"Personal"}">${IC.move}</button>
-          <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Notes">${IC.note}</button>
+          <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Note">${IC.note}</button>
           <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">${IC.list}</button>
           ${(!t.due && !dueOn) ? `<button type="button" class="ti-icon-btn ti-due-btn" data-action="due-add" title="Set due date">+ due</button>` : ""}
           <span class="ti-del" data-action="remove" title="Remove">${IC.del}</span>
@@ -4870,8 +5005,8 @@ function todoRowsHTML(items){
         <button type="button" class="ti-more" data-action="tools-toggle" title="More">${IC.more}</button>
       </div>
       ${checkedPending ? `<div class="ti-undo-bar"><span style="animation-delay:-${undoElapsedMs}ms"></span></div>` : ""}
-      <div class="ti-note-wrap" style="display:${noteOn?"block":"none"}"><div class="ti-note"><textarea placeholder="Add a note…">${esc(t.note||"")}</textarea></div></div>
-      <div class="ti-sub-wrap" style="display:${subOn?"block":"none"}">${subChecklistHTML(subitems)}</div>
+      <div class="ti-fold${noteOn?" open":""}" data-fold="note"><div class="ti-fold-in"><div class="ti-note-wrap"><div class="ti-note"><span class="ti-note-label">Note</span><textarea placeholder="Write a note…" rows="2">${esc(t.note||"")}</textarea></div></div></div></div>
+      <div class="ti-fold${subOn?" open":""}" data-fold="sub"><div class="ti-fold-in"><div class="ti-sub-wrap">${subChecklistHTML(subitems, t.id)}</div></div></div>
     </div>`;
   }).join("");
 }
@@ -4909,6 +5044,22 @@ function rerenderTodoWrap(root){
   if(!wrap) return;
   const items = (window.__todosApi ? window.__todosApi.getState().items : []) || [];
   wrap.innerHTML = todoRowsHTML(itemsForList(items, getActiveTodoList()));
+}
+
+/* Ticking a checklist item: the row slides to its new place (unchecked above checked) first, then
+   the change is written, so the re-render that follows lands on the same order instead of jumping. */
+function subCheckAnimated(item, id, subId){
+  const row = item.querySelector(`.ti-sub-item[data-sub="${subId}"]`);
+  const list = row && row.parentElement;
+  const commit = () => { if(window.__todosApi) window.__todosApi.toggleSub(id, subId); };
+  if(!row || !list || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)){ commit(); return; }
+  flipReorder(list, () => {
+    row.classList.toggle("done");
+    [...list.children].sort((a,b) =>
+      (a.classList.contains("done")?1:0) - (b.classList.contains("done")?1:0) || (+a.dataset.idx) - (+b.dataset.idx)
+    ).forEach(r => list.appendChild(r));
+  }, ".ti-sub-item");
+  setTimeout(commit, 330);
 }
 
 function wireTodoRows(root){
@@ -4974,21 +5125,24 @@ function wireTodoRows(root){
       const commit = () => { if(window.__todosApi) window.__todosApi.setKind(id, to); };
       if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) commit();
       else setTimeout(commit, 240);
-    } else if(action === "note-toggle"){
-      if(expandedNotes.has(id)) expandedNotes.delete(id); else expandedNotes.add(id);
-      rerenderTodoWrap(root);
-      if(expandedNotes.has(id)){
-        const ta = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-note textarea`);
-        if(ta) ta.focus();
+    } else if(action === "note-toggle" || action === "sub-toggle"){
+      /* opened in place (no list re-render) so the panel can slide */
+      const isNote = action === "note-toggle";
+      const set = isNote ? expandedNotes : expandedSubs;
+      if(set.has(id)) set.delete(id); else set.add(id);
+      const open = set.has(id);
+      item.classList.toggle(isNote ? "note-open" : "sub-open", open);
+      const fold = item.querySelector(`.ti-fold[data-fold="${isNote ? "note" : "sub"}"]`);
+      if(fold) fold.classList.toggle("open", open);
+      if(open && fold){
+        const f = fold.querySelector(isNote ? "textarea" : ".ti-sub-add input");
+        if(f) setTimeout(() => { try{ f.focus({preventScroll:true}); }catch(err){ f.focus(); } }, 150);
       }
-    } else if(action === "sub-toggle"){
-      if(expandedSubs.has(id)) expandedSubs.delete(id); else expandedSubs.add(id);
-      rerenderTodoWrap(root);
     } else if(action === "text-edit"){
       textEditing.add(id);
       rerenderTodoWrap(root);
       const inp = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-text-input`);
-      if(inp){ inp.focus(); inp.select(); }
+      if(inp){ todoGrow(inp); inp.focus(); inp.select(); }
     } else if(action === "due-add" || action === "due-edit"){
       dueEditing.add(id);
       rerenderTodoWrap(root);
@@ -4997,7 +5151,12 @@ function wireTodoRows(root){
     } else if(action === "due-clear"){
       if(window.__todosApi) window.__todosApi.setDue(id, null);
     } else if(action === "sub-check"){
-      if(window.__todosApi) window.__todosApi.toggleSub(id, actionEl.dataset.sub);
+      subCheckAnimated(item, id, actionEl.dataset.sub);
+    } else if(action === "sub-edit"){
+      subEditing.add(id + ":" + actionEl.dataset.sub);
+      rerenderTodoWrap(root);
+      const sinp = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-sub-input`);
+      if(sinp){ sinp.focus(); sinp.select(); }
     } else if(action === "sub-remove"){
       if(window.__todosApi) window.__todosApi.removeSub(id, actionEl.dataset.sub);
     } else if(action === "list-move"){
@@ -5006,10 +5165,15 @@ function wireTodoRows(root){
   });
 
   wrap.addEventListener("keydown", (e) => {
-    const inp = e.target.closest(".ti-text-input");
+    const inp = e.target.closest(".ti-text-input, .ti-sub-input");
     if(!inp) return;
     if(e.key === "Enter"){ e.preventDefault(); inp.blur(); }
     else if(e.key === "Escape"){ inp.dataset.cancelled = "1"; inp.blur(); }
+  });
+
+  wrap.addEventListener("input", (e) => {
+    const ta = e.target.closest(".ti-text-input");
+    if(ta) todoGrow(ta);
   });
 
   wrap.addEventListener("submit", (e) => {
@@ -5033,6 +5197,15 @@ function wireTodoRows(root){
   });
 
   wrap.addEventListener("focusout", (e) => {
+    const subInp = e.target.closest(".ti-sub-input");
+    if(subInp){
+      const sid = subInp.closest(".todo-item").dataset.id;
+      subEditing.delete(sid + ":" + subInp.dataset.sub);
+      const sval = subInp.value.trim();
+      if(subInp.dataset.cancelled !== "1" && sval && window.__todosApi) window.__todosApi.setSubText(sid, subInp.dataset.sub, sval);
+      rerenderTodoWrap(root);
+      return;
+    }
     const textInp = e.target.closest(".ti-text-input");
     if(textInp){
       const id = textInp.closest(".todo-item").dataset.id;
@@ -5063,8 +5236,8 @@ function wireTodoRows(root){
    transform and immediately transition that transform away to zero. Reads
    as a smooth slide instead of the old instant snap (Eli's request, Aug
    2026). Only the rows that actually moved get a transition applied. */
-function flipReorder(wrap, mutate){
-  const rows = [...wrap.querySelectorAll(".todo-item")];
+function flipReorder(wrap, mutate, sel){
+  const rows = [...wrap.querySelectorAll(sel || ".todo-item")];
   const first = new Map(rows.map(el => [el, el.getBoundingClientRect().top]));
   mutate();
   const moved = [];
@@ -13299,6 +13472,11 @@ gateInit();
       },
       toggleSub(id, subId){
         updateItem(id, t => { t.subitems = (t.subitems||[]).map(s => s.id === subId ? { ...s, done: !s.done } : s); return t; });
+      },
+      setSubText(id, subId, text){
+        text = (text||"").trim();
+        if(!text) return;
+        updateItem(id, t => { t.subitems = (t.subitems||[]).map(s => s.id === subId ? { ...s, text } : s); return t; });
       },
       removeSub(id, subId){
         updateItem(id, t => { t.subitems = (t.subitems||[]).filter(s => s.id !== subId); return t; });

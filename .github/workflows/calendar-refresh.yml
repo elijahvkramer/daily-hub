@@ -7,6 +7,10 @@ name: Calendar Refresh
 on:
   schedule:
         - cron: "12,42 * * * *"
+        # Market-hours extras (13:00-21:59 UTC, Mon-Fri = 8am-5pm Central). GitHub silently drops a
+        # lot of scheduled runs (Oct 8 2026: one run, then 4+ hours of nothing, and the Portfolio
+        # sat on a 9:40am snapshot all afternoon), so give it more, differently-timed chances.
+        - cron: "3,8,18,23,28,33,38,48,53,58 13-21 * * 1-5"
   workflow_dispatch: {}
 
 concurrency:

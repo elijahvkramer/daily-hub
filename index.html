@@ -17,6 +17,8 @@
     r.style.setProperty("--h", isFinite(h) ? h : 212);
     r.style.setProperty("--sat", isFinite(sat) ? sat : 1);
     if(localStorage.getItem("dh-night") === "1") r.setAttribute("data-mode", "dark");
+    var fnt = localStorage.getItem("dh-font");
+    if(fnt && /^[A-Za-z0-9 ]+$/.test(fnt)) r.style.setProperty("--dh-font", "'" + fnt + "'," + "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif");
   }catch(e){ document.documentElement.classList.add("glass"); }
 })();
 </script>
@@ -50,9 +52,10 @@
 <link rel="apple-touch-startup-image" href="splash-750x1334.png"  media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Outfit:wght@400;500;600;700&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
+    --dh-font:'Plus Jakarta Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     --ink:#16181D; --ink2:#22252C; --gold:#C8A24B; --gold-soft:#E3CE9A; --gold-dark:#A08339;
     --cream:#F4F1EA; --panel:#F4F1EA; --paper:#F7F6F2; --card:#FFFFFF; --hairline:#E7E7E1;
     --muted:#6B7177; --up:#18996B; --down:#DC4B43; --shadow:0 1px 2px rgba(22,24,29,.05),0 6px 24px -8px rgba(22,24,29,.10);
@@ -83,7 +86,7 @@
   body,.topbar,.card,.cf-tab{transition:background-color .25s ease,color .25s ease,border-color .25s ease}
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{font-family:'Lato',-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+  body{font-family:var(--dh-font);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
   ::selection{background:var(--gold);color:var(--ink)}
 
   /* ---------- top bar ---------- */
@@ -271,7 +274,7 @@
   @media(max-width:720px){.np-front{grid-template-columns:1fr}.np-lead-col{padding-right:0;border-right:none;border-bottom:1px solid var(--hairline);padding-bottom:18px;margin-bottom:16px}.np-rail{padding-left:0}.np-cols.two{column-count:1}}
   /* section view: front-page treatment — lead story + a 2-column newspaper flow */
   .np-sec-title{font-family:Georgia,serif;font-size:25px;font-weight:900;color:var(--ink);border-bottom:3px double var(--ink);padding-bottom:8px;margin-bottom:16px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-  .np-sec-title .np-count{font-family:'Lato',sans-serif;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .np-sec-title .np-count{font-family:var(--dh-font);font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .np-lead-story{border-bottom:1px solid var(--hairline);padding-bottom:18px;margin-bottom:16px}
   .np-lead-story .ls-t{font-family:Georgia,serif;font-size:clamp(21px,3vw,27px);font-weight:900;line-height:1.14;color:var(--ink);margin-bottom:8px}
   .np-lead-story .ls-b{font-size:14.5px;line-height:1.7;color:var(--ink)}
@@ -1018,7 +1021,7 @@
   .brainfood{border:2px solid var(--ink);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
   .brainfood .bf-hd{background:var(--ink2);color:var(--cream);padding:11px 18px;display:flex;align-items:center;gap:9px;font-family:Georgia,serif;font-weight:900;font-size:16px;letter-spacing:.02em}
   .brainfood .bf-hd .bf-em{font-size:17px}
-  .brainfood .bf-hd .bf-tag{margin-left:auto;font-family:'Lato',sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .brainfood .bf-hd .bf-tag{margin-left:auto;font-family:var(--dh-font);font-size:9.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
   .bf-grid{display:grid;grid-template-columns:repeat(3,1fr)}
   .bf-item{padding:15px 18px;border-right:1px solid var(--hairline)}
   .bf-item:last-child{border-right:none}
@@ -1222,7 +1225,7 @@
   .sm-head{display:flex;align-items:center;gap:14px;padding-right:36px}
   .sm-head .mk{width:44px;height:44px;border-radius:10px;color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .sm-tk{font-family:Georgia,serif;font-weight:900;font-size:19px;color:var(--ink)}
-  .sm-nm{font-family:'Lato',sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);margin-left:8px}
+  .sm-nm{font-family:var(--dh-font);font-weight:400;font-size:12.5px;color:var(--muted);margin-left:8px}
   .sm-price{font-size:14px;font-weight:700;color:var(--ink);margin-top:3px}
   .sm-price .pchgline{font-weight:900;margin-left:8px}
   .sm-costrow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--ink);margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline)}
@@ -2067,11 +2070,11 @@
   .nw-art-body{font-size:16.5px;line-height:1.72;color:var(--ink)} .nw-art-body p{margin:0 0 16px;max-width:66ch}
   .nw-art-body p:first-child::first-letter{font-family:Georgia,serif;font-size:3.1em;font-weight:900;float:left;line-height:.85;margin:6px 8px 0 0;color:var(--gold-dark)}
   .nw-quote{margin:22px 0;padding:6px 0 6px 20px;border-left:4px solid var(--gold);font-family:Georgia,serif;font-size:21px;font-weight:700;line-height:1.35;letter-spacing:-.01em}
-  .nw-quote cite{display:block;font-family:'Lato',sans-serif;font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted);margin-top:8px}
+  .nw-quote cite{display:block;font-family:var(--dh-font);font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted);margin-top:8px}
   .nw-why{margin:22px 0 8px;padding:16px 18px;border-radius:14px;background:color-mix(in srgb, var(--gold) 10%, transparent);border:1px solid color-mix(in srgb, var(--gold) 28%, transparent)}
   .nw-why p{font-size:15px;line-height:1.55;margin:6px 0 0}
   .nw-next{margin-top:26px;padding:16px 18px;border-radius:14px;background:color-mix(in srgb, var(--ink) 4%, transparent);cursor:pointer} .nw-next:hover .nw-row-t{color:var(--gold-dark)}
-  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif}
+  html.glass body{font-family:var(--dh-font)}
   /* ---------- Now strip (Home): the handful of things that matter this week ---------- */
   .now-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-top:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   /* Countdown rail (Sep 2026): Eli asked for the countdowns to be "fun / visual", so each
@@ -2318,8 +2321,8 @@
            radial-gradient(60% 55% at 55% 110%,hsl(calc(var(--h) - 46) calc(48% * var(--sat)) 22%) 0,transparent 62%),
            var(--paper);
   }
-  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif}
-  html.glass body{font-family:'Inter','Lato',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--paper);color:var(--ink)}
+  html.glass body{font-family:var(--dh-font)}
+  html.glass body{font-family:var(--dh-font);background:var(--paper);color:var(--ink)}
   html.glass body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--mesh);background-size:cover}
   html.glass ::selection{background:var(--accent);color:#fff}
   html.glass .card,html.glass .chart-card,html.glass .bento-card,html.glass .agenda-card,html.glass .todos,html.glass .event,html.glass .qcard,
@@ -2648,6 +2651,15 @@
     .cal-card .cal-ev{padding:1px 3px;border-radius:5px;margin-bottom:2px}
     .cal-card .cal-head .cm{font-size:17px}
   }
+
+  /* Font picker (theme panel) */
+  .font-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 2px}
+  .font-opt{appearance:none;border:1px solid var(--hairline);background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);border-radius:10px;padding:8px 9px;text-align:left;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;gap:2px;line-height:1.15;transition:border-color .15s,background .15s}
+  .font-opt small{font-size:11px;font-weight:500;color:var(--muted)}
+  .font-opt:hover{border-color:color-mix(in srgb,var(--accent,var(--gold)) 55%,transparent)}
+  .font-opt.active{border-color:var(--accent,var(--gold));background:color-mix(in srgb,var(--accent,var(--gold)) 14%,transparent)}
+  .theme-panel{width:236px}
+  html.glass body{letter-spacing:-.003em}
 </style>
 </head>
 <body>
@@ -7699,7 +7711,7 @@ function renderHistory(){
   area += ` L ${X(pts.length-1).toFixed(1)} ${H-PB} Z`;
   const grid = [min+pad, (min+max)/2, max-pad].map(v =>
     `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>
-     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Lato">${usd(v,0)}</text>`).join("");
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="inherit">${usd(v,0)}</text>`).join("");
   body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="histSvg">
     <defs><linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
@@ -7709,8 +7721,8 @@ function renderHistory(){
     <circle cx="${X(pts.length-1).toFixed(1)}" cy="${Y(lastV).toFixed(1)}" r="4" fill="${col}"/>
     <line id="histHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="var(--gold)" stroke-width="1" style="display:none"/>
     <circle id="histDot" r="4.5" fill="var(--gold)" style="display:none"/>
-    <text x="${PL}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="Lato">${esc(shortDate(pts[0].d))}</text>
-    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Lato">${esc(shortDate(pts[pts.length-1].d))}</text>
+    <text x="${PL}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="inherit">${esc(shortDate(pts[0].d))}</text>
+    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="inherit">${esc(shortDate(pts[pts.length-1].d))}</text>
     <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="histHit"/>
   </svg><div class="hist-tip" id="histTip"></div>`;
   const svg = $("#histSvg"), tip = $("#histTip"), hair = $("#histHair"), dot = $("#histDot");
@@ -7760,7 +7772,7 @@ function renderHistoryIntraday(body){
   area += ` L ${X(pts[pts.length-1].ts).toFixed(1)} ${H-PB} Z`;
   const grid = [min+pad, (min+max)/2, max-pad].map(v =>
     `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>
-     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Lato">${usd(v,0)}</text>`).join("");
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="inherit">${usd(v,0)}</text>`).join("");
   const fmtTime = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
   const fmtTipTime = ts => new Date(ts*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"}) + " ET";
   body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="histSvg">
@@ -7772,8 +7784,8 @@ function renderHistoryIntraday(body){
     <circle cx="${X(pts[pts.length-1].ts).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="4" fill="${col}"/>
     <line id="histHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="var(--gold)" stroke-width="1" style="display:none"/>
     <circle id="histDot" r="4.5" fill="var(--gold)" style="display:none"/>
-    <text x="${PL}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="Lato">Open</text>
-    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Lato">Close</text>
+    <text x="${PL}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="inherit">Open</text>
+    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="inherit">Close</text>
     <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="histHit"/>
   </svg><div class="hist-tip" id="histTip"></div>`;
   const svg = $("#histSvg"), tip = $("#histTip"), hair = $("#histHair"), dot = $("#histDot");
@@ -8031,10 +8043,10 @@ function drawSmChart(body, pts, opts){
   area += ` L ${X(pts[pts.length-1],pts.length-1).toFixed(1)} ${H-PB} Z`;
   const grid = [min+pad,(min+max)/2,max-pad].map(v =>
     `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>
-     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Lato">${opts.fmtY ? opts.fmtY(v) : usd(v,2)}</text>`).join("");
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="inherit">${opts.fmtY ? opts.fmtY(v) : usd(v,2)}</text>`).join("");
   const refSvg = opts.refLine!=null
     ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="var(--topbar-muted)" stroke-width="1.5" stroke-dasharray="5,4"/>
-       <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Lato" font-weight="700">${esc(opts.refLabel||"")}</text>`
+       <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="inherit" font-weight="700">${esc(opts.refLabel||"")}</text>`
     : "";
   body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="smSvg">
     <defs><linearGradient id="smGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
@@ -8045,8 +8057,8 @@ function drawSmChart(body, pts, opts){
     <circle cx="${X(pts[pts.length-1],pts.length-1).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="3.5" fill="${col}"/>
     <line id="smHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="var(--gold)" stroke-width="1" style="display:none"/>
     <circle id="smDot" r="4" fill="var(--gold)" style="display:none"/>
-    <text x="${PL}" y="${H-7}" font-size="10.5" fill="var(--muted)" font-family="Lato">${esc(opts.fmtX0(pts[0]))}</text>
-    <text x="${W-PR}" y="${H-7}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Lato">${esc(opts.fmtX1(pts[pts.length-1]))}</text>
+    <text x="${PL}" y="${H-7}" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX0(pts[0]))}</text>
+    <text x="${W-PR}" y="${H-7}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX1(pts[pts.length-1]))}</text>
     <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="smHit"/>
   </svg><div class="hist-tip" id="smTip"></div>`;
   const svg = $("#smSvg"), tip = $("#smTip"), hair = $("#smHair"), dot = $("#smDot");
@@ -13188,12 +13200,18 @@ function themeSet(hex, night){
   themeApply(t, night);
   return t;
 }
+const DH_FONTS = ["Plus Jakarta Sans","Inter","Manrope","DM Sans","Outfit","Figtree"];
+function fontSaved(){ try{ const f = localStorage.getItem("dh-font"); return DH_FONTS.includes(f) ? f : DH_FONTS[0]; }catch(e){ return DH_FONTS[0]; } }
+function fontSet(f){
+  try{ localStorage.setItem("dh-font", f); }catch(e){}
+  document.documentElement.style.setProperty("--dh-font", `'${f}','Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`);
+}
 function themePickerInit(){
   const btn = $("#themeBtn"), panel = $("#themePanel"), picker = $("#themePicker");
   if(!btn || !panel || !picker) return;
 
   function render(){
-    const saved = themeSaved(), night = themeIsNight();
+    const saved = themeSaved(), night = themeIsNight(), curFont = fontSaved();
     const activeH = Math.round(saved.h);
     panel.innerHTML = `<div class="theme-panel-title">Color</div>
       <div class="theme-grid">${THEME_SWATCHES.map(sw => {
@@ -13207,6 +13225,8 @@ function themePickerInit(){
         <span class="theme-custom-l">Any color…</span>
         <input type="color" id="themeColor" value="${esc(saved.hex)}">
       </label>
+      <div class="theme-panel-title" style="margin-top:12px">Font</div>
+      <div class="font-list">${DH_FONTS.map(f => `<button class="font-opt${f===curFont?" active":""}" data-font="${f}" style="font-family:'${f}',sans-serif">${f}<small>Aa 0123</small></button>`).join("")}</div>
       <div class="theme-shuffle-row"><span>Night mode</span>
         <button class="theme-toggle${night ? " on" : ""}" id="themeNightToggle" role="switch" aria-checked="${night}"><span class="theme-toggle-knob"></span></button>
       </div>
@@ -13222,6 +13242,7 @@ function themePickerInit(){
       inp.addEventListener("input", () => themeApply(themeFromHex(inp.value), themeIsNight()));
       inp.addEventListener("change", () => { themeSet(inp.value, themeIsNight()); render(); });
     }
+    panel.querySelectorAll(".font-opt").forEach(el => el.addEventListener("click", () => { fontSet(el.dataset.font); render(); }));
     $("#themeNightToggle").addEventListener("click", () => {
       themeSet(themeSaved().hex, !themeIsNight()); render();
     });

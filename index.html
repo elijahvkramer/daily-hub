@@ -4717,8 +4717,7 @@ function wirePortfolioSnapshot(){
     const sw = $("#psSparkWrap");
     if(P.intraReady){
       const ser = intradaySeries();
-      sw.innerHTML = ser ? buildIntradayChart(ser, t.day, intraIsToday() ? null : "Last session")
-        : `<div style="font-size:11.5px;color:var(--muted);padding:20px 0;text-align:center">${P.fetching ? "Loading today's session…" : "Intraday chart unavailable right now."}</div>`;
+      sw.innerHTML = ser ? buildIntradayChart(ser, t.day, intraIsToday() ? null : "Last session") : pDayRangeVisual(t, false);
     } else if(!P.fetching){ sw.innerHTML = `<div style="font-size:11.5px;color:var(--muted);padding:20px 0;text-align:center">Loading today's session…</div>`; }
   };
   pLoadQuoteCache();        // paint the last-known numbers right now, before any network
@@ -7495,8 +7494,22 @@ function intradaySeries(positions){
                                      // page's own "Today" range passes pView() so an account
                                      // filter (e.g. just the Roth) is reflected here too.
   if(!P.intraday) return null;
-  const syms = Object.keys(P.intraday); if(!syms.length) return null;
-  const spineSym = P.intraday["SPY"] ? "SPY" : syms[0];
+  /* Oct 2026: the server snapshot fell back to a source with no intraday bars, and the one symbol
+     that still carried a series was BTC from an OLDER day -- it became the time axis and the chart
+     drew nonsense. So: only equity series from the same session count, crypto is only kept if it is
+     current, and if too few holdings have bars there is no chart (the caller shows a clean fallback). */
+  const all = Object.keys(P.intraday).filter(x => P.intraday[x] && P.intraday[x].t && P.intraday[x].c && P.intraday[x].t.length > 1);
+  const eq = all.filter(x => !x.includes("-"));
+  if(!eq.length) return null;
+  const lastT = x => P.intraday[x].t[P.intraday[x].t.length-1];
+  const refT = Math.max(...eq.map(lastT));
+  const fresh = x => lastT(x) >= refT - 8*3600;
+  const syms = all.filter(fresh);
+  const needEq = positions.filter(p => p.type !== "cash" && !(p.fetchSymbol||p.ticker).includes("-")).length;
+  const haveEq = eq.filter(fresh).length;
+  if(haveEq < Math.max(1, Math.ceil(needEq * 0.5))) return null;
+  const freshEq = eq.filter(fresh);
+  const spineSym = (P.intraday["SPY"] && fresh("SPY")) ? "SPY" : freshEq[0];
   const spine = P.intraday[spineSym].t;
   const meta = P.intraMeta || {start:spine[0], end:spine[spine.length-1]};
   const aligned = {};
@@ -7519,6 +7532,28 @@ function intradaySeries(positions){
   });
   if(pts.length < 2) return null;
   return {pts, start:meta.start, end:meta.end};
+}
+/* What to show when there is no usable session series: a clean "where we are vs. the last close"
+   visual built only from numbers we do have (current value, today's change), so the card never
+   looks broken. `t` is pTotals(); big=true is the full-width Portfolio-tab version. */
+function pDayRangeVisual(t, big){
+  const prev = t.value - t.day, pct = Math.max(-3, Math.min(3, t.dayPct || 0));
+  const col = t.day >= 0 ? "var(--up)" : "var(--down)";
+  const W = 320, H = big ? 150 : 112, x0 = 26, x1 = W - 26, mid = (x0 + x1) / 2;
+  const mx = mid + (pct / 3) * ((x1 - x0) / 2), y = big ? 74 : 56;
+  const a = Math.min(mid, mx), b = Math.max(mid, mx);
+  const note = P.fetching ? "Loading today's session…" : (t.anyLive ? "Session chart appears once live bars load" : "Waiting on live prices");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" role="img" aria-label="Today versus last close">
+    <defs><linearGradient id="pdrG" x1="0" x2="1"><stop offset="0" stop-color="${col}" stop-opacity=".25"/><stop offset="1" stop-color="${col}" stop-opacity=".9"/></linearGradient></defs>
+    <rect x="${x0}" y="${y-4}" width="${x1-x0}" height="8" rx="4" fill="var(--hairline)"/>
+    <rect x="${a.toFixed(1)}" y="${y-4}" width="${Math.max(6, b-a).toFixed(1)}" height="8" rx="4" fill="url(#pdrG)"/>
+    <line x1="${mid}" x2="${mid}" y1="${y-14}" y2="${y+14}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 3"/>
+    <circle cx="${mx.toFixed(1)}" cy="${y}" r="8" fill="${col}" opacity=".18"/><circle cx="${mx.toFixed(1)}" cy="${y}" r="5" fill="${col}"/>
+    <text x="${Math.max(x0+30, Math.min(x1-30, mx)).toFixed(1)}" y="${y-18}" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)">${usd(t.value,0)}</text>
+    <text x="${mid}" y="${y+32}" text-anchor="middle" font-size="10.5" fill="var(--muted)">Last close ${usd(prev,0)}</text>
+    <text x="${x0}" y="${y+32}" font-size="10" fill="var(--muted)">−3%</text><text x="${x1}" y="${y+32}" text-anchor="end" font-size="10" fill="var(--muted)">+3%</text>
+    <text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${esc(note)}</text>
+  </svg>`;
 }
 /* draws the intraday value line on a fixed open→close axis; the line only reaches "now",
    leaving the rest of the session's width empty to fill as the day goes on. */
@@ -7701,7 +7736,12 @@ function renderHistoryIntraday(body){
   if(!P.intraReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadIntraday().then(() => { if(S.tab === "portfolio" && (P.histRange||"Today") === "Today") renderHistory(); }); return; }
   const ser = intradaySeries(pView());
   const head = $("#histHead");
-  if(!ser){ body.innerHTML = `<div class="empty">${P.fetching ? "Loading today's session…" : "Today's session data isn't available yet — try Refresh."}</div>`; if(head) head.textContent = ""; return; }
+  if(!ser){
+    const t0 = pTotals(pView());
+    body.innerHTML = `<div style="max-width:520px;margin:6px auto 0">${pDayRangeVisual(t0, true)}</div>`;
+    if(head) head.innerHTML = `<span class="hist-delta ${pcls(t0.day)}">${usdS(t0.day)} (${pctS(t0.dayPct)})</span>&nbsp; Today vs. last close`;
+    return;
+  }
   const t = pTotals(pView());
   const { pts, start, end } = ser;
   if(head) head.innerHTML = `<span class="hist-delta ${pcls(t.day)}">${usdS(t.day)} (${pctS(t.dayPct)})</span>&nbsp; ${intraIsToday() ? "Today's session" : "Last session (market closed)"}`;

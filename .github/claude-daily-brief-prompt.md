@@ -92,7 +92,11 @@ Time window — strict: Tuesday-Friday, only cover things that happened in the p
 
 Every article you rely on must carry a visible publication date inside the window; an undated page is not evidence of timing.
 
-Topics, in this order (each its own section; skip a topic with a one-line "nothing new" note rather than padding with stale stories):
+**Dates are verified by code, so record them honestly (Oct 8, 2026).** An edition ran a Kentucky "pro day" story under today's dateline that cited a 2025 article — an annual event is exactly how last year's coverage passes for today's. Every item therefore carries `published`: the ISO date (`YYYY-MM-DD`) printed on the article page you read, copied from the page, never assumed, never today's date by default. If you cannot find a publication date on the page, do not use that article. For anything that recurs every year (a pro day, a combine, a draft, a trade deadline, an earnings date, an anniversary, a budget vote), confirm the year on the page before you write a word. `scripts/news_guard.py` re-reads each article's own date after you publish and deletes anything older than four days, so a wrong or missing date costs you the story.
+
+**Depth floor.** Every section must carry at least 4 items — never one, never zero (Tech sat empty for days in early October because the rules above ate every candidate). If fewer than 4 qualify, in this order: (a) look one more time with a different query and different outlets (trade press, regional papers, beat writers, wire services); (b) for a genuinely new development on a story that already ran, report the development as its own item; (c) use the full window, including the evening before. Do not pad with undated or out-of-window items. The guard tops up anything still short from fresh wire feeds, but those fillers have no `detail` page — yours should always be better.
+
+Topics, in this order (each its own section; if a topic looks quiet, search again before giving up — a "nothing new" note is a last resort, not a default; never pad with stale stories):
 
 1. US Military & Foreign Conflict
 2. Politics & Policy
@@ -104,7 +108,7 @@ Topics, in this order (each its own section; skip a topic with a one-line "nothi
    - General (min 2 items/day): NFL, Men's College Basketball, College Football, PGA, UFC, Men's Grand Slam Tennis, NBA — 1-2 searches covers this whole set.
    - Favorites items first, then General. A story fitting either goes to Favorites, never duplicated in both.
 
-4-6 items per section (Sports typically runs 4-7 total, that's fine).
+4-6 items per section, **minimum 4** (Sports typically runs 4-7 total, that's fine).
 
 **Depth (required — the site renders each item as a full article page).** Every item carries `detail`: 2-3 paragraphs, 150-260 words total, separated by a blank line (`\n\n`), written like a wire-service story — what happened, the context a smart reader needs, what happens next. Not a restatement of `lead`+`body`. Add `whyItMatters` (one plain sentence) on every item, and `quote` — `{"text": "...", "who": "Name, title"}` — whenever a source article carries a real, attributable quote (never invent or paraphrase one into quotation marks). `imgCaption` (under 12 words, what the photo shows) whenever `img` is set.
 
@@ -118,7 +122,7 @@ python3 scripts/og_image.py <url1> <url2> ... > /tmp/imgs.tsv
 
 and set each item's `img` to the image URL it printed (skip items that printed `-`). This is what puts the story's own photograph on the page. Do NOT hand-write image URLs, and do NOT reuse one article's photo for a different story. `imgQuery` (Wikipedia subject lookup) is now only a fallback for items with no usable `img`: set it only when confident of a single concrete, depictable subject (person/place/institution/company/hardware) — a wrong photo is the failure mode to avoid.
 
-Repeat check (required, before finalizing): read `data/manifest.json`'s `news` array for the last 3 published dates, decrypt each (`python3 scripts/decrypt_calendar.py data/news/<date>.json.enc /tmp/cal_pass.txt /tmp/prev-<date>.json`), and compare your candidates against their items' `storyKey` values AND their leads. Drop any candidate that covers the same underlying event as something already published in those 3 editions, unless there's a genuinely new dated development — in which case the lead sentence must state what changed and when ("…re-committed to Missouri on Monday, ending a week of…"). When in doubt, drop it — a short section beats a repeated one. Clean up `/tmp/prev-*.json` after.
+Repeat check (required, before finalizing): read `data/manifest.json`'s `news` array for the last 3 published dates, decrypt each (`python3 scripts/decrypt_calendar.py data/news/<date>.json.enc /tmp/cal_pass.txt /tmp/prev-<date>.json`), and compare your candidates against their items' `storyKey` values AND their leads. Drop any candidate that covers the same underlying event as something already published in those 3 editions, unless there's a genuinely new dated development — in which case the lead sentence must state what changed and when ("…re-committed to Missouri on Monday, ending a week of…"). When in doubt about a repeat, look for a different story — a repeated item is worse than a replacement, and an empty section is worse than both (see the depth floor). Clean up `/tmp/prev-*.json` after.
 
 Every item also carries `storyKey`: a short stable slug for the underlying event (`mitchell-missouri-commit`, `fed-sept-rate-cut`, `giants-week1-loss`), so tomorrow's run can match repeats even when the wording differs.
 
@@ -134,7 +138,7 @@ Write `/tmp/news.json`:
   "glance": [ {"label":"Military & Conflict","teaser":"3-6 word chip"}, "x6, one per section incl. Random and Sports" ],
   "sections": [
     {"title":"US Military & Foreign Conflict","items":[
-      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences (the dek).","detail":"2-3 paragraphs, 150-260 words, blank line between paragraphs","whyItMatters":"one sentence","quote":{"text":"a real quote from a source article","who":"Name, role"},"storyKey":"short-event-slug","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgCaption":"what the photo shows","imgQuery":"fallback only: a photographable subject","video":"https://www.youtube.com/watch?v=… (optional; see below)"}
+      {"lead":"Bold lead sentence.","body":"1-2 punchy sentences (the dek).","detail":"2-3 paragraphs, 150-260 words, blank line between paragraphs","whyItMatters":"one sentence","quote":{"text":"a real quote from a source article","who":"Name, role"},"storyKey":"short-event-slug","published":"YYYY-MM-DD from the article page","url":"https://…/the-article","source":"Outlet","img":"https://…/lead-photo.jpg (from og_image.py; omit if none)","imgCaption":"what the photo shows","imgQuery":"fallback only: a photographable subject","video":"https://www.youtube.com/watch?v=… (optional; see below)"}
     ]},
     "... x6 in topic order: the 5th titled \"Random\", the 6th titled \"Sports\" with every item carrying a group field: {\"lead\":\"...\",\"body\":\"...\",\"group\":\"Favorites\"}"
   ],

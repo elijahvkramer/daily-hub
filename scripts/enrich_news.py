@@ -41,6 +41,7 @@ import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dh_crypto import decrypt_json, encrypt_json, read_passphrase  # noqa: E402
+import news_guard  # noqa: E402
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
@@ -470,10 +471,26 @@ def main():
         print(f"  ! could not read {path}: {e}", file=sys.stderr)
         return 0
 
+    # Freshness guard + minimum-depth top-up (see news_guard.py). Runs BEFORE photo enrichment
+    # so stale stories never get a photo spent on them, and fillers arrive with their own.
+    guard_changed, guard = False, {}
+    try:
+        guard_changed, guard = news_guard.run(
+            edition, date, repo, passphrase, decrypt_json,
+            lambda u, t=12, mb=700_000: get(u, timeout=t, max_bytes=mb))
+        for line in guard["dropped_stale"]:
+            print(f"  - dropped stale story: {line}")
+        if guard["added"]:
+            print(f"  + topped up from feeds: {guard['added']}")
+        print(f"  section counts: {guard['section_counts']} (feeds ok {guard['feeds_ok']}, pool {guard['pool']})")
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! news guard failed (edition left as-is): {e}", file=sys.stderr)
+
     items = [it for sec in edition.get("sections", []) for it in sec.get("items", [])]
     missing = [it for it in items if not it.get("img")]
-    if not missing and all(it.get("video") or it.get("vchk") or not it.get("url") for it in items):
+    if not guard_changed and not missing and all(it.get("video") or it.get("vchk") or not it.get("url") for it in items):
         print(f"news {date}: all {len(items)} items already have photos")
+        _write_status(repo, date, items, missing, 0, {"feed": 0, "article": 0, "wiki": 0}, 0, guard)
         return 0
 
     # Bounded work per run: the job repeats every ~30 minutes, so it converges over the day
@@ -495,28 +512,38 @@ def main():
             videos += 1
 
     filled = got["feed"] + got["article"] + got["wiki"]
+    _write_status(repo, date, items, missing, filled, got, videos, guard)
+
+    if not filled and not videos and not guard_changed:
+        print(f"news {date}: no new photos resolved ({len(missing)} still without)")
+        return 0
+    if dry:
+        print(f"news {date}: DRY RUN -- would fill {filled} ({got}); guard changed edition: {guard_changed}")
+        return 0
+    with open(path, "w") as f:
+        json.dump(encrypt_json(edition, passphrase), f)
+    print(f"news {date}: +{filled} photos ({got['feed']} from a wire feed, {got['article']} from the article, "
+          f"{got['wiki']} from Wikipedia); {len(missing) - filled} still without; "
+          f"guard: -{len(guard.get('dropped_stale', []))} stale, +{sum(guard.get('added', {}).values())} topped up")
+    return 0
+
+
+def _write_status(repo, date, items, missing, filled, got, videos, guard):
+    """data/news.status.json: plaintext, no story content, so a run can be audited from the repo."""
     status = {"date": date, "items": len(items), "had_photos": len(items) - len(missing),
               "filled_this_run": filled, "from_feed": got["feed"], "from_article": got["article"],
               "from_wikipedia": got["wiki"], "feed_pool": len(feed_index()) if _FEED_INDEX is not None else 0,
               "videos": videos, "with_video": sum(1 for it in items if it.get("video")),
-              "still_missing": len(missing) - filled}
+              "still_missing": len(missing) - filled,
+              "section_counts": guard.get("section_counts", {}),
+              "dropped_stale": len(guard.get("dropped_stale", [])),
+              "topped_up": sum(guard.get("added", {}).values()),
+              "guard_feeds_ok": guard.get("feeds_ok", 0)}
     try:
         with open(os.path.join(repo, "data", "news.status.json"), "w") as f:
             json.dump({"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), **status}, f, indent=1)
     except Exception:  # noqa: BLE001
         pass
-
-    if not filled and not videos:
-        print(f"news {date}: no new photos resolved ({len(missing)} still without)")
-        return 0
-    if dry:
-        print(f"news {date}: DRY RUN -- would fill {filled} ({got})")
-        return 0
-    with open(path, "w") as f:
-        json.dump(encrypt_json(edition, passphrase), f)
-    print(f"news {date}: +{filled} photos ({got['feed']} from a wire feed, {got['article']} from the article, "
-          f"{got['wiki']} from Wikipedia); {status['still_missing']} still without")
-    return 0
 
 
 if __name__ == "__main__":

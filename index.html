@@ -2161,13 +2161,23 @@
   .bp-block-h span{font-size:10px;letter-spacing:.02em;text-transform:none;font-weight:700;color:var(--muted)}
   .bp-h{grid-column:1/-1;font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 -2px}
   .bp-h:first-child{margin-top:0}
+  .bp-range{margin:0 0 10px;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .bp-range::-webkit-scrollbar{display:none}
+  .bp-range button{padding:5px 10px;font-size:10.5px;letter-spacing:.05em}
+  .bp-click{cursor:pointer}
+  .bp-click:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .yc-click{cursor:pointer;outline:none}
+  .yc-click:focus-visible .yc-dot{stroke-width:4;fill:var(--gold)}
+  .yc-click:hover .yc-dot{stroke-width:3.6;fill:var(--gold)}
+  .yc-click:hover .yc-lab{fill:var(--gold-dark)}
   .bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:10px}
-  .bp-tile{position:relative;overflow:hidden;border:1px solid var(--hairline);border-radius:16px;padding:13px 14px 0;background:var(--card);
+  .bp-tile{position:relative;overflow:hidden;border:1px solid var(--hairline);border-radius:16px;padding:13px 12px 0;background:var(--card);
            display:flex;flex-direction:column;gap:6px;min-width:0;box-shadow:var(--shadow);
            transition:border-color .15s ease, transform .15s ease}
   .bp-tile:hover{border-color:color-mix(in srgb, var(--tc, var(--gold)) 45%, var(--hairline));transform:translateY(-1px)}
-  .bp-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
-  .bp-ic{flex-shrink:0;width:40px;height:40px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;
+  .bp-top{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0}
+  .bp-top .rb-chip{font-size:10.5px;padding:3px 6px;white-space:nowrap}
+  .bp-ic{flex-shrink:0;width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;
          background:color-mix(in srgb, var(--tc, var(--gold)) 14%, transparent)}
   .bp-ic .glyph{width:24px;height:24px;display:block}
   .bp-id{min-width:0}
@@ -2175,7 +2185,7 @@
   .bp-sub{font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   .bp-v{font-size:23px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05;color:var(--ink);margin-top:-2px}
   .bp-f{display:flex;align-items:center;gap:8px;min-height:22px}
-  .bp-spark{display:block;height:38px;margin:2px -14px 0;flex-shrink:0}
+  .bp-spark{display:block;height:38px;margin:2px -12px 0;flex-shrink:0}
   .bp-spark svg{width:100%;height:100%;display:block}
   .bp-wait .bp-v{color:var(--muted);font-weight:800}
   .bp-wait{opacity:.72}
@@ -5735,6 +5745,46 @@ const pickRow = (rows, spec, used) => rows.find(r => !(used && used.has(r)) && s
 /* Live quotes for the board, straight from the browser. One batched spark request covers every
    symbol and brings today's 5-minute series back with it, so each row can carry its own shape. */
 const BOARD_LIVE_SYMS = [...new Set(BOARD_PRICES.concat(BOARD_YIELDS).map(s => s.live).filter(Boolean))];
+/* Oct 2026, Eli: "Gold is missing the % change." Yahoo's batched spark call sometimes drops a symbol
+   (futures like GC=F are the usual casualty) while returning the rest, and the tile then fell back to
+   the published row, which carries a note ("spot / oz") but no change. So anything the batch didn't
+   return is now fetched on its own through the chart endpoint, and gold has a spot-price alternate. */
+const BOARD_ALT = { "GC=F": ["XAUUSD=X"] };
+const BOARD_RANGES = {
+  "1D":  { r:"1d",  i:"5m",  lab:"Today" },
+  "1W":  { r:"5d",  i:"30m", lab:"Past week" },
+  "1M":  { r:"1mo", i:"1d",  lab:"Past month" },
+  "3M":  { r:"3mo", i:"1d",  lab:"Past 3 months" },
+  "6M":  { r:"6mo", i:"1d",  lab:"Past 6 months" },
+  "YTD": { r:"ytd", i:"1d",  lab:"Year to date" },
+  "1Y":  { r:"1y",  i:"1d",  lab:"Past year" },
+  "5Y":  { r:"5y",  i:"1wk", lab:"Past 5 years" }
+};
+async function boardChartOne(sym, range, interval){
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}&_ts=${Date.now()}`;
+  const attempts = NR_PROXY_URLS(target).map(u => (async () => {
+    const r = await pFetchTimeout(u, range === "1d" ? 9000 : 16000, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
+    const j = await r.json(); const res = j?.chart?.result?.[0], m = res?.meta;
+    if(!m || typeof m.regularMarketPrice !== "number") throw new Error("no data");
+    const reg = m.currentTradingPeriod?.regular, c = res.indicators?.quote?.[0]?.close;
+    return { price:m.regularMarketPrice, prev:(m.chartPreviousClose ?? m.previousClose ?? m.regularMarketPrice), time:m.regularMarketTime,
+             series: (res.timestamp && c) ? {t:res.timestamp, c, start:reg?.start, end:reg?.end} : null };
+  })());
+  try{ return await Promise.any(attempts); }catch(e){ return null; }
+}
+async function boardChart(sym, range, interval){
+  let q = await boardChartOne(sym, range, interval);
+  if(!q && BOARD_ALT[sym]) for(const a of BOARD_ALT[sym]){ q = await boardChartOne(a, range, interval); if(q) break; }
+  return q;
+}
+async function boardFillMissing(out, range, interval){
+  const missing = BOARD_LIVE_SYMS.filter(x => !out[x] || (range !== "1d" && !out[x].series));
+  for(let i = 0; i < missing.length; i += 4){
+    const got = await Promise.all(missing.slice(i, i+4).map(x => boardChart(x, range, interval)));
+    missing.slice(i, i+4).forEach((x,k) => { if(got[k]) out[x] = got[k]; });
+  }
+  return out;
+}
 async function boardLive(force){
   const fresh = S.boardLive && S.boardLiveAt && (Date.now() - S.boardLiveAt < 180000);
   if(fresh && !force) return S.boardLive;
@@ -5742,11 +5792,39 @@ async function boardLive(force){
   S._boardLivePromise = (async () => {
     let out = {};
     try{ out = await pSparkAll(BOARD_LIVE_SYMS); }catch(e){ out = {}; }
-    if(Object.keys(out).length){ S.boardLive = out; S.boardLiveAt = Date.now(); }
+    if(Object.keys(out).length){
+      try{ await boardFillMissing(out, "1d", "5m"); }catch(e){}
+      S.boardLive = out; S.boardLiveAt = Date.now();
+    }
     return S.boardLive || {};
   })();
   try{ return await S._boardLivePromise; }
   finally{ S._boardLivePromise = null; }
+}
+/* Change over a chosen window, for every tile at once. 1D stays "vs. previous close" (day over day);
+   every other window is first close in the window -> latest price. One batched call per window, cached
+   ten minutes, with the same per-symbol rescue as above. */
+async function boardRangeLoad(rk){
+  S.boardRangeData = S.boardRangeData || {}; S.boardRangeAt = S.boardRangeAt || {};
+  if(S.boardRangeData[rk] && Date.now() - (S.boardRangeAt[rk] || 0) < 600000) return;
+  const cfg = BOARD_RANGES[rk]; if(!cfg) return;
+  let out = {};
+  try{ out = await pSparkAll(BOARD_LIVE_SYMS, cfg.r, cfg.i); }catch(e){ out = {}; }
+  try{ await boardFillMissing(out, cfg.r, cfg.i); }catch(e){}
+  S.boardRangeData[rk] = out; S.boardRangeAt[rk] = Date.now();
+}
+function boardRepaint(){
+  const g = $("#deskCard .desk-grid"); if(!g || !S.boardCtx) return;
+  const old = g.querySelector(".desk-board"); if(!old) return;
+  old.outerHTML = boardHTML(S.boardCtx.rates, S.boardCtx.prices, S.boardLive || {});
+}
+async function setBoardRange(rk){
+  if(!BOARD_RANGES[rk]) return;
+  S.boardRange = rk; S._boardRangeTok = (S._boardRangeTok || 0) + 1; const tok = S._boardRangeTok;
+  boardRepaint();
+  if(rk === "1D") return;
+  await boardRangeLoad(rk);
+  if(S._boardRangeTok === tok) boardRepaint();
 }
 const boardPct = q => (q && q.prev) ? (q.price/q.prev - 1)*100 : null;
 function boardFmt(spec, n){
@@ -5773,6 +5851,7 @@ function boardSpark(q, up){
 
 function boardHTML(rates, prices, live){
   live = live || {};
+  const rng = (S.boardRange && BOARD_RANGES[S.boardRange]) ? S.boardRange : "1D";
   const src = (rates || []).filter(r => r && r.label);
   const psrc = (prices || []).filter(p => p && p.label);
 
@@ -5782,13 +5861,24 @@ function boardHTML(rates, prices, live){
     const q = spec.live ? live[spec.live] : null;
     const row = pickRow(psrc, spec, usedP) || pickRow(src, spec, usedP);
     if(row) usedP.add(row);
+    let o;
     if(q && typeof q.price === "number"){
       const pct = boardPct(q);
-      return { spec, value: boardFmt(spec, q.price), pct, q, live:true,
-               note: quoteIsToday(q.time) ? "live" : "last close" };
+      o = { spec, value: boardFmt(spec, q.price), pct, q, live:true,
+            note: quoteIsToday(q.time) ? "live" : "last close" };
+    } else if(row) o = { spec, value: row.value, pct: typeof row.pct === "number" ? row.pct : null, note: row.note || "published", live:false };
+    else o = { spec, value:"—", pct:null, note:"awaiting refresh", missing:true, live:false };
+    /* a longer window than today: change = first close in the window -> latest price */
+    if(rng !== "1D" && spec.live){
+      const rd = S.boardRangeData && S.boardRangeData[rng], rq = rd && rd[spec.live];
+      const c = rq && rq.series && rq.series.c ? rq.series.c.filter(v => v != null) : [];
+      if(c.length >= 2){
+        const last = (q && typeof q.price === "number") ? q.price : c[c.length-1];
+        o.pct = (last / c[0] - 1) * 100; o.q = rq; o.note = rng;
+        if(o.missing){ o.value = boardFmt(spec, last); o.missing = false; }
+      } else { o.pct = null; o.q = null; o.note = rd ? "n/a" : "…"; }
     }
-    if(row) return { spec, value: row.value, pct: typeof row.pct === "number" ? row.pct : null, note: row.note || "published", live:false };
-    return { spec, value:"—", pct:null, note:"awaiting refresh", missing:true, live:false };
+    return o;
   });
 
   let lastGroup = null;
@@ -5797,10 +5887,11 @@ function boardHTML(rates, prices, live){
     if(p.spec.group !== lastGroup){ lastGroup = p.spec.group; if(p.spec.group) head = `<div class="bp-h">${esc(p.spec.group)}</div>`; }
     const up = (p.pct || 0) >= 0;
     const chip = typeof p.pct === "number"
-      ? `<span class="rb-chip ${cls(p.pct)}">${fmtPct(p.pct)}</span>`
+      ? `<span class="rb-chip ${cls(p.pct)}">${Math.abs(p.pct) >= 100 ? (p.pct > 0 ? "+" : "−") + Math.abs(p.pct).toFixed(0) + "%" : fmtPct(p.pct)}</span>`
       : `<span class="rb-chip flat">${esc(p.note)}</span>`;
     const m = BOARD_META[p.spec.label] || {};
-    return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}" style="--tc:${m.c || "var(--gold)"}">
+    const clk = p.spec.live ? ` data-bsym="${esc(p.spec.live)}" data-blab="${esc(p.spec.label)}" role="button" tabindex="0" title="${esc(p.spec.label)} price history"` : "";
+    return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}${p.spec.live ? " bp-click" : ""}"${clk} style="--tc:${m.c || "var(--gold)"}">
         <div class="bp-top">${bpLogo(p.spec)}${chip}</div>
         <div class="bp-id"><div class="bp-t">${esc(p.spec.label)}</div><div class="bp-sub">${esc(m.sub || "")}</div></div>
         <div class="bp-v">${esc(p.value)}</div>
@@ -5813,9 +5904,15 @@ function boardHTML(rates, prices, live){
   BOARD_YIELDS.forEach(spec => {
     const q = spec.live ? live[spec.live] : null;
     if(q && typeof q.price === "number" && q.price > 0 && q.price < 25){
-      const bp = q.prev ? Math.round((q.price - q.prev)*100) : null;
-      ys.push({ label: spec.label, value: q.price.toFixed(2) + "%", n: q.price,
-                note: bp == null ? "live" : (bp === 0 ? "flat" : (bp > 0 ? "+" : "") + bp + " bp"), live:true });
+      let bp = q.prev ? Math.round((q.price - q.prev)*100) : null;
+      if(rng !== "1D"){
+        const rd = S.boardRangeData && S.boardRangeData[rng], rq = rd && rd[spec.live];
+        const c = rq && rq.series && rq.series.c ? rq.series.c.filter(v => v != null) : [];
+        bp = c.length >= 2 ? Math.round((q.price - c[0])*100) : null;
+        if(bp == null){ ys.push({ label: spec.label, value: q.price.toFixed(2) + "%", n: q.price, note: rd ? "n/a" : "…", live:true, sym:spec.live }); return; }
+      }
+      ys.push({ label: spec.label, value: q.price.toFixed(2) + "%", n: q.price, sym: spec.live,
+                note: bp == null ? "live" : (bp === 0 ? "flat" : (bp > 0 ? "+" : "−") + Math.abs(bp) + " bp"), live:true });
       return;
     }
     const r = pickRow(src, spec, usedY);
@@ -5850,7 +5947,8 @@ function boardHTML(rates, prices, live){
     const base = H - B + 4, id = "ycg" + (++_gradN);
     let g = "";
     for(let t = Math.ceil(lo); t <= hi; t++) g += `<line class="yc-gl" x1="${L}" x2="${W - R}" y1="${yP(t).toFixed(1)}" y2="${yP(t).toFixed(1)}"/><text class="yc-ax" x="${L - 7}" y="${(yP(t) + 3.5).toFixed(1)}" text-anchor="end">${t}%</text>`;
-    const dots = pts.map((r,i) => `<g>
+    const dots = pts.map((r,i) => `<g class="yc-g${r.sym ? " yc-click" : ""}"${r.sym ? ` data-bsym="${esc(r.sym)}" data-blab="${esc(r.label)}" data-byield="1" role="button" tabindex="0"` : ""}>
+        ${r.sym ? `<rect x="${(P[i][0]-30).toFixed(1)}" y="${T-26}" width="60" height="${H-T+26}" fill="transparent"/>` : ""}
         <line class="yc-st" x1="${P[i][0].toFixed(1)}" x2="${P[i][0].toFixed(1)}" y1="${P[i][1].toFixed(1)}" y2="${base}"/>
         <circle class="yc-dot" cx="${P[i][0].toFixed(1)}" cy="${P[i][1].toFixed(1)}" r="5.5"/>
         <text class="yc-val" x="${P[i][0].toFixed(1)}" y="${(P[i][1] - 12).toFixed(1)}" text-anchor="middle">${esc(r.value)}</text>
@@ -5882,11 +5980,12 @@ function boardHTML(rates, prices, live){
   const yLive = ys.filter(y => y.live).length;
   return `<div class="desk-board">
       <div class="bp-block">
-        <div class="bp-block-h">Markets<span>${liveCount ? liveCount + " of " + ps.length + " quoting live" : "from the published board"}</span></div>
+        <div class="bp-block-h">Markets<span>${rng !== "1D" ? esc(BOARD_RANGES[rng].lab) + " · first close → latest" : (liveCount ? liveCount + " of " + ps.length + " quoting live · vs. prev close" : "from the published board")}</span></div>
+        <div class="bp-range seg" role="group" aria-label="Change over">${Object.keys(BOARD_RANGES).map(k => `<button type="button" data-brange="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
         <div class="bp-grid">${priceBlock}</div>
       </div>
       <div class="bp-block">
-        <div class="bp-block-h">Yields<span>by maturity${yLive ? " · " + yLive + " live" : ""}</span></div>
+        <div class="bp-block-h">Yields<span>by maturity${yLive ? " · " + (rng === "1D" ? "today" : BOARD_RANGES[rng].lab.toLowerCase()) : ""}</span></div>
         <div class="rb">${yieldBlock}</div>
       </div>
     </div>`;
@@ -5925,6 +6024,7 @@ async function renderDesk(){
      topic tiles, which is why the rates were unreadable even when they were there. Now the
      market strip runs the full width of the card at the top, the yield ladder sits under it,
      and the topic tiles get the whole width below that. */
+  S.boardCtx = { rates, prices };
   const board = boardHTML(rates, prices, S.boardLive || {});
   const outlook = `<div class="desk-outlook">
     <div class="bp-block-h">The read<span>tap a topic for how to talk about it</span></div>
@@ -5985,9 +6085,9 @@ async function renderDesk(){
     if(rb) rb.addEventListener("click", async () => {
       rb.textContent = "Refreshing…";
       await boardLive(true);
-      const g = $("#deskCard .desk-grid"); if(!g) return;
-      const old = g.querySelector(".desk-board");
-      if(old) old.outerHTML = boardHTML(rates, prices, S.boardLive || {});
+      boardRepaint();
+      S.boardRangeData = {}; S.boardRangeAt = {};
+      if(S.boardRange && S.boardRange !== "1D") setBoardRange(S.boardRange);
       paintFoot();
     });
   };
@@ -5997,11 +6097,22 @@ async function renderDesk(){
      topic tiles (so an open topic panel stays open). */
   boardLive().then(q => {
     if(!q || !Object.keys(q).length) return;
-    const g = $("#deskCard .desk-grid"); if(!g) return;
-    const old = g.querySelector(".desk-board"); if(!old) return;
-    old.outerHTML = boardHTML(rates, prices, q);
+    boardRepaint();
     paintFoot();
   }).catch(() => {});
+  /* tiles and curve points open a price history; the range pills change every tile's % window */
+  if(!card._boardWired){
+    card._boardWired = true;
+    card.addEventListener("click", e => {
+      const rb = e.target.closest("[data-brange]"); if(rb){ setBoardRange(rb.dataset.brange); return; }
+      const t = e.target.closest("[data-bsym]"); if(t) openBoardModal(t.dataset.bsym, t.dataset.blab, !!t.dataset.byield);
+    });
+    card.addEventListener("keydown", e => {
+      if(e.key !== "Enter" && e.key !== " ") return;
+      const t = e.target.closest && e.target.closest("[data-bsym]"); if(!t) return;
+      e.preventDefault(); openBoardModal(t.dataset.bsym, t.dataset.blab, !!t.dataset.byield);
+    });
+  }
 }
 
 function renderCalendarBody(p, d){
@@ -6591,14 +6702,14 @@ async function pQuote(sym){
    endpoint -- replaces what used to be up to 24 separate per-symbol requests
    (a price chart call + an intraday chart call for each holding). pQuote
    (above) stays as a per-symbol fallback for any ticker this doesn't return. */
-async function pSparkAll(syms){
+async function pSparkAll(syms, range, interval){
   if(!syms.length) return {};
   // see the cache-buster note in pQuote() above -- same fix, same reason.
-  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=1d&interval=5m&_ts=${Date.now()}`;
+  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=${range || "1d"}&interval=${interval || "5m"}&_ts=${Date.now()}`;
   const urls = NR_PROXY_URLS(target);   // same three-proxy race the newsroom uses -- allorigins goes down for stretches and corsproxy.io now wants a paid key, so two was really one
   // Race both proxies instead of trying them one after another -- see pQuote() above.
   const attempts = urls.map(u => (async () => {
-    const r = await pFetchTimeout(u, 8000, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
+    const r = await pFetchTimeout(u, (range && range !== "1d") ? 16000 : 8000, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
     const j = await r.json(); const results = j?.spark?.result;
     const out = {};
     if(Array.isArray(results) && results.length){
@@ -7398,6 +7509,104 @@ function renderHistoryIntraday(body){
 }
 
 
+/* ---------- market-board detail: click any tile or Treasury point for its price history ----------
+   Eli, Oct 2026: "click on any of them to see its price change over time like we have in the portfolio
+   section." Same modal shell and drawSmChart as the stock modal, fed straight from Yahoo's chart
+   endpoint one window at a time (cached ten minutes per symbol + window). */
+let BM = null;   // { sym, label, isYield, spec, range }
+function closeBoardModal(){
+  const ov = $("#boardModalOverlay"); if(ov) ov.remove();
+  if(BM && BM._esc) document.removeEventListener("keydown", BM._esc);
+  BM = null;
+}
+async function boardSeries(sym, rk){
+  S.boardSer = S.boardSer || {};
+  const key = sym + "|" + rk, hit = S.boardSer[key];
+  if(hit && Date.now() - hit.at < 600000) return hit.q;
+  const cfg = BOARD_RANGES[rk];
+  const q = await boardChart(sym, cfg.r, cfg.i);
+  if(q) S.boardSer[key] = { at: Date.now(), q };
+  return q;
+}
+async function openBoardModal(sym, label, isYield){
+  closeBoardModal();
+  const spec = BOARD_PRICES.find(x => x.live === sym) || BOARD_YIELDS.find(x => x.live === sym) || {};
+  const meta = BOARD_META[spec.label] || {};
+  BM = { sym, label, isYield, spec, range: (S.boardRange && BOARD_RANGES[S.boardRange]) ? S.boardRange : "1D" };
+  const icon = isYield ? glyphSVG("bonds", "#8B6BD9") : bpLogo(spec);
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay"; overlay.id = "boardModalOverlay";
+  overlay.innerHTML = `<div class="modal-card">
+    <button class="modal-close" id="bmClose">✕</button>
+    <div class="sm-head">
+      <span class="${isYield ? "bp-ic" : ""}" ${isYield ? `style="--tc:#8B6BD9"` : ""}>${icon}</span>
+      <div>
+        <div class="sm-tk">${esc(label)}<span class="sm-nm">${esc(isYield ? "Treasury yield" : (meta.sub || ""))}</span></div>
+        <div class="sm-price" id="bmPrice">&nbsp;</div>
+      </div>
+    </div>
+    <div class="ptoolbar" style="margin:14px 0 8px">
+      <div class="seg" id="bmSeg">${Object.keys(BOARD_RANGES).map(r => `<button data-r="${r}" class="${BM.range === r ? "on" : ""}">${r}</button>`).join("")}</div>
+      <span class="pstatus" id="bmHead"></span>
+    </div>
+    <div id="bmBody" style="position:relative"><div class="spinner" style="margin:46px auto"></div></div>
+    <div class="chart-cap">Yahoo Finance via public proxies (unofficial) · ${isYield ? "yield, in percent" : "price"} · 1D is measured against the previous close, longer windows from their first close · educational, not investment advice.</div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", e => { if(e.target === overlay) closeBoardModal(); });
+  $("#bmClose").addEventListener("click", closeBoardModal);
+  BM._esc = e => { if(e.key === "Escape") closeBoardModal(); };
+  document.addEventListener("keydown", BM._esc);
+  overlay.querySelectorAll("#bmSeg button").forEach(b => b.addEventListener("click", () => {
+    BM.range = b.dataset.r;
+    overlay.querySelectorAll("#bmSeg button").forEach(x => x.classList.toggle("on", x === b));
+    renderBoardChart();
+  }));
+  renderBoardChart();
+}
+async function renderBoardChart(){
+  const cur = BM; if(!cur) return;
+  const body = $("#bmBody"), head = $("#bmHead"), priceEl = $("#bmPrice"); if(!body) return;
+  const rk = cur.range, spec = cur.spec;
+  body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`;
+  if(head) head.textContent = "";
+  const q = await boardSeries(cur.sym, rk);
+  if(BM !== cur || cur.range !== rk) return;          // closed, or a different window was picked meanwhile
+  const fmtV = v => cur.isYield ? v.toFixed(2) + "%" : boardFmt(spec, v);
+  const t = q && q.series && q.series.t, c = q && q.series && q.series.c;
+  const raw = (t && c) ? t.map((ts,i) => ({ts, v:c[i]})).filter(p => p.v != null) : [];
+  if(raw.length < 2){ body.innerHTML = `<div class="empty">Price history isn't available for that window right now — try another, or reopen in a minute.</div>`; return; }
+  const first = raw[0].v, last = (rk === "1D" || rk === "1W") ? raw[raw.length-1].v : raw[raw.length-1].v;
+  const live = S.boardLive && S.boardLive[cur.sym];
+  const now = (live && typeof live.price === "number") ? live.price : q.price;
+  const base = rk === "1D" ? (q.prev || first) : first;
+  const delta = now - base, dPct = base ? delta/base*100 : 0;
+  const dTxt = cur.isYield ? `${delta >= 0 ? "+" : "−"}${Math.abs(delta*100).toFixed(0)} bp`
+                           : `${delta >= 0 ? "+" : "−"}${boardFmt(spec, Math.abs(delta))}`;
+  if(priceEl) priceEl.innerHTML = `${esc(fmtV(now))} <span class="pchgline ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)}) ${esc(rk === "1D" ? "today" : BOARD_RANGES[rk].lab.toLowerCase())}</span>`;
+  const intraday = rk === "1D" || rk === "1W";
+  const etOpts = {timeZone:"America/New_York"};
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${esc(BOARD_RANGES[rk].lab)}`;
+  if(rk === "1D"){
+    const st = q.series.start, en = q.series.end;
+    const timed = st != null && en != null && en > st;
+    drawSmChart(body, raw.map(p => ({x:p.ts, v:p.v})), {
+      timeAxis: timed, start: st, end: en, fmtY: fmtV,
+      fmtX0: p => timed ? "Open" : new Date(p.x*1000).toLocaleTimeString("en-US",{...etOpts,hour:"numeric",minute:"2-digit"}),
+      fmtX1: p => timed ? "Close" : new Date(p.x*1000).toLocaleTimeString("en-US",{...etOpts,hour:"numeric",minute:"2-digit"}),
+      fmtTip: p => `${esc(new Date(p.x*1000).toLocaleTimeString("en-US",{...etOpts,hour:"numeric",minute:"2-digit"}))} ET · <span class="tv">${esc(fmtV(p.v))}</span>`
+    });
+    return;
+  }
+  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA", etOpts);
+  drawSmChart(body, raw.map(p => ({x: intraday ? p.ts : dstr(p.ts), v:p.v})), {
+    timeAxis:false, fmtY: fmtV,
+    fmtX0: p => intraday ? shortDate(dstr(p.x)) : shortDate(p.x),
+    fmtX1: p => intraday ? shortDate(dstr(p.x)) : shortDate(p.x),
+    fmtTip: p => `${esc(intraday ? new Date(p.x*1000).toLocaleString("en-US",{...etOpts,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " ET" : longDate(p.x))} · <span class="tv">${esc(fmtV(p.v))}</span>`
+  });
+}
+
 /* ---------- stock detail modal (price history + your cost basis) ---------- */
 const SM_RANGES = ["Today","1W","1M","3M","6M","YTD","1Y","5Y"];
 let SM = null;   // { ticker, sym, range }
@@ -7539,7 +7748,7 @@ function drawSmChart(body, pts, opts){
   area += ` L ${X(pts[pts.length-1],pts.length-1).toFixed(1)} ${H-PB} Z`;
   const grid = [min+pad,(min+max)/2,max-pad].map(v =>
     `<line x1="${PL}" x2="${W-PR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>
-     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Lato">${usd(v,2)}</text>`).join("");
+     <text x="${PL-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="Lato">${opts.fmtY ? opts.fmtY(v) : usd(v,2)}</text>`).join("");
   const refSvg = opts.refLine!=null
     ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="var(--topbar-muted)" stroke-width="1.5" stroke-dasharray="5,4"/>
        <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Lato" font-weight="700">${esc(opts.refLabel||"")}</text>`

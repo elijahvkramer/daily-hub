@@ -6015,8 +6015,12 @@ const BOARD_RANGES = {
   "5Y":  { r:"5y",  i:"1wk", lab:"Past 5 years" }
 };
 async function boardChartOne(sym, range, interval){
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}&_ts=${Date.now()}`;
-  const attempts = NR_PROXY_URLS(target).map(u => (async () => {
+  /* Two Yahoo hosts x the proxies (plus corsproxy.io, board-only): any one answer wins. A single flaky
+     proxy used to leave the price-history window empty. */
+  const targets = ["query1","query2"].map(h => `https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}&_ts=${Date.now()}`);
+  const urls = [];
+  targets.forEach(t => { NR_PROXY_URLS(t).forEach(u => urls.push(u)); urls.push("https://corsproxy.io/?" + encodeURIComponent(t)); });
+  const attempts = urls.map(u => (async () => {
     const r = await pFetchTimeout(u, range === "1d" ? 9000 : 16000, {cache:"no-store"}); if(!r.ok) throw new Error("bad status");
     const j = await r.json(); const res = j?.chart?.result?.[0], m = res?.meta;
     if(!m || typeof m.regularMarketPrice !== "number") throw new Error("no data");
@@ -7819,8 +7823,13 @@ async function boardSeries(sym, rk){
   const key = sym + "|" + rk, hit = S.boardSer[key];
   if(hit && Date.now() - hit.at < 600000) return hit.q;
   const cfg = BOARD_RANGES[rk];
-  const q = await boardChart(sym, cfg.r, cfg.i);
-  if(q) S.boardSer[key] = { at: Date.now(), q };
+  let q = await boardChart(sym, cfg.r, cfg.i);
+  if(!q || !q.series) q = await boardChart(sym, cfg.r, cfg.i) || q;       // one more try before giving up
+  if(!q || !q.series){                                                     // fall back to what the board already holds
+    const have = rk === "1D" ? (S.boardLive && S.boardLive[sym]) : (S.boardRangeData && S.boardRangeData[rk] && S.boardRangeData[rk][sym]);
+    if(have && have.series) q = have;
+  }
+  if(q && q.series) S.boardSer[key] = { at: Date.now(), q };
   return q;
 }
 async function openBoardModal(sym, label, isYield){
@@ -7870,7 +7879,8 @@ async function renderBoardChart(){
   const fmtV = v => cur.isYield ? v.toFixed(2) + "%" : boardFmt(spec, v);
   const t = q && q.series && q.series.t, c = q && q.series && q.series.c;
   const raw = (t && c) ? t.map((ts,i) => ({ts, v:c[i]})).filter(p => p.v != null) : [];
-  if(raw.length < 2){ body.innerHTML = `<div class="empty">Price history isn't available for that window right now — try another, or reopen in a minute.</div>`; return; }
+  if(raw.length < 2){ body.innerHTML = `<div class="empty">Price history isn't available for that window right now.<br><button type="button" class="bm-retry" style="margin-top:10px;appearance:none;border:1px solid var(--hairline);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-weight:700;cursor:pointer">Try again</button></div>`;
+    const rb = body.querySelector(".bm-retry"); if(rb) rb.addEventListener("click", () => { renderBoardChart(); }); return; }
   const first = raw[0].v, last = (rk === "1D" || rk === "1W") ? raw[raw.length-1].v : raw[raw.length-1].v;
   const live = S.boardLive && S.boardLive[cur.sym];
   const now = (live && typeof live.price === "number") ? live.price : q.price;

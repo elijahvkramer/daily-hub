@@ -7153,6 +7153,9 @@ function renderCalendarBody(p, d){
      Outlook -- swapped their order on Home. ---- */
   h += `<div id="todayTriple"><div class="bento-card cal-card cal-full">${buildMiniCal(todayList, radarList, d.date)}</div></div>`;
 
+  /* ---- Treatment tracker (H. pylori protocol dose counter) ---- */
+  h += `<div class="bento-card" id="rxCard"></div>`;
+
   /* ---- Running Outlook: where the asset classes stand + how to explain them ---- */
   h += `<div class="bento-card" id="deskCard"><div class="bc-label">Running Outlook</div><div class="desk-grid"><div class="spinner" style="margin:18px auto"></div></div></div>`;
 
@@ -7180,6 +7183,7 @@ function renderCalendarBody(p, d){
   /* The Close now lives on the Games tab — see renderGamesLauncher(). */
 
   p.innerHTML = h;
+  if(window.__rxMount) window.__rxMount();
   // pair the weather card next to the portfolio snapshot
   const wxSlot = p.querySelector("#wxSlot"), wxCard = p.querySelector("#wxHero");
   if(wxSlot && wxCard) wxSlot.appendChild(wxCard);
@@ -15219,6 +15223,133 @@ function skyArrive(){
   }catch(e){
     console.error("Daily Hub: to-do sync failed to initialize", e);
   }
+</script>
+<script type="module">
+  // ---- Treatment dose tracker (H. pylori protocol) ----
+  // Firestore doc protocol/main = { start:"YYYY-MM-DD", entries:{ "YYYY-MM-DD": { om:[ms..], mt:[..], am:[..], pb:[..] } } }
+  // Each tap on "Take" appends a timestamp; "Undo" removes the last one. A localStorage copy keeps
+  // it working if Firestore is slow or the security rules don't yet allow the protocol doc.
+  import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+  const CFG = { apiKey:"AIzaSyBbS7KO_-ji_I82nZZ0UuorW47Unf3BNOE", authDomain:"daily-hub-todos.firebaseapp.com",
+    projectId:"daily-hub-todos", storageBucket:"daily-hub-todos.firebasestorage.app",
+    messagingSenderId:"816153848388", appId:"1:816153848388:web:23127952bba70d7205ea11" };
+  const START = "2026-10-07", DAYS = 14, LS_KEY = "dh_rx_v1";
+  const MEDS = [
+    { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
+    { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"9:00a · 1:00p · 6:30p · 10:30p" },
+    { k:"am", name:"Amoxicillin",    dose:"2 capsules", target:2, times:"6:30a · 5:00p" },
+    { k:"pb", name:"Pepto-Bismol",   dose:"2 tablets",  target:4, times:"6:30a · 12:00p · 5:00p · 10:30p" }
+  ];
+
+  let state = { start: START, entries: {} };
+  try{ const c = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if(c && c.entries) state = { start: START, entries: c.entries }; }catch(e){}
+  let ref = null, synced = null, viewDate = null;
+
+  const pad = n => String(n).padStart(2, "0");
+  const ymd = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+  const todayStr = () => ymd(new Date());
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate()+n); return ymd(d); };
+  const dayNum = s => Math.round((parse(s) - parse(START)) / 864e5) + 1;
+  const fmtT = ms => new Date(ms).toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+  const list = (date, k) => ((state.entries[date] || {})[k] || []);
+
+  function css(){
+    if(document.getElementById("rx-css")) return;
+    const s = document.createElement("style"); s.id = "rx-css";
+    s.textContent = `
+    #rxCard{margin-top:12px}
+    #rxCard .rx-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    #rxCard .rx-nav{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--muted)}
+    #rxCard .rx-nav button{border:1px solid var(--hairline);background:var(--card);color:var(--ink);border-radius:8px;width:28px;height:28px;font-weight:900;cursor:pointer}
+    #rxCard .rx-nav button:disabled{opacity:.3;cursor:default}
+    #rxCard .rx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:12px}
+    #rxCard .rx-med{border:1px solid var(--hairline);border-radius:12px;padding:12px 13px;background:var(--card)}
+    #rxCard .rx-med.done{border-color:var(--up)}
+    #rxCard .rx-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+    #rxCard .rx-name{font-weight:800;font-size:14.5px;color:var(--ink)}
+    #rxCard .rx-count{font-weight:900;font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+    #rxCard .rx-med.done .rx-count{color:var(--up)}
+    #rxCard .rx-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+    #rxCard .rx-dots{display:flex;gap:6px;margin:10px 0}
+    #rxCard .rx-dot{flex:1;height:8px;border-radius:99px;background:var(--hairline)}
+    #rxCard .rx-dot.on{background:var(--up)}
+    #rxCard .rx-row{display:flex;gap:6px;align-items:center}
+    #rxCard .rx-take{flex:1;border:0;border-radius:9px;padding:9px 10px;font-weight:900;font-size:13px;cursor:pointer;background:var(--ink);color:var(--card)}
+    #rxCard .rx-undo{border:1px solid var(--hairline);background:var(--card);color:var(--muted);border-radius:9px;padding:9px 11px;font-weight:800;font-size:13px;cursor:pointer}
+    #rxCard .rx-undo:disabled{opacity:.35;cursor:default}
+    #rxCard .rx-last{font-size:11px;color:var(--muted);margin-top:7px;min-height:14px}
+    #rxCard .rx-foot{font-size:11px;color:var(--muted);margin-top:10px}`;
+    document.head.appendChild(s);
+  }
+
+  function render(){
+    const el = document.getElementById("rxCard"); if(!el) return;
+    css();
+    const today = todayStr();
+    if(!viewDate) viewDate = today;
+    const n = dayNum(viewDate), inRange = n >= 1 && n <= DAYS;
+    const dayLbl = inRange ? `Day ${n} of ${DAYS}` : (n < 1 ? "Before start" : "Course complete");
+    const dateLbl = parse(viewDate).toLocaleDateString([], { weekday:"short", month:"short", day:"numeric" }) + (viewDate === today ? " · Today" : "");
+    el.innerHTML = `<div class="rx-head"><div><div class="bc-label">Treatment tracker</div>
+        <div class="rx-sub">${dayLbl} · ${dateLbl}</div></div>
+        <div class="rx-nav"><button data-nav="-1" aria-label="Previous day" ${n<=1?"disabled":""}>‹</button>
+        <button data-nav="1" aria-label="Next day" ${viewDate>=today?"disabled":""}>›</button></div></div>
+      <div class="rx-grid">${MEDS.map(m => {
+        const a = list(viewDate, m.k), c = a.length, done = c >= m.target;
+        return `<div class="rx-med${done?" done":""}">
+          <div class="rx-top"><div class="rx-name">${m.name}</div><div class="rx-count">${c}/${m.target}</div></div>
+          <div class="rx-sub">${m.dose} per dose · ${m.times}</div>
+          <div class="rx-dots">${Array.from({length:m.target},(_,i)=>`<div class="rx-dot${i<c?" on":""}"></div>`).join("")}</div>
+          <div class="rx-row"><button class="rx-take" data-take="${m.k}">${done?"Log extra dose":"Took "+m.dose}</button>
+          <button class="rx-undo" data-undo="${m.k}" ${c?"":"disabled"} aria-label="Undo last ${m.name} dose">Undo</button></div>
+          <div class="rx-last">${c ? "Last dose " + fmtT(a[c-1]) : "None yet"}</div></div>`;
+      }).join("")}</div>
+      <div class="rx-foot">${synced === false ? "Saved on this device only — cloud sync unavailable" : "Synced across devices"}</div>`;
+    el.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => { viewDate = addDays(viewDate, +b.dataset.nav); render(); });
+    el.querySelectorAll("[data-take]").forEach(b => b.onclick = () => change(b.dataset.take, 1));
+    el.querySelectorAll("[data-undo]").forEach(b => b.onclick = () => change(b.dataset.undo, -1));
+  }
+
+  function change(k, dir){
+    const e = state.entries[viewDate] = { ...(state.entries[viewDate] || {}) };
+    const a = (e[k] || []).slice();
+    if(dir > 0){
+      // logging a past day: stamp noon so it sorts sensibly; today: stamp now
+      a.push(viewDate === todayStr() ? Date.now() : parse(viewDate).getTime() + 12*36e5);
+    }else a.pop();
+    e[k] = a;
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
+    render();
+    if(ref) setDoc(ref, { start: START, entries: { [viewDate]: { [k]: a } } }, { merge: true })
+      .then(() => { if(synced !== true){ synced = true; render(); } })
+      .catch(err => { console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } });
+  }
+
+  window.__rxMount = () => { viewDate = null; render(); };
+
+  try{
+    const app = getApps().length ? getApp() : initializeApp(CFG);
+    const auth = getAuth(app), db = getFirestore(app);
+    ref = doc(db, "protocol", "main");
+    let unsub = null;
+    onAuthStateChanged(auth, user => {
+      if(!user || unsub) return;
+      unsub = onSnapshot(ref, snap => {
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        // cloud wins per medication-day, but keep any local-only entries not yet pushed
+        const merged = { ...state.entries };
+        for(const [d, v] of Object.entries(data.entries || {})) merged[d] = { ...(merged[d] || {}), ...v };
+        state.entries = merged;
+        try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: merged })); }catch(err){}
+        synced = true; render();
+      }, err => { console.error("Daily Hub: protocol listener failed", err); synced = false; render(); });
+    });
+  }catch(e){ console.error("Daily Hub: protocol tracker init failed", e); synced = false; }
+  render();
 </script>
 </body>
 </html>

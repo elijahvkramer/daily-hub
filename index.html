@@ -2879,9 +2879,9 @@
 
 
   /* ---------- event colours by type (Eli, Oct 2026) ---------- */
-  .k-personal{--kc:#C9962A} .k-work{--kc:#3A6EA5} .k-family{--kc:#2E9D6B} .k-couple{--kc:#8B5CD6}
+  .k-personal{--kc:#3A6EA5} .k-work{--kc:#3A6EA5} .k-family{--kc:#2E9D6B} .k-couple{--kc:#8B5CD6}
   .k-birthday{--kc:#E0457B} .k-holiday{--kc:#D8483F} .k-todo{--kc:#4C9A6A}
-  .cal-card .cal-ev{background:color-mix(in srgb,var(--kc,var(--gold)) 11%,transparent);box-shadow:inset 3px 0 0 var(--kc,var(--gold))}
+  .cal-card .cal-ev{background:color-mix(in srgb,var(--kc,#3A6EA5) 11%,transparent);box-shadow:inset 3px 0 0 var(--kc,#3A6EA5)}
   .cal-card .cal-cell.has:hover .cal-ev{background:color-mix(in srgb,var(--kc,var(--gold)) 20%,transparent)}
   .cal-card .cal-cell-bar{background:var(--kc,#3A6EA5)}
   .cal-ev i{background:var(--kc,var(--gold))}
@@ -2902,6 +2902,16 @@
   .desk-refresh.busy{opacity:.8;cursor:default}
   .desk-refresh.busy::before{content:"";width:11px;height:11px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:deskSpin .7s linear infinite}
   @keyframes deskSpin{to{transform:rotate(360deg)}}
+
+
+  /* the two board columns share a height; mortgage tiles are the same size as the market tiles */
+  .desk-board{align-items:stretch}
+  .desk-board > .bp-block{display:flex;flex-direction:column}
+  .bp-range{align-self:flex-start}
+  @media(min-width:1021px){ .desk-board > .bp-block:first-child .bp-grid{flex:1;grid-template-rows:1fr auto 1fr} }
+  .bp-tile{min-height:162px}
+  .desk-board > .bp-block:last-child .rb{flex:1;display:flex;flex-direction:column}
+  .yc-morts{margin-top:auto;padding-top:12px}
 
   /* Font picker (theme panel) */
   .font-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 2px}
@@ -5281,9 +5291,14 @@ function eventStartTimeText(lead){
 }
 /* Colour key for the Two-Week View. Only the categories that actually appear are listed. */
 const CAL_CATS = [
-  ["personal", "Mine"], ["work", "Work"], ["family", "Family"], ["couple", "Brooklyn + Eli"],
+  ["personal", "Events"], ["family", "Family"], ["couple", "Brooklyn + Eli"],
   ["birthday", "Birthdays"], ["holiday", "Holidays"], ["todo", "To-dos due"]
 ];
+/* work and personal are both the normal blue; birthdays are recognised by title even on older data */
+function calCat(cat, label){
+  if(/\bbirthday\b|\bb-?day\b/i.test(label || "")) return "birthday";
+  return (!cat || cat === "work") ? "personal" : cat;
+}
 function calLegendHTML(spans, byDate){
   const used = new Set();
   (spans || []).forEach(sp => used.add(sp.cat || "personal"));
@@ -5297,14 +5312,14 @@ function buildMiniCal(todayList, radarList, todayDate){
   const byDate = {};
   const spans = []; // {start, end, label} — multi-day CALENDAR events only (endDate
                      // present); to-do due dates render as "Reminder:" pills instead (below)
-  const add = (dstr, label, time, isTodo, startTime, cat) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo, startTime, cat: isTodo ? "todo" : (cat || "personal")}); };
+  const add = (dstr, label, time, isTodo, startTime, cat) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo, startTime, cat: isTodo ? "todo" : calCat(cat, label)}); };
   const addSpan = (item, fallbackDate) => {
     if(!item || typeof item === "string" || !item.endDate) return;
     const ev = parseEventLead(item.lead, item.body, fallbackDate);
     if(!ev.dateStr) return;
     /* startDate comes from the server (a multi-day event can have begun before today, when the lead
        carries no date); fall back to the date parsed from the lead */
-    spans.push({ start: item.startDate || ev.dateStr, end: item.endDate, label: (item.body || ev.title || "").split(" · ")[0], cat: item.cat || "personal" });
+    spans.push({ start: item.startDate || ev.dateStr, end: item.endDate, label: (item.body || ev.title || "").split(" · ")[0], cat: calCat(item.cat, item.body) });
   };
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
@@ -5599,7 +5614,7 @@ function agendaItems(list, dateStr){
     const title = (p.title || (ev.body || "").split(" · ")[0] || ev.lead || "Event").replace(/\s*—\s*$/, "");
     const where = (ev.body || "").split(" · ").slice(1).join(" · ");
     out.push({
-      i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo, cat: ev.isTodo ? "todo" : (ev.cat || "personal"),
+      i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo, cat: ev.isTodo ? "todo" : calCat(ev.cat, ev.body),
       start: p.startMin,
       end: (p.endMin != null && p.startMin != null && p.endMin > p.startMin) ? p.endMin : null
     });
@@ -9039,15 +9054,17 @@ async function boardSeries(sym, rk){
   };
   let q = null;
   if(rk !== "1D" && rk !== "1W") q = await fromHist();          // multi-month windows are daily closes anyway
+  /* today's shape is already on the board from the live quote: use it instantly, no new request */
+  if(!q && rk === "1D"){ const h = S.boardLive && S.boardLive[sym]; if(h && h.series && h.series.c && h.series.c.filter(v => v != null).length >= 3) q = h; }
   if(!q && !/^MORT/.test(sym)){
-    q = await withDeadline(boardChart(sym, cfg.r, cfg.i), 9000, null);
-    if(!q || !q.series) q = (await withDeadline(boardChart(sym, cfg.r, cfg.i), 7000, null)) || q;   // one more try before giving up
+    q = await withDeadline(boardChart(sym, cfg.r, cfg.i), 4500, null);   // short cap: never leave the chart spinning
   }
   if(!q || !q.series){                                                     // fall back to what the board already holds
     const have = rk === "1D" ? (S.boardLive && S.boardLive[sym]) : (S.boardRangeData && S.boardRangeData[rk] && S.boardRangeData[rk][sym]);
     if(have && have.series) q = have;
   }
   if(!q || !q.series){ const h = await fromHist(); if(h) q = h; }       // the week lands here when the proxies are down
+  if(!q || !q.series){ const h = await withDeadline(boardHistory(), 3000, null); if(h){ const g = await fromHist(); if(g) q = g; } }
   if(q && q.series) S.boardSer[key] = { at: Date.now(), q };
   return q;
 }
@@ -15428,9 +15445,9 @@ function skyArrive(){
   const START = "2026-10-07", DAYS = 14, LS_KEY = "dh_rx_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
-    { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"9:00a · 1:00p · 6:30p · 10:30p" },
-    { k:"am", name:"Amoxicillin",    dose:"2 capsules", target:2, times:"6:30a · 5:00p" },
-    { k:"pb", name:"Pepto-Bismol",   dose:"2 tablets",  target:4, times:"6:30a · 12:00p · 5:00p · 10:30p" }
+    { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
+    { k:"am", name:"Amoxicillin",    dose:"2 capsules", target:2, times:"8:00a · 1:00p" },
+    { k:"pb", name:"Pepto-Bismol",   dose:"2 tablets",  target:4, times:"6:30a · 12:00p · 5:00p · 9:00p" }
   ];
 
   let state = { start: START, entries: {} };
@@ -15529,9 +15546,9 @@ function skyArrive(){
      scheduled time onward; the popup stops chasing a dose 3 hours after its time. */
   const SLOTS = {
     om: [[6,30],[17,0]],
-    mt: [[9,0],[13,0],[18,30],[22,30]],
-    am: [[6,30],[17,0]],
-    pb: [[6,30],[12,0],[17,0],[22,30]]
+    mt: [[8,0],[13,0],[15,30],[18,30]],     // antibiotics only after food
+    am: [[8,0],[13,0]],
+    pb: [[6,30],[12,0],[17,0],[21,0]]
   };
   const EARLY_MS = 45*60e3, WINDOW_MS = 3*60*60e3, SNOOZE_KEY = "dh_rx_snooze_v1";
   let loaded = false, remindEl = null, pillEl = null, baseTitle = null;

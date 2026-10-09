@@ -42,6 +42,7 @@ CALENDAR_IDS = [
     "6668454f24e15ba8a30ea5f496b32f9713c27bb5bde025f21eaaea6f831a09e9@group.calendar.google.com",
     "73f90f2a90ecc6ef0895707a47af926c2f70714a4ad692aac3871c38054681e3@group.calendar.google.com",  # Redtail
     "en.usa#holiday@group.v.calendar.google.com",  # public calendar; readable without an explicit share
+    "527e24b1bf13963c357d62c167467a5d72f4b1e9303aed8e18151e9a56415856@group.calendar.google.com",  # Hub Birthdays: regular yearly events (Google's own birthday-type events on the primary calendar are invisible to the service account)
 ]
 
 WINDOW_DAYS = 15  # matches the retired live-sync window (today + 15 days)
@@ -56,6 +57,7 @@ CALENDAR_CATS = {
     "6668454f24e15ba8a30ea5f496b32f9713c27bb5bde025f21eaaea6f831a09e9@group.calendar.google.com": "couple",
     "73f90f2a90ecc6ef0895707a47af926c2f70714a4ad692aac3871c38054681e3@group.calendar.google.com": "work",
     "en.usa#holiday@group.v.calendar.google.com": "holiday",
+    "527e24b1bf13963c357d62c167467a5d72f4b1e9303aed8e18151e9a56415856@group.calendar.google.com": "birthday",
 }
 BIRTHDAY_TITLE = re.compile(r"\bbirthday\b|\bb-?day\b", re.I)
 

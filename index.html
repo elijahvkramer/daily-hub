@@ -686,6 +686,74 @@
   .fr2-mini .s-over .top{color:var(--fr-over)}
   .fr2-foot{font-size:12.5px;color:var(--muted);text-align:center;padding-top:4px}
 
+  /* ---- v3: one clock per person (any catch-up counts) ---- */
+  .fr3-avw{--sz:40px;position:relative;width:calc(var(--sz) + 10px);height:calc(var(--sz) + 10px);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .fr3-avw > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .fr3-avw .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent);stroke-width:4.5}
+  .fr3-avw .val{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
+  .fr3-avw.s-ok .val{stroke:var(--fr-ok)} .fr3-avw.s-soon .val{stroke:var(--fr-soon)} .fr3-avw.s-over .val{stroke:var(--fr-over)}
+  .fr3-avw.s-over .trk{stroke:color-mix(in srgb,var(--fr-over) 18%,transparent)}
+  .fr3-avw .fr2-av{width:var(--sz);height:var(--sz);box-shadow:none}
+  .fr3-avw.sm{--sz:32px} .fr3-avw.sm .fr2-av{font-size:12px}
+  .fr3-avw.md{--sz:44px} .fr3-avw.md .fr2-av{font-size:15.5px}
+  .fr3-avw.lg{--sz:64px} .fr3-avw.lg .fr2-av{font-size:22px}
+  .fr3-avw.xl{--sz:88px} .fr3-avw.xl .fr2-av{font-size:30px;box-shadow:0 14px 30px -12px hsl(var(--av-h) 50% 40% / .45)}
+  .fr3-avw.xl .val{stroke-width:3.4} .fr3-avw.xl .trk{stroke-width:3}
+  .fr3-avw.xl.s-over::after{content:"";position:absolute;inset:-2px;border-radius:50%;box-shadow:0 0 0 0 color-mix(in srgb,var(--fr-over) 40%,transparent);animation:fr3Pulse 2.4s ease-out infinite}
+  @keyframes fr3Pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--fr-over) 35%,transparent)}70%{box-shadow:0 0 0 14px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.fr3-avw.xl.s-over::after{animation:none}}
+  .fr3-main{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .fr3-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .fr3-stats > div{padding:12px 14px;border-radius:16px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);min-width:0}
+  .fr3-stats > div > span{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .fr3-stats > div > span .fr2-ic{width:14px;height:14px}
+  .fr3-stats b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr3-stats b .fr2-pill{margin-top:0;font-size:12px}
+  .fr3-cta{display:flex;gap:10px}
+  .fr3-cta .fr3-big{flex:1 1 auto;padding:15px 20px;font-size:15.5px;border-radius:16px}
+  .fr3-cta .fr3-big .fr2-ic{width:20px;height:20px;stroke-width:2.4}
+  .fr3-earlier-btn{border-radius:16px;padding:15px 18px}
+  .fr3-earlier-btn.on{border-color:var(--gold);color:var(--gold-dark,var(--gold))}
+  .fr3-earlier{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;animation:fr2Fade .25s both}
+  .fr3-chip{appearance:none;font:inherit;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;border:1px solid var(--hairline);background:var(--modal-solid,var(--card));color:var(--ink);cursor:pointer;transition:all .15s}
+  .fr3-chip:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .fr3-date{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hairline);border-radius:999px;padding:4px 6px 4px 12px;background:var(--modal-solid,var(--card))}
+  .fr3-date .fr2-ic{width:15px;height:15px;color:var(--muted)}
+  .fr3-date input{font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:none;border:0;outline:none;padding:5px 4px}
+  .fr3-hint{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .fr3-list{list-style:none;display:flex;flex-direction:column;gap:2px;margin:0 -8px}
+  .fr3-row{display:flex;align-items:center;gap:6px;border-radius:14px;transition:background .15s}
+  .fr3-row:hover{background:color-mix(in srgb,var(--ink) 4.5%,transparent)}
+  .fr3-row-main{appearance:none;border:0;background:none;font:inherit;color:inherit;text-align:left;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:7px 8px;cursor:pointer}
+  .fr3-row-main .t{flex:1;min-width:0}
+  .fr3-row-main .t b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr3-row-main .t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr3-row-main .fr2-pill{margin-top:0;white-space:nowrap}
+  .fr3-tick{appearance:none;width:36px;height:36px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--hairline);background:var(--modal-solid,var(--card));color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-right:6px;transition:all .18s}
+  .fr3-tick .fr2-ic{width:17px;height:17px;stroke-width:2.4}
+  .fr3-tick:hover{background:var(--fr-ok);border-color:var(--fr-ok);color:#fff;transform:scale(1.06)}
+  .fr3-tick:active{transform:scale(.94)}
+  html.sky .fr2-seg{background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  html.sky .fr2-seg button:not(.on){color:#fff}
+  html.glass.sky:not([data-mode="dark"]) .fr2-tools :is(.fr2-search input,.fr2-chip:not(.on)){background:rgba(255,255,255,.82);border-color:rgba(255,255,255,.9);color:var(--ink)}
+  .fr2-pulse-n small{font-size:22px;font-weight:800;margin-left:2px;color:var(--muted)}
+  .fr3-recent{display:flex;gap:6px;flex-wrap:wrap}
+  .fr3-recent button{appearance:none;border:0;background:none;font:inherit;color:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:12px;cursor:pointer;width:62px}
+  .fr3-recent button:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+  .fr3-recent span{font-size:12px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fr3-recent em{font-style:normal;font-size:11px;color:var(--muted)}
+  .fr2-pc{position:relative;cursor:default;padding:0;gap:0}
+  .fr3-pc-open{appearance:none;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px;width:100%}
+  .fr2-pc .fr3-tick{position:absolute;top:14px;right:8px}
+  .fr2-pc .fr2-pc-top{padding-right:40px}
+  .fr3-pc-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+  .fr3-bar{height:6px;border-radius:6px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+  .fr3-bar i{display:block;height:100%;border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+  .fr3-bar.s-ok i{background:var(--fr-ok)} .fr3-bar.s-soon i{background:var(--fr-soon)} .fr3-bar.s-over i{background:var(--fr-over)}
+  .fr3-pc-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .fr3-pc-foot .fr2-pill{margin-top:0}
+  @media(max-width:560px){.fr3-stats{gap:6px}.fr3-stats > div{padding:10px}.fr3-stats b{font-size:14px}.fr3-cta .fr3-big{font-size:14.5px;padding:14px}.fr3-earlier-btn{padding:14px 12px}}
+
   /* ---- sheet (person detail / add) ---- */
   .fr2-back{position:fixed;inset:0;z-index:900;background:rgba(10,14,22,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px}
   .fr2-back.anim{animation:fr2BgIn .2s ease}
@@ -1689,6 +1757,33 @@
   .ins-hero-cap span{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .ins-hero-cap b{font-size:13px;font-weight:800;color:var(--ink);text-align:right}
 
+  /* the live take (Oct 2026) */
+  .ins-take{margin:0 0 16px;padding:16px 18px 14px;border-radius:16px;border:1px solid color-mix(in srgb,var(--gold) 28%,var(--hairline));
+    background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 7%,var(--card)),var(--card) 60%);position:relative;overflow:hidden}
+  .ins-take-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+  .ins-take-h b{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+  .ins-take-ic{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 16%,transparent)}
+  .ins-take-ic svg{width:14px;height:14px;fill:var(--gold)}
+  .ins-take-s{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .ins-take-b{font-size:14.5px;line-height:1.6;color:var(--ink);min-height:48px}
+  .ins-take-b p{margin:0 0 6px}
+  .ins-take-b ul{margin:4px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .ins-take-b li{position:relative;padding-left:18px}
+  .ins-take-b li::before{content:"";position:absolute;left:4px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+  .ins-take-b b{font-weight:800}
+  .ins-take-b.typing > :last-child::after{content:"";display:inline-block;width:7px;height:1.05em;margin-left:2px;vertical-align:-2px;border-radius:2px;background:var(--gold);animation:insCaret .9s steps(2) infinite}
+  @keyframes insCaret{50%{opacity:0}}
+  .ins-think{display:inline-flex;gap:5px;padding:8px 0}
+  .ins-think i{width:7px;height:7px;border-radius:50%;background:var(--gold);opacity:.35;animation:insDot 1.1s ease-in-out infinite}
+  .ins-think i:nth-child(2){animation-delay:.15s} .ins-think i:nth-child(3){animation-delay:.3s}
+  @keyframes insDot{40%{opacity:1;transform:translateY(-3px)}}
+  .ins-take-src{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px}
+  .ins-take-src > span{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+  .ins-take-src a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:none;padding:3px 9px;border-radius:999px;border:1px solid var(--hairline);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ins-take-src a:hover{color:var(--ink);border-color:var(--gold)}
+  .ins-key-btn{margin-left:auto;appearance:none;font:inherit;font-size:11.5px;font-weight:800;color:var(--gold-dark,var(--gold));background:none;border:1px dashed color-mix(in srgb,var(--gold) 55%,transparent);border-radius:999px;padding:4px 10px;cursor:pointer}
+  .ins-key-btn:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  @media (prefers-reduced-motion:reduce){.ins-think i,.ins-take-b.typing > :last-child::after{animation:none}}
   .ins-why{margin-bottom:16px}
   .ins-why-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
              font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-dark);
@@ -2945,7 +3040,8 @@
 #mb .mb-sky,#mb .mb-shade,#mb .mb-stars,#mb .mb-glow{transition:opacity .9s ease .15s}
 #mb.closing .mb-sky,#mb.closing .mb-shade,#mb.closing .mb-stars,#mb.closing .mb-glow{opacity:0!important}
 #mb.closing :is(.mb-deck,.mb-next,.mb-go,.mb-skip,.mb-date){opacity:0!important;transform:translateY(40px) scale(.98)!important;transition:opacity .4s ease,transform .5s cubic-bezier(.4,0,.2,1)!important}
-#mb.closing .fly{transition:transform .95s cubic-bezier(.65,0,.15,1);transform-origin:0 0}
+#mb.closing .fly{transition:transform .95s cubic-bezier(.65,0,.15,1),color .95s ease;transform-origin:0 0;will-change:transform}
+#mb.closing .fly span{transition:none}
 #mb.closing.solo :is(.mb-greet,.mb-arc){opacity:0;transform:translateY(-30px);transition:opacity .5s ease,transform .6s ease}
 #mb[data-sky="morning"]{--mb-top:#0E2A55;--mb-mid:#1F5C93;--mb-low:#4E8DBB;--mb-hz:#F2C58E;--mb-sun:#FFE2A8}
 #mb[data-sky="day"]{--mb-top:#0C3266;--mb-mid:#1C64A8;--mb-low:#3F8FCB;--mb-hz:#A9D4EE;--mb-sun:#FFF1C9}
@@ -3000,7 +3096,31 @@
 #mb .mb-next .nx-sub{flex-basis:100%;font-size:14px;color:var(--mb-dim);margin-top:2px}
 
 /* ---- lower deck (arrives after the intro) ---- */
-#mb .mb-deck{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;margin-top:34px;opacity:0;transform:translateY(26px);
+#mb .mb-wide{grid-column:1/-1}
+#mb #mbPf,#mb #mbIb{display:flex;flex-direction:column}
+#mb #mbIbB{flex:1;min-height:0}
+/* quick hits */
+#mb .mb-hits{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:22px}
+#mb .mb-hits:empty{display:none}
+#mb .mb-hit{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;min-width:0;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  opacity:0;transform:translateY(10px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1),background .2s ease}
+#mb.s1 .mb-hit{opacity:1;transform:none;transition-delay:calc(var(--d) + .2s),calc(var(--d) + .2s),0s}
+#mb .mb-hit:hover{background:rgba(255,255,255,.14)}
+#mb .mb-hit:focus-visible{outline:2px solid #fff}
+#mb .hi-ic{width:38px;height:38px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--mb-sun) 22%,transparent);color:var(--mb-sun)}
+#mb .hi-ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#mb .hi-b{display:flex;flex-direction:column;min-width:0}
+#mb .hi-l{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mb-dim)}
+#mb .hi-b b{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+#mb .hi-s{font-size:12.5px;color:var(--mb-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* markets as a strip of tiles */
+#mb .mk-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#mb .mk-tile{padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.16);min-width:0}
+#mb .mk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+#mb .mk-tile .mk-sp{width:100%;height:36px;display:block}
+@media (max-width:860px){#mb .mk-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#mb .mb-deck{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px;opacity:0;transform:translateY(26px);
   transition:opacity .8s ease,transform .9s cubic-bezier(.2,.7,.2,1);pointer-events:none}
 #mb.s2 .mb-deck{opacity:1;transform:none;pointer-events:auto}
 #mb .mb-p{background:rgba(8,18,42,.32);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:20px 22px;
@@ -3132,13 +3252,25 @@ html.sky body{background:var(--sky-paper)}
 
 /* ---- the band ---- */
 .skyband{display:none}
-html.sky .skyband{display:block;position:absolute;left:0;right:0;top:0;height:var(--band-h);z-index:0;pointer-events:none;overflow:hidden;
-  background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 38%,color-mix(in srgb,var(--sky-low) 80%,var(--sky-paper)) 70%,var(--sky-paper) 100%);
+/* Eli, Oct 2026: "the faded background blue to white [should be] more static instead of me
+   scrolling down past it -- the items on top should scroll, but keep the gradient the same or
+   add an animation." The sky is now pinned to the viewport (position:fixed) and the page scrolls
+   over it; it breathes slowly (sun glow + a drifting light) instead of sliding away. */
+html.sky .skyband{display:block;position:fixed;left:0;right:0;top:0;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,var(--sky-top) 0px,var(--sky-mid) calc(var(--band-h) * .38),color-mix(in srgb,var(--sky-low) 80%,var(--sky-paper)) calc(var(--band-h) * .7),var(--sky-paper) var(--band-h),var(--sky-paper) 100%);
   filter:hue-rotate(var(--sky-shift))}
-html.sky .skyband .sb-sun{position:absolute;left:var(--sun-x);top:var(--sun-y,62%);width:620px;height:620px;transform:translate(-50%,-50%);border-radius:50%;
+html.sky .skyband::after{content:"";position:absolute;inset:-20% -20% auto -20%;height:calc(var(--band-h) * 1.3);pointer-events:none;
+  background:radial-gradient(40% 50% at 30% 40%,rgba(255,255,255,.14),transparent 70%),radial-gradient(35% 45% at 75% 30%,color-mix(in srgb,var(--sky-hz) 30%,transparent),transparent 70%);
+  animation:skyAurora 38s ease-in-out infinite alternate}
+@keyframes skyAurora{0%{transform:translate3d(-4%,0,0) scale(1)}50%{transform:translate3d(3%,-2%,0) scale(1.06)}100%{transform:translate3d(6%,1%,0) scale(1.02)}}
+html.sky .skyband .sb-sun{animation:skyBreathe 14s ease-in-out infinite}
+@keyframes skyBreathe{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:.85;transform:translate(-50%,-50%) scale(1.08)}}
+html.sky[data-sky="night"] .skyband .sb-sun{animation:none}
+@media (prefers-reduced-motion:reduce){html.sky .skyband::after,html.sky .skyband .sb-sun{animation:none}}
+html.sky .skyband .sb-sun{position:absolute;left:var(--sun-x);top:var(--sun-y,calc(var(--band-h) * .62));width:620px;height:620px;transform:translate(-50%,-50%);border-radius:50%;
   background:radial-gradient(closest-side,color-mix(in srgb,var(--sun) 70%,transparent),color-mix(in srgb,var(--sun) 18%,transparent) 45%,transparent 72%);opacity:.75}
 html.sky[data-sky="night"] .skyband .sb-sun{opacity:.22;width:360px;height:360px}
-html.sky .skyband .sb-stars{position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease;
+html.sky .skyband .sb-stars{position:absolute;inset:0 0 auto 0;height:var(--band-h);opacity:0;transition:opacity 1.5s ease;
   background-image:radial-gradient(1px 1px at 9% 14%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 36%,#fff 50%,transparent 51%),
   radial-gradient(1.4px 1.4px at 37% 10%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 51% 27%,#fff 50%,transparent 51%),
   radial-gradient(1px 1px at 63% 8%,#fff 50%,transparent 51%),radial-gradient(1.4px 1.4px at 74% 33%,#fff 50%,transparent 51%),
@@ -3147,9 +3279,9 @@ html.sky .skyband .sb-stars{position:absolute;inset:0;opacity:0;transition:opaci
 html.sky[data-sky="night"] .skyband .sb-stars{opacity:.75}
 html.sky[data-sky="dawn"] .skyband .sb-stars,html.sky[data-sky="evening"] .skyband .sb-stars{opacity:.3}
 html.sky .skyband .sb-wisp{position:absolute;height:60px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(18px);animation:sbDrift 140s linear infinite}
-html.sky .skyband .sb-wisp.w1{width:520px;top:18%;left:-10%}
-html.sky .skyband .sb-wisp.w2{width:380px;top:40%;left:30%;animation-duration:190s;animation-delay:-60s;opacity:.7}
-html.sky .skyband .sb-wisp.w3{width:640px;top:8%;left:60%;animation-duration:230s;animation-delay:-120s;opacity:.55}
+html.sky .skyband .sb-wisp.w1{width:520px;top:calc(var(--band-h) * .18);left:-10%}
+html.sky .skyband .sb-wisp.w2{width:380px;top:calc(var(--band-h) * .4);left:30%;animation-duration:190s;animation-delay:-60s;opacity:.7}
+html.sky .skyband .sb-wisp.w3{width:640px;top:calc(var(--band-h) * .08);left:60%;animation-duration:230s;animation-delay:-120s;opacity:.55}
 html.sky[data-sky="night"] .skyband .sb-wisp{opacity:.12}
 @keyframes sbDrift{from{transform:translateX(-30vw)}to{transform:translateX(70vw)}}
 html.sky .hero,html.sky main,html.sky footer{position:relative;z-index:1}
@@ -3247,7 +3379,7 @@ html.sky .foot-in{color:var(--muted);opacity:.8}
 /* page entrance after the brief hands off */
 @keyframes skyRise{from{opacity:0;transform:translateY(26px) scale(.985)}to{opacity:1;transform:none}}
 html.sky.arriving .panel.active > *{animation:skyRise .8s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + 120ms)}
-html.sky.arriving .hero-in > :not(.hero-arc){animation:skyRise .7s cubic-bezier(.2,.7,.2,1) both}
+html.sky.arriving .hero-in > :not(.hero-arc):not(#heroTitle){animation:skyRise .7s cubic-bezier(.2,.7,.2,1) both}
 
 /* ---- theme panel: sky picker ---- */
 .sky-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
@@ -3258,13 +3390,22 @@ html.sky.arriving .hero-in > :not(.hero-arc){animation:skyRise .7s cubic-bezier(
 
 /* ---- Games: Arcade ---- */
 html.sky .arc-wrap{max-width:1180px;margin:0 auto}
+  .ar-bf{all:unset;box-sizing:border-box;cursor:pointer;margin-top:12px;display:inline-flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:13.5px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background .2s ease,transform .2s ease}
+  .ar-bf:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
+  .ar-bf:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .ar-bf b{font-weight:700}
+  .ar-bf-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#0B6E58,#0E9F6E)}
+  .ar-bf-ic svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .ar-bf-go{font-size:18px;line-height:1;opacity:.8}
+  .ar-bf.played .ar-bf-ic{background:rgba(255,255,255,.22)}
 html.sky .ar-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;color:#fff;margin:8px 0 22px}
 html.sky .ar-head h2{margin:0;font:300 clamp(34px,3.3vw,52px)/1.05 var(--disp);letter-spacing:-.035em;color:#fff}
 html.sky .ar-head p{margin:8px 0 0;color:rgba(255,255,255,.82);font-size:15px}
 html.sky .ar-ring{display:flex;align-items:center;gap:12px;color:#fff;font-size:14px;font-weight:600}
 html.sky .ar-ring svg{width:54px;height:54px;transform:rotate(-90deg)}
 html.sky .ar-ring circle{fill:none;stroke-width:6}
-html.sky .ar-feat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+html.sky .ar-feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 html.sky .ar-card{all:unset;cursor:pointer;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:230px;border-radius:var(--r-card);overflow:hidden;color:#fff;
   padding:20px;box-shadow:0 26px 50px -28px rgba(8,20,50,.6);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s ease;isolation:isolate}
 html.sky .ar-card:hover{transform:translateY(-4px);box-shadow:0 34px 60px -28px rgba(8,20,50,.7)}
@@ -3296,7 +3437,7 @@ html.sky .ar-tile .ar-s{font-size:12px;color:var(--muted);margin-top:2px}
 html.sky .ar-tile .ar-chk{position:absolute;top:8px;right:9px;width:18px;height:18px;border-radius:50%;background:var(--up);color:#fff;display:none;place-items:center;font-size:11px;font-weight:900}
 html.sky .ar-tile.played .ar-chk{display:grid}
 html.sky .ar-tile.played .ar-t{opacity:.7}
-@media(max-width:1100px){html.sky .ar-feat{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){html.sky .ar-feat{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){html.sky .ar-feat{grid-template-columns:1fr 1fr;gap:10px} html.sky .ar-card{min-height:170px;padding:14px} html.sky .ar-card .ar-nm{font-size:17px} html.sky .ar-head{flex-direction:column;align-items:flex-start}}
 
 /* Games, Brain Food and the game screens sit on the band: their loose header text goes white */
@@ -3306,6 +3447,212 @@ html.sky #panel-quiz .bf-top,html.sky #panel-quiz .bf-date,html.sky #panel-quiz 
   html.sky .skyband .sb-wisp{animation:none}
   html.sky.arriving .panel.active > *,html.sky.arriving .hero-in > *{animation:none}
 }
+</style>
+<style id="dc3-style">
+/* ---- The Daily Case v3 ---- */
+.dc3 .dc3-file{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:14px;position:relative;overflow:hidden}
+.dc3 .dc3-file::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,#7A4E8C,#D9A5C8)}
+.dc3-top{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.dc3-client{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.dc3-av{width:52px;height:52px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font:700 18px var(--disp,inherit);color:hsl(var(--h) 45% 26%);background:linear-gradient(145deg,hsl(var(--h) 75% 88%),hsl(calc(var(--h) + 30) 70% 78%))}
+.dc3-t{font:600 22px/1.15 var(--disp,inherit);letter-spacing:-.02em;color:var(--ink)}
+.dc3-who{font-size:13.5px;color:var(--muted);margin-top:3px}
+.dc3-sit{font-size:15.5px;line-height:1.55;color:var(--ink);margin:0 0 14px}
+.dc3-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dc3-facts span{padding:9px 11px;border-radius:12px;background:color-mix(in srgb,var(--ink) 4%,transparent);min-width:0}
+.dc3-facts u{display:block;text-decoration:none;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.dc3-facts b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+@media(max-width:620px){.dc3-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dc3-rail{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.dc3-pip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:6px 12px 6px 6px;border-radius:999px;background:var(--card);border:1px solid var(--hairline);color:var(--muted)}
+.dc3-pip i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.dc3-pip.on{color:var(--ink);border-color:#7A4E8C}.dc3-pip.on i{background:#7A4E8C;color:#fff}
+.dc3-pip.done i{background:var(--up);color:#fff}
+.dc3-mood{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:10px 14px;margin-bottom:14px}
+.dc3-face svg{width:34px;height:34px;fill:none;stroke:var(--mc);stroke-width:1.7;stroke-linecap:round;transition:all .5s ease}
+.dc3-face .f{fill:var(--mc);stroke:none}
+.dc3-face path{transition:d .5s ease}
+.dc3-mood-b{flex:1;min-width:0}
+.dc3-mood-l{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.dc3-mood-bar{height:8px;border-radius:8px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.dc3-mood-bar i{display:block;height:100%;border-radius:8px;transition:width .7s cubic-bezier(.2,.8,.2,1),background .5s ease}
+.dc3-card{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:24px;padding:22px;box-shadow:var(--shadow)}
+.dc3-card.in{animation:dc3In .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes dc3In{from{opacity:0;transform:translateY(14px)}}
+.dc3-k{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7A4E8C;margin-bottom:6px}
+html[data-mode="dark"] .dc3-k{color:#D9A5C8}
+.dc3-q{font:600 24px/1.2 var(--disp,inherit);letter-spacing:-.02em;color:var(--ink);margin:0 0 16px}
+.dc3-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dc3-opts.talk{grid-template-columns:1fr}
+@media(max-width:620px){.dc3-opts{grid-template-columns:1fr}}
+.dc3-opt{appearance:none;font:inherit;text-align:left;font-size:14.5px;font-weight:600;line-height:1.4;color:var(--ink);background:color-mix(in srgb,var(--ink) 3%,var(--card));border:1.5px solid var(--hairline);border-radius:16px;padding:14px 16px;cursor:pointer;transition:transform .15s,border-color .15s,background .2s,opacity .3s}
+.dc3-opt:hover:not(:disabled){border-color:#7A4E8C;transform:translateY(-2px)}
+.dc3-opt:disabled{cursor:default}
+.dc3-opt.right{border-color:var(--up);background:color-mix(in srgb,var(--up) 11%,var(--card));animation:dc3Pop .4s ease}
+.dc3-opt.wrong{border-color:var(--down);background:color-mix(in srgb,var(--down) 9%,var(--card));animation:dc3Shake .4s ease}
+.dc3-opt.dim{opacity:.45}
+.dc3-say{font-weight:500;font-size:14px}
+@keyframes dc3Pop{50%{transform:scale(1.03)}}
+@keyframes dc3Shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.dc3-why{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:14.5px;line-height:1.5;animation:dc3In .35s ease}
+.dc3-why.ok{background:color-mix(in srgb,var(--up) 10%,transparent)} .dc3-why.off{background:color-mix(in srgb,var(--down) 9%,transparent)}
+.dc3-why b{font-weight:800}
+.dc3-foot{display:flex;justify-content:flex-end;margin-top:16px}
+.dc3-go{appearance:none;font:inherit;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#5B3A78,#7A4E8C);border:0;border-radius:999px;padding:12px 22px;cursor:pointer;box-shadow:0 10px 22px -10px #7A4E8C;transition:transform .15s}
+.dc3-go:hover{transform:translateY(-2px)}
+.dc3-decs{display:flex;flex-direction:column;gap:10px}
+.dc3-dec{border-radius:18px;padding:16px 18px;border:1.5px solid var(--hairline);background:color-mix(in srgb,var(--ink) 2.5%,var(--card));transition:transform .22s ease,opacity .22s ease}
+.dc3-dec.wait{padding:10px 18px;border-style:dashed;color:var(--muted);font-size:12.5px;font-weight:700;background:none}
+.dc3-dec.live{border-color:#7A4E8C;box-shadow:0 14px 30px -18px #7A4E8C}
+.dc3-dec.live.in{animation:dc3In .4s cubic-bezier(.2,.8,.2,1)}
+.dc3-dec.fly-r{transform:translateX(40px) rotate(2deg);opacity:0}
+.dc3-dec.fly-l{transform:translateX(-40px) rotate(-2deg);opacity:0}
+.dc3-dec-n{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.dc3-dec-t{font-size:16px;font-weight:700;line-height:1.4;color:var(--ink)}
+.dc3-dec p{margin:8px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.dc3-dec.done.ok{border-color:color-mix(in srgb,var(--up) 55%,transparent)} .dc3-dec.done.ok .dc3-dec-n{color:var(--up)}
+.dc3-dec.done.off{border-color:color-mix(in srgb,var(--down) 50%,transparent)} .dc3-dec.done.off .dc3-dec-n{color:var(--down)}
+.dc3-yn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.dc3-yn button{appearance:none;font:inherit;font-size:15px;font-weight:800;border-radius:14px;padding:13px;cursor:pointer;border:1.5px solid;transition:transform .12s,background .15s}
+.dc3-yn button:active{transform:scale(.97)}
+.dc3-y{color:var(--up);border-color:color-mix(in srgb,var(--up) 50%,transparent);background:color-mix(in srgb,var(--up) 8%,transparent)}
+.dc3-y:hover{background:var(--up);color:#fff}
+.dc3-n{color:var(--down);border-color:color-mix(in srgb,var(--down) 50%,transparent);background:color-mix(in srgb,var(--down) 7%,transparent)}
+.dc3-n:hover{background:var(--down);color:#fff}
+.dc3-result{text-align:center}
+.dc3-ring{position:relative;width:150px;height:150px;margin:4px auto 10px}
+.dc3-ring svg{width:100%;height:100%}
+.dc3-ring .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 8%,transparent);stroke-width:10}
+.dc3-ring .val{fill:none;stroke:#7A4E8C;stroke-width:10;stroke-linecap:round;animation:dc3Ring 1.2s cubic-bezier(.2,.8,.2,1)}
+@keyframes dc3Ring{from{stroke-dasharray:0 400}}
+.dc3-ring > div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dc3-ring b{font:600 44px/1 var(--disp,inherit);color:var(--ink)} .dc3-ring span{font-size:13px;font-weight:700;color:var(--muted);margin-top:4px}
+.dc3-verdict{font-size:16px;font-weight:700;margin-bottom:18px}
+.dc3-srs{display:flex;flex-direction:column;gap:10px;max-width:440px;margin:0 auto 18px;text-align:left}
+.dc3-sr{display:grid;grid-template-columns:100px 1fr 56px;gap:10px;align-items:center;font-size:13.5px;font-weight:700}
+.dc3-sbar{height:8px;border-radius:8px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.dc3-sbar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#7A4E8C,#D9A5C8)}
+.dc3-sr b{text-align:right} .dc3-sr small{color:var(--muted);font-weight:600}
+.dc3-take{font-size:14px;line-height:1.5;text-align:left;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,#7A4E8C 8%,transparent)}
+@media (prefers-reduced-motion:reduce){.dc3 *{animation:none!important}}
+</style>
+<style id="qb-style">
+/* ---- Word Blitz ---- */
+.qb{--qb1:#C2703B;--qb2:#E8496A;--qb3:#7C4DFF}
+.qb-hero,.qb-card,.qb-mode,.qb-stat{position:relative;overflow:hidden;border-radius:26px}
+.qb-hero{padding:28px 28px 26px;margin-bottom:14px;color:#fff;background:linear-gradient(135deg,#7A2E12 0%,var(--qb1) 40%,var(--qb2) 75%,var(--qb3) 120%);box-shadow:0 30px 60px -30px #7A2E12}
+.qb-orbs i{position:absolute;border-radius:50%;filter:blur(30px);opacity:.55;animation:qbOrb 16s ease-in-out infinite alternate;pointer-events:none}
+.qb-orbs i:nth-child(1){width:260px;height:260px;background:#FFC48A;top:-90px;right:-60px}
+.qb-orbs i:nth-child(2){width:200px;height:200px;background:#FF7AA8;bottom:-90px;left:20%;animation-duration:20s}
+.qb-orbs i:nth-child(3){width:160px;height:160px;background:#9C7BFF;top:20%;left:-60px;animation-duration:24s}
+@keyframes qbOrb{to{transform:translate(30px,20px) scale(1.15)}}
+.qb-hero > :not(.qb-orbs){position:relative}
+.qb-hero-k{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+.qb-hero-w{font:300 clamp(44px,7vw,78px)/1 var(--disp,'Sora',sans-serif);letter-spacing:-.04em;margin:8px 0 6px;animation:qbRise .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes qbRise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}}
+.qb-hero-p{font-size:14px;opacity:.85;margin-bottom:12px}
+.qb-hero-d{font-size:18px;font-weight:600;line-height:1.4;max-width:640px}
+.qb-hero-x{font-size:14.5px;font-style:italic;opacity:.82;margin-top:10px;max-width:640px}
+.qb-modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:620px){.qb-modes{grid-template-columns:1fr}}
+.qb-mode{appearance:none;font:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--glass-edge,var(--hairline));background:var(--card);color:var(--ink);box-shadow:var(--shadow);transition:transform .18s,box-shadow .18s}
+.qb-mode:hover{transform:translateY(-3px)}
+.qb-mode b{display:block;font:600 19px var(--disp,inherit);letter-spacing:-.02em}
+.qb-mode small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.qb-mode-ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;flex-shrink:0;color:#fff}
+.qb-mode-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.qb-mode.blitz .qb-mode-ic{background:linear-gradient(135deg,var(--qb1),var(--qb2));box-shadow:0 10px 22px -10px var(--qb2)}
+.qb-mode.blitz .qb-mode-ic svg{fill:#fff;stroke:none}
+.qb-mode.chill .qb-mode-ic{background:linear-gradient(135deg,#2E86AB,#7CC6E8)}
+.qb-go{margin-left:auto;font-size:13px;font-weight:800;padding:8px 14px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.qb-mode.blitz .qb-go{background:linear-gradient(135deg,var(--qb1),var(--qb2));color:#fff}
+.qb-stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px;margin-bottom:6px}
+.qb-stat{padding:16px 18px;background:var(--card);border:1px solid var(--glass-edge,var(--hairline));box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:center}
+.qb-stat b{font:600 26px var(--disp,inherit);letter-spacing:-.03em} .qb-stat small{font-size:12px;color:var(--muted);font-weight:700}
+.qb-stat.ring{flex-direction:row;align-items:center;gap:12px}
+.qb-stat.ring svg{width:58px;height:58px;flex-shrink:0}
+.qb-stat .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 8%,transparent);stroke-width:7}
+.qb-stat .val{fill:none;stroke:var(--qb2);stroke-width:7;stroke-linecap:round}
+.qb-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.qb-bar .qdots{flex:1;justify-content:center}
+.qb-pts{display:flex;align-items:baseline;gap:4px;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--hairline)}
+.qb-pts b{font:600 20px var(--disp,inherit);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.qb-pts small{font-size:12px;color:var(--muted);font-weight:700}
+.qb-card{padding:22px 24px 24px;background:var(--card);border:1px solid var(--glass-edge,var(--hairline));box-shadow:var(--shadow)}
+.qb-card.in{animation:qbIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes qbIn{from{opacity:0;transform:translateY(18px) scale(.985)}}
+.qb-card.shake{animation:qbShake .45s ease}
+@keyframes qbShake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.qb-card-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.qb-timer{position:relative;width:52px;height:52px;flex-shrink:0}
+.qb-timer svg{width:100%;height:100%}
+.qb-timer .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent);stroke-width:5}
+.qb-timer .val{fill:none;stroke:var(--qb1);stroke-width:5;stroke-linecap:round;transition:stroke .3s}
+.qb-timer .val.late{stroke:var(--down)}
+.qb-timer span{position:absolute;inset:0;display:grid;place-items:center;font:600 17px var(--disp,inherit);font-variant-numeric:tabular-nums}
+.qb-n{font:600 26px var(--disp,inherit)} .qb-n small{font-size:14px;color:var(--muted)}
+.qb-combo{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--muted);padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.qb-combo svg{width:15px;height:15px;fill:currentColor}
+.qb-combo.hot{color:#fff;background:linear-gradient(135deg,#FF8A00,#E8496A);box-shadow:0 8px 20px -10px #E8496A;animation:qbHot 1.4s ease-in-out infinite}
+@keyframes qbHot{50%{box-shadow:0 8px 26px -6px #FF8A00}}
+.qb-5050{margin-left:auto;appearance:none;font:inherit;font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:999px;border:1.5px dashed color-mix(in srgb,var(--qb3) 60%,transparent);color:var(--qb3);background:none;cursor:pointer}
+html[data-mode="dark"] .qb-5050{color:#B9A3FF}
+.qb-5050:disabled{opacity:.35;cursor:default}
+.qb-k{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.qb-prompt{font:300 clamp(34px,5vw,54px)/1.05 var(--disp,inherit);letter-spacing:-.035em;color:var(--ink);margin:6px 0 4px}
+.qb-prompt.def{font:500 clamp(19px,2.4vw,24px)/1.35 var(--disp,inherit);letter-spacing:-.01em;margin:8px 0 14px}
+.qb-ipa{font-size:14px;color:var(--muted);margin-bottom:14px}
+.qb-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:620px){.qb-opts{grid-template-columns:1fr}}
+.qb-opt{appearance:none;font:inherit;text-align:left;display:flex;align-items:flex-start;gap:12px;padding:15px 16px;border-radius:18px;border:1.5px solid var(--hairline);background:color-mix(in srgb,var(--ink) 2.5%,var(--card));color:var(--ink);font-size:14.5px;line-height:1.4;cursor:pointer;
+  transition:transform .15s,border-color .15s,background .2s,opacity .3s;animation:qbOpt .4s both cubic-bezier(.2,.8,.2,1);animation-delay:var(--d)}
+@keyframes qbOpt{from{opacity:0;transform:translateY(10px)}}
+.qb-opt b{font:600 18px var(--disp,inherit);letter-spacing:-.01em}
+.qb-opt kbd{font:700 11px var(--disp,inherit);width:22px;height:22px;flex-shrink:0;border-radius:7px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);margin-top:1px}
+.qb-opt:hover:not(:disabled){border-color:var(--qb1);transform:translateY(-2px)}
+.qb-opt:disabled{cursor:default}
+.qb-opt.correct{border-color:var(--up);background:color-mix(in srgb,var(--up) 13%,var(--card));animation:qbPop .4s ease}
+.qb-opt.correct kbd{background:var(--up);color:#fff}
+.qb-opt.wrong{border-color:var(--down);background:color-mix(in srgb,var(--down) 10%,var(--card))}
+.qb-opt.dim{opacity:.4}
+.qb-opt.gone{opacity:.12;transform:scale(.97);pointer-events:none}
+@keyframes qbPop{50%{transform:scale(1.035)}}
+.qb-pop{position:absolute;right:26px;top:22px;font:700 26px var(--disp,inherit);color:var(--up);animation:qbFloat 1.1s ease-out forwards;pointer-events:none}
+@keyframes qbFloat{from{opacity:0;transform:translateY(10px) scale(.8)}20%{opacity:1;transform:none}to{opacity:0;transform:translateY(-34px)}}
+.qb-reveal{margin-top:16px;padding:14px 16px;border-radius:16px;font-size:14.5px;line-height:1.5;animation:qbIn .35s ease}
+.qb-reveal.ok{background:color-mix(in srgb,var(--up) 10%,transparent)} .qb-reveal.off{background:color-mix(in srgb,var(--down) 8%,transparent)}
+.qb-reveal-h{font-weight:800;margin-bottom:4px}
+.qb-reveal i{color:var(--muted)}
+.qb-ex{font-style:italic;color:var(--muted);margin-top:6px}
+.qb-next{appearance:none;font:inherit;font-size:15px;font-weight:800;color:#fff;border:0;border-radius:999px;padding:13px 24px;margin-top:14px;cursor:pointer;
+  background:linear-gradient(135deg,var(--qb1),var(--qb2));box-shadow:0 12px 26px -12px var(--qb2);transition:transform .15s}
+.qb-next:hover{transform:translateY(-2px)}
+.qb-res{text-align:center;color:#fff;background:linear-gradient(135deg,#7A2E12 0%,var(--qb1) 40%,var(--qb2) 75%,var(--qb3) 120%);border:0}
+.qb-res > :not(.qb-orbs){position:relative}
+.qb-res .qb-k{color:rgba(255,255,255,.8)}
+.qb-stars{display:flex;justify-content:center;gap:8px;margin:12px 0 4px}
+.qb-stars svg{width:40px;height:40px;fill:rgba(255,255,255,.22)}
+.qb-stars svg.on{fill:#FFD75E;filter:drop-shadow(0 4px 10px rgba(255,200,80,.6));animation:qbStar .6s cubic-bezier(.2,1.6,.4,1) both}
+.qb-stars svg.on:nth-child(2){animation-delay:.15s} .qb-stars svg.on:nth-child(3){animation-delay:.3s}
+@keyframes qbStar{from{transform:scale(0) rotate(-40deg)}}
+.qb-res-big{font:300 clamp(56px,9vw,92px)/1 var(--disp,inherit);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.qb-res-big small{font-size:22px;opacity:.75;margin-left:6px}
+.qb-res-row{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:12px 0 8px;font-size:14px;opacity:.9}
+.qb-res-msg{font-size:16px;font-weight:600;margin-bottom:6px}
+.qb-res-btns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.qb-res .qb-next{background:#fff;color:#8A3B12;box-shadow:0 12px 30px -12px rgba(0,0,0,.4)}
+.qb-res .pbtn{margin-top:14px}
+.qb-flips{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.qb-flip{appearance:none;font:inherit;position:relative;height:130px;border:0;padding:0;background:none;cursor:pointer;perspective:800px}
+.qb-flip span{position:absolute;inset:0;border-radius:18px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;backface-visibility:hidden;transition:transform .55s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow)}
+.qb-flip .f{background:var(--card);border:1px solid var(--hairline);color:var(--ink)}
+.qb-flip .f b{font:600 22px var(--disp,inherit);letter-spacing:-.02em} .qb-flip .f small{font-size:11.5px;color:var(--muted);margin-top:6px}
+.qb-flip .b{background:linear-gradient(135deg,var(--qb1),var(--qb2));color:#fff;font-size:13.5px;line-height:1.4;transform:rotateY(180deg)}
+.qb-flip.on .f{transform:rotateY(-180deg)} .qb-flip.on .b{transform:rotateY(0)}
+.qb-confetti{position:fixed;z-index:9500;pointer-events:none;width:0;height:0}
+.qb-confetti i{position:absolute;width:8px;height:12px;border-radius:2px;animation:qbConf 1s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes qbConf{from{transform:translate(0,0) rotate(0);opacity:1}to{transform:translate(var(--x),calc(var(--y) + 60px)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion:reduce){.qb *{animation:none!important}}
 </style>
 <style id="sky-caps">
 /* Sky: sentence case everywhere (generated from every all-caps rule above) */
@@ -4699,16 +5046,16 @@ const wxDrops = (xs, y, col) => xs.map((x,i) => `<line x1="${x}" y1="${y+(i%2)*1
 const wxFlakes = xs => xs.map((x,i) => `<circle cx="${x}" cy="${26+(i%2)*3}" r="1.7" fill="${WX_C.snow}" stroke="${WX_C.rim}" stroke-width=".7"/>`).join("");
 function wxIcon(cond, day, size){
   const c = (cond||"").toLowerCase(); const sz = size || 26;
-  const wrap = inner => `<svg class="wxi" viewBox="0 0 32 32" width="${sz}" height="${sz}" aria-hidden="true">${inner}</svg>`;
+  const wrap = inner => `<svg class="wxi" viewBox="0 0 32 32" style="overflow:visible" width="${sz}" height="${sz}" aria-hidden="true">${inner}</svg>`;
   const night = day === false;
-  if(c.includes("thunder")) return wrap(wxCloud(2,1,1) + `<path d="M17 21 l-4 6 h3.2 l-1.6 5 6-7.4 h-3.4 l1.8-3.6 z" fill="${WX_C.bolt}" stroke="${WX_C.sun}" stroke-width=".8" stroke-linejoin="round"/>`);
-  if(c.includes("snow")) return wrap(wxCloud(2,0,1) + wxFlakes([10,16,22]));
+  if(c.includes("thunder")) return wrap(wxCloud(0.5,1,1) + `<path d="M17 21 l-4 6 h3.2 l-1.6 5 6-7.4 h-3.4 l1.8-3.6 z" fill="${WX_C.bolt}" stroke="${WX_C.sun}" stroke-width=".8" stroke-linejoin="round"/>`);
+  if(c.includes("snow")) return wrap(wxCloud(0.5,0,1) + wxFlakes([10,16,22]));
   if(c.includes("shower")) return wrap((night ? wxMoon(23,7,5.5) : wxSun(23,7,5)) + wxCloud(0,4,.92) + wxDrops([11,17], 26, WX_C.rain));
-  if(c.includes("rain")||c.includes("drizzle")) return wrap(wxCloud(2,0,1) + wxDrops([10,16,22], 24, WX_C.rain));
-  if(c.includes("fog")||c.includes("haze")) return wrap(wxCloud(2,-2,.95) + [0,1,2].map(i => `<line x1="${6+i*1.5}" y1="${23+i*3}" x2="${26-i*1.5}" y2="${23+i*3}" stroke="${WX_C.fog}" stroke-width="2.2" stroke-linecap="round"/>`).join(""));
-  if(c.includes("overcast")) return wrap(wxCloud(-1,3,.8) + wxCloud(4,0,1.05));
+  if(c.includes("rain")||c.includes("drizzle")) return wrap(wxCloud(0.5,0,1) + wxDrops([10,16,22], 24, WX_C.rain));
+  if(c.includes("fog")||c.includes("haze")) return wrap(wxCloud(1,-2,.95) + [0,1,2].map(i => `<line x1="${6+i*1.5}" y1="${23+i*3}" x2="${26-i*1.5}" y2="${23+i*3}" stroke="${WX_C.fog}" stroke-width="2.2" stroke-linecap="round"/>`).join(""));
+  if(c.includes("overcast")) return wrap(wxCloud(-1,4,.78) + wxCloud(2.5,1,.97));
   if(c.includes("partly")||c.includes("mostly cloud")) return wrap((night ? wxMoon(23,8,5.5) : wxSun(22,8,5)) + wxCloud(0,5,.95));
-  if(c.includes("cloud")) return wrap(wxCloud(2,2,1.05));
+  if(c.includes("cloud")) return wrap(wxCloud(0.5,2,1.02));
   if(c.includes("mostly")) return wrap(night ? wxMoon(16,15,8) : wxSun(16,16,7));   // mostly sunny / mostly clear
   return wrap(night ? wxMoon(16,15,8.5) : wxSun(16,16,7.5));                        // sunny / clear
 }
@@ -7501,69 +7848,34 @@ function daysSince(iso){
   if(!isFinite(then)) return null;
   return Math.floor((Date.now() - then) / 86400000);
 }
-// 21 mirrors DEFAULT_FRIEND_FREQ in the friends sync module (a separate JS
-// module scope, so the constant can't be shared directly — keep in sync).
-/* ---------- who am I actually out of touch with? ----------
-   Eli, Sep 2026: "I'd rather it be less strictly like 'due to reach out to this person in
-   three days'. If I texted someone a month ago but haven't called them in 6 months, suggest
-   that. Each should be tracked individually, and it should matter in terms of which people
-   I owe communications to."
-
-   So a contact is no longer one timestamp. Each person has three channels -- text, call,
-   hang out -- each with its own cadence derived from that person's overall frequency (a
-   text is the cheap, frequent one; seeing someone is the rare, expensive one). A person's
-   urgency is the WORST of their three ratios (days since / that channel's cadence), and the
-   nudge names the channel: "Call Adam — last call 6 months ago", not "reach out to Adam".
-   Nothing new is stored: the per-channel history was already being written by logContact. */
-const FRIEND_CHANNELS = [
-  { key:"text",    label:"text",     verb:"Text",     icon:"💬", mult:1 },
-  { key:"call",    label:"call",     verb:"Call",     icon:"📞", mult:2.5 },
-  { key:"hangout", label:"hangout",  verb:"See",      icon:"☕", mult:5 }
-];
-const FRIEND_CH = Object.fromEntries(FRIEND_CHANNELS.map(c => [c.key, c]));
-/* history entries carry free-text methods ("Hung out", "Call", "", …) written by older
-   versions of the buttons, so classify rather than assume. */
-function friendChannelOf(method){
-  const s = String(method || "").toLowerCase();
-  if(!s) return null;
-  if(/hang|coffee|lunch|dinner|drinks|saw |visit|met |in person|golf/.test(s)) return "hangout";
-  if(/call|phone|facetime|zoom|voice/.test(s)) return "call";
-  if(/text|message|dm|imessage|wrote|email/.test(s)) return "text";
-  return null;
-}
-function friendChannels(f){
-  const freq = Number(f.freqDays) || 21;
-  const hist = f.history || [];
-  const everContacted = !!f.lastContact;
-  return FRIEND_CHANNELS.map(c => {
-    const last = hist.find(h => friendChannelOf(h.method) === c.key);
-    const cadence = Math.max(3, Math.round(freq * c.mult));
-    const days = last ? daysSince(last.date) : null;
-    /* Never logged on this channel isn't a five-alarm fire on its own -- it usually just
-       means the channel is new. It ranks as mildly due, unless this person has never been
-       contacted at all, which is. */
-    const ratio = days == null ? (everContacted ? 1.1 : 2) : days / cadence;
-    return { ...c, cadence, days, last: last ? last.date : null, ratio, over: days != null && days >= cadence };
-  });
+/* ---------- who am I out of touch with? ----------
+   Eli, Oct 2026: "It doesn't need to separate the last text, call or hangout, just the last
+   touch point in general. If I've talked to them recently, whether that's in person, by call,
+   or by text, that's all that matters."
+   So a person is one clock again: days since the most recent touchpoint of ANY kind, against
+   the rhythm he picked for them. Old history entries keep their method text (nothing is
+   migrated or lost); it just no longer drives anything. */
+const FRIEND_CH = { touch:{ key:"touch", label:"catch-up", verb:"Catch up with", icon:"\u{1F44B}" } };
+function friendLastTouch(f){
+  let best = f.lastContact ? new Date(f.lastContact).getTime() : 0;
+  for(const h of (f.history || [])){ const t = h && h.date ? new Date(h.date).getTime() : 0; if(isFinite(t) && t > best) best = t; }
+  return best ? new Date(best).toISOString() : null;
 }
 function friendStatus(f){
-  const chans = friendChannels(f);
-  const worst = chans.reduce((a, b) => (b.ratio > a.ratio ? b : a));
-  const days = daysSince(f.lastContact);
-  const state = !f.lastContact ? "never" : worst.ratio >= 1 ? "overdue" : worst.ratio >= 0.8 ? "soon" : "ok";
+  const freq = Number(f.freqDays) || 21;
+  const last = friendLastTouch(f);
+  const days = last ? daysSince(last) : null;
+  const ratio = days == null ? 2 : days / freq;
+  const state = days == null ? "never" : ratio >= 1 ? "overdue" : ratio >= 0.8 ? "soon" : "ok";
   const first = String(f.name || "").trim().split(/\s+/)[0] || f.name;
+  const worst = { ...FRIEND_CH.touch, cadence: freq, days, last, ratio };
   return {
-    days, chans, worst, ratio: worst.ratio, state,
-    overdueBy: worst.days != null ? worst.days - worst.cadence : 900,
-    suggestion: `${worst.verb} ${first}`,
-    because: worst.days == null ? `no ${worst.label} logged yet` : `last ${worst.label} ${relTimeAgo(worst.last)}`
+    days, last, freq, worst, ratio, state,
+    overdueBy: days != null ? days - freq : 900,
+    dueIn: days != null ? freq - days : 0,
+    suggestion: `Catch up with ${first}`,
+    because: days == null ? "nothing logged yet" : `last talked ${relTimeAgo(last)}`
   };
-}
-function friendChannelChip(c){
-  const cls = c.days == null ? "none" : c.ratio >= 1 ? "over" : c.ratio >= 0.8 ? "soon" : "ok";
-  const age = c.days == null ? "—" : c.days === 0 ? "today" : c.days < 7 ? c.days + "d"
-            : c.days < 60 ? Math.round(c.days/7) + "w" : Math.round(c.days/30) + "mo";
-  return `<span class="fch ${cls}" title="${esc(c.verb)} · every ${c.cadence} days">${c.icon}<b>${age}</b></span>`;
 }
 function freqLabel(days){
   const d = Number(days) || 21;
@@ -7571,6 +7883,7 @@ function freqLabel(days){
   if(d === 14) return "every 2 weeks";
   if(d === 21) return "every 3 weeks";
   if(d === 30) return "monthly";
+  if(d === 60) return "every 2 months";
   if(d === 90) return "every 3 months";
   if(d === 180) return "every 6 months";
   return `every ${d} days`;
@@ -7617,70 +7930,16 @@ function nextUpFriend(people){
   return upcoming[0];
 }
 
-function buildFriendsCardHTML(state){
-  const people = (state && state.people) || [];
-  let body;
-  if(!people.length){
-    body = `<div class="friends-pick-sub">No friends tracked yet — add some from the Manage page.</div>`;
-  }else{
-    const featured = pickFeaturedFriend(people);
-    if(featured){
-      const daysTxt = featured.days == null ? "You haven't logged a catch-up yet" : `${featured.days} day${featured.days===1?"":"s"} since you last connected`;
-      body = `<div class="friends-pick">
-        <div class="friends-pick-name">${esc(featured.p.name)}</div>
-        <div class="friends-pick-sub">${esc(daysTxt)} · aiming for ${esc(freqLabel(featured.p.freqDays))}</div>
-        <div class="friends-log-row">
-          <button type="button" class="friends-log-btn" data-id="${featured.p.id}" data-method="Text">💬 Text</button>
-          <button type="button" class="friends-log-btn" data-id="${featured.p.id}" data-method="Call">📞 Call</button>
-          <button type="button" class="friends-log-btn" data-id="${featured.p.id}" data-method="Hung out">☕ Hung out</button>
-          <button type="button" class="friends-log-btn" data-id="${featured.p.id}" data-method="">✓ Reached out</button>
-        </div>
-      </div>`;
-    }else{
-      const next = nextUpFriend(people);
-      const inDays = next ? Math.max(1, -next.overdueBy) : null;
-      const nextTxt = next ? `Next up: ${esc(next.p.name)} in ${inDays} day${inDays===1?"":"s"}` : "Add a friend to start tracking.";
-      body = `<div class="friends-pick friends-caught-up">
-        <div class="friends-pick-name">🎉 All caught up</div>
-        <div class="friends-pick-sub">${nextTxt}</div>
-      </div>`;
-    }
-  }
-  return `<div class="card friends-card" id="friendsCard">
-    <div class="tc-head"><span class="h">Friend Check-In</span><a href="javascript:void(0)" class="friends-manage-link" id="friendsManageLink">Manage →</a></div>
-    ${body}
-  </div>`;
-}
-function wireFriendsCard(root){
-  const card = root.querySelector("#friendsCard");
-  if(!card || card.dataset.wired) return;
-  card.dataset.wired = "1";
-  const link = card.querySelector("#friendsManageLink");
-  if(link) link.addEventListener("click", goFriends);
-  card.addEventListener("click", e => {
-    const b = e.target.closest(".friends-log-btn");
-    if(b && window.__friendsApi) window.__friendsApi.logContact(b.dataset.id, b.dataset.method);
-  });
-}
-function refreshFriendsCard(root, state){
-  const slot = root.querySelector("#friendsCardSlot");
-  if(!slot) return;
-  slot.innerHTML = buildFriendsCardHTML(state || (window.__friendsApi ? window.__friendsApi.getState() : {people:[]}));
-  wireFriendsCard(root);
-}
-
-/* ================= Friends v2 (Eli, Oct 2026) =================
-   "I don't want to click in just to see a large list of names... it should be more simple
-   when I first open it up. If I really want to see everyone, there should still be an option."
-   So the page opens on ONE person: who to reach out to, which channel, why, and one tap to log
-   it (with Undo). The roster lives behind the "Everyone" toggle, and a tap on anyone opens a
-   detail sheet with everything the old row had (log, rhythm, remove) plus rename and history.
-   Same Firestore data (friends doc, people[]) and the same per-channel urgency math above --
-   nothing about anyone is changed or migrated. */
+/* ================= Friends v3 (Eli, Oct 2026) =================
+   One question, one answer: "who haven't I talked to in a while?"
+   - Opens on ONE person (who's most out of touch), with one big "We caught up" button.
+     Text, call, coffee — it all counts the same. Back-date it with "Earlier…" if it was
+     yesterday or last weekend.
+   - Below that, everyone who's due, each with a one-tap check, then "See everyone".
+   - Each avatar wears a freshness ring: full right after you talk, draining toward their
+     rhythm, red once it's run out. That's the whole model. */
 const FR_SVG = {
-  text:'<path d="M4.5 5h15A1.5 1.5 0 0 1 21 6.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17h-1A1.5 1.5 0 0 1 3 15.5v-9A1.5 1.5 0 0 1 4.5 5z"/><path d="M7.5 10h9M7.5 13h5.5"/>',
-  call:'<path d="M6.8 3.5h2.5l1.5 4.3-2.1 1.4a12.5 12.5 0 0 0 6.1 6.1l1.4-2.1 4.3 1.5v2.5a2 2 0 0 1-2.2 2A17 17 0 0 1 4.8 5.7a2 2 0 0 1 2-2.2z"/>',
-  hangout:'<path d="M4.5 9.5h11.5v4.5a5 5 0 0 1-5 5h-1.5a5 5 0 0 1-5-5V9.5z"/><path d="M16 11h1.3a2.5 2.5 0 0 1 0 5H16"/><path d="M8.3 3.5c-.7.9-.7 1.8 0 2.7M12.2 3.5c-.7.9-.7 1.8 0 2.7"/>',
+  wave:'<path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L3.5 15a1.6 1.6 0 0 1 2.4-2.1L8 15"/>',
   search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   x:'<path d="M6 6l12 12M18 6L6 18"/>',
@@ -7689,20 +7948,19 @@ const FR_SVG = {
   focus:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/>',
   grid:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
   pencil:'<path d="M15.5 4.5l4 4L8 20H4v-4z"/>',
-  skip:'<path d="M5 6l7 6-7 6zM13 6l7 6-7 6z"/>'
+  skip:'<path d="M5 6l7 6-7 6zM13 6l7 6-7 6z"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
 };
 function frIcon(k){ return `<svg class="fr2-ic" viewBox="0 0 24 24" aria-hidden="true">${FR_SVG[k]||""}</svg>`; }
-const FR_RHYTHMS = [[7,"Weekly"],[14,"Every 2 weeks"],[21,"Every 3 weeks"],[30,"Monthly"],[90,"Every 3 months"],[180,"Every 6 months"]];
-const FR_DONE = { text:"Texted", call:"Called", hangout:"Hung out" };
-const FR_NOUN = { text:"Text", call:"Call", hangout:"Hangout" };
-const FR_LOGGED = { text:"a text", call:"a call", hangout:"a hangout" };
+const FR_RHYTHMS = [[7,"Weekly"],[14,"Every 2 weeks"],[21,"Every 3 weeks"],[30,"Monthly"],[60,"Every 2 months"],[90,"Every 3 months"],[180,"Every 6 months"]];
 
 const FR = (() => {
   let view = "focus", skipped = [];
   try{ view = localStorage.getItem("dh-friends-view") === "all" ? "all" : "focus"; }catch(e){}
   try{ skipped = JSON.parse(sessionStorage.getItem("dh-friends-skip") || "[]"); }catch(e){}
   return { view, skipped:new Set(skipped), focusId:null, find:"", q:"", filter:"all", sort:"due",
-           openId:null, adding:false, addFreq:21, editing:false, armRemove:null, shownId:null, sheetShown:false };
+           openId:null, adding:false, addFreq:21, editing:false, armRemove:null, shownId:null, sheetShown:false, earlierFor:null };
 })();
 function frSaveView(){ try{ localStorage.setItem("dh-friends-view", FR.view); }catch(e){} }
 function frSaveSkip(){ try{ sessionStorage.setItem("dh-friends-skip", JSON.stringify([...FR.skipped])); }catch(e){} }
@@ -7737,31 +7995,44 @@ function frSpan(d){
   const u = d < 7 ? [d,"day"] : d < 60 ? [Math.round(d/7),"week"] : d < 365 ? [Math.round(d/30),"month"] : [Math.round(d/365),"year"];
   return `${u[0]} ${u[1]}${u[0]===1?"":"s"}`;
 }
-function frEvery(days){ const d = Number(days); if(d % 30 === 0 && d >= 60) return `every ${d/30} months`; if(d % 7 === 0 && d >= 14) return `every ${d/7} weeks`; if(d === 7) return "weekly"; return `every ${d} days`; }
-function frChanState(c){ return c.days == null ? "none" : c.ratio >= 1 ? "over" : c.ratio >= 0.8 ? "soon" : "ok"; }
+function frEvery(days){ const d = Number(days); const hit = FR_RHYTHMS.find(r => r[0] === d); if(hit) return hit[1].toLowerCase(); if(d % 7 === 0) return `every ${d/7} weeks`; return `every ${d} days`; }
 function frState(st){ return (st.state === "never" || st.state === "overdue") ? "over" : st.state; }
+/* freshness 0..1 — 1 right after a catch-up, 0 once the rhythm has run out */
+function frFresh(st){ return st.days == null ? 0 : Math.max(0, Math.min(1, 1 - st.ratio)); }
 function frAvatar(p, size, st){
   st = st || friendStatus(p);
-  return `<span class="fr2-av ${size||""} s-${frState(st)}" style="--av-h:${frHue(p.name)}" aria-hidden="true">${esc(frInitials(p.name))}</span>`;
-}
-function frRing(c){
-  const R = 21, C = 2 * Math.PI * R, s = frChanState(c);
-  const fill = s === "none" ? 0 : s === "over" ? 1 : Math.max(.06, 1 - c.ratio);
-  return `<span class="fr2-ring s-${s}"><svg viewBox="0 0 48 48"><circle class="trk" cx="24" cy="24" r="${R}"/><circle class="val" cx="24" cy="24" r="${R}" stroke-dasharray="${(fill*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 24 24)"/></svg>${frIcon(c.key)}</span>`;
+  const s = frState(st), f = frFresh(st);
+  const R = 46, C = 2 * Math.PI * R;
+  const arc = s === "over" ? C : Math.max(.04, f) * C;
+  return `<span class="fr3-avw ${size||""} s-${s}" style="--av-h:${frHue(p.name)}" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="${R}"/><circle class="val" cx="50" cy="50" r="${R}" stroke-dasharray="${arc.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 50 50)"/></svg>
+    <span class="fr2-av">${esc(frInitials(p.name))}</span></span>`;
 }
 function frPill(st){
   const s = frState(st);
-  const txt = st.state === "never" ? "New · say hi" : s === "over" ? `${FR_NOUN[st.worst.key]} due` : s === "soon" ? `${FR_NOUN[st.worst.key]} soon` : "On track";
+  const txt = st.state === "never" ? "New · say hi" : s === "over" ? (st.overdueBy > 0 ? `${frSpan(st.overdueBy)} over` : "Due today") : s === "soon" ? `Due in ${frSpan(Math.max(1, st.dueIn))}` : "Caught up";
   return `<span class="fr2-pill s-${s}">${esc(txt)}</span>`;
 }
-/* one plain-English line on why this person is up */
+/* one plain-English line on where things stand */
 function frWhy(p, st){
-  const first = esc(frFirst(p.name)), w = st.worst;
-  if(st.state === "never") return `You haven't logged anything with ${first} yet.`;
-  if(st.state === "ok") return `You're in a good spot with ${first}. Last contact ${frAge(st.days)}.`;
-  if(w.days == null) return `No ${w.label} with ${first} logged yet — you usually ${w.key==="hangout"?"see":w.key} them ${frEvery(w.cadence)}.`;
-  const lateBy = w.days - w.cadence;
-  return `Last ${w.label} was <b>${frAge(w.days)}</b>` + (lateBy > 0 ? ` — about ${frSpan(lateBy)} past your usual rhythm.` : ", right around when you'd usually reach back out.");
+  const first = esc(frFirst(p.name));
+  if(st.state === "never") return `You haven't logged a catch-up with ${first} yet.`;
+  if(st.state === "ok") return `You talked <b>${frAge(st.days)}</b>. Next catch-up in about ${frSpan(Math.max(1, st.dueIn))}.`;
+  if(st.state === "soon") return `You talked <b>${frAge(st.days)}</b> — coming due in ${frSpan(Math.max(1, st.dueIn))}.`;
+  return `You last talked <b>${frAge(st.days)}</b>` + (st.overdueBy > 0 ? ` — ${frSpan(st.overdueBy)} past your ${frEvery(st.freq)} rhythm.` : `, right on your ${frEvery(st.freq)} rhythm.`);
+}
+function frDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+/* the "Earlier…" picker: a few one-tap presets plus a real date field */
+function frEarlierHTML(id){
+  if(FR.earlierFor !== id) return "";
+  const today = new Date();
+  const ago = n => { const d = new Date(today); d.setDate(d.getDate() - n); return d; };
+  const lastSat = (() => { const d = new Date(today); const back = ((d.getDay() + 1) % 7) || 7; d.setDate(d.getDate() - back); return d; })();
+  const presets = [["Yesterday", ago(1)], ["2 days ago", ago(2)], ["Last weekend", lastSat], ["A week ago", ago(7)]];
+  return `<div class="fr3-earlier" data-id="${id}">
+    ${presets.map(([l, d]) => `<button class="fr3-chip" data-act="log-on" data-id="${id}" data-date="${frDateStr(d)}">${l}</button>`).join("")}
+    <label class="fr3-date">${frIcon("cal")}<input type="date" data-act-date="${id}" max="${frDateStr(today)}" aria-label="Pick the date"></label>
+  </div>`;
 }
 
 function frModel(){
@@ -7770,33 +8041,33 @@ function frModel(){
   const due = all.filter(x => x.st.state === "overdue" || x.st.state === "never").sort((a,b) => b.st.ratio - a.st.ratio);
   const feat = people.length ? pickFeaturedFriend(people) : null;
   if(feat){ const i = due.findIndex(x => x.p.id === feat.p.id); if(i > 0) due.unshift(due.splice(i, 1)[0]); }
-  const soon = all.filter(x => x.st.state === "soon"), ok = all.filter(x => x.st.state === "ok");
-  // whoever's up: a person picked by hand, else the first due person not set aside this session
+  const soon = all.filter(x => x.st.state === "soon").sort((a,b) => b.st.ratio - a.st.ratio);
+  const ok = all.filter(x => x.st.state === "ok");
   let cur = FR.focusId ? all.find(x => x.p.id === FR.focusId) : null;
   if(!cur && FR.focusId) FR.focusId = null;
   let fresh = due.filter(x => !FR.skipped.has(x.p.id));
   if(!cur && due.length && !fresh.length){ FR.skipped.clear(); frSaveSkip(); fresh = due; }
   if(!cur) cur = fresh[0] || null;
-  return { people, all, due, soon, ok, cur, picked: !!FR.focusId };
+  const recent = all.filter(x => x.st.days != null).sort((a,b) => a.st.days - b.st.days).slice(0, 5);
+  return { people, all, due, soon, ok, cur, recent, picked: !!FR.focusId };
 }
 
 /* ---------- Focus view ---------- */
 function frHeroHTML(m){
   const x = m.cur;
   if(!x){
-    const next = m.all.filter(y => y.st.state !== "overdue" && y.st.state !== "never").sort((a,b) => b.st.ratio - a.st.ratio)[0];
-    const inDays = next ? Math.max(1, Math.round(next.st.worst.cadence - (next.st.worst.days ?? 0))) : 0;
+    const next = m.soon[0] || m.ok.slice().sort((a,b) => b.st.ratio - a.st.ratio)[0];
     return `<section class="fr2-card fr2-done">
       <div class="fr2-done-badge">${frIcon("check")}</div>
-      <h2>Everyone's heard from you</h2>
-      <p>${next ? `Next up: ${esc(next.st.suggestion)} in about ${inDays} day${inDays===1?"":"s"}.` : "Add a few friends to get started."}</p>
+      <h2>You're all caught up</h2>
+      <p>${next ? `Next up: ${esc(frFirst(next.p.name))} in about ${frSpan(Math.max(1, next.st.dueIn))}.` : "Add a few friends to get started."}</p>
       ${next ? `<button class="fr2-btn" data-act="focus" data-id="${next.p.id}">Reach out to ${esc(frFirst(next.p.name))} early</button>` : `<button class="fr2-btn primary" data-act="add">${frIcon("plus")}Add a friend</button>`}
     </section>`;
   }
   const { p, st } = x;
   const enter = FR.shownId !== p.id; FR.shownId = p.id;
   const s = frState(st);
-  const eyebrow = m.picked ? "Catching up" : st.state === "never" ? "Say hi" : "Reach out next";
+  const eyebrow = m.picked ? "Catching up" : st.state === "never" ? "Say hi" : s === "over" ? "Been a while" : "Coming up";
   const pos = m.due.findIndex(y => y.p.id === p.id);
   const dots = m.due.length > 1 && pos >= 0 ? `<div class="fr2-progress">${m.due.slice(0, 6).map((_, i) => `<i class="${i===pos?"on":""}"></i>`).join("")}<span>${pos+1} of ${m.due.length}</span></div>` : `<span></span>`;
   return `<section class="fr2-card fr2-hero ${enter && !frReduced() ? "is-entering" : ""}" data-id="${p.id}" style="--av-h:${frHue(p.name)}">
@@ -7806,52 +8077,69 @@ function frHeroHTML(m){
     </div>
     <div class="fr2-id">
       ${frAvatar(p, "xl", st)}
-      <div><div class="fr2-name">${esc(st.state === "ok" ? p.name : st.suggestion + (p.name.trim().includes(" ") ? " " + p.name.trim().split(/\s+/).slice(1).join(" ") : ""))}</div>
+      <div style="min-width:0"><div class="fr2-name">${esc(p.name)}</div>
       <div class="fr2-why">${frWhy(p, st)}</div></div>
     </div>
-    <div class="fr2-chans">${st.chans.map(c => `<div class="fr2-chan ${c.key===st.worst.key && s!=="ok" ? "sugg" : ""}">${frRing(c)}<div class="fr2-chan-t"><b>${FR_NOUN[c.key]}</b><span>${c.days==null ? "never logged" : frAge(c.days)}</span></div></div>`).join("")}</div>
-    <div class="fr2-log-h">Done? Log it</div>
-    <div class="fr2-logs">${FRIEND_CHANNELS.map(c => `<button class="fr2-btn ${c.key===st.worst.key ? "primary" : ""}" data-act="log" data-hero="1" data-id="${p.id}" data-ch="${c.key}">${frIcon(c.key)}${FR_DONE[c.key]}</button>`).join("")}</div>
+    <div class="fr3-stats">
+      <div><span>${frIcon("clock")}Last talked</span><b>${st.days == null ? "Never" : frAge(st.days)}</b></div>
+      <div><span>${frIcon("cal")}Rhythm</span><b>${esc(frEvery(st.freq).replace(/^./, c => c.toUpperCase()))}</b></div>
+      <div><span>${frIcon("focus")}Status</span><b>${frPill(st)}</b></div>
+    </div>
+    <div class="fr3-cta">
+      <button class="fr2-btn primary fr3-big" data-act="log" data-hero="1" data-id="${p.id}">${frIcon("check")}We caught up today</button>
+      <button class="fr2-btn fr3-earlier-btn ${FR.earlierFor===p.id?"on":""}" data-act="earlier" data-id="${p.id}">${frIcon("cal")}Earlier…</button>
+    </div>
+    ${frEarlierHTML(p.id)}
+    <div class="fr3-hint">Text, call, or in person — any catch-up counts.</div>
     <div class="fr2-hero-foot">${dots}
       ${m.picked ? `<button class="fr2-btn ghost" data-act="unpick">Back to suggestions</button>` : m.due.length > 1 ? `<button class="fr2-btn ghost" data-act="skip" data-id="${p.id}">Not now ${frIcon("skip")}</button>` : ""}
     </div>
   </section>`;
 }
-function frQRow(x, sub){
-  return `<li><button class="fr2-qrow" data-act="focus" data-id="${x.p.id}">${frAvatar(x.p, "sm", x.st)}<span class="t"><b>${esc(x.p.name)}</b><span>${esc(sub || (x.st.state==="never" ? "Nothing logged yet" : `${x.st.suggestion} · ${x.st.because}`))}</span></span>${frIcon("chev")}</button></li>`;
+/* compact roster row with its own one-tap check */
+function frRow(x){
+  return `<li class="fr3-row s-${frState(x.st)}">
+    <button class="fr3-row-main" data-act="open" data-id="${x.p.id}">${frAvatar(x.p, "sm", x.st)}
+      <span class="t"><b>${esc(x.p.name)}</b><span>${x.st.days == null ? "Nothing logged yet" : `Talked ${frAge(x.st.days)}`}</span></span>${frPill(x.st)}</button>
+    <button class="fr3-tick" data-act="log" data-id="${x.p.id}" title="We caught up today" aria-label="Log a catch-up with ${esc(x.p.name)} today">${frIcon("check")}</button>
+  </li>`;
 }
 function frFindHTML(m){
   const q = FR.find.trim().toLowerCase();
   if(!q) return "";
   const hits = m.all.filter(x => x.p.name.toLowerCase().includes(q)).slice(0, 6);
-  return hits.length ? `<ul class="fr2-q">${hits.map(x => frQRow(x, x.st.days==null ? "Nothing logged yet" : `Last contact ${frAge(x.st.days)}`)).join("")}</ul>`
+  return hits.length ? `<ul class="fr3-list">${hits.map(frRow).join("")}</ul>`
                      : `<div class="fr2-empty">No one named “${esc(FR.find.trim())}”. <button class="fr2-btn ghost" data-act="add" data-name="${esc(FR.find.trim())}">${frIcon("plus")}Add them</button></div>`;
 }
 function frFocusHTML(m){
   const n = m.people.length;
   const up = m.due.filter(x => !m.cur || x.p.id !== m.cur.p.id);
-  const soonSorted = m.soon.slice().sort((a,b) => b.st.ratio - a.st.ratio);
-  const list = up.length ? up : soonSorted;
+  const list = up.length ? up : m.soon;
   const pct = k => n ? (k / n * 100) : 0;
   return `<div class="fr2-focus">
-    <div>${frHeroHTML(m)}</div>
+    <div class="fr3-main">${frHeroHTML(m)}
+      ${list.length ? `<section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>${up.length ? "Also overdue" : "Coming up soon"}</h3><button data-act="view" data-view="all">See everyone →</button></div>
+        <ul class="fr3-list">${list.slice(0, 6).map(frRow).join("")}</ul>
+        ${list.length > 6 ? `<div class="fr2-more">+${list.length - 6} more · <button class="fr2-btn ghost" style="padding:4px 8px" data-act="view" data-view="all" data-filter="due">see them</button></div>` : ""}
+      </section>` : ""}
+    </div>
     <aside class="fr2-side">
       <section class="fr2-card fr2-box">
-        <div class="fr2-box-h"><h3>Your circle</h3><button data-act="view" data-view="all">See all ${n}</button></div>
-        <div class="fr2-pulse-top"><div class="fr2-pulse-n">${m.due.length}</div><div class="fr2-pulse-l">${m.due.length === 1 ? "friend is" : "friends are"}<br>waiting to hear from you</div></div>
-        <div class="fr2-meter">${m.due.length?`<i class="o" style="flex-grow:${pct(m.due.length)}"></i>`:""}${m.soon.length?`<i class="s" style="flex-grow:${pct(m.soon.length)}"></i>`:""}${m.ok.length?`<i class="k" style="flex-grow:${pct(m.ok.length)}"></i>`:""}</div>
-        <div class="fr2-legend"><span><i style="background:var(--fr-over)"></i><b>${m.due.length}</b> due</span><span><i style="background:var(--fr-soon)"></i><b>${m.soon.length}</b> soon</span><span><i style="background:var(--fr-ok)"></i><b>${m.ok.length}</b> on track</span></div>
-      </section>
-      ${list.length ? `<section class="fr2-card fr2-box">
-        <div class="fr2-box-h"><h3>${up.length ? "Also due" : "Coming up"}</h3></div>
-        <ul class="fr2-q">${list.slice(0, 4).map(x => frQRow(x)).join("")}</ul>
-        ${list.length > 4 ? `<div class="fr2-more">+${list.length - 4} more · <button class="fr2-btn ghost" style="padding:4px 8px" data-act="view" data-view="all" data-filter="due">see them</button></div>` : ""}
-      </section>` : ""}
-      <section class="fr2-card fr2-box">
-        <div class="fr2-box-h"><h3>Caught up with someone?</h3></div>
-        <label class="fr2-search">${frIcon("search")}<input id="fr2Find" type="search" placeholder="Type a name…" autocomplete="off" value="${esc(FR.find)}"></label>
+        <div class="fr2-box-h"><h3>Just talked to someone?</h3></div>
+        <label class="fr2-search">${frIcon("search")}<input id="fr2Find" type="search" placeholder="Type their name…" autocomplete="off" value="${esc(FR.find)}"></label>
         <div class="fr2-find-res" id="fr2FindRes">${frFindHTML(m)}</div>
       </section>
+      <section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>Your circle</h3><button data-act="view" data-view="all">All ${n}</button></div>
+        <div class="fr2-pulse-top"><div class="fr2-pulse-n">${n ? Math.round(m.ok.length / n * 100) : 0}<small>%</small></div><div class="fr2-pulse-l">of your people<br>are caught up</div></div>
+        <div class="fr2-meter">${m.due.length?`<i class="o" style="flex-grow:${pct(m.due.length)}"></i>`:""}${m.soon.length?`<i class="s" style="flex-grow:${pct(m.soon.length)}"></i>`:""}${m.ok.length?`<i class="k" style="flex-grow:${pct(m.ok.length)}"></i>`:""}</div>
+        <div class="fr2-legend"><span><i style="background:var(--fr-over)"></i><b>${m.due.length}</b> overdue</span><span><i style="background:var(--fr-soon)"></i><b>${m.soon.length}</b> soon</span><span><i style="background:var(--fr-ok)"></i><b>${m.ok.length}</b> caught up</span></div>
+      </section>
+      ${m.recent.length ? `<section class="fr2-card fr2-box">
+        <div class="fr2-box-h"><h3>Recently</h3></div>
+        <div class="fr3-recent">${m.recent.map(x => `<button data-act="open" data-id="${x.p.id}" title="${esc(x.p.name)} · ${frAge(x.st.days)}">${frAvatar(x.p, "sm", x.st)}<span>${esc(frFirst(x.p.name))}</span><em>${frAgeShort(x.st.days)}</em></button>`).join("")}</div>
+      </section>` : ""}
     </aside>
   </div>`;
 }
@@ -7863,29 +8151,35 @@ function frGridHTML(m){
   if(FR.filter === "due") rows = rows.filter(x => frState(x.st) === "over");
   if(FR.filter === "soon") rows = rows.filter(x => x.st.state === "soon");
   if(FR.filter === "ok") rows = rows.filter(x => x.st.state === "ok");
-  const lastOf = x => x.p.lastContact ? new Date(x.p.lastContact).getTime() : 0;
+  const lastOf = x => x.st.last ? new Date(x.st.last).getTime() : 0;
   if(FR.sort === "name") rows.sort((a,b) => a.p.name.localeCompare(b.p.name));
   else if(FR.sort === "recent") rows.sort((a,b) => lastOf(b) - lastOf(a));
   else rows.sort((a,b) => b.st.ratio - a.st.ratio);
-  if(!rows.length) return `<div class="fr2-card fr2-box fr2-empty" style="text-align:center;padding:30px">${q ? `No one matches “${esc(FR.q.trim())}”.` : "Nobody here right now."}</div>`;
-  return `<div class="fr2-grid">${rows.map((x, i) => `<button class="fr2-card fr2-pc" data-act="open" data-id="${x.p.id}" style="animation-delay:${Math.min(i, 14) * 18}ms">
-      <div class="fr2-pc-top">${frAvatar(x.p, "md", x.st)}<div class="t"><b>${esc(x.p.name)}</b>${frPill(x.st)}</div></div>
-      <div class="fr2-mini">${x.st.chans.map(c => { const s = frChanState(c); const w = s==="none" ? 0 : s==="over" ? 100 : Math.max(6, (1 - c.ratio) * 100); return `<div class="s-${s}"><div class="top">${frIcon(c.key)}<span>${frAgeShort(c.days)}</span></div><div class="bar"><i style="width:${w.toFixed(0)}%"></i></div></div>`; }).join("")}</div>
-    </button>`).join("")}</div>`;
+  if(!rows.length) return `<div class="fr2-card fr2-box fr2-empty" style="text-align:center;padding:30px">${q ? `No one matches “${esc(FR.q.trim())}”. <button class="fr2-btn ghost" data-act="add" data-name="${esc(FR.q.trim())}">${frIcon("plus")}Add them</button>` : "Nobody here right now."}</div>`;
+  return `<div class="fr2-grid">${rows.map((x, i) => {
+    const s = frState(x.st), w = s === "over" ? 100 : frFresh(x.st) * 100;
+    return `<div class="fr2-card fr2-pc s-${s}" style="animation-delay:${Math.min(i, 14) * 18}ms">
+      <button class="fr3-pc-open" data-act="open" data-id="${x.p.id}">
+        <div class="fr2-pc-top">${frAvatar(x.p, "md", x.st)}<div class="t"><b>${esc(x.p.name)}</b><span class="fr3-pc-sub">${x.st.days == null ? "Nothing logged" : `Talked ${frAge(x.st.days)}`}</span></div></div>
+        <div class="fr3-bar s-${s}"><i style="width:${Math.max(4, w).toFixed(0)}%"></i></div>
+        <div class="fr3-pc-foot">${frPill(x.st)}<span>${esc(frEvery(x.st.freq))}</span></div>
+      </button>
+      <button class="fr3-tick" data-act="log" data-id="${x.p.id}" title="We caught up today" aria-label="Log a catch-up with ${esc(x.p.name)} today">${frIcon("check")}</button>
+    </div>`; }).join("")}</div>`;
 }
 function frAllHTML(m){
   const chip = (k, label, n) => `<button class="fr2-chip ${FR.filter===k?"on":""}" data-act="filter" data-f="${k}">${label} <b>${n}</b></button>`;
   return `<div class="fr2-tools">
       <label class="fr2-search">${frIcon("search")}<input id="fr2Q" type="search" placeholder="Search ${m.people.length} friends" autocomplete="off" value="${esc(FR.q)}"></label>
-      <div class="fr2-chipset">${chip("all","All",m.people.length)}${chip("due","Due",m.due.length)}${chip("soon","Soon",m.soon.length)}${chip("ok","On track",m.ok.length)}</div>
+      <div class="fr2-chipset">${chip("all","All",m.people.length)}${chip("due","Overdue",m.due.length)}${chip("soon","Soon",m.soon.length)}${chip("ok","Caught up",m.ok.length)}</div>
       <select class="fr2-sort" id="fr2Sort" aria-label="Sort">
-        <option value="due"${FR.sort==="due"?" selected":""}>Most overdue</option>
+        <option value="due"${FR.sort==="due"?" selected":""}>Longest since we talked</option>
+        <option value="recent"${FR.sort==="recent"?" selected":""}>Most recent</option>
         <option value="name"${FR.sort==="name"?" selected":""}>Name A–Z</option>
-        <option value="recent"${FR.sort==="recent"?" selected":""}>Recently talked</option>
       </select>
     </div>
     <div id="fr2Grid">${frGridHTML(m)}</div>
-    <div class="fr2-foot">Bars fill back up each time you log a text, call, or hangout, and drain toward that person's rhythm.</div>`;
+    <div class="fr2-foot">The ring and bar refill every time you log a catch-up, then drain toward that person's rhythm. Tap ✓ to log today.</div>`;
 }
 
 /* ---------- sheets ---------- */
@@ -7895,9 +8189,8 @@ function frSheetHTML(m){
       <button class="fr2-x" data-act="close" aria-label="Close">${frIcon("x")}</button>
       <h2 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px">Add a friend</h2>
       <form id="fr2AddForm"><div class="fr2-rename"><input class="fr2-add-in" id="fr2AddName" maxlength="60" placeholder="Their name" autocomplete="off" value="${esc(FR.addName||"")}"></div>
-      <div class="fr2-sec"><div class="fr2-sec-h">How often do you want to text?</div>
-        <div class="fr2-rhythm">${FR_RHYTHMS.map(([d,l]) => `<button type="button" class="${FR.addFreq===d?"on":""}" data-act="add-freq" data-days="${d}">${l}</button>`).join("")}</div>
-        <div class="fr2-hint">Calls are spaced about 2½× that, hangouts about 5×.</div></div>
+      <div class="fr2-sec"><div class="fr2-sec-h">How often do you want to catch up?</div>
+        <div class="fr2-rhythm">${FR_RHYTHMS.map(([d,l]) => `<button type="button" class="${FR.addFreq===d?"on":""}" data-act="add-freq" data-days="${d}">${l}</button>`).join("")}</div></div>
       <div class="fr2-sh-foot"><span></span><button type="submit" class="fr2-btn primary">${frIcon("plus")}Add friend</button></div></form>
     </div></div>`;
   }
@@ -7906,26 +8199,27 @@ function frSheetHTML(m){
   const { p, st } = x;
   const fd = Number(p.freqDays) || 21;
   const rhythms = FR_RHYTHMS.some(([d]) => d === fd) ? FR_RHYTHMS : [...FR_RHYTHMS, [fd, frEvery(fd)]];
-  const hist = (p.history || []).filter(h => h && h.date);
-  const fmt = iso => new Date(iso).toLocaleDateString("en-US", { month:"short", day:"numeric", year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
+  const hist = (p.history || []).filter(h => h && h.date).slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+  const fmt = iso => new Date(iso).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
   return `<div class="fr2-back ${FR.sheetShown ? "" : "anim"}" data-act="close-bg"><div class="fr2-sheet" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
     <button class="fr2-x" data-act="close" aria-label="Close">${frIcon("x")}</button>
-    <div class="fr2-sh-id">${frAvatar(p, "xl", st)}<div style="min-width:0;flex:1">
+    <div class="fr2-sh-id">${frAvatar(p, "lg", st)}<div style="min-width:0;flex:1">
       ${FR.editing ? `<form class="fr2-rename" id="fr2RenameForm"><input id="fr2RenameIn" maxlength="60" value="${esc(p.name)}"><button class="fr2-btn primary" type="submit">Save</button></form>`
                    : `<div class="nm"><h2>${esc(p.name)}</h2><button class="fr2-icon-btn" data-act="rename" title="Rename">${frIcon("pencil")}</button></div>`}
       ${frPill(st)}
     </div></div>
     <div class="fr2-why">${frWhy(p, st)}</div>
-    <div class="fr2-sec"><div class="fr2-sec-h">Log a catch-up</div>
-      <div class="fr2-logs">${FRIEND_CHANNELS.map(c => `<button class="fr2-btn ${c.key===st.worst.key && frState(st)!=="ok" ? "primary" : ""}" data-act="log" data-id="${p.id}" data-ch="${c.key}">${frIcon(c.key)}${FR_DONE[c.key]}</button>`).join("")}</div></div>
-    <div class="fr2-sec"><div class="fr2-sec-h">By channel</div>
-      ${st.chans.map(c => `<div class="fr2-crow">${frRing(c)}<div class="t"><b>${FR_NOUN[c.key]}</b><span>${c.last ? `Last ${fmt(c.last)} · ${frAge(c.days)}` : "Never logged"} · aim ${frEvery(c.cadence)}</span></div></div>`).join("")}
+    <div class="fr2-sec">
+      <div class="fr3-cta">
+        <button class="fr2-btn primary fr3-big" data-act="log" data-id="${p.id}">${frIcon("check")}We caught up today</button>
+        <button class="fr2-btn fr3-earlier-btn ${FR.earlierFor===p.id?"on":""}" data-act="earlier" data-id="${p.id}">${frIcon("cal")}Earlier…</button>
+      </div>
+      ${frEarlierHTML(p.id)}
     </div>
-    <div class="fr2-sec"><div class="fr2-sec-h">Rhythm <small>how often you want to text ${esc(frFirst(p.name))}</small></div>
-      <div class="fr2-rhythm">${rhythms.map(([d,l]) => `<button class="${fd===d?"on":""}" data-act="freq" data-id="${p.id}" data-days="${d}">${esc(l)}</button>`).join("")}</div>
-      <div class="fr2-hint">Calls are spaced about 2½× that, hangouts about 5×.</div></div>
-    <div class="fr2-sec"><div class="fr2-sec-h">History</div>
-      ${hist.length ? `<ul class="fr2-tl">${hist.map(h => { const ch = friendChannelOf(h.method); return `<li><span class="b">${ch ? frIcon(ch) : frIcon("check")}</span><b>${ch ? FR_DONE[ch] : (esc(h.method) || "Reached out")}</b><span class="d">${fmt(h.date)} · ${frAge(daysSince(h.date))}</span></li>`; }).join("")}</ul>`
+    <div class="fr2-sec"><div class="fr2-sec-h">Rhythm <small>how often you want to catch up with ${esc(frFirst(p.name))}</small></div>
+      <div class="fr2-rhythm">${rhythms.map(([d,l]) => `<button class="${fd===d?"on":""}" data-act="freq" data-id="${p.id}" data-days="${d}">${esc(l)}</button>`).join("")}</div></div>
+    <div class="fr2-sec"><div class="fr2-sec-h">Catch-ups</div>
+      ${hist.length ? `<ul class="fr2-tl">${hist.slice(0, 12).map(h => `<li><span class="b">${frIcon("check")}</span><b>${fmt(h.date)}</b><span class="d">${frAge(daysSince(h.date))}</span></li>`).join("")}</ul>`
                   : `<div class="fr2-empty">Nothing logged yet${p.lastContact ? ` · last contact set ${fmt(p.lastContact)}` : ""}.</div>`}
     </div>
     <div class="fr2-sh-foot">
@@ -7948,14 +8242,18 @@ function frToast(msg, undo){
   if(undo) t.querySelector("button").addEventListener("click", () => { undo(); close(); });
   frToastTimer = setTimeout(close, 6500);
 }
-function frLog(id, ch, fromHero){
+/* whenStr: optional "YYYY-MM-DD" (local) for a back-dated catch-up; noon avoids TZ edge flips */
+function frLog(id, fromHero, whenStr){
   const api = window.__friendsApi; if(!api) return;
   const p = (api.getState().people || []).find(x => x.id === id); if(!p) return;
   const prev = JSON.parse(JSON.stringify(p));
+  let whenIso = null, label = "today";
+  if(whenStr){ const [y, mo, d] = whenStr.split("-").map(Number); const dt = new Date(y, mo - 1, d, 12); if(isFinite(dt.getTime())){ whenIso = dt.toISOString(); label = dt.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }); } }
   const go = () => {
-    api.logContact(id, ch);
+    api.logContact(id, "", whenIso);
+    FR.earlierFor = null;
     if(fromHero){ FR.skipped.add(id); frSaveSkip(); if(FR.focusId === id) FR.focusId = null; }
-    frToast(`Logged ${FR_LOGGED[ch]} with ${frFirst(p.name)}`, api.replace ? () => { FR.skipped.delete(id); frSaveSkip(); api.replace(prev); } : null);
+    frToast(`Caught up with ${frFirst(p.name)} · ${label}`, api.replace ? () => { FR.skipped.delete(id); frSaveSkip(); api.replace(prev); } : null);
   };
   const card = fromHero && document.querySelector(`.fr2-hero[data-id="${id}"]`);
   if(card && !frReduced()){ card.classList.remove("is-entering"); card.classList.add("is-leaving"); setTimeout(go, 260); }
@@ -7968,18 +8266,17 @@ function renderFriendsBody(){
   const m = frModel();
   $("#heroTitle").textContent = "Friends";
   $("#heroSub").textContent = m.people.length
-    ? (m.due.length ? `${m.due.length} ${m.due.length===1?"person":"people"} to reach out to · ${m.people.length} in your circle` : `You're caught up with all ${m.people.length}`)
+    ? (m.due.length ? `${m.due.length} ${m.due.length===1?"person":"people"} you haven't talked to in a while` : `You're caught up with all ${m.people.length}`)
     : "Keep up with the people who matter";
-  $("#heroDateline").textContent = "One person at a time · tap Everyone for the full roster";
+  $("#heroDateline").textContent = "Any catch-up counts — text, call, or in person";
 
-  // keep typing focus/caret through live re-renders
   const ae = document.activeElement, aeId = ae && ae.id && panel.contains(ae) ? ae.id : null;
   const caret = aeId && typeof ae.selectionStart === "number" ? ae.selectionStart : null;
 
   panel.innerHTML = `<div class="fr2">
     <div class="fr2-bar">
       <div class="fr2-seg" role="tablist">
-        <button class="${FR.view==="focus"?"on":""}" data-act="view" data-view="focus" role="tab">${frIcon("focus")}Focus</button>
+        <button class="${FR.view==="focus"?"on":""}" data-act="view" data-view="focus" role="tab">${frIcon("focus")}Up next</button>
         <button class="${FR.view==="all"?"on":""}" data-act="view" data-view="all" role="tab">${frIcon("grid")}Everyone</button>
       </div>
       <button class="fr2-btn" data-act="add" aria-label="Add friend">${frIcon("plus")}<span class="lbl">Add friend</span></button>
@@ -7992,7 +8289,7 @@ function renderFriendsBody(){
   if(aeId){ const el = document.getElementById(aeId); if(el){ el.focus(); if(caret != null) try{ el.setSelectionRange(caret, caret); }catch(e){} } }
   frWire(panel);
 }
-function frCloseSheet(){ FR.openId = null; FR.adding = false; FR.editing = false; FR.armRemove = null; FR.addName = ""; renderFriendsBody(); }
+function frCloseSheet(){ FR.openId = null; FR.adding = false; FR.editing = false; FR.armRemove = null; FR.addName = ""; FR.earlierFor = null; renderFriendsBody(); }
 function frWire(panel){
   if(panel.dataset.fr2) return;
   panel.dataset.fr2 = "1";
@@ -8001,15 +8298,17 @@ function frWire(panel){
     const act = el.dataset.act, id = el.dataset.id, api = window.__friendsApi;
     if(act === "close-bg"){ if(e.target === el) frCloseSheet(); return; }
     if(act === "close"){ frCloseSheet(); return; }
-    if(act === "view"){ FR.view = el.dataset.view; if(el.dataset.filter) FR.filter = el.dataset.filter; frSaveView(); renderFriendsBody(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+    if(act === "view"){ FR.view = el.dataset.view; FR.filter = el.dataset.filter || "all"; frSaveView(); renderFriendsBody(); window.scrollTo({top:0, behavior:"smooth"}); return; }
     if(act === "filter"){ FR.filter = el.dataset.f; renderFriendsBody(); return; }
     if(act === "add"){ FR.adding = true; FR.addName = el.dataset.name || ""; FR.openId = null; renderFriendsBody(); setTimeout(() => { const i = $("#fr2AddName"); if(i) i.focus(); }, 60); return; }
     if(act === "add-freq"){ FR.addName = ($("#fr2AddName")||{}).value || ""; FR.addFreq = Number(el.dataset.days); renderFriendsBody(); return; }
-    if(act === "skip"){ FR.skipped.add(id); frSaveSkip(); const c = panel.querySelector(".fr2-hero"); if(c && !frReduced()){ c.classList.add("is-leaving"); setTimeout(renderFriendsBody, 240); } else renderFriendsBody(); return; }
+    if(act === "skip"){ FR.skipped.add(id); frSaveSkip(); FR.earlierFor = null; const c = panel.querySelector(".fr2-hero"); if(c && !frReduced()){ c.classList.add("is-leaving"); setTimeout(renderFriendsBody, 240); } else renderFriendsBody(); return; }
     if(act === "unpick"){ FR.focusId = null; renderFriendsBody(); return; }
     if(act === "focus"){ FR.focusId = id; FR.view = "focus"; frSaveView(); FR.find = ""; FR.openId = null; FR.adding = false; renderFriendsBody(); window.scrollTo({top:0, behavior:"smooth"}); return; }
-    if(act === "open"){ FR.openId = id; FR.editing = false; FR.armRemove = null; renderFriendsBody(); return; }
-    if(act === "log"){ frLog(id, el.dataset.ch, el.dataset.hero === "1"); return; }
+    if(act === "open"){ FR.openId = id; FR.editing = false; FR.armRemove = null; FR.earlierFor = null; renderFriendsBody(); return; }
+    if(act === "earlier"){ FR.earlierFor = FR.earlierFor === id ? null : id; renderFriendsBody(); return; }
+    if(act === "log"){ frLog(id, el.dataset.hero === "1"); return; }
+    if(act === "log-on"){ frLog(id, !FR.openId && !!panel.querySelector(`.fr2-hero[data-id="${id}"]`), el.dataset.date); return; }
     if(act === "freq"){ if(api) api.setFreq(id, el.dataset.days); return; }
     if(act === "rename"){ FR.editing = true; renderFriendsBody(); setTimeout(() => { const i = $("#fr2RenameIn"); if(i){ i.focus(); i.select(); } }, 30); return; }
     if(act === "remove"){
@@ -8026,7 +8325,7 @@ function frWire(panel){
     if(e.target.id === "fr2AddForm"){
       e.preventDefault();
       const name = ($("#fr2AddName").value || "").trim(); if(!name || !api) return;
-      api.add(name, FR.addFreq); FR.adding = false; FR.addName = ""; FR.find = "";
+      api.add(name, FR.addFreq); FR.adding = false; FR.addName = ""; FR.find = ""; FR.q = "";
       frToast(`Added ${name}`); renderFriendsBody();
     }
     if(e.target.id === "fr2RenameForm"){
@@ -8042,13 +8341,14 @@ function frWire(panel){
   });
   panel.addEventListener("change", e => {
     if(e.target.id === "fr2Sort"){ FR.sort = e.target.value; const g = $("#fr2Grid"); if(g) g.innerHTML = frGridHTML(frModel()); }
+    const dId = e.target.dataset && e.target.dataset.actDate;
+    if(dId && e.target.value){ frLog(dId, !FR.openId && !!panel.querySelector(`.fr2-hero[data-id="${dId}"]`), e.target.value); }
   });
   document.addEventListener("keydown", e => {
     if(e.key === "Escape" && (FR.openId || FR.adding) && S.tab === "friends"){ frCloseSheet(); }
-    if(e.key === "Enter" && e.target && e.target.id === "fr2Find"){ const first = $("#fr2FindRes .fr2-qrow"); if(first){ e.preventDefault(); first.click(); } }
+    if(e.key === "Enter" && e.target && e.target.id === "fr2Find"){ const first = $("#fr2FindRes .fr3-tick"); if(first){ e.preventDefault(); first.click(); FR.find = ""; } }
   });
 }
-
 /* ================= portfolio ================= */
 /* Holdings are NOT embedded here — they live encrypted in data/holdings.json.enc
    and are decrypted at the site gate. */
@@ -9651,10 +9951,10 @@ function renderInsightCard(){
       <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>${esc(p.ticker)}</button>`).join("");
   el.innerHTML = `<div class="ai-head">
       <span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span>
-      <span class="ai-head-r">Live headlines · fetched on click</span>
+      <span class="ai-head-r">Written live when you click</span>
     </div>
     <div class="ins-pick" id="insPick">${chips || `<span class="ins-empty">No holdings in this view.</span>`}</div>
-    <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above. The headlines around it are pulled live, right then — what has actually been published about it in the last few days — with the price picture underneath and the full written read a click away.</p>`}</div>`;
+    <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above and get a fresh take on what's going on with it — the latest news, in plain English, written on the spot — with the price picture underneath.</p>`}</div>`;
   el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => {
     if(P.insTicker === b.dataset.ins) insClear(); else insGenerate(b.dataset.ins);   // click the lit chip again = hide the read
   }));
@@ -9677,6 +9977,187 @@ function insStoryHTML(it, dim){
       <span class="ins-story-m"><i class="ins-tag ${tag.cls}">${tag.label}</i>${esc(it.outlet || "")}${it.t ? ` · ${esc(nrAgo(it.t))}` : ""}</span>
       <span class="ins-story-t">${esc(it.title)}</span>
     </span></a>`;
+}
+
+/* ---------------------------------------------------------------------------
+   The take. Eli, Oct 2026: "I don't want it to produce news stories. If I click on a stock, I
+   want it to rapidly generate the latest snapshot of the news in your own words ... why the most
+   recent move has happened or why the price is where it is ... generated on the spot, just like a
+   Claude chat response, typed out one word at a time really quickly."
+
+   So a click sends one request to Claude (Messages API, streaming, with the web-search tool) and
+   the answer is typed into the card as it arrives. The API key lives ONLY in this browser's
+   localStorage, entered once from the card's key button; it is never in the repo or the data
+   files. Without a key the card falls back to a quick read composed in the browser from live
+   headlines, typed out the same way, and says how to switch Claude on.
+   --------------------------------------------------------------------------- */
+const INS_KEY_LS = "dh-anthropic-key";
+const INS_MODEL = "claude-haiku-5-5";
+function insApiKey(){ try{ return localStorage.getItem(INS_KEY_LS) || ""; }catch(e){ return ""; } }
+function insMd(txt){
+  // tiny, safe markdown: escape, then **bold**, bullets and paragraphs
+  const lines = esc(txt).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  let html = "", inList = false;
+  lines.forEach(l => {
+    const b = l.match(/^[-•*]\s+(.*)/);
+    if(b){ if(!inList){ html += "<ul>"; inList = true; } html += `<li>${b[1]}</li>`; }
+    else { if(inList){ html += "</ul>"; inList = false; } html += `<p>${l}</p>`; }
+  });
+  return html + (inList ? "</ul>" : "");
+}
+/* A typewriter that drains a growing buffer a few words at a time, so a burst of tokens still
+   reads like a fast, even type-out rather than paragraphs popping in. */
+function insTypewriter(el){
+  const tw = { full:"", shown:0, done:false, raf:0, el };
+  const tick = () => {
+    if(!document.contains(el)){ tw.raf = 0; return; }
+    const backlog = tw.full.length - tw.shown;
+    if(backlog > 0){
+      const step = Math.max(2, Math.ceil(backlog / 18));
+      let n = tw.shown + step;
+      const sp = tw.full.indexOf(" ", n); if(sp > 0 && sp - n < 12) n = sp + 1;   // end on a word
+      tw.shown = Math.min(tw.full.length, n);
+      el.innerHTML = insMd(tw.full.slice(0, tw.shown)) ;
+      el.classList.add("typing");
+    }
+    if(tw.done && tw.shown >= tw.full.length){ el.classList.remove("typing"); tw.raf = 0; return; }
+    tw.raf = requestAnimationFrame(tick);
+  };
+  tw.push = t => { tw.full += t; if(!tw.raf) tw.raf = requestAnimationFrame(tick); };
+  tw.finish = () => { tw.done = true; if(!tw.raf) tw.raf = requestAnimationFrame(tick); };
+  return tw;
+}
+function insTakeFacts(p, st, spy){
+  const f = [`Ticker: ${p.ticker}${p.name ? " (" + p.name + ")" : ""}`, `Sector/theme: ${sectorOf(p)}`,
+    `Last price: ${p.price != null ? "$" + (+p.price).toFixed(2) : "n/a"}, today ${p.dayPct != null ? (p.dayPct >= 0 ? "+" : "") + p.dayPct.toFixed(2) + "%" : "n/a"}`];
+  if(st){
+    if(st.r21 != null) f.push(`1-month ${st.r21.toFixed(1)}%, 3-month ${st.r63 != null ? st.r63.toFixed(1) + "%" : "n/a"}, 1-year ${st.r252 != null ? st.r252.toFixed(1) + "%" : "n/a"}`);
+    f.push(`52-week range $${st.lo.toFixed(2)}–$${st.hi.toFixed(2)} (now ${st.rangePos.toFixed(0)}% of the way up)`);
+    if(st.ma50 != null && st.ma200 != null) f.push(`50-day avg $${st.ma50.toFixed(2)}, 200-day avg $${st.ma200.toFixed(2)}`);
+  }
+  if(spy != null) f.push(`S&P 500 3-month: ${spy.toFixed(1)}%`);
+  return f.join("\n");
+}
+async function insTakeClaude(p, st, spy, token, tw, setSub, setSrc){
+  const key = insApiKey();
+  const today = new Date().toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric", year:"numeric", timeZone:"America/New_York"});
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{ "content-type":"application/json", "x-api-key":key, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+    body: JSON.stringify({
+      model: INS_MODEL, max_tokens: 700, stream: true,
+      tools: [{ type:"web_search_20250305", name:"web_search", max_uses:3 }],
+      system: `You are a sharp equity analyst briefing a financial advisor. Today is ${today}. Search the web for the most recent news on the holding, then explain in your own words — never paste or list headlines — why it moved recently and why the price sits where it does. Format: one bold bottom-line sentence, then 2–4 short "- " bullets naming the concrete drivers (earnings, guidance, analyst moves, macro, sector flows, fund flows for ETFs/mutual funds), each with when it happened. 90–150 words. If nothing company-specific broke, say it is trading with its sector/the market and say what drove that. No preamble, no disclaimers, no links in the text.`,
+      messages: [{ role:"user", content:`What's going on with ${p.ticker}? Here are the numbers I can see:\n${insTakeFacts(p, st, spy)}` }]
+    })
+  });
+  if(!res.ok){
+    let msg = res.status + ""; try{ const j = await res.json(); msg = (j.error && j.error.message) || msg; }catch(e){}
+    const err = new Error(msg); err.status = res.status; throw err;
+  }
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = "", searching = 0, wrote = false;
+  const srcs = new Map();
+  while(true){
+    const { value, done } = await reader.read();
+    if(done) break;
+    if(token !== P.insToken){ try{ reader.cancel(); }catch(e){} return; }
+    buf += dec.decode(value, { stream:true });
+    let i;
+    while((i = buf.indexOf("\n\n")) >= 0){
+      const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+      const line = chunk.split("\n").find(l => l.startsWith("data:")); if(!line) continue;
+      let ev; try{ ev = JSON.parse(line.slice(5)); }catch(e){ continue; }
+      if(ev.type === "content_block_start" && ev.content_block){
+        const cb = ev.content_block;
+        if(cb.type === "server_tool_use"){ searching++; setSub(searching > 1 ? `searching again (${searching})…` : "searching the latest news…"); }
+        if(cb.type === "web_search_tool_result"){ setSub("reading what it found…"); }
+        if(cb.type === "text" && !wrote){ setSub("writing…"); }
+      }
+      if(ev.type === "content_block_delta" && ev.delta){
+        if(ev.delta.type === "text_delta"){ wrote = true; tw.push(ev.delta.text); }
+        if(ev.delta.type === "citations_delta" && ev.delta.citation){
+          const c = ev.delta.citation; if(c.url && !srcs.has(c.url)){ srcs.set(c.url, c.title || c.url); setSrc([...srcs].slice(0, 5)); }
+        }
+      }
+      if(ev.type === "error"){ throw new Error((ev.error && ev.error.message) || "stream error"); }
+    }
+  }
+  tw.finish();
+  return true;
+}
+/* No key: a quick read composed in the browser from live headlines + the price picture. */
+async function insTakeLocal(p, st, spy, token, tw, setSub, setSrc){
+  let news = { own:[], context:[] };
+  try{ news = await insFetchNews(p); }catch(e){}
+  if(token !== P.insToken) return;
+  const up = p.dayPct >= 0, mv = Math.abs(p.dayPct || 0);
+  const typical = st && st.dayVol ? mv / st.dayVol : null;
+  const size = typical == null ? "" : typical < .6 ? "a quiet session" : typical < 1.4 ? "an ordinary-sized move" : typical < 2.5 ? "a big move for it" : "an outlier move";
+  const fresh = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 3*864e5);
+  const tags = {}; fresh.forEach(x => { const t = insNewsTag(x.title).label; tags[t] = (tags[t] || 0) + 1; });
+  const themes = Object.entries(tags).sort((a,b) => b[1]-a[1]).map(([k]) => k.toLowerCase()).filter(k => k !== "coverage").slice(0, 2);
+  let out = `**${p.ticker} is ${up ? "up" : "down"} ${mv.toFixed(2)}% today${size ? " — " + size : ""}.**\n`;
+  if(fresh.length) out += `- The conversation around it over the last few days is mostly ${themes.length ? themes.join(" and ") : "general coverage"}${fresh.length > 1 ? `, across ${fresh.length} stories` : ""}.\n`;
+  else out += `- Nothing company-specific broke in the last few days, so this looks like it's trading with ${sectorOf(p) === "Other" ? "the market" : "its " + sectorOf(p).toLowerCase() + " theme"}.\n`;
+  if(st && spy != null && st.r63 != null){ const gap = st.r63 - spy; out += `- Over three months it has ${gap >= 0 ? "beaten" : "lagged"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points.\n`; }
+  if(st) out += `- It sits ${st.rangePos.toFixed(0)}% of the way up its 52-week range, ${st.ma200 != null && st.last >= st.ma200 ? "above" : "below"} its 200-day average.\n`;
+  tw.push(out); tw.finish();
+  setSrc(news.own.slice(0, 4).map(x => [x.url, (x.outlet ? x.outlet + ": " : "") + x.title]));
+  return true;
+}
+async function insTake(p, st, spy, token){
+  const body = $("#insTakeB"), subEl = $("#insTakeS"), srcEl = $("#insTakeSrc"); if(!body) return;
+  const setSub = t => { if(subEl && document.contains(subEl)) subEl.textContent = t; };
+  const setSrc = list => { if(!srcEl || !document.contains(srcEl)) return;
+    srcEl.innerHTML = list.length ? `<span>Sources</span>` + list.map(([u, t]) => { let host = ""; try{ host = new URL(u).hostname.replace(/^www\./, ""); }catch(e){}
+      return `<a href="${esc(u)}" target="_blank" rel="noopener" title="${esc(t)}">${esc(host || t)}</a>`; }).join("") : ""; };
+  const keyBtn = `<button class="ins-key-btn" id="insKeyBtn" type="button">${insApiKey() ? "Claude key ✓" : "Turn on Claude"}</button>`;
+  const cacheKey = "dh-take:" + p.ticker;
+  let cached = null; try{ cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null"); }catch(e){}
+  const tw = insTypewriter(body);
+  const capture = tw.push; let all = "";
+  tw.push = t => { all += t; capture(t); };
+  const wire = () => { const b = $("#insKeyBtn"); if(b) b.addEventListener("click", insKeyPrompt); };
+  if(cached && !P.insForce && Date.now() - cached.at < 20*60e3 && cached.ai === !!insApiKey()){
+    body.innerHTML = ""; tw.push(cached.text); tw.finish(); setSrc(cached.src || []);
+    setSub(`${cached.ai ? "Claude" : "Quick read"} · ${new Date(cached.at).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}`);
+    srcEl.insertAdjacentHTML("beforeend", keyBtn); wire(); return;
+  }
+  P.insForce = false;
+  let srcList = [];
+  const setSrc2 = l => { srcList = l; setSrc(l); };
+  let ai = !!insApiKey(), ok = false;
+  try{
+    body.innerHTML = `<span class="ins-think"><i></i><i></i><i></i></span>`;
+    let first = true; const push0 = tw.push; tw.push = t => { if(first){ body.innerHTML = ""; first = false; } push0(t); };
+    ok = ai ? await insTakeClaude(p, st, spy, token, tw, setSub, setSrc2) : await insTakeLocal(p, st, spy, token, tw, setSub, setSrc2);
+  }catch(e){
+    if(token !== P.insToken) return;
+    if(ai){
+      const bad = e.status === 401 || e.status === 403;
+      setSub(bad ? "Claude key was rejected — showing a quick read" : "Claude didn't answer — showing a quick read");
+      ai = false; body.innerHTML = "";
+      try{ ok = await insTakeLocal(p, st, spy, token, tw, () => {}, setSrc2); }catch(e2){}
+    }
+  }
+  if(token !== P.insToken) return;
+  if(ok){
+    setSub(`${ai ? "Claude · just now" : "Quick read · add a Claude key for the full take"}`);
+    try{ sessionStorage.setItem(cacheKey, JSON.stringify({ at:Date.now(), text:all, src:srcList, ai })); }catch(e){}
+  } else if(!all){ body.innerHTML = `<p class="ins-empty">Couldn't pull anything just now. Hit Redo in a minute.</p>`; }
+  if(srcEl) srcEl.insertAdjacentHTML("beforeend", keyBtn); wire();
+}
+function insKeyPrompt(){
+  const cur = insApiKey();
+  const v = prompt(cur ? "Your Anthropic API key is saved in this browser only.\nPaste a new one to replace it, or clear the box to remove it:" :
+    "Paste an Anthropic API key (console.anthropic.com → API keys).\nIt's stored only in this browser, never on GitHub, and used just for these stock takes.", cur ? "••••" + cur.slice(-4) : "");
+  if(v === null) return;
+  try{
+    if(!v.trim()) localStorage.removeItem(INS_KEY_LS);
+    else if(!v.startsWith("••••")) localStorage.setItem(INS_KEY_LS, v.trim());
+  }catch(e){}
+  if(P.insTicker){ P.insForce = true; insGenerate(P.insTicker); }
 }
 
 async function insGenerate(ticker){
@@ -9708,42 +10189,24 @@ async function insGenerate(ticker){
       <button class="ins-regen" id="insRegen">⟳ Redo</button>
     </div>
     <div class="ins-hero">${insSpark(st, up)}<div class="ins-hero-cap"><span>Last 90 trading days</span><b>${esc(built.verdict)}</b></div></div>
-    <div class="ins-why" id="insWhy">
-      <div class="ins-why-h">Why it's moving<span class="ins-why-s" id="insWhyS">pulling headlines…</span></div>
-      <div class="ins-news" id="insNews"><div class="ins-sk"></div><div class="ins-sk"></div><div class="ins-sk"></div></div>
+    <div class="ins-take" id="insTake">
+      <div class="ins-take-h"><span class="ins-take-ic"><svg viewBox="0 0 24 24"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg></span>
+        <b>What's going on with ${esc(p.ticker)}</b><span class="ins-take-s" id="insTakeS">searching the latest news…</span></div>
+      <div class="ins-take-b" id="insTakeB"><span class="ins-think"><i></i><i></i><i></i></span></div>
+      <div class="ins-take-src" id="insTakeSrc"></div>
     </div>
     ${insVisuals(p, st, spyS ? spyS.r63 : null)}
     <details class="ins-more"><summary>Full written read — every number behind the picture</summary>
       <div class="ins-more-b" id="insMoreB">
         ${built.rows.map(r => `<div class="ins-row"><i style="background:${r.c}"></i><div>${r.txt}</div></div>`).join("")}
       </div></details>
-    <p class="ins-foot">Headlines are fetched live when you click; the price read is written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes and your own cost basis. A story appearing next to a move is not proof it caused it. Educational only — not investment advice.</p>`;
+    <p class="ins-foot">The take is searched and written live when you click; the price read is written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes and your own cost basis. News next to a move is not proof it caused it. Educational only — not investment advice.</p>`;
 
   const rb = $("#insRegen");
-  if(rb) rb.addEventListener("click", () => insGenerate(ticker));
+  if(rb) rb.addEventListener("click", () => { P.insForce = true; insGenerate(ticker); });
 
-  /* headlines */
-  let news = { own: [], context: [] };
-  try{ news = await insFetchNews(p); }catch(e){}
-  if(token !== P.insToken) return;
-  const wrap = $("#insNews"), sub = $("#insWhyS"), why = $("#insWhy");
-  if(wrap && why){
-    const all = news.own.concat(news.context);
-    if(!all.length){
-      sub.textContent = "no headlines came back";
-      wrap.innerHTML = `<p class="ins-empty">Nothing published about ${esc(p.ticker)} came back from the news feeds just now — which is itself a read: today's move is more likely the market or the sector than anything specific to this holding. Try the Redo button in a minute, or open the News tab for the wider picture.</p>`;
-    } else {
-      const day = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 864e5).length;
-      const week = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 6048e5).length;
-      sub.textContent = news.own.length
-        ? `${day} ${day === 1 ? "story" : "stories"} in the last 24 hours · ${week} this week`
-        : "no ticker-specific stories — showing the sector backdrop";
-      wrap.innerHTML =
-        (news.own.length ? news.own.map(it => insStoryHTML(it, false)).join("") : "") +
-        (news.context.length ? `<div class="ins-ctx-h">Sector &amp; market backdrop</div>` + news.context.map(it => insStoryHTML(it, true)).join("") : "");
-      if(news.own.length) why.insertAdjacentHTML("beforeend", insPulse(news.own));
-    }
-  }
+  /* the take: Claude searches and writes it live, streamed word by word */
+  insTake(p, st, spyS ? spyS.r63 : null, token);
 
   /* anything the published briefs already said, folded into the written read */
   let notes = [];
@@ -9939,6 +10402,31 @@ function riskModel(list){
           maxDD = dd;
         }
       }
+      /* only trust a measurement that covers (nearly) the whole book; a half-loaded history
+         set produced a different number on every refresh */
+      const covVal = covered.reduce((s,c) => s + c.h.mv, 0);
+      if(vol != null && covVal < invTotal * .75){ vol = null; maxDD = null; beta = null; badDayPct = null; volBy = {}; }
+    }
+  }
+
+  /* Eli, Oct 2026: "earlier today it was 80 or 81, now it says 86 … it shouldn't be recalculated
+     all the time." The jump came from the volatility/drawdown inputs flipping between an estimate
+     (history still loading) and a measurement (history loaded) depending on load timing. Now the
+     measured stats are pinned per holdings set (tickers + share counts) for the trading day, so
+     every refresh paints the same number; the score only moves when what you own changes, when
+     prices move the weights, or once a day as the one-year window rolls forward. */
+  {
+    const sig = list.filter(p => p.marketValue > 0).map(p => `${p.ticker}:${(+p.shares || 0).toFixed(3)}`).sort().join("|");
+    const day = new Date().toLocaleDateString("en-CA", {timeZone:"America/New_York"});
+    let cache = null;
+    try{ cache = JSON.parse(localStorage.getItem("dh-risk-stats") || "null"); }catch(e){}
+    const sameBook = cache && cache.sig === sig;
+    if(sameBook && cache.day === day){
+      vol = cache.vol; maxDD = cache.maxDD; beta = cache.beta; badDayPct = cache.badDayPct; volBy = cache.volBy || {};
+    }else if(vol != null){
+      try{ localStorage.setItem("dh-risk-stats", JSON.stringify({sig, day, vol, maxDD, beta, badDayPct, volBy})); }catch(e){}
+    }else if(sameBook){
+      vol = cache.vol; maxDD = cache.maxDD; beta = cache.beta; badDayPct = cache.badDayPct; volBy = cache.volBy || {};
     }
   }
 
@@ -11403,7 +11891,6 @@ async function renderBrainFoodDeck(gate){
    is the only progress marker left, which is exactly what he asked to keep. */
 const GAME_SHELVES = [
   { n:"Play here", built:true, games:[
-    { id:"brainfood", name:"Brain Food",     ic:"\u{1F9E0}", col:"#0E9F6E" },
     { id:"case",      name:"The Daily Case", ic:"\u{1F5C2}️", col:"#7A4E8C" },
     { id:"crossword", name:"Crossword",      ic:"\u{270F}️",  col:"#378ADD" },
     { id:"quiz",      name:"Word Quiz",      ic:"\u{1F4D6}", col:"#C2703B" }
@@ -11466,7 +11953,9 @@ const ARCADE_ART = {
       <text x="100" y="108" fill="#fff" font-family="Sora,sans-serif" font-weight="300" font-size="46" text-anchor="middle">Aa</text></svg>` }
 };
 function renderGamesLauncher(){
-  if(!bfSeenToday()){ renderBrainFoodGate(); return; }
+  /* Eli, Oct 2026: "Brain Food doesn't need to be its own big tab ... it can be somewhere if I
+     want to revisit it. Just the Daily Case, the Crossword and the Word Quiz." So the daily
+     Brain Food gate is gone and it lives as a slim card in the Arcade header instead. */
   const panel = $("#panel-quiz");
   $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
@@ -11498,7 +11987,8 @@ function renderGamesLauncher(){
   }).join("");
 
   panel.innerHTML = `<div class="arc-wrap">
-    <div class="ar-head"><div><h2>Arcade</h2><p>Four to play here, plus the daily puzzles you like elsewhere.</p></div>
+    <div class="ar-head"><div><h2>Arcade</h2><p>Three to play here, plus the daily puzzles you like elsewhere.</p>
+      <button type="button" class="ar-bf app${played.has("brainfood") || (typeof bfSeenToday === "function" && bfSeenToday()) ? " played" : ""}" data-game="brainfood"><span class="ar-bf-ic"><svg viewBox="0 0 24 24"><path d="M12 3c-3.6 0-6 2.6-6 5.8 0 2 .9 3.4 2 4.5.8.8 1.2 1.6 1.2 2.7V17h5.6v-1c0-1.1.4-1.9 1.2-2.7 1.1-1.1 2-2.5 2-4.5C18 5.6 15.6 3 12 3z"/><path d="M9.5 20h5"/></svg></span><span><b>Brain Food</b> · today's fact, story &amp; word</span><span class="ar-bf-go">›</span></button></div>
       <div class="ar-ring"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" stroke="rgba(255,255,255,.25)"/><circle cx="27" cy="27" r="22" stroke="#fff" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C.toFixed(1)}"/></svg><span>${done} of ${all}<br><small style="font-weight:500;opacity:.8">played today</small></span></div></div>
     <div class="ar-feat">${feat}</div>
     ${secs}
@@ -11510,7 +12000,6 @@ function renderGamesLauncher(){
   panel.querySelectorAll(".app-ext[data-game]").forEach(el => el.addEventListener("click", () => { markGamePlayed(el.dataset.game); el.classList.add("played"); }));
 }
 
-function qBestLabel(){ const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }
 
 /* ================= built-in: The Case File (logic-grid mystery) =================
    A generated whodunit. Four suspects are each tied to one room, one object left
@@ -12149,278 +12638,188 @@ function dcStatLabel(){
   return `Avg ${Math.round((s.total||0)/s.played)}/100 · best ${s.best||0}`;
 }
 function dcGrade(n){
-  return n >= 92 ? {g:"A",  w:"Textbook."} : n >= 84 ? {g:"A−", w:"Strong work."}
-       : n >= 76 ? {g:"B+", w:"Solid, with a gap."} : n >= 68 ? {g:"B",  w:"Defensible."}
-       : n >= 58 ? {g:"C+", w:"Half the case."} : n >= 48 ? {g:"C",  w:"Missed the centre of it."}
-       : {g:"D", w:"Start again with the questions."};
+  return n >= 92 ? {g:"A",  w:"Textbook. They'd refer you to their friends."} : n >= 80 ? {g:"A−", w:"Strong work. Client leaves feeling taken care of."}
+       : n >= 68 ? {g:"B",  w:"Solid, with one gap worth studying."} : n >= 52 ? {g:"C",  w:"Half the case. Read the debrief."}
+       : {g:"D", w:"Rough meeting. Deal another and run it back."};
 }
 
-let DC = null;   // { c, step, a:{q:[],risks:[],alloc:{},dec:{},talk:null}, scored:null }
+/* ================= The Daily Case, v3 (Eli, Oct 2026) =================
+   "Make it more practical. Don't make it as complicated and as long, but make it more fun and
+   more simple. I still want interactivity."
 
-const DC_STEPS = ["Discovery","Diagnosis","Allocation","Structure","The conversation","Debrief"];
-const DC_ALLOC_ROWS = [
-  { k:"eq",   label:"Equities",     hint:"Global stocks — the growth engine, and the part that falls" },
-  { k:"bond", label:"Bonds",        hint:"High-quality fixed income — ballast and, now, real yield" },
-  { k:"cash", label:"Cash",         hint:"T-bills and money market — anything spent within two years" },
-  { k:"real", label:"Real assets",  hint:"Real estate, commodities, infrastructure — inflation defence" }
-];
+   Same generated households (dcBuild above: any life stage, wealth band, family and career), but
+   the five-round engagement is now a two-minute meeting in three beats, each answered with one
+   tap and graded on the spot:
 
-function dcKey(id){ return "dh-dc-play-" + id; }
-function dcSave(){
-  if(!DC) return;
-  try{ localStorage.setItem(dcKey(DC.c.id), JSON.stringify({ step:DC.step, a:DC.a, scored:DC.scored })); }catch(e){}
+     1. THE REAL PROBLEM (30)  one of four — what this case actually turns on
+     2. QUICK CALLS      (45)  three "do it / don't" cards, flipped one at a time
+     3. SAY IT           (25)  pick the line you'd actually say to the client
+
+   A client-confidence meter rises and falls with every answer, so the meeting has a pulse. */
+let DC = null;   // { c, step, a:{risk:null, dec:{}, talk:null}, scored }
+const DC_STEPS = ["The problem","Quick calls","Say it","Result"];
+function dcKey(id){ return "dh-dc3-play-" + id; }
+function dcSave(){ if(!DC) return; try{ localStorage.setItem(dcKey(DC.c.id), JSON.stringify({ step:DC.step, a:DC.a, scored:DC.scored })); }catch(e){} }
+function dcLoad(id){ try{ const j = JSON.parse(localStorage.getItem(dcKey(id)) || "null"); return j && j.a ? j : null; }catch(e){ return null; } }
+
+/* one-of-four on the real problem: the case's lead risk plus three it does NOT carry */
+function dcRiskChoices(c){
+  if(c._riskChoices) return c._riskChoices;
+  const r = dcRng(c.id + ":risk");
+  const lead = c.rightRisks[0];
+  const others = DC_FLAG_ORDER.filter(f => !c.flags.includes(f)).sort(() => r() - 0.5).slice(0, 3);
+  c._riskChoices = [lead].concat(others).sort(() => r() - 0.5);
+  return c._riskChoices;
 }
-function dcLoad(id){
-  try{ const j = JSON.parse(localStorage.getItem(dcKey(id)) || "null"); return j && j.a ? j : null; }catch(e){ return null; }
+const DC_RISK_SHORT = { liquidity:"No cash set aside for what's about to be spent", concentration:"Too much riding on one position",
+  tax:"A tax bill being decided by accident", incomeGap:"The paycheck stops and nothing replaces it", insurance:"One bad event would land on their balance sheet",
+  estate:"Beneficiaries & documents don't match their life now", behavioral:"Emotions are about to override the plan",
+  sequence:"Withdrawals start into whatever the market's doing", horizon:"Money needed soon is invested like long-term money",
+  longevity:"The plan assumes an average lifespan, no care costs", debt:"Expensive debt alongside investments", education:"A dated tuition bill with no funding plan" };
+function dcDecs(c){ return c.decisions.slice(0, 3); }
+function dcMood(){
+  const c = DC.c, a = DC.a; let m = 50;
+  if(a.risk != null) m += a.risk === c.rightRisks[0] ? 16 : -12;
+  dcDecs(c).forEach((d, i) => { if(a.dec[i] !== undefined) m += a.dec[i] === d.yes ? 9 : -9; });
+  if(a.talk != null) m += c.talk[a.talk].ok ? 14 : -14;
+  return Math.max(4, Math.min(100, m));
 }
-
 function dcScore(){
   const c = DC.c, a = DC.a;
-  const qPts = a.q.reduce((s,id) => s + (c.questions.find(x => x.q.id === id) || {w:0}).w, 0);
-  const discovery = Math.round(20 * Math.min(1, qPts / c.qMax));
-  const rightRisks = a.risks.filter(f => c.rightRisks.includes(f)).length;
-  const diagnosis = Math.round(20 * (rightRisks / 2));
-  const dev = ["eq","bond","cash","real"].reduce((s,k) => s + Math.abs((a.alloc[k]||0) - c.target[k]), 0);
-  const allocation = Math.round(25 * Math.max(0, 1 - dev / 60));
-  const decRight = c.decisions.filter((d,i) => a.dec[i] === d.yes).length;
-  const structure = decRight * 5;
-  const pick = c.talk[a.talk];
-  const conversation = pick && pick.ok ? 15 : 0;
-  const total = discovery + diagnosis + allocation + structure + conversation;
-  return { discovery, diagnosis, allocation, structure, conversation, total, dev, decRight, rightRisks, qPts };
+  const problem = a.risk === c.rightRisks[0] ? 30 : 0;
+  const decRight = dcDecs(c).filter((d,i) => a.dec[i] === d.yes).length;
+  const calls = decRight * 15;
+  const say = a.talk != null && c.talk[a.talk].ok ? 25 : 0;
+  return { problem, calls, say, decRight, total: problem + calls + say };
 }
 function dcCommit(sc){
   try{
     const s = dcStats();
-    s.played = (s.played||0) + 1;
-    s.total = (s.total||0) + sc.total;
-    s.best = Math.max(s.best||0, sc.total);
+    s.played = (s.played||0) + 1; s.total = (s.total||0) + sc.total; s.best = Math.max(s.best||0, sc.total);
     s.streak = sc.total >= 80 ? (s.streak||0) + 1 : 0;
     localStorage.setItem("dh-dc-stats", JSON.stringify(s));
   }catch(e){}
 }
 
 function renderDailyCase(fresh){
-  const panel = $("#panel-quiz");
   $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = "";
   $("#staleNote").style.display = "none";
-
   const id = fresh ? ("free-" + Date.now()) : ("case-" + todayCT());
   if(!DC || DC.c.id !== id){
     const c = dcBuild(id);
     const saved = fresh ? null : dcLoad(id);
-    DC = { c, step: saved ? saved.step : 0, a: saved ? saved.a : { q:[], risks:[], alloc:null, dec:{}, talk:null }, scored: saved ? saved.scored : null };
-    if(!DC.a.alloc) DC.a.alloc = { eq:60, bond:25, cash:10, real:5 };
+    DC = { c, step: saved ? saved.step : 0, a: saved ? saved.a : { risk:null, dec:{}, talk:null }, scored: saved ? saved.scored : null, anim:true };
   }
   dcPaint();
 }
 
-function dcPaint(){
-  const panel = $("#panel-quiz"), c = DC.c, a = DC.a;
-  const rail = DC_STEPS.map((s,i) => `<span class="dc-pip${i===DC.step?" on":i<DC.step?" done":""}">${esc(s)}</span>`).join("");
-
-  const head = `<button class="pbtn game-back" id="dcBack">← Back to Games</button>
-    <div class="dc-file">
-      <div class="dc-tab"><span>Case № ${String(hashStr(c.id)%9000+1000)}</span>
-        <span>${esc(c.stage.label)} · ${esc(c.wealth.label)}</span></div>
-      <div class="dc-t">${esc(c.ev.t)}</div>
-      <div class="dc-who">${esc(c.profile)}</div>
-      <p class="dc-sit">${esc(c.situation)}</p>
-    </div>
-    <div class="dc-rail">${rail}</div>`;
-
-  let bodyHTML = "";
-  if(DC.step === 0){
-    bodyHTML = `<div class="dc-card">
-      <div class="dc-k">Round 1 · Discovery <span>20 points</span></div>
-      <h3 class="dc-q">You get three questions before you say anything. Choose them.</h3>
-      <p class="dc-note">Whatever you ask gets answered with this household's real numbers — and you will need some of those numbers in round three.</p>
-      <div class="dc-opts">${c.questions.map(x => {
-        const on = a.q.includes(x.q.id);
-        const ansd = on ? `<div class="dc-ans">“${esc(x.q.a(c))}”</div>` : "";
-        return `<button type="button" class="dc-opt${on?" on":""}" data-q="${esc(x.q.id)}"><span class="dc-opt-t">${esc(x.q.q)}</span>${ansd}</button>`;
-      }).join("")}</div>
-      <div class="dc-foot"><span class="dc-count">${a.q.length} of 3 asked</span>
-        <button class="dc-go" id="dcNext" ${a.q.length < 3 ? "disabled" : ""}>Next →</button></div>
-    </div>`;
-  } else if(DC.step === 1){
-    bodyHTML = `<div class="dc-card">
-      <div class="dc-k">Round 2 · Diagnosis <span>20 points</span></div>
-      <h3 class="dc-q">Which two risks are actually primary here?</h3>
-      <p class="dc-note">Several of these are real risks for someone. Only two are the ones this case turns on.</p>
-      <div class="dc-opts">${c.riskOptions.map(f => `
-        <button type="button" class="dc-opt${a.risks.includes(f)?" on":""}" data-risk="${esc(f)}">
-          <span class="dc-opt-t">${esc(DC_RISK[f])}</span></button>`).join("")}</div>
-      <div class="dc-foot"><span class="dc-count">${a.risks.length} of 2 chosen</span>
-        <button class="dc-go" id="dcNext" ${a.risks.length < 2 ? "disabled" : ""}>Next →</button></div>
-    </div>`;
-  } else if(DC.step === 2){
-    const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0);
-    const known = a.q.includes("purpose") || a.q.includes("cash");
-    bodyHTML = `<div class="dc-card">
-      <div class="dc-k">Round 3 · Allocation <span>25 points</span></div>
-      <h3 class="dc-q">Build the portfolio. It has to total 100%.</h3>
-      <p class="dc-note">${known
-        ? `You know what you learned in discovery: about ${dcK(c.cashNeed)} is needed inside two years, against ${dcK(c.assets)} investable and a ${c.horizon}-year horizon for the rest.`
-        : `You did not ask what this money is for or how much cash they keep — so you are sizing this blind. That is the cost of a wasted question.`}</p>
-      <div class="dc-sliders">${DC_ALLOC_ROWS.map(rw => `
-        <div class="dc-sl">
-          <div class="dc-sl-h"><b>${esc(rw.label)}</b><span class="dc-sl-v" data-v="${rw.k}">${a.alloc[rw.k]||0}%</span></div>
-          <input type="range" min="0" max="100" step="1" value="${a.alloc[rw.k]||0}" data-a="${rw.k}" class="dc-range">
-          <div class="dc-sl-hint">${esc(rw.hint)}</div>
-        </div>`).join("")}</div>
-      <div class="dc-total ${tot===100?"ok":"bad"}">Total <b id="dcTot">${tot}</b>%${tot===100?" ✓":""}
-        <button class="dc-balance" id="dcBal">Balance to 100</button></div>
-      <div class="dc-foot"><span class="dc-count">${tot===100?"Ready":"Must total exactly 100%"}</span>
-        <button class="dc-go" id="dcNext" ${tot!==100?"disabled":""}>Next →</button></div>
-    </div>`;
-  } else if(DC.step === 3){
-    const answered = c.decisions.filter((d,i) => a.dec[i] !== undefined).length;
-    bodyHTML = `<div class="dc-card">
-      <div class="dc-k">Round 4 · Structure <span>20 points</span></div>
-      <h3 class="dc-q">Four calls. Do it, or don't.</h3>
-      <div class="dc-decs">${c.decisions.map((d,i) => `
-        <div class="dc-dec">
-          <div class="dc-dec-t">${esc(d.text)}</div>
-          <div class="dc-yn">
-            <button type="button" class="dc-y${a.dec[i]===true?" on":""}" data-d="${i}" data-v="1">Do it</button>
-            <button type="button" class="dc-n${a.dec[i]===false?" on":""}" data-d="${i}" data-v="0">Don't</button>
-          </div>
-        </div>`).join("")}</div>
-      <div class="dc-foot"><span class="dc-count">${answered} of 4 answered</span>
-        <button class="dc-go" id="dcNext" ${answered < 4 ? "disabled" : ""}>Next →</button></div>
-    </div>`;
-  } else if(DC.step === 4){
-    bodyHTML = `<div class="dc-card">
-      <div class="dc-k">Round 5 · The conversation <span>15 points</span></div>
-      <h3 class="dc-q">Now say it to ${esc(c.first)}. Which version?</h3>
-      <div class="dc-opts">${c.talk.map((t,i) => `
-        <button type="button" class="dc-opt dc-opt-talk${a.talk===i?" on":""}" data-talk="${i}">
-          <span class="dc-opt-t">${esc(t.t)}</span></button>`).join("")}</div>
-      <div class="dc-foot"><span class="dc-count">${a.talk==null?"Pick one":"Ready"}</span>
-        <button class="dc-go" id="dcNext" ${a.talk==null?"disabled":""}>Score the case →</button></div>
-    </div>`;
-  } else {
-    bodyHTML = dcDebriefHTML();
-  }
-
-  panel.innerHTML = `<div class="dc-wrap">${head}${bodyHTML}
-    <div class="dc-stats"><span>${esc(dcStatLabel())}</span><span>Streak ${dcStats().streak || 0}</span></div>
-    <div style="text-align:center;margin-top:12px"><button class="pbtn" id="dcNew">Deal me a different case</button></div>
-  </div>`;
-  dcWire();
+function dcMoodHTML(){
+  const m = dcMood();
+  const col = m >= 70 ? "var(--up)" : m >= 45 ? "#E0A100" : "var(--down)";
+  const word = m >= 85 ? "Thrilled" : m >= 70 ? "Confident" : m >= 55 ? "Listening" : m >= 40 ? "Unsure" : "Losing faith";
+  return `<div class="dc3-mood" title="How the client feels about you right now">
+    <span class="dc3-face" style="--mc:${col}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="9" cy="10" r=".9" class="f"/><circle cx="15" cy="10" r=".9" class="f"/>
+      <path d="M8 ${15.5 - (m-50)/30} Q12 ${15.5 + (m-50)/12} 16 ${15.5 - (m-50)/30}"/></svg></span>
+    <div class="dc3-mood-b"><div class="dc3-mood-l">Client confidence<b style="color:${col}">${word}</b></div>
+      <div class="dc3-mood-bar"><i style="width:${m}%;background:${col}"></i></div></div></div>`;
 }
 
-function dcDebriefHTML(){
-  const c = DC.c, a = DC.a, sc = DC.scored;
-  const g = dcGrade(sc.total);
-  const bar = (label, got, max) => `<div class="dc-bar"><div class="dc-bar-l">${esc(label)}</div>
-      <div class="dc-bar-t"><span style="width:${(got/max*100).toFixed(0)}%"></span></div>
-      <div class="dc-bar-v">${got}<i>/${max}</i></div></div>`;
-
-  const missed = c.questions.filter(x => x.w === 3 && !a.q.includes(x.q.id));
-  const riskLines = c.rightRisks.map(f => `<li><b>${esc(DC_RISK[f])}</b>${a.risks.includes(f) ? " — you had it." : " — you missed it."}</li>`).join("");
-  const allocRows = DC_ALLOC_ROWS.map(rw => {
-    const you = a.alloc[rw.k]||0, t = c.target[rw.k], d = you - t;
-    return `<tr><td>${esc(rw.label)}</td><td class="dc-num">${you}%</td><td class="dc-num">${t}%</td>
-      <td class="dc-num ${Math.abs(d)<=4?"ok":"off"}">${d>0?"+":""}${d}</td></tr>`;
-  }).join("");
-  const decRows = c.decisions.map((d,i) => {
-    const right = a.dec[i] === d.yes;
-    return `<div class="dc-rev ${right?"ok":"off"}">
-      <div class="dc-rev-h">${right?"✓":"✗"} ${esc(d.text)}</div>
-      <div class="dc-rev-a">Correct answer: <b>${d.yes ? "do it" : "don't"}</b></div>
-      <p>${esc(d.why)}</p></div>`;
-  }).join("");
-  const pick = c.talk[a.talk], rightTalk = c.talk.find(t => t.ok);
-
-  return `<div class="dc-card dc-score">
-      <div class="dc-grade"><b>${esc(g.g)}</b><span>${sc.total}<i>/100</i></span></div>
-      <div class="dc-verdict">${esc(g.w)}</div>
-      <div class="dc-bars">
-        ${bar("Discovery", sc.discovery, 20)}
-        ${bar("Diagnosis", sc.diagnosis, 20)}
-        ${bar("Allocation", sc.allocation, 25)}
-        ${bar("Structure", sc.structure, 20)}
-        ${bar("Conversation", sc.conversation, 15)}
+function dcPaint(){
+  const panel = $("#panel-quiz"), c = DC.c, a = DC.a;
+  const rail = DC_STEPS.map((s,i) => `<span class="dc3-pip${i===DC.step?" on":i<DC.step?" done":""}"><i>${i<DC.step?"✓":i+1}</i>${esc(s)}</span>`).join("");
+  const initials = c.name.split(" ").map(w => w[0]).join("");
+  const hue = hashStr(c.name) % 360;
+  const head = `<button class="pbtn game-back" id="dcBack">← Back to Games</button>
+    <div class="dc3-file">
+      <div class="dc3-top"><span class="dc3-no">Case № ${String(hashStr(c.id)%9000+1000)}</span><span class="dc3-tag">${esc(c.stage.label)} · ${esc(c.wealth.label)}</span></div>
+      <div class="dc3-client">
+        <span class="dc3-av" style="--h:${hue}">${esc(initials)}</span>
+        <div><div class="dc3-t">${esc(c.ev.t)}</div><div class="dc3-who">${esc(c.name)}, ${c.age} · ${esc(c.workDesc)}</div></div>
+      </div>
+      <p class="dc3-sit">${esc(c.situation)}</p>
+      <div class="dc3-facts">
+        <span><u>Income</u><b>${dcK(c.income)}/yr</b></span><span><u>Invested</u><b>${dcK(c.assets)}</b></span>
+        <span><u>Cash</u><b>${dcK(c.cash)}</b></span><span><u>Family</u><b>${esc(c.family.d.replace(/^married, /,"").replace(/^married with /,""))}</b></span>
       </div>
     </div>
-    <div class="dc-card">
-      <div class="dc-k">The debrief</div>
-      <h4 class="dc-sh">Discovery</h4>
-      <p class="dc-p">${missed.length
-        ? `You left ${missed.length} high-value question${missed.length===1?"":"s"} on the table: ${missed.map(m => `“${esc(m.q.q)}”`).join(" and ")}.`
-        : `You asked the three that mattered. Everything downstream got easier because of it.`}</p>
-      <h4 class="dc-sh">The two risks that were primary</h4>
-      <ul class="dc-ul">${riskLines}</ul>
-      <h4 class="dc-sh">Allocation</h4>
-      <p class="dc-p">Target comes out of a ${c.horizon}-year horizon, a risk capacity of ${c.capacity} out of 5, and ${dcK(c.cashNeed)} of spending inside two years against ${dcK(c.assets)} invested.</p>
-      <table class="dc-tbl"><thead><tr><th></th><th class="dc-num">You</th><th class="dc-num">Target</th><th class="dc-num">Gap</th></tr></thead><tbody>${allocRows}</tbody></table>
-      <h4 class="dc-sh">Structure — ${sc.decRight} of 4</h4>
-      ${decRows}
-      <h4 class="dc-sh">The conversation</h4>
-      <p class="dc-p">${pick && pick.ok
-        ? "You led with their goal, named the trade-off in their language and gave one concrete next step. That is the whole job."
-        : esc((pick && c.talkWhy[pick.tag]) || "") + " The version that works:"}</p>
-      ${pick && pick.ok ? "" : `<blockquote class="dc-quote">${esc(rightTalk.t)}</blockquote>`}
+    <div class="dc3-rail">${rail}</div>
+    ${DC.step < 3 ? dcMoodHTML() : ""}`;
+
+  let body = "";
+  if(DC.step === 0){
+    const lead = c.rightRisks[0], picked = a.risk != null;
+    body = `<div class="dc3-card${DC.anim?" in":""}">
+      <div class="dc3-k">Beat 1 · 30 pts</div>
+      <h3 class="dc3-q">What's the real problem here?</h3>
+      <div class="dc3-opts">${dcRiskChoices(c).map(f => {
+        const st = !picked ? "" : f === lead ? " right" : f === a.risk ? " wrong" : " dim";
+        return `<button type="button" class="dc3-opt${st}" data-risk="${esc(f)}" ${picked?"disabled":""}>${esc(DC_RISK_SHORT[f] || DC_RISK[f])}</button>`; }).join("")}</div>
+      ${picked ? `<div class="dc3-why ${a.risk===lead?"ok":"off"}"><b>${a.risk===lead ? "Nailed it." : "Not quite."}</b> ${esc(DC_RISK[lead])}${c.rightRisks[1] ? ` The runner-up: ${esc((DC_RISK_SHORT[c.rightRisks[1]]||"").toLowerCase())}.` : ""}</div>
+        <div class="dc3-foot"><button class="dc3-go" id="dcNext">Next: quick calls →</button></div>` : ""}
     </div>`;
+  } else if(DC.step === 1){
+    const decs = dcDecs(c);
+    const cur = decs.findIndex((d,i) => a.dec[i] === undefined);
+    body = `<div class="dc3-card"><div class="dc3-k">Beat 2 · 15 pts each</div>
+      <h3 class="dc3-q">Do it, or don't?</h3>
+      <div class="dc3-decs">${decs.map((d,i) => {
+        const ans = a.dec[i];
+        if(ans === undefined && i !== cur) return `<div class="dc3-dec wait"><span>Call ${i+1}</span></div>`;
+        if(ans === undefined) return `<div class="dc3-dec live${DC.anim?" in":""}"><div class="dc3-dec-n">Call ${i+1} of 3</div><div class="dc3-dec-t">${esc(d.text)}</div>
+          <div class="dc3-yn"><button type="button" class="dc3-n" data-d="${i}" data-v="0">✕ Don't</button><button type="button" class="dc3-y" data-d="${i}" data-v="1">✓ Do it</button></div></div>`;
+        const ok = ans === d.yes;
+        return `<div class="dc3-dec done ${ok?"ok":"off"}"><div class="dc3-dec-n">${ok?"Right call":"Wrong call"} · the answer is <b>${d.yes?"do it":"don't"}</b></div>
+          <div class="dc3-dec-t">${esc(d.text)}</div><p>${esc(d.why)}</p></div>`;
+      }).join("")}</div>
+      ${cur < 0 ? `<div class="dc3-foot"><button class="dc3-go" id="dcNext">Next: say it →</button></div>` : ""}</div>`;
+  } else if(DC.step === 2){
+    const picked = a.talk != null;
+    body = `<div class="dc3-card${DC.anim?" in":""}">
+      <div class="dc3-k">Beat 3 · 25 pts</div>
+      <h3 class="dc3-q">${esc(c.first)} asks what you'd do. You say…</h3>
+      <div class="dc3-opts talk">${c.talk.map((t,i) => {
+        const st = !picked ? "" : t.ok ? " right" : i === a.talk ? " wrong" : " dim";
+        return `<button type="button" class="dc3-opt dc3-say${st}" data-talk="${i}" ${picked?"disabled":""}>${esc(t.t)}</button>`; }).join("")}</div>
+      ${picked ? `<div class="dc3-why ${c.talk[a.talk].ok?"ok":"off"}"><b>${c.talk[a.talk].ok ? "That's the one." : "Ouch."}</b> ${c.talk[a.talk].ok ? "Their goal first, the trade-off in plain English, one concrete next step." : esc(c.talkWhy[c.talk[a.talk].tag] || "")}</div>
+        <div class="dc3-foot"><button class="dc3-go" id="dcNext">See how the meeting went →</button></div>` : ""}
+    </div>`;
+  } else {
+    const sc = DC.scored, g = dcGrade(sc.total), C = 2*Math.PI*52;
+    const row = (l, got, max) => `<div class="dc3-sr"><span>${l}</span><div class="dc3-sbar"><i style="width:${(got/max*100).toFixed(0)}%"></i></div><b>${got}<small>/${max}</small></b></div>`;
+    body = `<div class="dc3-card dc3-result in">
+      <div class="dc3-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="trk"/><circle cx="60" cy="60" r="52" class="val" stroke-dasharray="${(C*sc.total/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 60 60)"/></svg>
+        <div><b>${esc(g.g)}</b><span>${sc.total}/100</span></div></div>
+      <div class="dc3-verdict">${esc(g.w)}</div>
+      <div class="dc3-srs">${row("The problem", sc.problem, 30)}${row("Quick calls", sc.calls, 45)}${row("Say it", sc.say, 25)}</div>
+      <div class="dc3-take"><b>Takeaway for real meetings:</b> ${esc(DC_RISK[c.rightRisks[0]])} Lead with that, fix it first, then talk investments.</div>
+    </div>`;
+  }
+
+  panel.innerHTML = `<div class="dc-wrap dc3">${head}${body}
+    <div class="dc-stats"><span>${esc(dcStatLabel())}</span><span>Streak ${dcStats().streak || 0}</span></div>
+    <div style="text-align:center;margin-top:12px"><button class="pbtn" id="dcNew">${DC.step === 3 ? "Deal me another client" : "Different case"}</button></div>
+  </div>`;
+  DC.anim = false;
+  dcWire();
 }
 
 function dcWire(){
   const panel = $("#panel-quiz"), c = DC.c, a = DC.a;
   $("#dcBack").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
-  $("#dcNew").addEventListener("click", () => { DC = null; renderDailyCase(true); });
-
-  panel.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => {
-    const id = b.dataset.q, i = a.q.indexOf(id);
-    if(i >= 0) a.q.splice(i,1); else if(a.q.length < 3) a.q.push(id);
-    dcSave(); dcPaint();
-  }));
-  panel.querySelectorAll("[data-risk]").forEach(b => b.addEventListener("click", () => {
-    const f = b.dataset.risk, i = a.risks.indexOf(f);
-    if(i >= 0) a.risks.splice(i,1); else if(a.risks.length < 2) a.risks.push(f);
-    dcSave(); dcPaint();
-  }));
+  $("#dcNew").addEventListener("click", () => { DC = null; renderDailyCase(true); window.scrollTo({top:0, behavior:"smooth"}); });
+  panel.querySelectorAll("[data-risk]").forEach(b => b.addEventListener("click", () => { if(a.risk != null) return; a.risk = b.dataset.risk; dcSave(); dcPaint(); }));
   panel.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
-    a.dec[+b.dataset.d] = b.dataset.v === "1";
-    dcSave(); dcPaint();
+    const i = +b.dataset.d; if(a.dec[i] !== undefined) return;
+    a.dec[i] = b.dataset.v === "1";
+    const card = b.closest(".dc3-dec"); if(card) card.classList.add(b.dataset.v === "1" ? "fly-r" : "fly-l");
+    dcSave(); DC.anim = true; setTimeout(dcPaint, 220);
   }));
-  panel.querySelectorAll("[data-talk]").forEach(b => b.addEventListener("click", () => {
-    a.talk = +b.dataset.talk; dcSave(); dcPaint();
-  }));
-
-  /* sliders repaint only the numbers, so dragging stays smooth */
-  panel.querySelectorAll(".dc-range").forEach(el => {
-    const sync = () => {
-      a.alloc[el.dataset.a] = +el.value;
-      const badge = panel.querySelector(`[data-v="${el.dataset.a}"]`);
-      if(badge) badge.textContent = el.value + "%";
-      const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0);
-      const tn = $("#dcTot"); if(tn){ tn.textContent = tot; tn.parentNode.className = "dc-total " + (tot===100?"ok":"bad"); }
-      const go = $("#dcNext"); if(go) go.disabled = tot !== 100;
-      const cnt = panel.querySelector(".dc-count"); if(cnt) cnt.textContent = tot===100 ? "Ready" : "Must total exactly 100%";
-    };
-    el.addEventListener("input", sync);
-    el.addEventListener("change", () => { sync(); dcSave(); });
-  });
-  $("#dcBal")?.addEventListener("click", () => {
-    const tot = DC_ALLOC_ROWS.reduce((s,r) => s + (a.alloc[r.k]||0), 0) || 1;
-    let rest = 100;
-    DC_ALLOC_ROWS.forEach((rw,i) => {
-      const v = i === DC_ALLOC_ROWS.length-1 ? rest : Math.round((a.alloc[rw.k]||0) / tot * 100);
-      a.alloc[rw.k] = Math.max(0, v); rest -= a.alloc[rw.k];
-    });
-    dcSave(); dcPaint();
-  });
-
+  panel.querySelectorAll("[data-talk]").forEach(b => b.addEventListener("click", () => { if(a.talk != null) return; a.talk = +b.dataset.talk; dcSave(); dcPaint(); }));
   $("#dcNext")?.addEventListener("click", () => {
-    if(DC.step === 4){
-      DC.scored = dcScore();
-      dcCommit(DC.scored);
-      DC.step = 5;
-    } else DC.step++;
-    dcSave(); dcPaint();
-    window.scrollTo({top:0, behavior:"smooth"});
+    DC.step++;
+    if(DC.step === 3){ DC.scored = dcScore(); dcCommit(DC.scored); }
+    DC.anim = true; dcSave(); dcPaint();
+    const r = panel.querySelector(".dc3-rail"); if(r) r.scrollIntoView({behavior:"smooth", block:"start"});
   });
 }
 
@@ -14036,8 +14435,8 @@ async function renderQuizTab(){
     const words = await fetchWords();
     const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
     $("#heroEyebrow").textContent = "Word Quiz";
-    $("#heroTitle").textContent = "How Sharp Is Your Lexicon?";
-    $("#heroSub").textContent = `A multiple-choice quiz built from every Word of the Day in your news briefings — ${words.length} words and counting. Each weekday's new word joins the bank automatically.`;
+    $("#heroTitle").textContent = "Word Blitz";
+    $("#heroSub").textContent = `Beat the clock, build a streak, rack up points — ${words.length} words from your briefings, and every new Word of the Day joins the bank.`;
     $("#heroDateline").textContent = `Newest word: ${newest.term} · added ${niceDate(newest.date)}`;
     quizHome(words);
   }catch(e){
@@ -14048,129 +14447,231 @@ async function renderQuizTab(){
   }
 }
 
+/* ================= Word Quiz → Word Blitz (Eli, Oct 2026) =================
+   "Make the word quiz more fun. Be creative, be stunning / cool."
+   Same word bank and the same spaced repetition underneath (qRecord / weightedPick), now played
+   as a game: ten words against a shrinking timer ring, points for speed, a combo multiplier that
+   builds on a hot streak, one 50/50 lifeline per round, confetti on the right answer, and a
+   results screen that turns the misses into flip cards. "Chill" mode drops the clock.
+   Keys: 1–4 pick, H for the 50/50, Enter for next. */
+const QB = { mode:"blitz", timer:0, t0:0, dur:12000, pts:0, combo:0, maxCombo:0, used5050:false, answered:false, keyH:null };
+const QB_DUR = 12000;
+function qbBest(){ return Number(localStorage.getItem("dh-quiz-best-pts") || "0"); }
+function qBestLabel(){ const p = qbBest(); if(p) return "Best " + p.toLocaleString("en-US") + " pts"; const b = localStorage.getItem("dh-quiz-best"); return b ? "Best "+b : "Not played yet"; }
+function qbStop(){ cancelAnimationFrame(QB.timer); QB.timer = 0; }
+function qbConfetti(el){
+  if(!el || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+  const r = el.getBoundingClientRect(), cols = ["#FFB300","#FF5E7E","#5BC0FF","#7CE3A6","#B48CFF","#FFD75E"];
+  const host = document.createElement("div"); host.className = "qb-confetti";
+  host.style.left = (r.left + r.width/2) + "px"; host.style.top = (r.top + r.height/2) + "px";
+  for(let i = 0; i < 28; i++){
+    const s = document.createElement("i"), a = Math.random()*Math.PI*2, d = 60 + Math.random()*120;
+    s.style.setProperty("--x", Math.cos(a)*d + "px"); s.style.setProperty("--y", (Math.sin(a)*d - 40) + "px");
+    s.style.setProperty("--r", (Math.random()*720 - 360) + "deg"); s.style.background = cols[i % cols.length];
+    s.style.animationDelay = (Math.random()*60) + "ms"; host.appendChild(s);
+  }
+  document.body.appendChild(host); setTimeout(() => host.remove(), 1100);
+}
+function qbKeys(fn){
+  if(QB.keyH) document.removeEventListener("keydown", QB.keyH);
+  QB.keyH = fn ? (e => { if(S.tab !== "quiz" || gamesView !== "quiz" || e.target.closest("input,textarea")) return; fn(e); }) : null;
+  if(QB.keyH) document.addEventListener("keydown", QB.keyH);
+}
+
 function quizHome(words){
+  qbStop(); qbKeys(null);
   const panel = $("#panel-quiz");
-  const best = localStorage.getItem("dh-quiz-best") || "—";
-  const plays = localStorage.getItem("dh-quiz-plays") || "0";
   const stats = qStats();
   const mastered = words.filter(w => { const st = stats[w.term]; return st && st.k >= 2 && st.c/st.s >= 0.75; }).length;
-  const n = Math.min(10, words.length);
-  let h = `<div class="qwrap">
+  const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
+  const plays = localStorage.getItem("dh-quiz-plays") || "0";
+  const pct = words.length ? mastered / words.length : 0, C = 2*Math.PI*30;
+  panel.innerHTML = `<div class="qwrap qb">
     <button class="pbtn game-back" id="qBackGames">← Back to Games</button>
-    <div class="qstats">
-      <div class="card"><div class="lbl">Words in Bank</div><div class="big">${words.length}</div></div>
-      <div class="card"><div class="lbl">Mastered</div><div class="big">${mastered}<span style="color:var(--muted);font-size:14px">/${words.length}</span></div></div>
-      <div class="card"><div class="lbl">Best Score</div><div class="big">${esc(String(best))}</div></div>
-      <div class="card"><div class="lbl">Rounds Played</div><div class="big">${esc(plays)}</div></div>
+    <div class="qb-hero">
+      <div class="qb-orbs"><i></i><i></i><i></i></div>
+      <div class="qb-hero-k">Today's word</div>
+      <div class="qb-hero-w">${esc(newest.term)}</div>
+      <div class="qb-hero-p">${[newest.respell || newest.ipa, newest.pos].filter(Boolean).map(esc).join(" · ")}</div>
+      <div class="qb-hero-d">${esc(newest.definition)}</div>
+      ${newest.example ? `<div class="qb-hero-x">“${esc(newest.example)}”</div>` : ""}
     </div>
-    <div class="qcard">
-      <div class="qprompt-label">Ready?</div>
-      <div class="qprompt">${n} questions, weighted toward words you haven't seen or have missed — today's newest word is always in the mix. Master a word (streak of 2+, 75%+ accuracy) and it shows up less often.</div>
-      <button class="qbig qnext" id="qStart">Start Quiz</button>
+    <div class="qb-modes">
+      <button class="qb-mode blitz" id="qStart"><span class="qb-mode-ic"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+        <span><b>Blitz</b><small>10 words · 12s each · combos &amp; points</small></span><span class="qb-go">Play</span></button>
+      <button class="qb-mode chill" id="qChill"><span class="qb-mode-ic"><svg viewBox="0 0 24 24"><path d="M4 15c2-4 6-6 8-6s6 2 8 6"/><path d="M8 19h8"/><circle cx="12" cy="6" r="2"/></svg></span>
+        <span><b>Chill</b><small>No clock — just you and the words</small></span><span class="qb-go">Play</span></button>
     </div>
-    <div class="kicker">Word Bank</div>
-    <button class="pbtn" id="qBankToggle" style="margin-bottom:14px">Show all ${words.length} words</button>
+    <div class="qb-stats">
+      <div class="qb-stat ring"><svg viewBox="0 0 70 70"><circle cx="35" cy="35" r="30" class="trk"/><circle cx="35" cy="35" r="30" class="val" stroke-dasharray="${(C*pct).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 35 35)"/></svg>
+        <div><b>${mastered}</b><small>of ${words.length} mastered</small></div></div>
+      <div class="qb-stat"><b>${qbBest() ? qbBest().toLocaleString("en-US") : "—"}</b><small>best score</small></div>
+      <div class="qb-stat"><b>${esc(plays)}</b><small>rounds played</small></div>
+    </div>
+    <button class="pbtn" id="qBankToggle" style="margin:6px 0 14px">Browse all ${words.length} words</button>
     <div id="qBank" style="display:none"></div>
   </div>`;
-  panel.innerHTML = h;
   $("#qBackGames").addEventListener("click", () => { gamesView = "launcher"; renderGamesLauncher(); });
-  $("#qStart").addEventListener("click", () => startRound(words));
+  $("#qStart").addEventListener("click", () => startRound(words, "blitz"));
+  $("#qChill").addEventListener("click", () => startRound(words, "chill"));
   $("#qBankToggle").addEventListener("click", () => {
-    const b = $("#qBank");
-    const open = b.style.display !== "none";
+    const b = $("#qBank"), open = b.style.display !== "none";
     b.style.display = open ? "none" : "block";
-    $("#qBankToggle").textContent = open ? `Show all ${words.length} words` : "Hide word bank";
+    $("#qBankToggle").textContent = open ? `Browse all ${words.length} words` : "Hide word bank";
     if(!open && !b.innerHTML){
       b.innerHTML = words.slice().sort((a,b2) => (b2.date||"").localeCompare(a.date||"")).map(w =>
         `<div class="bank-row"><span><span class="bt">${esc(w.term)}</span> <span class="bp">(${esc(w.pos||"")})</span></span>
          <span class="bd">${esc(w.definition)}</span>${masteryHtml(w.term)}<span class="bdate">${esc(shortDate(w.date))}</span></div>`).join("");
     }
   });
+  qbKeys(e => { if(e.key === "Enter"){ e.preventDefault(); startRound(words, "blitz"); } });
 }
 
-function startRound(words){
+function startRound(words, mode){
   const newest = words.reduce((a,b) => (a.date||"") > (b.date||"") ? a : b);
   const n = Math.min(10, words.length);
   const rest = weightedPick(words.filter(w => w !== newest), n-1);   // spaced repetition
   Q.round = shuffle([newest, ...rest]);
   Q.idx = 0; Q.score = 0; Q.results = [];
+  QB.mode = mode || "blitz"; QB.pts = 0; QB.combo = 0; QB.maxCombo = 0; QB.used5050 = false;
   renderQuestion(words);
 }
 
 function renderQuestion(words){
+  qbStop();
   const panel = $("#panel-quiz");
   const w = Q.round[Q.idx];
   const mode = Math.random() < 0.5 ? "def2word" : "word2def";
   const pool = shuffle(words.filter(x => x.term !== w.term)).slice(0, Math.min(3, words.length-1));
   const options = shuffle([w, ...pool]);
-  const dots = Q.round.map((_,i) =>
-    `<span class="qdot ${i < Q.idx ? (Q.results[i] ? "hit" : "miss") : i === Q.idx ? "now" : ""}"></span>`).join("");
-  let h = `<div class="qwrap"><div class="qcard">
-    <div class="qmeta"><span>Question ${Q.idx+1} / ${Q.round.length}</span><div class="qdots">${dots}</div><span>Score ${Q.score}</span></div>`;
-  if(mode === "def2word"){
-    h += `<div class="qprompt-label">Which word means…</div>
-      <div class="qprompt">“${esc(w.definition)}”</div><div class="qopts">`;
-    options.forEach((o,i) => h += `<button class="qopt" data-i="${i}"><b>${esc(o.term)}</b> <span style="color:var(--muted);font-size:12px">${esc(o.respell||"")}</span></button>`);
-  }else{
-    h += `<div class="qprompt-label">What does this word mean?</div>
-      <div class="qprompt">${esc(w.term)} <span class="qipa">${esc(w.ipa||"")} ${esc(w.respell||"")} · ${esc(w.pos||"")}</span></div><div class="qopts">`;
-    options.forEach((o,i) => h += `<button class="qopt" data-i="${i}">${esc(o.definition)}</button>`);
-  }
-  h += `</div><div id="qReveal"></div></div></div>`;
-  panel.innerHTML = h;
-  panel.querySelectorAll(".qopt").forEach(btn => btn.addEventListener("click", () => {
-    const pick = options[Number(btn.dataset.i)];
-    const right = pick.term === w.term;
-    if(right) Q.score++;
-    Q.results.push(right);
-    qRecord(w.term, right);
-    panel.querySelectorAll(".qopt").forEach(b2 => {
+  QB.answered = false;
+  const blitz = QB.mode === "blitz", C = 2*Math.PI*26;
+  const mult = Math.min(4, 1 + Math.floor(QB.combo/2));
+  const dots = Q.round.map((_,i) => `<span class="qdot ${i < Q.idx ? (Q.results[i] ? "hit" : "miss") : i === Q.idx ? "now" : ""}"></span>`).join("");
+  panel.innerHTML = `<div class="qwrap qb">
+    <div class="qb-bar">
+      <button class="pbtn" id="qQuit">✕ Quit</button>
+      <div class="qdots">${dots}</div>
+      <div class="qb-pts"><b id="qbPts">${QB.pts.toLocaleString("en-US")}</b><small>pts</small></div>
+    </div>
+    <div class="qb-card in" id="qbCard">
+      <div class="qb-card-top">
+        ${blitz ? `<div class="qb-timer"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" class="trk"/><circle cx="30" cy="30" r="26" class="val" id="qbRing" stroke-dasharray="${C.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 30 30)"/></svg><span id="qbSec">12</span></div>` : `<div class="qb-n">${Q.idx+1}<small>/${Q.round.length}</small></div>`}
+        <div class="qb-combo${QB.combo >= 2 ? " hot" : ""}"><svg viewBox="0 0 24 24"><path d="M12 2c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z"/></svg>${QB.combo >= 2 ? `${QB.combo} streak · ×${mult}` : "Build a streak"}</div>
+        <button class="qb-5050" id="qb5050" ${QB.used5050 ? "disabled" : ""} title="Remove two wrong answers (H)">50/50</button>
+      </div>
+      ${mode === "def2word"
+        ? `<div class="qb-k">Which word means…</div><div class="qb-prompt def">“${esc(w.definition)}”</div>`
+        : `<div class="qb-k">What does this mean?</div><div class="qb-prompt">${esc(w.term)}</div><div class="qb-ipa">${[w.respell || w.ipa, w.pos].filter(Boolean).map(esc).join(" · ")}</div>`}
+      <div class="qb-opts">${options.map((o,i) => `<button class="qb-opt" data-i="${i}" style="--d:${i*60}ms"><kbd>${i+1}</kbd><span>${mode === "def2word" ? `<b>${esc(o.term)}</b>` : esc(o.definition)}</span></button>`).join("")}</div>
+      <div id="qReveal"></div>
+    </div>
+  </div>`;
+  $("#qQuit").addEventListener("click", () => { qbStop(); quizHome(words); });
+
+  const answer = (idx, timedOut) => {
+    if(QB.answered) return; QB.answered = true; qbStop();
+    const pick = idx == null ? null : options[idx];
+    const right = !!pick && pick.term === w.term;
+    const left = blitz ? Math.max(0, 1 - (performance.now() - QB.t0) / QB_DUR) : 0;
+    let gain = 0;
+    if(right){
+      QB.combo++; QB.maxCombo = Math.max(QB.maxCombo, QB.combo);
+      const m = Math.min(4, 1 + Math.floor((QB.combo-1)/2));
+      gain = Math.round((100 + (blitz ? 150*left : 50)) * m);
+      QB.pts += gain; Q.score++;
+    } else QB.combo = 0;
+    Q.results.push(right); qRecord(w.term, right);
+    panel.querySelectorAll(".qb-opt").forEach(b2 => {
       b2.disabled = true;
       const o = options[Number(b2.dataset.i)];
       if(o.term === w.term) b2.classList.add("correct");
-      else if(b2 === btn) b2.classList.add("wrong");
+      else if(pick && o === pick) b2.classList.add("wrong");
       else b2.classList.add("dim");
     });
-    $("#qReveal").innerHTML = `<div class="qreveal">
-      <b>${esc(w.term)}</b> ${esc(w.ipa||"")} ${esc(w.respell||"")} (${esc(w.pos||"")}) — ${esc(w.definition)}
-      <div class="qex">“${esc(w.example||"")}”</div></div>
-      <button class="qbig qnext" id="qNext">${Q.idx+1 < Q.round.length ? "Next Question" : "See Results"}</button>`;
-    $("#qNext").addEventListener("click", () => {
-      Q.idx++;
-      if(Q.idx < Q.round.length) renderQuestion(words);
-      else finishRound(words);
-    });
-    $("#qNext").focus();
-  }));
+    const card = $("#qbCard");
+    if(right){ qbConfetti(panel.querySelector(".qb-opt.correct")); }
+    else if(card) card.classList.add("shake");
+    const ptsEl = $("#qbPts"); if(ptsEl) ptsEl.textContent = QB.pts.toLocaleString("en-US");
+    if(gain && card){ const pop = document.createElement("div"); pop.className = "qb-pop"; pop.textContent = "+" + gain; card.appendChild(pop); }
+    $("#qReveal").innerHTML = `<div class="qb-reveal ${right ? "ok" : "off"}">
+        <div class="qb-reveal-h">${right ? (QB.combo >= 3 ? `On fire — ${QB.combo} in a row` : "Nice.") : timedOut ? "Time's up." : "Not this time."}</div>
+        <div><b>${esc(w.term)}</b>${w.pos ? ` <i>${esc(w.pos)}</i>` : ""} — ${esc(w.definition)}</div>
+        ${w.example ? `<div class="qb-ex">“${esc(w.example)}”</div>` : ""}
+      </div>
+      <button class="qb-next" id="qNext">${Q.idx+1 < Q.round.length ? "Next word →" : "See results →"}</button>`;
+    const go = () => { Q.idx++; if(Q.idx < Q.round.length) renderQuestion(words); else finishRound(words); };
+    $("#qNext").addEventListener("click", go);
+    qbKeys(e => { if(e.key === "Enter" || e.key === " " || e.key === "ArrowRight"){ e.preventDefault(); go(); } });
+  };
+  panel.querySelectorAll(".qb-opt").forEach(btn => btn.addEventListener("click", () => answer(Number(btn.dataset.i), false)));
+  const do5050 = () => {
+    if(QB.used5050 || QB.answered) return; QB.used5050 = true;
+    const wrong = [...panel.querySelectorAll(".qb-opt")].filter(b => options[Number(b.dataset.i)].term !== w.term);
+    shuffle(wrong).slice(0, 2).forEach(b => { b.disabled = true; b.classList.add("gone"); });
+    const b = $("#qb5050"); if(b) b.disabled = true;
+  };
+  $("#qb5050").addEventListener("click", do5050);
+  qbKeys(e => {
+    if(/^[1-4]$/.test(e.key)){ const b = panel.querySelector(`.qb-opt[data-i="${+e.key-1}"]`); if(b && !b.disabled) answer(+e.key-1, false); }
+    else if(e.key === "h" || e.key === "H") do5050();
+  });
+
+  if(blitz){
+    QB.t0 = performance.now();
+    const ring = $("#qbRing"), sec = $("#qbSec");
+    const tick = now => {
+      const k = Math.min(1, (now - QB.t0) / QB_DUR);
+      if(ring && document.contains(ring)){
+        ring.setAttribute("stroke-dasharray", `${(C*(1-k)).toFixed(1)} ${C.toFixed(1)}`);
+        ring.classList.toggle("late", k > .66);
+        if(sec) sec.textContent = Math.ceil((1-k) * QB_DUR / 1000);
+      } else return;
+      if(k >= 1){ answer(null, true); return; }
+      QB.timer = requestAnimationFrame(tick);
+    };
+    QB.timer = requestAnimationFrame(tick);
+  }
 }
 
 function finishRound(words){
+  qbStop();
   const panel = $("#panel-quiz");
-  const pct = Math.round(Q.score/Q.round.length*100);
+  const n = Q.round.length, pct = Math.round(Q.score/n*100);
   const prevBest = localStorage.getItem("dh-quiz-best");
   const bestScore = prevBest ? Math.max(Number(prevBest.split("/")[0]), Q.score) : Q.score;
-  const isBest = !prevBest || Q.score >= Number(prevBest.split("/")[0]);
-  localStorage.setItem("dh-quiz-best", `${bestScore}/${Q.round.length}`);
+  localStorage.setItem("dh-quiz-best", `${bestScore}/${n}`);
   localStorage.setItem("dh-quiz-plays", String(Number(localStorage.getItem("dh-quiz-plays")||"0") + 1));
-  const msg = pct === 100 ? "Flawless. Perspicacious, even." :
-    pct >= 80 ? "Sharp — your lexicon is in fine form." :
-    pct >= 60 ? "Solid. A few more rounds and it's mastered." :
-    "The word bank below is your friend. Run it back.";
+  const isBest = QB.mode === "blitz" && QB.pts > qbBest();
+  if(isBest) localStorage.setItem("dh-quiz-best-pts", String(QB.pts));
+  const stars = pct === 100 ? 3 : pct >= 70 ? 2 : pct >= 40 ? 1 : 0;
+  const msg = pct === 100 ? "Flawless. Perspicacious, even." : pct >= 80 ? "Sharp — your lexicon is in fine form." :
+    pct >= 60 ? "Solid. A few more rounds and they're yours." : "The misses below come back more often until they stick.";
   const missed = Q.round.filter((_,i) => !Q.results[i]);
-  const missedHtml = missed.length ? `<div class="qreveal" style="text-align:left;margin-top:22px">
-    <b>Worth another look:</b>${missed.map(w => `<div style="margin-top:8px"><b>${esc(w.term)}</b> — ${esc(w.definition)}</div>`).join("")}
-    <div class="qex" style="margin-top:10px">These words will come around more often until you've got them.</div></div>` : "";
-  panel.innerHTML = `<div class="qwrap"><div class="qcard qscore-hero">
-    <div class="qprompt-label">Round Complete${isBest ? " · New Best" : ""}</div>
-    <div class="qs-big">${Q.score}<span style="color:var(--muted);font-size:26px">/${Q.round.length}</span></div>
-    <div class="qs-sub">${pct}% correct</div>
-    <div class="qs-msg">${esc(msg)}</div>
-    ${missedHtml}
-    <button class="qbig qnext" id="qAgain">Play Again</button>
-    <button class="pbtn qnext" id="qHome" style="width:100%">Back to Quiz Home</button>
-  </div></div>`;
-  $("#qAgain").addEventListener("click", () => startRound(words));
+  const star = on => `<svg viewBox="0 0 24 24" class="${on?"on":""}"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>`;
+  panel.innerHTML = `<div class="qwrap qb">
+    <div class="qb-card qb-res in">
+      <div class="qb-orbs"><i></i><i></i><i></i></div>
+      <div class="qb-k">${QB.mode === "blitz" ? "Blitz complete" : "Round complete"}${isBest ? " · new best" : ""}</div>
+      <div class="qb-stars">${[0,1,2].map(i => star(i < stars)).join("")}</div>
+      <div class="qb-res-big">${QB.mode === "blitz" ? `<span id="qbCount">0</span><small>pts</small>` : `${Q.score}<small>/${n}</small>`}</div>
+      <div class="qb-res-row"><span><b>${Q.score}/${n}</b> right</span><span><b>${QB.maxCombo}</b> best streak</span><span><b>${pct}%</b> accuracy</span></div>
+      <div class="qb-res-msg">${esc(msg)}</div>
+      <div class="qb-res-btns"><button class="qb-next" id="qAgain">Play again</button><button class="pbtn" id="qHome">Quiz home</button></div>
+    </div>
+    ${missed.length ? `<div class="qb-k" style="margin:18px 4px 10px">Flip the ones you missed</div>
+      <div class="qb-flips">${missed.map(w => `<button class="qb-flip"><span class="f"><b>${esc(w.term)}</b><small>tap to flip</small></span><span class="b">${esc(w.definition)}</span></button>`).join("")}</div>` : ""}
+  </div>`;
+  if(QB.mode === "blitz"){
+    const el = $("#qbCount"), t0 = performance.now(), target = QB.pts;
+    const step = now => { const k = Math.min(1, (now - t0)/1200), e = 1 - Math.pow(1-k, 3); if(el && document.contains(el)) el.textContent = Math.round(target*e).toLocaleString("en-US"); if(k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  if(stars >= 2) setTimeout(() => qbConfetti(panel.querySelector(".qb-stars")), 300);
+  panel.querySelectorAll(".qb-flip").forEach(b => b.addEventListener("click", () => b.classList.toggle("on")));
+  $("#qAgain").addEventListener("click", () => startRound(words, QB.mode));
   $("#qHome").addEventListener("click", () => quizHome(words));
+  qbKeys(e => { if(e.key === "Enter"){ e.preventDefault(); startRound(words, QB.mode); } });
 }
 
 /* ================= installed-app layer =================
@@ -14642,11 +15143,12 @@ function mbOpen(){
       <div class="mb-date">${esc(dateTxt)}</div>
       <div class="mb-arc" id="mbArc"></div>
       <div class="mb-next" id="mbNext"><span class="mb-ld"></span></div>
+      <div class="mb-hits" id="mbHits"></div>
       <div class="mb-deck">
-        <section class="mb-p" id="mbMk"><h3>Markets <small id="mbMkS"></small></h3><div id="mbMkB"><span class="mb-ld"></span></div></section>
         <section class="mb-p" id="mbPf"><h3>Your portfolio <small id="mbPfS"></small></h3><div id="mbPfB"><span class="mb-ld"></span></div></section>
-        <section class="mb-p" id="mbIb" style="grid-column:1/-1"><h3>Important email <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
-        <section class="mb-p" id="mbHl" style="grid-column:1/-1"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbIb"><h3>Important email <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p mb-wide" id="mbHl"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p mb-wide" id="mbMk"><h3>Markets <small id="mbMkS"></small></h3><div id="mbMkB"><span class="mb-ld"></span></div></section>
       </div>
       <div class="mb-go"><button id="mbGo">Start the day</button></div>
     </div>`;
@@ -14700,22 +15202,39 @@ function mbClose(after){
     if(tA && sA) pairs.push([sA, tA]);
   }
   if(!pairs.length) root.classList.add("solo");
-  root.classList.add("closing");   // transitions must exist before the transforms are set
+  /* Eli, Oct 2026: "once the animation moves to the home screen it kind of does this glitch."
+     The Home page used to be revealed (as the brief went transparent) and THEN told to play its
+     rise-in animation 260ms later, so every card blinked out and popped back. And the flown
+     greeting stayed on screen ~200ms after the real title reappeared under it, in a different
+     colour, so the title visibly doubled. Now: measure first, start the page's rise-in while the
+     brief is still opaque, tint the flying text toward the title's colour, and swap the two in
+     the same frame the flight lands. */
+  // skipped mid-intro: settle the half-faded letters so a crisp word flies, not a blur
+  root.querySelectorAll(".mb-greet span").forEach(sp => { sp.style.animation = "none"; sp.style.opacity = "1"; sp.style.filter = "none"; sp.style.transform = "none"; });
   const zoom = parseFloat(document.documentElement.style.zoom) || 1;   // big-screen fit scales CSS px
-  pairs.forEach(([src, dst]) => {
+  const flights = pairs.map(([src, dst]) => {
     const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
-    if(!a.width || !b.width) return;
+    if(!a.width || !b.width) return null;
     // the greeting is matched on its text box (its block is wider than the words)
     const aw = src.id === "mbGreet" ? mbTextWidth(src) : a.width, bw = dst.id === "heroTitle" ? mbTextWidth(dst) : b.width;
-    const sc = bw / aw;
-    src.classList.add("fly"); void src.offsetWidth;
-    requestAnimationFrame(() => { src.style.transform = `translate(${(b.left - a.left)/zoom}px, ${(b.top - a.top)/zoom}px) scale(${sc})`; });
-    dst.style.visibility = "hidden";
-    setTimeout(() => { dst.style.visibility = ""; }, 960);
+    return { src, dst, dx:(b.left - a.left)/zoom, dy:(b.top - a.top)/zoom, sc: bw / aw, col: getComputedStyle(dst).color };
+  }).filter(Boolean);
+  flights.forEach(f => { f.dst.style.visibility = "hidden"; });
+  if(typeof skyArrive === "function") skyArrive();
+  root.classList.add("closing");   // transitions must exist before the transforms are set
+  flights.forEach(f => {
+    f.src.classList.add("fly"); void f.src.offsetWidth;
+    requestAnimationFrame(() => {
+      f.src.style.transform = `translate(${f.dx}px, ${f.dy}px) scale(${f.sc})`;
+      if(f.src.id === "mbGreet") f.src.style.color = f.col;
+    });
   });
   if(after) after();
-  setTimeout(() => { if(typeof skyArrive === "function") skyArrive(); }, pairs.length ? 260 : 120);
-  setTimeout(finish, 1150);
+  const LAND = flights.length ? 960 : 620;
+  setTimeout(() => {
+    flights.forEach(f => { f.dst.style.visibility = ""; f.src.style.opacity = "0"; });
+    requestAnimationFrame(finish);
+  }, LAND);
 }
 function mbTextWidth(el){
   const r = document.createRange(); r.selectNodeContents(el);
@@ -14805,6 +15324,7 @@ async function mbLoadAgenda(now, fast){
   });
   $("#mbEv").innerHTML = pins;
   mbAnimateSun();
+  mbLoadHits(d);
   if(fast) mbRevealAllPins();
 
   // tomorrow's first item, from the two-week radar
@@ -14835,6 +15355,56 @@ async function mbLoadAgenda(now, fast){
   };
   paint();
   MB.tick = setInterval(() => { MB.nowT = mbT(mbNowMin()); paint(); }, 30000);
+}
+
+/* ---- quick hits: the small stuff worth knowing before the day starts ----
+   Eli, Oct 2026 ("think of some other ideas I can include"): weather, what's on the to-do list,
+   who to catch up with, and the next birthday/holiday countdown -- each a tap away from its page. */
+const MB_HIT_SVG = {
+  wx:'<path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6.8 9.2 4.4 4.4 0 0 0 7 18z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
+  todo:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>',
+  friend:'<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="10" r="2.4"/><path d="M15.5 14.6A4.5 4.5 0 0 1 21 19"/>',
+  gift:'<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5-4-5-1.5S10 9 12 9zm0 0c1.5-3.5 5-4 5-1.5S14 9 12 9z"/>',
+  flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'
+};
+function mbHitIcon(k){ return `<svg viewBox="0 0 24 24" aria-hidden="true">${MB_HIT_SVG[k]||""}</svg>`; }
+async function mbLoadHits(d){
+  const el = $("#mbHits"); if(!el) return;
+  const hits = [];
+  const paint = () => {
+    const box = $("#mbHits"); if(!box) return;
+    box.innerHTML = hits.map((h, i) => `<button class="mb-hit" data-i="${i}" style="--d:${i*70}ms"><span class="hi-ic">${mbHitIcon(h.ic)}</span><span class="hi-b"><span class="hi-l">${esc(h.label)}</span><b>${esc(h.big)}</b>${h.sub ? `<span class="hi-s">${esc(h.sub)}</span>` : ""}</span></button>`).join("");
+    box.querySelectorAll(".mb-hit").forEach(b => b.addEventListener("click", () => { const h = hits[+b.dataset.i]; if(h && h.go) mbClose(h.go); }));
+  };
+  // countdown: nearest birthday / holiday / drill the calendar refresh found
+  const cds = ((d && d.countdowns) || []).filter(c => c && c.date && c.date >= todayCT()).sort((a,b) => a.date.localeCompare(b.date));
+  // weather (Home loads it; give it a moment)
+  await mbWait(() => S.wx && S.wx.curTemp != null, 5000);
+  if(S.wx && S.wx.curTemp != null){
+    const rain = S.wx.rainMax != null && S.wx.rainMax >= 30 ? ` · ${S.wx.rainMax}% rain` : "";
+    hits.push({ ic: S.wx.curDay === false ? "wx" : /cloud|overcast|rain|storm|drizzle|fog/i.test(S.wx.curCond||"") ? "wx" : "sun",
+      label: "Weather", big: `${S.wx.curTemp}° ${S.wx.curCond || ""}`.trim(), sub: (S.wx.hi != null && isFinite(S.wx.hi) ? `H ${S.wx.hi}° · L ${S.wx.lo}°` : "") + rain,
+      go: () => goWeather() });
+  }
+  const td = window.__todosApi && window.__todosApi.getState ? window.__todosApi.getState() : null;
+  if(td && td.items){
+    const open = td.items.filter(t => !t.done);
+    const today = todayCT();
+    const dueNow = open.filter(t => t.due && t.due <= today);
+    const urgent = open.filter(t => t.kind === "urgent");
+    const lead = dueNow[0] || urgent[0] || open[0];
+    if(open.length) hits.push({ ic:"todo", label: dueNow.length ? `${dueNow.length} due today` : `${urgent.length} urgent to-do${urgent.length===1?"":"s"}`,
+      big: lead ? lead.text : "", sub: `${open.length} open in all`, go: () => switchTab("calendar") });
+  }
+  const fs = window.__friendsApi ? window.__friendsApi.getState() : null;
+  const feat = fs && (fs.people||[]).length && typeof pickFeaturedFriend === "function" ? pickFeaturedFriend(fs.people) : null;
+  if(feat) hits.push({ ic:"friend", label:"Catch up with", big: feat.p.name, sub: feat.because, go: () => typeof goFriends === "function" ? goFriends() : switchTab("friends") });
+  if(cds.length){
+    const c = cds[0], days = Math.round((new Date(c.date + "T12:00:00") - new Date(todayCT() + "T12:00:00")) / 864e5);
+    hits.push({ ic: /birthday|b-?day/i.test(c.label||"") ? "gift" : "flag", label: days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`, big: c.label, sub: new Date(c.date + "T12:00:00").toLocaleDateString("en-US",{weekday:"short", month:"short", day:"numeric"}) });
+  }
+  paint();
 }
 
 /* ---- markets ---- */
@@ -14872,13 +15442,13 @@ async function mbLoadMarkets(){
     const c = pct == null ? "" : pct >= 0 ? "up" : "down";
     const col = pct == null ? "rgba(255,255,255,.6)" : pct >= 0 ? "var(--mb-up)" : "var(--mb-down)";
     const kind = sym.endsWith("=F") && q ? "Futures " : "";
-    rows += `<div class="mk-row"><div class="mk-n">${esc(name)}<small>${kind}${esc(val)}</small></div>${mbSpark(vals, 92, 32, col) || "<span></span>"}<div class="mk-c ${c}">${pct == null ? "" : (pct>=0?"+":"−") + Math.abs(pct).toFixed(2) + "%"}</div></div>`;
+    rows += `<div class="mk-tile"><div class="mk-top"><div class="mk-n">${esc(name)}<small>${kind}${esc(val)}</small></div><div class="mk-c ${c}">${pct == null ? "" : (pct>=0?"+":"−") + Math.abs(pct).toFixed(2) + "%"}</div></div>${mbSpark(vals, 160, 36, col) || ""}</div>`;
   });
   const want = [/^10-yr/i, /^30-yr mortgage/i, /^fed funds/i, /^gold/i, /crude/i];
   const pool = [...((rates && rates.rates) || []), ...prices];
   const chips = want.map(rx => pool.find(r => rx.test(r.label || ""))).filter(Boolean)
     .map(r => `<span class="mk-rate">${esc(r.label)}<b>${esc(r.value)}</b></span>`).join("");
-  body.innerHTML = (rows || `<div class="mb-empty">Market prices aren't reachable right now. They'll be on your Home page once they load.</div>`) + (chips ? `<div class="mk-rates">${chips}</div>` : "");
+  body.innerHTML = (rows ? `<div class="mk-tiles">${rows}</div>` : `<div class="mb-empty">Market prices aren't reachable right now. They'll be on your Home page once they load.</div>`) + (chips ? `<div class="mk-rates">${chips}</div>` : "");
   mbSetLens(body);
 }
 
@@ -15414,13 +15984,19 @@ function skyArrive(){
         people.splice(Math.max(0, Math.min(Number(index) || 0, people.length)), 0, person);
         setDoc(friendsDocRef, { people }).catch(err => console.error("Daily Hub: failed to re-add friend", err));
       },
-      logContact(id, method){
-        const nowIso = new Date().toISOString();
+      // whenIso (optional) back-dates a catch-up ("yesterday", "last weekend"); history stays
+      // newest-first and lastContact is always the most recent touchpoint, never moved backward.
+      logContact(id, method, whenIso){
+        const t = whenIso ? new Date(whenIso) : new Date();
+        const iso = (isFinite(t.getTime()) ? t : new Date()).toISOString();
         const next = {
           people: friendsState.people.map(p => {
             if(p.id !== id) return p;
-            const hist = [{ date: nowIso, method: (method || "").trim() }, ...(p.history || [])].slice(0, FRIEND_HISTORY_CAP);
-            return { ...p, lastContact: nowIso, history: hist };
+            const hist = [{ date: iso, method: (method || "").trim() }, ...(p.history || [])]
+              .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, FRIEND_HISTORY_CAP);
+            const prevLast = p.lastContact ? new Date(p.lastContact).getTime() : 0;
+            const lastContact = new Date(iso).getTime() > prevLast ? iso : p.lastContact;
+            return { ...p, lastContact, history: hist };
           })
         };
         setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to log friend contact", err));

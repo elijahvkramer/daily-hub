@@ -46,6 +46,25 @@ CALENDAR_IDS = [
 
 WINDOW_DAYS = 15  # matches the retired live-sync window (today + 15 days)
 
+# Colour category per source calendar (Eli, Oct 2026: "holidays should be a different colour than
+# birthdays, and those a different colour than events I put on the schedule"). The site colours
+# each event by its `cat`; a birthday is recognised by Google's own event type (or a title that
+# says so) wherever it lives, so it wins over the calendar it happens to sit on.
+CALENDAR_CATS = {
+    "elijahvkramer@gmail.com": "personal",
+    "family13940029292116141615@group.calendar.google.com": "family",
+    "6668454f24e15ba8a30ea5f496b32f9713c27bb5bde025f21eaaea6f831a09e9@group.calendar.google.com": "couple",
+    "73f90f2a90ecc6ef0895707a47af926c2f70714a4ad692aac3871c38054681e3@group.calendar.google.com": "work",
+    "en.usa#holiday@group.v.calendar.google.com": "holiday",
+}
+BIRTHDAY_TITLE = re.compile(r"\bbirthday\b|\bb-?day\b", re.I)
+
+
+def event_cat(ev, cal_cat):
+    if (ev.get("eventType") == "birthday") or BIRTHDAY_TITLE.search(ev.get("summary") or ""):
+        return "birthday"
+    return cal_cat or "personal"
+
 
 # ---------- Google Calendar ----------
 
@@ -55,7 +74,7 @@ def get_credentials(key_path):
     return creds
 
 
-def fetch_events(creds, calendar_id, time_min, time_max):
+def fetch_events(creds, calendar_id, time_min, time_max, event_types=None):
     from urllib.parse import quote
     url = f"https://www.googleapis.com/calendar/v3/calendars/{quote(calendar_id, safe='')}/events"
     headers = {"Authorization": f"Bearer {creds.token}"}
@@ -71,17 +90,46 @@ def fetch_events(creds, calendar_id, time_min, time_max):
         }
         if page_token:
             params["pageToken"] = page_token
+        if event_types:
+            params["eventTypes"] = list(event_types)   # requests repeats the key per value
         r = requests.get(url, params=params, headers=headers, timeout=30)
         if r.status_code == 404:
             print(f"  ! calendar not found/not shared: {calendar_id}", file=sys.stderr)
             return items
         r.raise_for_status()
         j = r.json()
-        items.extend(j.get("items", []))
+        cat = CALENDAR_CATS.get(calendar_id)
+        for it in j.get("items", []):
+            it["_cat"] = event_cat(it, cat)
+            items.append(it)
         page_token = j.get("nextPageToken")
         if not page_token:
             break
     return items
+
+
+def fetch_all(creds, time_min, time_max):
+    """Every configured calendar, plus an explicit birthday-type sweep of the primary calendar
+    (Google files contact birthdays as eventType=birthday; asking for them by name means they
+    can never be silently left out). Duplicates by event id collapse."""
+    out, seen = [], set()
+    for cal_id in CALENDAR_IDS:
+        batch = fetch_events(creds, cal_id, time_min, time_max)
+        print(f"  {cal_id}: {len(batch)} events")
+        for it in batch:
+            out.append(it)
+            seen.add((cal_id, it.get("id")))
+    try:
+        extra = fetch_events(creds, CALENDAR_IDS[0], time_min, time_max, event_types=["birthday"])
+        added = 0
+        for it in extra:
+            if (CALENDAR_IDS[0], it.get("id")) not in seen:
+                out.append(it)
+                added += 1
+        print(f"  birthday sweep: {len(extra)} found, {added} new")
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! birthday sweep: {e}", file=sys.stderr)
+    return out
 
 
 # ---------- lead/body formatting (ported from gcalFormatEvent/gcalBucketEvents) ----------
@@ -98,7 +146,40 @@ def ct_date_str(dt):
     return dt.astimezone(CT).strftime("%Y-%m-%d")
 
 
-def format_event(ev, is_today):
+def span_info(ev):
+    """(start_date, end_date) in CT, inclusive, as YYYY-MM-DD strings; end_date is None unless the
+    event genuinely covers 2+ calendar days.
+
+    All-day events: Google's end.date is exclusive, so the last day is end.date minus one.
+    Timed events: Eli, Oct 2026 -- the Empower conference (Oct 12 7am to Oct 13 8pm) showed only
+    on the 12th, because timed events never spanned. They do now, unless the end is only a
+    late-night spill past midnight (a 9:30pm-12:30am reception stays on its start day)."""
+    s = ev.get("start") or {}
+    e = ev.get("end") or {}
+    if s.get("date") and not s.get("dateTime"):
+        start = datetime.date.fromisoformat(s["date"])
+        end = None
+        if e.get("date"):
+            last = datetime.date.fromisoformat(e["date"]) - datetime.timedelta(days=1)
+            if last > start:
+                end = last
+        return start.isoformat(), (end.isoformat() if end else None)
+    if not s.get("dateTime"):
+        return None, None
+    st = datetime.datetime.fromisoformat(s["dateTime"]).astimezone(CT)
+    end = None
+    if e.get("dateTime"):
+        en = datetime.datetime.fromisoformat(e["dateTime"]).astimezone(CT)
+        last = en.date()
+        if en.time() == datetime.time(0, 0):          # ends exactly at midnight: previous day is the last one
+            last = last - datetime.timedelta(days=1)
+        spill = (en.time() <= datetime.time(3, 0)) and (en - st) < datetime.timedelta(hours=12)
+        if last > st.date() and not spill:
+            end = last
+    return st.date().isoformat(), (end.isoformat() if end else None)
+
+
+def format_event(ev, is_today, continuing=False):
     s = ev.get("start") or {}
     e = ev.get("end") or {}
     is_all_day = bool(s.get("date") and not s.get("dateTime"))
@@ -106,25 +187,13 @@ def format_event(ev, is_today):
     location = ev.get("location")
     body = summary + (f" · {location}" if location else "")
 
+    start_date, end_date_str = span_info(ev)
     time_line = ""
-    end_date_str = None  # only set for events that genuinely span 2+ calendar days (CT)
     if is_all_day:
         dt = datetime.datetime.strptime(s["date"], "%Y-%m-%d")
         weekday = dt.strftime("%a")
         md = f"{dt.month}/{dt.day}"
-        if e.get("date"):
-            # Google's all-day "end.date" is EXCLUSIVE (the day after the event
-            # actually ends), so the last inclusive day is end.date minus one.
-            end_dt = datetime.datetime.strptime(e["date"], "%Y-%m-%d") - datetime.timedelta(days=1)
-            if end_dt.date() > dt.date():
-                end_date_str = end_dt.strftime("%Y-%m-%d")
     else:
-        # timed events NEVER get an endDate/span treatment, even when they
-        # run past midnight (e.g. a 9:30pm-12:30am reception) -- they still
-        # belong to their start day, just with their full time range shown
-        # (matching how Google Calendar's own month view handles them). Only
-        # genuine multi-day ALL-DAY events (the is_all_day branch above,
-        # e.g. a multi-day "FOCUS" block) render as a spanning bar.
         start_dt = datetime.datetime.fromisoformat(s["dateTime"])
         start_ct = start_dt.astimezone(CT)
         weekday = start_ct.strftime("%a")
@@ -132,16 +201,22 @@ def format_event(ev, is_today):
         time_line = fmt_ct_time(start_dt)
         if e.get("dateTime"):
             end_dt = datetime.datetime.fromisoformat(e["dateTime"])
-            time_line += "–" + fmt_ct_time(end_dt)
+            # a multi-day run shows its start time only; the span bar carries the rest
+            if not end_date_str:
+                time_line += "–" + fmt_ct_time(end_dt)
         time_line += " CT"
 
-    if is_today:
+    if continuing:
+        lead = ""          # already under way when today began: an all-day style row on today's list
+    elif is_today:
         lead = f"{time_line} —" if time_line else ""
     else:
         lead = f"{weekday} {md}" + (f", {time_line}" if time_line else "") + " —"
     result = {"lead": lead, "body": body}
     if end_date_str:
         result["endDate"] = end_date_str  # additive field; existing {lead,body} shape unchanged otherwise
+        result["startDate"] = start_date
+    result["cat"] = ev.get("_cat") or "personal"
     return result
 
 
@@ -150,25 +225,24 @@ def bucket_events(items, today_date_str):
     for ev in items:
         if ev.get("status") == "cancelled":
             continue
-        s = ev.get("start") or {}
-        is_all_day = bool(s.get("date") and not s.get("dateTime"))
-        if is_all_day:
-            date_str = s["date"]
-        elif s.get("dateTime"):
-            date_str = ct_date_str(datetime.datetime.fromisoformat(s["dateTime"]))
-        else:
+        start_date, end_date = span_info(ev)
+        if not start_date:
             continue
-        if date_str == today_date_str:
+        if start_date == today_date_str:
             today.append(format_event(ev, True))
-        elif date_str > today_date_str:
+        elif start_date > today_date_str:
             radar.append(format_event(ev, False))
+        elif end_date and end_date >= today_date_str:
+            # began before today and is still running (day 2 of a conference): keep it, so the
+            # span bar and today's agenda don't lose it the morning after it started
+            today.append(format_event(ev, True, continuing=True))
     # stable de-dup: same calendar item can't repeat, but overlapping calendars
     # (e.g. an event Eli is on in two calendars) could — collapse exact dupes.
     def dedupe(lst):
         seen = set()
         out = []
         for item in lst:
-            key = (item["lead"], item["body"], item.get("endDate"))
+            key = (item["lead"], item["body"], item.get("endDate"), item.get("startDate"))
             if key in seen:
                 continue
             seen.add(key)
@@ -343,11 +417,7 @@ def main():
     print(f"refresh_calendar: today (CT) = {today_str}, window = {time_min.isoformat()} .. {time_max.isoformat()}")
 
     creds = get_credentials(key_path)
-    all_items = []
-    for cal_id in CALENDAR_IDS:
-        items = fetch_events(creds, cal_id, time_min, time_max)
-        print(f"  {cal_id}: {len(items)} events")
-        all_items.extend(items)
+    all_items = fetch_all(creds, time_min, time_max)
 
     today_list, radar_list = bucket_events(all_items, today_str)
     print(f"  bucketed: today={len(today_list)} radar={len(radar_list)}")
@@ -362,9 +432,7 @@ def main():
     countdowns = []
     try:
         far_max = time_min + datetime.timedelta(days=COUNTDOWN_HORIZON_DAYS)
-        far_items = []
-        for cal_id in CALENDAR_IDS:
-            far_items.extend(fetch_events(creds, cal_id, time_min, far_max))
+        far_items = fetch_all(creds, time_min, far_max)
         bday = next_occurrence_by_kind(far_items, today_ct, "birthday")
         if bday:
             countdowns.append(bday)
@@ -456,6 +524,7 @@ def run_companions(pass_path, repo_dir):
     jobs = [
         ("portfolio quotes", [sys.executable, os.path.join(here, "refresh_quotes.py"), pass_path, repo_dir], 120),
         ("rate board", [sys.executable, os.path.join(here, "refresh_rates.py"), pass_path, repo_dir], 90),
+        ("board history", [sys.executable, os.path.join(here, "refresh_history.py"), pass_path, repo_dir], 150),
         ("news photos", [sys.executable, os.path.join(here, "enrich_news.py"), pass_path, repo_dir], 240),
         ("crossword", ["node", os.path.join(here, "build_crossword.js"), pass_path, repo_dir], 240),
     ]

@@ -2877,6 +2877,32 @@
     .cal-card .cal-head .cm{font-size:17px}
   }
 
+
+  /* ---------- event colours by type (Eli, Oct 2026) ---------- */
+  .k-personal{--kc:#C9962A} .k-work{--kc:#3A6EA5} .k-family{--kc:#2E9D6B} .k-couple{--kc:#8B5CD6}
+  .k-birthday{--kc:#E0457B} .k-holiday{--kc:#D8483F} .k-todo{--kc:#4C9A6A}
+  .cal-card .cal-ev{background:color-mix(in srgb,var(--kc,var(--gold)) 11%,transparent);box-shadow:inset 3px 0 0 var(--kc,var(--gold))}
+  .cal-card .cal-cell.has:hover .cal-ev{background:color-mix(in srgb,var(--kc,var(--gold)) 20%,transparent)}
+  .cal-card .cal-cell-bar{background:var(--kc,#3A6EA5)}
+  .cal-ev i{background:var(--kc,var(--gold))}
+  .cal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:11px;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .cal-legend span{display:inline-flex;align-items:center;gap:6px}
+  .cal-legend i{width:9px;height:9px;border-radius:3px;background:var(--kc)}
+  .ct-row .ct-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--kc,var(--gold));margin-right:6px;vertical-align:middle}
+  .ag-row.k-birthday .ag-name::before,.ag-row.k-holiday .ag-name::before,.ag-row.k-family .ag-name::before,.ag-row.k-couple .ag-name::before,.ag-row.k-work .ag-name::before{background:var(--kc);box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+
+
+  /* Markets board: mortgage tiles + the refresh control (Oct 2026) */
+  .yc-morts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+  .yc-morts .bp-v{font-size:21px}
+  .desk-refresh{appearance:none;border:1px solid var(--hairline);background:color-mix(in srgb,var(--paper) 80%,transparent);color:var(--gold-dark);
+    border-radius:999px;padding:7px 15px;font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:transform .12s ease,border-color .12s ease}
+  .desk-refresh:hover{border-color:var(--gold)} .desk-refresh:active{transform:scale(.96)}
+  .desk-refresh.busy{opacity:.8;cursor:default}
+  .desk-refresh.busy::before{content:"";width:11px;height:11px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:deskSpin .7s linear infinite}
+  @keyframes deskSpin{to{transform:rotate(360deg)}}
+
   /* Font picker (theme panel) */
   .font-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 2px}
   .font-opt{appearance:none;border:1px solid var(--hairline);background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);border-radius:10px;padding:8px 9px;text-align:left;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;gap:2px;line-height:1.15;transition:border-color .15s,background .15s}
@@ -5253,17 +5279,32 @@ function eventStartTimeText(lead){
   const m = String(lead||"").match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)/i);
   return m ? m[0].replace(/\s+/g,"").toLowerCase() : null;
 }
+/* Colour key for the Two-Week View. Only the categories that actually appear are listed. */
+const CAL_CATS = [
+  ["personal", "Mine"], ["work", "Work"], ["family", "Family"], ["couple", "Brooklyn + Eli"],
+  ["birthday", "Birthdays"], ["holiday", "Holidays"], ["todo", "To-dos due"]
+];
+function calLegendHTML(spans, byDate){
+  const used = new Set();
+  (spans || []).forEach(sp => used.add(sp.cat || "personal"));
+  Object.keys(byDate || {}).forEach(k => byDate[k].forEach(e => used.add(e.cat || "personal")));
+  const items = CAL_CATS.filter(c => used.has(c[0]));
+  if(items.length < 2) return "";
+  return `<div class="cal-legend">${items.map(c => `<span class="k-${c[0]}"><i></i>${esc(c[1])}</span>`).join("")}</div>`;
+}
 function buildMiniCal(todayList, radarList, todayDate){
   const base = new Date(todayDate+"T12:00:00");
   const byDate = {};
   const spans = []; // {start, end, label} — multi-day CALENDAR events only (endDate
                      // present); to-do due dates render as "Reminder:" pills instead (below)
-  const add = (dstr, label, time, isTodo, startTime) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo, startTime}); };
+  const add = (dstr, label, time, isTodo, startTime, cat) => { if(!dstr || !label) return; (byDate[dstr] = byDate[dstr]||[]).push({label, time, isTodo, startTime, cat: isTodo ? "todo" : (cat || "personal")}); };
   const addSpan = (item, fallbackDate) => {
     if(!item || typeof item === "string" || !item.endDate) return;
     const ev = parseEventLead(item.lead, item.body, fallbackDate);
     if(!ev.dateStr) return;
-    spans.push({ start: ev.dateStr, end: item.endDate, label: item.body || ev.title || "" });
+    /* startDate comes from the server (a multi-day event can have begun before today, when the lead
+       carries no date); fall back to the date parsed from the lead */
+    spans.push({ start: item.startDate || ev.dateStr, end: item.endDate, label: (item.body || ev.title || "").split(" · ")[0], cat: item.cat || "personal" });
   };
   (todayList||[]).forEach(item => {
     const lead = typeof item==="string"?item:item.lead, body = typeof item==="string"?"":item.body;
@@ -5273,7 +5314,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     // a genuinely multi-day event is represented ONLY by its spanning bar
     // (below) — skip the regular per-day chip so it doesn't also show up
     // redundantly as a one-line entry on its start day
-    if(!isSpan) add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
+    if(!isSpan) add(todayDate, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead), item && item.cat);
     addSpan(item, todayDate);
   });
   (radarList||[]).forEach(item => {
@@ -5281,7 +5322,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     const ev = parseEventLead(lead, body, null);
     const isTodo = typeof item !== "string" && !!item.isTodo;
     const isSpan = typeof item !== "string" && !!item.endDate;
-    if(!isSpan) add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead));
+    if(!isSpan) add(ev.dateStr, ev.title || body || (typeof item==="string"?item:""), eventTimeText(lead), isTodo, eventStartTimeText(lead), item && item.cat);
     addSpan(item, null);
   });
   const start = new Date(base); start.setDate(base.getDate() - base.getDay());   // Sunday of this week
@@ -5336,7 +5377,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     week.items.forEach(sp => {
       for(let col=sp.colStart; col<=sp.colEnd; col++){
         grid[col][sp.lane] = {
-          label: sp.label,
+          label: sp.label, cat: sp.cat,
           isStart: col === sp.colStart,
           isEnd: col === sp.colEnd,
           title: `${sp.label}: through ${fmtShortMD(sp.end)}`
@@ -5364,7 +5405,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     const extra = evs.length - visible.length;
     const rowsHTML = visible.map(e => e.isTodo
       ? `<span class="cal-rem">Reminder: ${esc(e.label)}</span>`
-      : `<div class="cal-ev"><i></i>${e.startTime?`<span class="cal-ev-t">${esc(e.startTime)}</span>`:""}<span class="cal-ev-b">${esc(e.label)}</span></div>`
+      : `<div class="cal-ev k-${esc(e.cat || "personal")}"><i></i>${e.startTime?`<span class="cal-ev-t">${esc(e.startTime)}</span>`:""}<span class="cal-ev-b">${esc(e.label)}</span></div>`
     ).join("");
     const moreHTML = extra > 0 ? `<div class="cal-more">+${extra} more</div>` : "";
     const week = i<7 ? week1 : week2, weekLanes = i<7 ? week1Lanes : week2Lanes;
@@ -5374,7 +5415,7 @@ function buildMiniCal(todayList, radarList, todayDate){
     if(week.laneCount > 0){
       const segs = weekLanes[i%7];
       lanesHTML = `<div class="cal-cell-lanes">` + segs.map(seg => seg
-        ? `<div class="cal-cell-bar${seg.isStart?" start":""}${seg.isEnd?" end":""}" title="${esc(seg.title)}">${seg.isStart?esc(seg.label):""}</div>`
+        ? `<div class="cal-cell-bar k-${esc(seg.cat || "personal")}${seg.isStart?" start":""}${seg.isEnd?" end":""}" title="${esc(seg.title)}">${seg.isStart?esc(seg.label):""}</div>`
         : `<div class="cal-cell-lane-empty"></div>`
       ).join("") + `</div>`;
     }
@@ -5385,7 +5426,7 @@ function buildMiniCal(todayList, radarList, todayDate){
   const end = new Date(start); end.setDate(start.getDate()+13);
   const label = `${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`;
   return `<div class="cal-head"><span class="cm">Two-Week View</span><div class="cal-head-right"><span class="cl">${esc(label)}</span><a class="cal-refresh-btn" href="https://github.com/elijahvkramer/daily-hub/actions/workflows/calendar-refresh.yml" target="_blank" rel="noopener" title="Opens GitHub Actions in a new tab -- click &quot;Run workflow&quot; there for an instant pull, then come back here; this page will pick it up automatically"><span class="spin">⟳</span></a></div></div>
-    <div class="cal-grid">${dowHTML}${cellsHTML}</div><div class="cal-tip"></div><div class="cal-refresh-toast">Watching for new data…</div>`;
+    <div class="cal-grid">${dowHTML}${cellsHTML}</div>${calLegendHTML(spans, byDate)}<div class="cal-tip"></div><div class="cal-refresh-toast">Watching for new data…</div>`;
 }
 // No credentials involved: clicking the refresh link just opens GitHub's own
 // Actions page (Eli is already signed in there) so HE clicks "Run workflow" --
@@ -5432,7 +5473,7 @@ function wireMiniCal(card){
     c.addEventListener("mouseenter", () => {
       let data; try{ data = JSON.parse(c.dataset.cal); }catch(e){ return; }
       const rows = (data.list||[]).length
-        ? data.list.map(e => `<div class="ct-row"><span class="ct-time">${esc(e.time||"All day")}</span> ${e.isTodo?'<span class="ct-todo-tag">to-do</span> ':''}${esc(e.label)}</div>`).join("")
+        ? data.list.map(e => `<div class="ct-row k-${esc(e.cat || "personal")}"><span class="ct-dot"></span><span class="ct-time">${esc(e.time||"All day")}</span> ${e.isTodo?'<span class="ct-todo-tag">to-do</span> ':''}${esc(e.label)}</div>`).join("")
         : `<span style="color:var(--muted)">Nothing scheduled</span>`;
       tip.innerHTML = `<div class="ct-day">${esc(data.day)}${data.today?" · Today":""}</div>${rows}`;
       tip.style.display = "block";
@@ -5558,7 +5599,7 @@ function agendaItems(list, dateStr){
     const title = (p.title || (ev.body || "").split(" · ")[0] || ev.lead || "Event").replace(/\s*—\s*$/, "");
     const where = (ev.body || "").split(" · ").slice(1).join(" · ");
     out.push({
-      i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo,
+      i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo, cat: ev.isTodo ? "todo" : (ev.cat || "personal"),
       start: p.startMin,
       end: (p.endMin != null && p.startMin != null && p.endMin > p.startMin) ? p.endMin : null
     });
@@ -5570,7 +5611,7 @@ function agendaRowHTML(a, state){
   const time = a.start == null
     ? (a.isTodo ? "Due" : "All day")
     : fmtClock(a.start) + (a.end != null ? " – " + fmtClock(a.end) : "");
-  return `<div class="ag-row${state ? " " + state : ""}${a.isTodo ? " is-todo" : ""}" title="${esc(a.where || a.title)}">
+  return `<div class="ag-row k-${esc(a.cat || "personal")}${state ? " " + state : ""}${a.isTodo ? " is-todo" : ""}" title="${esc(a.where || a.title)}">
       <div class="ag-time">${time}${state === "now" ? `<span class="ag-nowpill">Now</span>` : ""}</div>
       <div class="ag-name">${esc(a.title)}</div>${a.where ? `<div class="ag-where">${esc(a.where)}</div>` : ""}
     </div>`;
@@ -6705,7 +6746,8 @@ const BOARD_YIELDS = [
   { label:"2-yr",           match:/^2[ -]?(yr|year)|2[ -]?yr treasury/i, live:"2YY=F" },
   { label:"10-yr",          match:/^10[ -]?(yr|year)|10[ -]?yr treasury/i, live:"^TNX" },
   { label:"30-yr",          match:/^30[ -]?(yr|year)|30[ -]?yr treasury/i, live:"^TYX" },
-  { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i }
+  { label:"30-yr mortgage", match:/30[ -]?(yr|year).*mortgage|mortgage.*30/i, sym:"MORT30" },
+  { label:"15-yr mortgage", match:/15[ -]?(yr|year).*mortgage|mortgage.*15/i, sym:"MORT15" }
 ];
 /* Eli, Sep 2026 (round 4): "under Yields, I would like to see the following prices at all
    times: Gold, Brent Crude, BTC, ETH, all the main Indexes (S&P, VTI, etc.)." So this list is
@@ -6795,16 +6837,81 @@ async function boardFillMissing(out, range, interval){
   }
   return out;
 }
+/* ---- Board data, fastest source first (Oct 2026) ----
+   Eli: the markets board "won't update the prices quickly", the refresh button "doesn't really work", and
+   the prices couldn't be clicked for a trend. All three had one cause: every number came through public
+   CORS proxies, and a dead proxy meant a long silent wait and then nothing. Now:
+     1. the server snapshot (data/quotes.json.enc -> "board"), written every few minutes from GitHub's own
+        servers, paints the board within a fraction of a second;
+     2. the live proxies are then tried with a hard time cap, and replace the snapshot where they answer;
+     3. the board re-polls every minute while the tab is open, and the Refresh button reports exactly what
+        happened (live / snapshot only) instead of silently doing nothing;
+     4. data/history.json.enc gives every tile a trend even when no proxy answers. */
+const withDeadline = (p, ms, dflt) => Promise.race([p, nrSleep(ms).then(() => dflt)]);
+async function boardServerQuotes(){
+  try{
+    const j = await decryptEntry(await fetchDataFile("data/quotes.json.enc"), PASS);
+    if(!j || !j.board) return null;
+    const at = Date.parse(j.boardAt || j.updated || "");
+    return { quotes: j.board, at: isNaN(at) ? Date.now() : at };
+  }catch(e){ return null; }
+}
+async function boardHistory(){
+  if(S.boardHist !== undefined) return S.boardHist;
+  if(!S._boardHistP) S._boardHistP = (async () => {
+    try{ const j = await decryptEntry(await fetchDataFile("data/history.json.enc"), PASS); S.boardHist = (j && j.series) ? j : null; }
+    catch(e){ S.boardHist = null; }
+    return S.boardHist;
+  })();
+  return S._boardHistP;
+}
+const BOARD_SPAN_DAYS = { "1W":7, "1M":31, "3M":92, "6M":183, "1Y":366, "5Y":1830 };
+/* a window cut out of the server-side history: {t:[epoch], c:[close]} or null */
+function boardHistSlice(sym, rk){
+  const h = S.boardHist && S.boardHist.series && S.boardHist.series[sym];
+  if(!h || !h.t || h.t.length < 2) return null;
+  if(/^MORT/.test(sym) && (rk === "1D" || rk === "1W")) return null;     // a weekly survey has no intraday or one-week view
+  let from;
+  if(rk === "YTD") from = Date.UTC(new Date().getFullYear(), 0, 1) / 1000;
+  else if(BOARD_SPAN_DAYS[rk]) from = Date.now()/1000 - BOARD_SPAN_DAYS[rk]*86400;
+  else return null;
+  const t = [], c = [];
+  for(let i = 0; i < h.t.length; i++) if(h.t[i] >= from && h.c[i] != null){ t.push(h.t[i]); c.push(h.c[i]); }
+  if(rk === "1W" && t.length < 3){ const n = h.t.length; return { t:h.t.slice(Math.max(0,n-5)), c:h.c.slice(Math.max(0,n-5)) }; }
+  return t.length >= 2 ? { t, c } : null;
+}
 async function boardLive(force){
-  const fresh = S.boardLive && S.boardLiveAt && (Date.now() - S.boardLiveAt < 180000);
+  const fresh = S.boardLive && S.boardLiveAt && S.boardLiveSrc === "live" && (Date.now() - S.boardLiveAt < 45000);
   if(fresh && !force) return S.boardLive;
   if(S._boardLivePromise) return S._boardLivePromise;
   S._boardLivePromise = (async () => {
+    /* 1. snapshot: fast, and painted the moment it lands */
+    const snap = boardServerQuotes().then(sv => {
+      if(!sv) return;
+      S.boardSnapAt = sv.at;
+      let n = 0;
+      BOARD_LIVE_SYMS.forEach(sym => {
+        const q = sv.quotes[sym]; if(!q || typeof q.price !== "number") return;
+        const cur = S.boardLive && S.boardLive[sym];
+        if(cur && cur.src === "live" && cur.time && q.time && cur.time >= q.time) return;   // already holding something newer
+        S.boardLive = S.boardLive || {};
+        S.boardLive[sym] = { ...q, series: q.series || (cur && cur.series) || null, src:"snap" };
+        n++;
+      });
+      if(n){ if(!S.boardLiveAt) S.boardLiveAt = Date.now(); boardRepaint(); if(window.__deskPaintFoot) window.__deskPaintFoot(); }
+    }).catch(() => {});
+    /* 2. live proxies, with a hard cap so a dead proxy can't hold the board hostage */
     let out = {};
-    try{ out = await pSparkAll(BOARD_LIVE_SYMS); }catch(e){ out = {}; }
+    try{ out = await withDeadline(pSparkAll(BOARD_LIVE_SYMS), 7000, {}); }catch(e){ out = {}; }
+    if(Object.keys(out).length){ try{ await withDeadline(boardFillMissing(out, "1d", "5m"), 8000, null); }catch(e){} }
+    await snap;
+    S.boardTried = Date.now();
     if(Object.keys(out).length){
-      try{ await boardFillMissing(out, "1d", "5m"); }catch(e){}
-      S.boardLive = out; S.boardLiveAt = Date.now();
+      S.boardLive = S.boardLive || {};
+      for(const [sym, q] of Object.entries(out)) S.boardLive[sym] = { ...q, src:"live" };
+      S.boardLiveAt = Date.now(); S.boardLiveSrc = "live";
+    } else {
+      S.boardLiveSrc = (S.boardLive && Object.keys(S.boardLive).length) ? "snap" : null;
     }
     return S.boardLive || {};
   })();
@@ -6875,7 +6982,7 @@ function boardHTML(rates, prices, live){
     if(q && typeof q.price === "number"){
       const pct = boardPct(q);
       o = { spec, value: boardFmt(spec, q.price), pct, q, live:true,
-            note: quoteIsToday(q.time) ? "live" : "last close" };
+            note: q.src === "snap" ? "snapshot" : (quoteIsToday(q.time) ? "live" : "last close") };
     } else if(row) o = { spec, value: row.value, pct: typeof row.pct === "number" ? row.pct : null, note: row.note || "published", live:false };
     else o = { spec, value:"—", pct:null, note:"awaiting refresh", missing:true, live:false };
     /* a longer window than today: change = first close in the window -> latest price */
@@ -6900,12 +7007,19 @@ function boardHTML(rates, prices, live){
       ? `<span class="rb-chip ${cls(p.pct)}">${Math.abs(p.pct) >= 100 ? (p.pct > 0 ? "+" : "−") + Math.abs(p.pct).toFixed(0) + "%" : fmtPct(p.pct)}</span>`
       : `<span class="rb-chip flat">${esc(p.note)}</span>`;
     const m = BOARD_META[p.spec.label] || {};
+    /* a tile priced from the snapshot has no intraday bars; borrow its recent trend from the server-side
+       history so it is never a blank card (colour follows the shape drawn, not the day's change) */
+    let sparkHTML = p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`;
+    if(!(p.q && p.q.series && p.q.series.c && p.q.series.c.filter(v => v != null).length >= 3) && p.spec.live){
+      const sl = boardHistSlice(p.spec.live, rng === "1D" ? "1M" : rng);
+      if(sl) sparkHTML = boardSpark({ series:{ c: sl.c } }, sl.c[sl.c.length-1] >= sl.c[0]);
+    }
     const clk = p.spec.live ? ` data-bsym="${esc(p.spec.live)}" data-blab="${esc(p.spec.label)}" role="button" tabindex="0" title="${esc(p.spec.label)} price history"` : "";
     return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}${p.spec.live ? " bp-click" : ""}"${clk} style="--tc:${m.c || "var(--gold)"}">
         <div class="bp-top">${bpLogo(p.spec)}${chip}</div>
         <div class="bp-id"><div class="bp-t">${esc(p.spec.label)}</div><div class="bp-sub">${esc(m.sub || "")}</div></div>
         <div class="bp-v">${esc(p.value)}</div>
-        ${p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`}
+        ${sparkHTML}
       </div>`;
   }).join("");
 
@@ -6929,15 +7043,15 @@ function boardHTML(rates, prices, live){
     const n = r ? rateNum(r.value) : null;
     /* `used` matters: "30-yr mortgage" also satisfies the plain "30-yr" matcher, so without
        it a missing 30-year Treasury would print the mortgage twice. */
-    if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n, live:false }); }
+    if(r && n != null){ usedY.add(r); ys.push({ label: spec.label, value: r.value, note: r.note || "", n, live:false, sym: spec.sym || spec.live }); }
   });
 
   /* Oct 2026: the dot-on-a-bar ladder was hard to read at a glance. Treasuries and the policy rate are
      the same thing -- a rate by maturity -- so they are drawn as the yield curve itself (shape =
      the story: inverted, flat, steep). The mortgage rate is a different animal, so it gets its own
      card with its spread over the 10-year. */
-  const mort = ys.find(r => /mortgage/i.test(r.label));
-  const curve = ys.filter(r => r !== mort);
+  const morts = ys.filter(r => /mortgage/i.test(r.label));
+  const curve = ys.filter(r => !/mortgage/i.test(r.label));
   const curveSVG = pts => {
     const W = 340, H = 214, L = 30, R = 12, T = 38, B = 56;
     const ns = pts.map(r => r.n);
@@ -6971,10 +7085,25 @@ function boardHTML(rates, prices, live){
       <path class="yc-line" d="${d}"/>${dots}</svg>`;
   };
   const tenYr = curve.find(r => /^10/.test(r.label));
-  const mortCard = !mort ? "" : `<div class="yc-mort" style="--tc:#E0567F">
-      <span class="bp-ic">${glyphSVG("mortgage", "#E0567F")}</span>
-      <div class="bp-id"><div class="bp-t">30-yr mortgage</div><div class="bp-sub">${tenYr ? (mort.n - tenYr.n).toFixed(2) + " pts over the 10-yr" : "Freddie Mac weekly"}</div></div>
-      <div class="yc-mv">${esc(mort.value)}<i>${esc(mort.note || "")}</i></div></div>`;
+  /* The mortgage rates are market tiles like the ones above (same card, same chip, same sparkline), not a
+     one-off banner: Eli, Oct 2026, "the 30-year mortgage thing looks a little bit out of place". */
+  const mortTile = r => {
+    const sl = boardHistSlice(r.sym, "6M");
+    const mUp = sl ? sl.c[sl.c.length-1] >= sl.c[0] : false;
+    const wk = String(r.note || "").match(/([+-]?\d*\.?\d+)\s*w\/w/i);
+    const dv = wk ? parseFloat(wk[1]) : null;
+    const chip = dv != null && !isNaN(dv) && dv !== 0
+      ? `<span class="rb-chip ${dv > 0 ? "down" : "up"}">${dv > 0 ? "+" : "−"}${Math.abs(dv).toFixed(2)} w/w</span>`
+      : `<span class="rb-chip flat">${esc(r.note || "weekly")}</span>`;
+    const sub = /^30/.test(r.label) && tenYr ? (r.n - tenYr.n).toFixed(2) + " pts over the 10-yr" : "Freddie Mac · weekly";
+    return `<div class="bp-tile bp-click" data-bsym="${esc(r.sym)}" data-blab="${esc(r.label)}" data-byield="1" role="button" tabindex="0" title="${esc(r.label)} history" style="--tc:#E0567F">
+        <div class="bp-top"><span class="bp-ic" style="--tc:#E0567F">${glyphSVG("mortgage", "#E0567F")}</span>${chip}</div>
+        <div class="bp-id"><div class="bp-t">${esc(r.label)}</div><div class="bp-sub">${esc(sub)}</div></div>
+        <div class="bp-v">${esc(r.value)}</div>
+        ${sl ? boardSpark({ series:{ c: sl.c } }, !mUp) : `<span class="bp-spark"></span>`}
+      </div>`;
+  };
+  const mortCard = morts.length ? `<div class="yc-morts">${morts.map(mortTile).join("")}</div>` : "";
 
   let yieldBlock = "";
   if(curve.length >= 2){
@@ -6986,11 +7115,13 @@ function boardHTML(rates, prices, live){
     yieldBlock = `<p class="bp-empty">Yields publish with the next refresh.</p>`;
   }
 
-  const liveCount = ps.filter(p => p.live).length;
+  const liveCount = ps.filter(p => p.q && p.q.src === "live").length;
+  const snapCount = ps.filter(p => p.q && p.q.src === "snap").length;
+  const snapTime = S.boardSnapAt ? new Date(S.boardSnapAt).toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"}) : "";
   const yLive = ys.filter(y => y.live).length;
   return `<div class="desk-board">
       <div class="bp-block">
-        <div class="bp-block-h">Markets<span>${rng !== "1D" ? esc(BOARD_RANGES[rng].lab) + " · first close → latest" : (liveCount ? liveCount + " of " + ps.length + " quoting live · vs. prev close" : "from the published board")}</span></div>
+        <div class="bp-block-h">Markets<span>${rng !== "1D" ? esc(BOARD_RANGES[rng].lab) + " · first close → latest" : (liveCount ? liveCount + " of " + ps.length + " quoting live · vs. prev close" : (snapCount ? "snapshot" + (snapTime ? " · " + snapTime : "") + " · vs. prev close" : "from the published board"))}</span></div>
         <div class="bp-range seg" role="group" aria-label="Change over">${Object.keys(BOARD_RANGES).map(k => `<button type="button" data-brange="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
         <div class="bp-grid">${priceBlock}</div>
       </div>
@@ -7006,6 +7137,14 @@ async function fetchRates(){
   if(S.rates !== undefined) return S.rates;
   try{ S.rates = await decryptEntry(await fetchDataFile("data/rates.json.enc"), PASS); }catch(e){ S.rates = null; }
   return S.rates;
+}
+function boardSources(live, md){
+  md = md || {};
+  const rates = (live && live.rates && live.rates.length) ? live.rates
+    : (md.rates && md.rates.length ? md.rates : (md.stats || []));
+  const prices = (live && live.prices && live.prices.length) ? live.prices
+    : (md.prices && md.prices.length ? md.prices : (md.stats || []));
+  return { rates, prices };
 }
 async function renderDesk(){
   const card0 = $("#deskCard"); if(!card0) return;
@@ -7024,10 +7163,8 @@ async function renderDesk(){
   const ol = fromBrief || OUTLOOK_SEED.items;
   const seeded = !fromBrief;
 
-  const rates = (live && live.rates && live.rates.length) ? live.rates
-    : (md.rates && md.rates.length ? md.rates : (md.stats || []));
-  const prices = (live && live.prices && live.prices.length) ? live.prices
-    : (md.prices && md.prices.length ? md.prices : (md.stats || []));
+  S.boardMd = md;
+  const { rates, prices } = boardSources(live, md);
 
   /* Eli, Sep 2026 (round 4): "let's work on the layout of this entire tab to make it better /
      make things larger." The board used to be squeezed into a third of the card beside the
@@ -7084,32 +7221,56 @@ async function renderDesk(){
 
   let foot = card.querySelector(".desk-foot");
   if(!foot){ foot = document.createElement("div"); foot.className = "desk-foot"; card.appendChild(foot); }
+  const stamp = t => new Date(t).toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"});
   const paintFoot = () => {
+    const f = card.querySelector(".desk-foot"); if(!f) return;
     const bits = [];
-    if(S.boardLiveAt) bits.push("Markets quoted " + relTimeAgo(new Date(S.boardLiveAt).toISOString()));
-    if(live && live.updated) bits.push("board file " + relTimeAgo(live.updated));
+    if(S.boardLiveSrc === "live") bits.push("Live quotes · " + stamp(S.boardLiveAt));
+    else if(S.boardSnapAt) bits.push("Live feed unreachable · snapshot from " + stamp(S.boardSnapAt));
+    else if(S.boardTried) bits.push("Live quotes unreachable · showing the published board");
+    else bits.push("Loading quotes…");
+    if(S.rates && S.rates.updated) bits.push("rates file " + relTimeAgo(S.rates.updated));
     else if(md.dateline) bits.push(md.dateline);
-    foot.innerHTML = `<span>${esc(bits.join(" · "))}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>
-      <a id="deskRefresh" role="button" tabindex="0">Refresh</a>`;
-    const rb = foot.querySelector("#deskRefresh");
-    if(rb) rb.addEventListener("click", async () => {
-      rb.textContent = "Refreshing…";
-      await boardLive(true);
-      boardRepaint();
-      S.boardRangeData = {}; S.boardRangeAt = {};
-      if(S.boardRange && S.boardRange !== "1D") setBoardRange(S.boardRange);
-      paintFoot();
-    });
+    f.innerHTML = `<span>${esc(bits.join(" · "))}${seeded ? " · outlook refreshes with tomorrow's brief" : ""}</span>
+      <button type="button" id="deskRefresh" class="desk-refresh${S._deskRefreshing ? " busy" : ""}"${S._deskRefreshing ? " disabled" : ""}>${S._deskRefreshing ? "Refreshing…" : "Refresh"}</button>`;
+    const rb = f.querySelector("#deskRefresh");
+    if(rb) rb.addEventListener("click", deskRefreshNow);
   };
+  window.__deskPaintFoot = paintFoot;
+  /* One path for the button and the timer: reload the published files, re-quote, repaint, report. */
+  async function deskRefreshNow(){
+    if(S._deskRefreshing) return;
+    S._deskRefreshing = true; paintFoot();
+    const t0 = Date.now();
+    try{
+      S.rates = undefined; S.boardSer = {}; S.boardRangeData = {}; S.boardRangeAt = {};
+      const [fresh] = await Promise.all([fetchRates(), boardLive(true)]);
+      S.boardCtx = boardSources(fresh, S.boardMd);
+      boardRepaint();
+      if(S.boardRange && S.boardRange !== "1D") await setBoardRange(S.boardRange);
+    }catch(e){ console.warn("Daily Hub: board refresh failed", e); }
+    const rest = 650 - (Date.now() - t0); if(rest > 0) await nrSleep(rest);   // long enough to see that it ran
+    S._deskRefreshing = false; paintFoot();
+  }
   paintFoot();
 
-  /* Quote the board from the browser, then swap the live numbers in without touching the
-     topic tiles (so an open topic panel stays open). */
+  /* Quote the board (snapshot first, then the proxies), without touching the topic tiles so an open
+     topic panel stays open. */
   boardLive().then(q => {
     if(!q || !Object.keys(q).length) return;
     boardRepaint();
     paintFoot();
   }).catch(() => {});
+  boardHistory().then(h => { if(h) boardRepaint(); }).catch(() => {});
+  /* keep the prices moving: re-quote every minute while the page is visible */
+  if(!window.__boardTimer){
+    const tick = async () => {
+      if(document.hidden || S._deskRefreshing || !document.querySelector("#deskCard .desk-board")) return;
+      try{ await boardLive(true); boardRepaint(); if(window.__deskPaintFoot) window.__deskPaintFoot(); }catch(e){}
+    };
+    window.__boardTimer = setInterval(tick, 60000);
+    document.addEventListener("visibilitychange", () => { if(!document.hidden && S.boardLiveAt && Date.now() - S.boardLiveAt > 60000) tick(); });
+  }
   /* tiles and curve points open a price history; the range pills change every tile's % window */
   if(!card._boardWired){
     card._boardWired = true;
@@ -8870,12 +9031,23 @@ async function boardSeries(sym, rk){
   const key = sym + "|" + rk, hit = S.boardSer[key];
   if(hit && Date.now() - hit.at < 600000) return hit.q;
   const cfg = BOARD_RANGES[rk];
-  let q = await boardChart(sym, cfg.r, cfg.i);
-  if(!q || !q.series) q = await boardChart(sym, cfg.r, cfg.i) || q;       // one more try before giving up
+  /* A window cut from the server-side history: instant, and needs no proxy at all. */
+  const fromHist = async () => {
+    await boardHistory();
+    const sl = boardHistSlice(sym, rk);
+    return sl ? { price: sl.c[sl.c.length-1], prev: sl.c[0], series: { t: sl.t, c: sl.c, daily: true } } : null;
+  };
+  let q = null;
+  if(rk !== "1D" && rk !== "1W") q = await fromHist();          // multi-month windows are daily closes anyway
+  if(!q && !/^MORT/.test(sym)){
+    q = await withDeadline(boardChart(sym, cfg.r, cfg.i), 9000, null);
+    if(!q || !q.series) q = (await withDeadline(boardChart(sym, cfg.r, cfg.i), 7000, null)) || q;   // one more try before giving up
+  }
   if(!q || !q.series){                                                     // fall back to what the board already holds
     const have = rk === "1D" ? (S.boardLive && S.boardLive[sym]) : (S.boardRangeData && S.boardRangeData[rk] && S.boardRangeData[rk][sym]);
     if(have && have.series) q = have;
   }
+  if(!q || !q.series){ const h = await fromHist(); if(h) q = h; }       // the week lands here when the proxies are down
   if(q && q.series) S.boardSer[key] = { at: Date.now(), q };
   return q;
 }
@@ -8892,7 +9064,7 @@ async function openBoardModal(sym, label, isYield){
     <div class="sm-head">
       <span class="${isYield ? "bp-ic" : ""}" ${isYield ? `style="--tc:#8B6BD9"` : ""}>${icon}</span>
       <div>
-        <div class="sm-tk">${esc(label)}<span class="sm-nm">${esc(isYield ? "Treasury yield" : (meta.sub || ""))}</span></div>
+        <div class="sm-tk">${esc(label)}<span class="sm-nm">${esc(isYield ? (/mortgage/i.test(label) ? "Freddie Mac · weekly survey" : "Treasury yield") : (meta.sub || ""))}</span></div>
         <div class="sm-price" id="bmPrice">&nbsp;</div>
       </div>
     </div>
@@ -8910,6 +9082,7 @@ async function openBoardModal(sym, label, isYield){
   document.addEventListener("keydown", BM._esc);
   overlay.querySelectorAll("#bmSeg button").forEach(b => b.addEventListener("click", () => {
     BM.range = b.dataset.r;
+    BM._alt = false; BM._note = "";
     overlay.querySelectorAll("#bmSeg button").forEach(x => x.classList.toggle("on", x === b));
     renderBoardChart();
   }));
@@ -8926,6 +9099,22 @@ async function renderBoardChart(){
   const fmtV = v => cur.isYield ? v.toFixed(2) + "%" : boardFmt(spec, v);
   const t = q && q.series && q.series.t, c = q && q.series && q.series.c;
   const raw = (t && c) ? t.map((ts,i) => ({ts, v:c[i]})).filter(p => p.v != null) : [];
+  if(raw.length < 2 && !cur._alt){
+    /* this window has nothing right now: show the nearest one that does, and say so */
+    cur._alt = true;
+    for(const alt of ["1M","3M","1W","6M","1Y","YTD","5Y","1D"]){
+      if(alt === rk) continue;
+      const qa = await boardSeries(cur.sym, alt);
+      if(BM !== cur) return;
+      const ok = qa && qa.series && qa.series.c && qa.series.c.filter(v => v != null).length >= 2;
+      if(ok){
+        cur.range = alt;
+        cur._note = `${rk} isn't available right now · showing ${BOARD_RANGES[alt].lab.toLowerCase()}`;
+        document.querySelectorAll("#bmSeg button").forEach(x => x.classList.toggle("on", x.dataset.r === alt));
+        return renderBoardChart();
+      }
+    }
+  }
   if(raw.length < 2){ body.innerHTML = `<div class="empty">Price history isn't available for that window right now.<br><button type="button" class="bm-retry" style="margin-top:10px;appearance:none;border:1px solid var(--hairline);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-weight:700;cursor:pointer">Try again</button></div>`;
     const rb = body.querySelector(".bm-retry"); if(rb) rb.addEventListener("click", () => { renderBoardChart(); }); return; }
   const first = raw[0].v, last = (rk === "1D" || rk === "1W") ? raw[raw.length-1].v : raw[raw.length-1].v;
@@ -8936,9 +9125,9 @@ async function renderBoardChart(){
   const dTxt = cur.isYield ? `${delta >= 0 ? "+" : "−"}${Math.abs(delta*100).toFixed(0)} bp`
                            : `${delta >= 0 ? "+" : "−"}${boardFmt(spec, Math.abs(delta))}`;
   if(priceEl) priceEl.innerHTML = `${esc(fmtV(now))} <span class="pchgline ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)}) ${esc(rk === "1D" ? "today" : BOARD_RANGES[rk].lab.toLowerCase())}</span>`;
-  const intraday = rk === "1D" || rk === "1W";
+  const intraday = (rk === "1D" || rk === "1W") && !(q.series && q.series.daily);
   const etOpts = {timeZone:"America/New_York"};
-  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${esc(BOARD_RANGES[rk].lab)}`;
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${esc(BOARD_RANGES[rk].lab)}${cur._note ? ` · <i style="font-style:normal;color:var(--muted)">${esc(cur._note)}</i>` : ""}`;
   if(rk === "1D"){
     const st = q.series.start, en = q.series.end;
     const timed = st != null && en != null && en > st;
@@ -15323,13 +15512,149 @@ function skyArrive(){
     }else a.pop();
     e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
-    render();
+    render(); checkReminder();
     if(ref) setDoc(ref, { start: START, entries: { [viewDate]: { [k]: a } } }, { merge: true })
       .then(() => { if(synced !== true){ synced = true; render(); } })
       .catch(err => { console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } });
   }
 
-  window.__rxMount = () => { viewDate = null; render(); };
+  window.__rxMount = () => { viewDate = null; render(); checkReminder(); };
+
+  /* ---------- site-wide dose reminder (Eli, Oct 2026) ----------
+     When a scheduled dose time passes and that medication hasn't been logged, the whole site is covered
+     by a reminder you have to answer: take it and confirm, or say you can't right now and be reminded
+     again later (15 min / 30 min / 1 hr). It is device-independent: "taken" is judged from the logged
+     dose timestamps (which sync), so a dose logged on your phone clears the popup on your computer.
+     A dose counts as handled if any dose of that medication was logged from 45 minutes before its
+     scheduled time onward; the popup stops chasing a dose 3 hours after its time. */
+  const SLOTS = {
+    om: [[6,30],[17,0]],
+    mt: [[9,0],[13,0],[18,30],[22,30]],
+    am: [[6,30],[17,0]],
+    pb: [[6,30],[12,0],[17,0],[22,30]]
+  };
+  const EARLY_MS = 45*60e3, WINDOW_MS = 3*60*60e3, SNOOZE_KEY = "dh_rx_snooze_v1";
+  let loaded = false, remindEl = null, pillEl = null, baseTitle = null;
+  const slotMs = (day, h, mi) => { const d = parse(day); d.setHours(h, mi, 0, 0); return d.getTime(); };
+  const fmtSlot = ms => new Date(ms).toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+
+  function dueDoses(){
+    const today = todayStr(), n = dayNum(today);
+    if(n < 1 || n > DAYS) return [];
+    const now = Date.now(), out = [];
+    MEDS.forEach(m => {
+      const arr = list(today, m.k), last = arr.length ? Math.max(...arr) : 0;
+      const due = SLOTS[m.k].map(([h, mi]) => slotMs(today, h, mi))
+        .filter(t => t <= now && now - t <= WINDOW_MS && last < t - EARLY_MS);
+      if(due.length) out.push({ m, slot: Math.max(...due) });
+    });
+    return out;
+  }
+  const readSnooze = () => { try{ return JSON.parse(localStorage.getItem(SNOOZE_KEY) || "null"); }catch(e){ return null; } };
+  const writeSnooze = v => { try{ if(v) localStorage.setItem(SNOOZE_KEY, JSON.stringify(v)); else localStorage.removeItem(SNOOZE_KEY); }catch(e){} };
+
+  function remindCss(){
+    if(document.getElementById("rx-remind-css")) return;
+    const st = document.createElement("style"); st.id = "rx-remind-css";
+    st.textContent = `
+    #rxRemind{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;
+      background:rgba(14,16,22,.62);-webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);animation:rxFade .22s ease-out}
+    @keyframes rxFade{from{opacity:0}to{opacity:1}}
+    #rxRemind .rr-card{width:min(460px,100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:24px;padding:26px 24px 20px;
+      background:var(--card,#fff);color:var(--ink,#14161B);box-shadow:0 30px 80px -20px rgba(0,0,0,.55);border:1px solid var(--hairline,rgba(0,0,0,.08))}
+    #rxRemind .rr-kick{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark,#9A6F10)}
+    #rxRemind h2{margin:6px 0 2px;font-size:27px;line-height:1.1;letter-spacing:-.025em;font-weight:800}
+    #rxRemind .rr-sub{font-size:13px;color:var(--muted,#6B7280);margin-bottom:16px}
+    #rxRemind .rr-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+    #rxRemind .rr-med{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 14px;border-radius:14px;
+      background:color-mix(in srgb,var(--ink,#14161B) 5%,transparent)}
+    #rxRemind .rr-name{font-weight:800;font-size:16px}
+    #rxRemind .rr-dose{font-weight:800;font-size:15px;color:var(--gold-dark,#9A6F10);white-space:nowrap}
+    #rxRemind .rr-ok{width:100%;border:0;border-radius:14px;padding:15px 16px;font-size:16px;font-weight:900;cursor:pointer;
+      background:var(--ink,#14161B);color:var(--card,#fff)}
+    #rxRemind .rr-ok:active{transform:scale(.99)}
+    #rxRemind .rr-later{margin-top:16px;padding-top:14px;border-top:1px solid var(--hairline,rgba(0,0,0,.1))}
+    #rxRemind .rr-later-t{font-size:12px;font-weight:700;color:var(--muted,#6B7280);margin-bottom:8px}
+    #rxRemind .rr-snz{display:flex;gap:8px}
+    #rxRemind .rr-snz button{flex:1;border:1px solid var(--hairline,rgba(0,0,0,.14));background:transparent;color:var(--ink,#14161B);
+      border-radius:12px;padding:10px 6px;font-size:13px;font-weight:800;cursor:pointer}
+    #rxPill{position:fixed;right:16px;bottom:16px;z-index:2147482000;border:0;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:900;cursor:pointer;
+      background:var(--ink,#14161B);color:var(--card,#fff);box-shadow:0 12px 30px -8px rgba(0,0,0,.5)}
+    `;
+    document.head.appendChild(st);
+  }
+  function closeRemind(){ if(remindEl){ remindEl.remove(); remindEl = null; } document.documentElement.style.overflow = ""; }
+  function closePill(){ if(pillEl){ pillEl.remove(); pillEl = null; } }
+
+  function showRemind(due){
+    remindCss(); closePill();
+    const sig = due.map(d => d.m.k + "@" + d.slot).join("|");
+    const since = fmtSlot(Math.min(...due.map(d => d.slot)));
+    const html = `<div class="rr-card" role="alertdialog" aria-modal="true" aria-labelledby="rrT">
+      <div class="rr-kick">Treatment reminder</div>
+      <h2 id="rrT">Time to take your ${due.length > 1 ? "meds" : due[0].m.name.toLowerCase()}</h2>
+      <div class="rr-sub">Due ${esc2(since)}${due.length > 1 ? "" : ""} · confirm once you have taken ${due.length > 1 ? "them" : "it"}</div>
+      <div class="rr-list">${due.map(d => `<div class="rr-med"><span class="rr-name">${d.m.name}</span><span class="rr-dose">${d.m.dose}</span></div>`).join("")}</div>
+      <button class="rr-ok" type="button" id="rrOk">I took ${due.length > 1 ? "them" : "it"} &mdash; confirm</button>
+      <div class="rr-later"><div class="rr-later-t">Not near your protocol? Remind me again in</div>
+        <div class="rr-snz"><button type="button" data-snz="15">15 min</button><button type="button" data-snz="30">30 min</button><button type="button" data-snz="60">1 hour</button></div></div>
+    </div>`;
+    if(remindEl && remindEl.dataset.sig === sig) return;           // already showing exactly this
+    closeRemind();
+    remindEl = document.createElement("div"); remindEl.id = "rxRemind"; remindEl.dataset.sig = sig; remindEl.innerHTML = html;
+    document.body.appendChild(remindEl);
+    document.documentElement.style.overflow = "hidden";
+    remindEl.querySelector("#rrOk").onclick = () => {
+      due.forEach(d => logToday(d.m.k));
+      writeSnooze(null); closeRemind(); render(); checkReminder();
+    };
+    remindEl.querySelectorAll("[data-snz]").forEach(b => b.onclick = () => {
+      writeSnooze({ until: Date.now() + (+b.dataset.snz)*60e3, sig });
+      closeRemind(); checkReminder();
+    });
+    setTimeout(() => { const ok = remindEl && remindEl.querySelector("#rrOk"); if(ok) ok.focus(); }, 60);
+  }
+  const esc2 = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  function showPill(due, until){
+    remindCss();
+    const mins = Math.max(1, Math.round((until - Date.now())/60e3));
+    if(!pillEl){
+      pillEl = document.createElement("button"); pillEl.id = "rxPill"; pillEl.type = "button";
+      pillEl.onclick = () => { writeSnooze(null); checkReminder(); };
+      document.body.appendChild(pillEl);
+    }
+    pillEl.textContent = "Dose due \u00b7 reminder in " + mins + " min \u2014 tap to take it now";
+  }
+
+  function checkReminder(){
+    try{
+      const unlocked = (typeof PASS !== "undefined") && !!PASS;     // nothing before the passphrase is entered
+      const due = (unlocked && loaded) ? dueDoses() : [];
+      if(baseTitle === null) baseTitle = document.title;
+      if(!due.length){ closeRemind(); closePill(); writeSnooze(null); document.title = baseTitle; return; }
+      document.title = "Meds due \u00b7 " + baseTitle;
+      const sig = due.map(d => d.m.k + "@" + d.slot).join("|");
+      const sn = readSnooze();
+      if(sn && sn.sig === sig && sn.until > Date.now()){ closeRemind(); showPill(due, sn.until); return; }
+      showRemind(due);
+    }catch(e){ console.error("Daily Hub: dose reminder failed", e); }
+  }
+  setInterval(checkReminder, 15000);
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) checkReminder(); });
+  setTimeout(() => { loaded = true; checkReminder(); }, 8000);       // if cloud sync never answers, trust this device
+
+  function logToday(k){
+    const day = todayStr();
+    const e = state.entries[day] = { ...(state.entries[day] || {}) };
+    const a = (e[k] || []).slice(); a.push(Date.now()); e[k] = a;
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
+    try{
+      if(ref) setDoc(ref, { start: START, entries: { [day]: { [k]: a } } }, { merge: true })
+        .then(() => { if(synced !== true){ synced = true; render(); } })
+        .catch(err => { console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } });
+    }catch(err){ console.error("Daily Hub: protocol sync failed", err); }   // one failed write must never stop the next dose being logged
+  }
 
   try{
     const app = getApps().length ? getApp() : initializeApp(CFG);
@@ -15345,8 +15670,8 @@ function skyArrive(){
         for(const [d, v] of Object.entries(data.entries || {})) merged[d] = { ...(merged[d] || {}), ...v };
         state.entries = merged;
         try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: merged })); }catch(err){}
-        synced = true; render();
-      }, err => { console.error("Daily Hub: protocol listener failed", err); synced = false; render(); });
+        synced = true; render(); loaded = true; checkReminder();
+      }, err => { console.error("Daily Hub: protocol listener failed", err); synced = false; render(); loaded = true; checkReminder(); });
     });
   }catch(e){ console.error("Daily Hub: protocol tracker init failed", e); synced = false; }
   render();

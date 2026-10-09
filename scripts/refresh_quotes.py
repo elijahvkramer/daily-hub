@@ -153,6 +153,75 @@ def fetch_cnbc(syms, session):
     return out
 
 
+# ---------------------------------------------------------------------------------------
+# Market-board snapshot (Oct 2026). The Home tab's Markets/Yields board used to depend entirely on
+# browser -> public CORS proxy -> Yahoo; when those proxies were slow or down the board sat on
+# "awaiting refresh", the Refresh button appeared to do nothing, and there was no history to click
+# into. These quotes ride in the same encrypted file as the portfolio snapshot (under "board"),
+# fetched from GitHub's own servers, so the board always has a recent price and day change to paint
+# instantly. Keys are the Yahoo symbols the site already uses; values are CNBC symbol candidates.
+BOARD_CNBC = {
+    "^GSPC": [".SPX"], "^IXIC": [".IXIC"], "^DJI": [".DJI"], "VTI": ["VTI"],
+    "GC=F": ["@GC.1"], "BZ=F": ["@LCO.1", "LCO-CMD"],
+    "^IRX": ["US3M"], "2YY=F": ["US2Y"], "^TNX": ["US10Y"], "^TYX": ["US30Y"],
+    "BTC-USD": ["BTC.CM="], "ETH-USD": ["ETH.CM="],
+}
+
+
+def _num(v):
+    """CNBC prints numbers as strings, sometimes with commas, a trailing % (yields) or a $."""
+    if v is None:
+        return None
+    t = str(v).replace(",", "").replace("%", "").replace("$", "").strip()
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+def fetch_board(session):
+    """{yahoo_symbol: {price, prev, time, src}} for whatever CNBC answers. Never raises."""
+    cands = {}
+    for ysym, lst in BOARD_CNBC.items():
+        for c in lst:
+            cands[c.upper()] = ysym
+    url = ("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols="
+           + "%7C".join(requests.utils.quote(c, safe="") for c in cands) +
+           "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1")
+    try:
+        r = session.get(url, timeout=15)
+        r.raise_for_status()
+        payload = r.json()
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! board cnbc: {e}", file=sys.stderr)
+        return {}
+    quotes = (((payload or {}).get("FormattedQuoteResult") or {}).get("FormattedQuote")) or []
+    if isinstance(quotes, dict):
+        quotes = [quotes]
+    by_cnbc = {}
+    for q in quotes:
+        try:
+            key = (q.get("symbol") or q.get("issue_id") or "").upper()
+            last = _num(q.get("last"))
+            if not key or last is None:
+                continue
+            prev = _num(q.get("previous_day_closing"))
+            if prev is None:
+                chg = _num(q.get("change"))
+                prev = (last - chg) if chg is not None else last
+            by_cnbc[key] = {"price": last, "prev": prev,
+                            "time": int(datetime.datetime.now(datetime.timezone.utc).timestamp()), "src": "cnbc"}
+        except Exception:  # noqa: BLE001
+            continue
+    out = {}
+    for ysym, lst in BOARD_CNBC.items():
+        for c in lst:
+            if c.upper() in by_cnbc:
+                out[ysym] = by_cnbc[c.upper()]
+                break
+    return out
+
+
 NY = ZoneInfo("America/New_York")
 PROXIES = [
     "https://api.allorigins.win/raw?url=",
@@ -284,10 +353,12 @@ def main():
         if s and s not in syms:
             syms.append(s)
 
-    previous = {}
+    previous, previous_board = {}, {}
     if os.path.exists(out_path):
         try:
-            previous = decrypt_json(json.load(open(out_path)), passphrase).get("quotes", {})
+            _prev = decrypt_json(json.load(open(out_path)), passphrase)
+            previous = _prev.get("quotes", {})
+            previous_board = _prev.get("board", {}) or {}
         except Exception as e:  # noqa: BLE001
             print(f"  ! could not read the previous quotes file ({e}); starting fresh", file=sys.stderr)
 
@@ -325,17 +396,27 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"  ! attach_series: {e}", file=sys.stderr)
 
+    board = dict(previous_board)
+    try:
+        got_board = fetch_board(session)
+        board.update(got_board)
+        print(f"  board snapshot: {len(got_board)}/{len(BOARD_CNBC)} symbols", file=sys.stderr)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! board: {e}", file=sys.stderr)
+
     # Skip the commit when nothing actually moved (weekends, overnight): a re-encrypt with a
     # new IV would otherwise look like a change every single tick.
-    if quotes == previous:
+    if quotes == previous and board == previous_board:
         print(f"quotes unchanged for all {len(syms)} symbols; not rewriting")
         write_status(repo, ok=True, source=source, refreshed=fresh, symbols=len(syms), series=nseries, note="unchanged")
         return 0
-    write_status(repo, ok=True, source=source, refreshed=fresh, symbols=len(syms), series=nseries, note="written")
+    write_status(repo, ok=True, source=source, refreshed=fresh, symbols=len(syms), series=nseries, board=len(board), note="written")
 
     payload = {
         "updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "quotes": quotes,
+        "board": board,
+        "boardAt": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
     }
     with open(out_path, "w") as f:
         json.dump(encrypt_json(payload, passphrase), f)

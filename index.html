@@ -16043,7 +16043,7 @@ function skyArrive(){
   // (the to-do module owns the connection and hands snapshots to window.__onProtocolSnapshot; see its
   // "Treatment tracker bridge"). Each tap on "Take" appends a timestamp; "Undo" removes the last one.
   // A localStorage copy keeps it working offline, and unconfirmed local changes ("dirty") are retried.
-  const START = "2026-10-07", DAYS = 14, LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
+  const START = "2026-10-07", DAYS = 14, BUILD = "10-10c", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
     { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
@@ -16132,7 +16132,7 @@ function skyArrive(){
           <button class="rx-undo" data-undo="${m.k}" ${c?"":"disabled"} aria-label="Undo last ${m.name} dose">Undo</button></div>
           <div class="rx-last">${c ? "Last dose " + fmtT(a[c-1]) : "None yet"}</div></div>`;
       }).join("")}</div>
-      <div class="rx-foot">${synced === false ? "Saved on this device only — cloud sync unavailable" : "Synced across devices"}</div>`;
+      <div class="rx-foot">${synced === false ? "Saved on this device only — cloud sync unavailable" : "Synced across devices \u00b7 build " + BUILD}</div>`;
     el.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => { viewDate = addDays(viewDate, +b.dataset.nav); render(); });
     el.querySelectorAll("[data-take]").forEach(b => b.onclick = () => change(b.dataset.take, 1));
     el.querySelectorAll("[data-undo]").forEach(b => b.onclick = () => change(b.dataset.undo, -1));

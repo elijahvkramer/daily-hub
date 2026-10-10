@@ -2,7 +2,7 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-09-10b";
+const VERSION = "dh-2026-10-10a";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";
@@ -78,7 +78,8 @@ self.addEventListener("fetch", e => {
   if(isHTML(req, url.pathname)){
     e.respondWith((async () => {
       try{
-        const res = await fetch(req);
+        // no-store: skip the browser's 10-minute HTTP cache so a new deploy reaches the phone on the very next open
+        const res = await fetch(new Request(req.url, { cache: "no-store", credentials: "same-origin" }));
         const c = await caches.open(SHELL_CACHE);
         c.put(key("index.html"), res.clone());
         return res;

@@ -16043,7 +16043,7 @@ function skyArrive(){
   // (the to-do module owns the connection and hands snapshots to window.__onProtocolSnapshot; see its
   // "Treatment tracker bridge"). Each tap on "Take" appends a timestamp; "Undo" removes the last one.
   // A localStorage copy keeps it working offline, and unconfirmed local changes ("dirty") are retried.
-  const START = "2026-10-07", DAYS = 14, BUILD = "10-10c", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
+  const START = "2026-10-07", DAYS = 14, BUILD = "10-10d", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
     { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
@@ -16106,9 +16106,51 @@ function skyArrive(){
     #rxCard .rx-undo{border:1px solid var(--hairline);background:var(--card);color:var(--muted);border-radius:9px;padding:9px 11px;font-weight:800;font-size:13px;cursor:pointer}
     #rxCard .rx-undo:disabled{opacity:.35;cursor:default}
     #rxCard .rx-last{font-size:11px;color:var(--muted);margin-top:7px;min-height:14px}
-    #rxCard .rx-foot{font-size:11px;color:var(--muted);margin-top:10px}`;
+    #rxCard .rx-foot{font-size:11px;color:var(--muted);margin-top:10px}
+    #rxCard .rx-slots{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+    #rxCard .rx-slot{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:800;
+      border:1px solid var(--hairline);color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.4}
+    #rxCard .rx-slot svg{width:10px;height:10px;flex:none}
+    #rxCard .rx-slot.taken{border-color:var(--up);color:var(--up);background:color-mix(in srgb,var(--up) 13%,transparent)}
+    #rxCard .rx-slot.due{border-color:var(--gold-dark,#9A6F10);color:var(--gold-dark,#9A6F10);background:color-mix(in srgb,var(--gold-dark,#9A6F10) 12%,transparent)}
+    #rxCard .rx-slot.missed{border-style:dashed;border-color:var(--down,#C84A3B);color:var(--down,#C84A3B);opacity:.8}`;
     document.head.appendChild(s);
   }
+
+  /* ---- which dose times are covered (Oct 2026) ----
+     Each logged dose is matched to the nearest still-open scheduled time of that medication, so
+     taking one late or skipping one lands on the right time. Per time: taken (check), due (passed,
+     inside the 3-hour reminder window), missed (window over, or a past day), or upcoming. */
+  const slotLbl = ([h, mi]) => ((h % 12) || 12) + ":" + pad(mi) + (h < 12 ? "a" : "p");
+  const CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5-5.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function slotInfo(day, k){
+    const slots = SLOTS[k].map(([h, mi]) => slotMs(day, h, mi));
+    const doses = list(day, k).slice().sort((a, b) => a - b), taken = slots.map(() => null);
+    doses.forEach(t => {
+      let best = -1, bd = Infinity;
+      slots.forEach((sl, i) => { if(taken[i] === null){ const d = Math.abs(t - sl); if(d < bd){ bd = d; best = i; } } });
+      if(best >= 0) taken[best] = t;
+    });
+    const now = Date.now(), tod = todayStr();
+    return slots.map((sl, i) => ({
+      label: slotLbl(SLOTS[k][i]), at: taken[i],
+      state: taken[i] !== null ? "taken"
+        : day < tod ? "missed"
+        : day > tod ? "upcoming"
+        : sl > now ? "upcoming"
+        : (now - sl <= WINDOW_MS ? "due" : "missed")
+    }));
+  }
+  function slotChips(day, k){
+    return `<div class="rx-slots">${slotInfo(day, k).map(sl => {
+      const tip = sl.state === "taken" ? "Taken " + fmtT(sl.at) : sl.state === "due" ? "Due now" : sl.state === "missed" ? "Not logged" : "Upcoming";
+      return `<span class="rx-slot ${sl.state}" title="${tip}" aria-label="${sl.label}, ${tip.toLowerCase()}">${sl.state === "taken" ? CHECK : ""}${sl.label}</span>`;
+    }).join("")}</div>`;
+  }
+  const slotSig = () => MEDS.map(m => slotInfo(viewDate || todayStr(), m.k).map(sl => sl.state).join("")).join("|");
+  let lastSlotSig = "";
+  // an upcoming time turns "due" (and later "missed") on its own, so refresh when any time changes state
+  setInterval(() => { try{ if(document.getElementById("rxCard") && slotSig() !== lastSlotSig) render(); }catch(e){} }, 30000);
 
   function render(){
     const el = document.getElementById("rxCard"); if(!el) return;
@@ -16116,6 +16158,7 @@ function skyArrive(){
     const today = todayStr();
     if(!viewDate) viewDate = today;
     const n = dayNum(viewDate), inRange = n >= 1 && n <= DAYS;
+    lastSlotSig = slotSig();
     const dayLbl = inRange ? `Day ${n} of ${DAYS}` : (n < 1 ? "Before start" : "Course complete");
     const dateLbl = parse(viewDate).toLocaleDateString([], { weekday:"short", month:"short", day:"numeric" }) + (viewDate === today ? " · Today" : "");
     el.innerHTML = `<div class="rx-head"><div><div class="bc-label">Treatment tracker</div>
@@ -16126,7 +16169,7 @@ function skyArrive(){
         const a = list(viewDate, m.k), c = a.length, done = c >= m.target;
         return `<div class="rx-med${done?" done":""}">
           <div class="rx-top"><div class="rx-name">${m.name}</div><div class="rx-count">${c}/${m.target}</div></div>
-          <div class="rx-sub">${m.dose} per dose · ${m.times}</div>
+          <div class="rx-sub">${m.dose} per dose</div>${inRange ? slotChips(viewDate, m.k) : `<div class="rx-sub">${m.times}</div>`}
           <div class="rx-dots">${Array.from({length:m.target},(_,i)=>`<div class="rx-dot${i<c?" on":""}"></div>`).join("")}</div>
           <div class="rx-row"><button class="rx-take" data-take="${m.k}">${done?"Log extra dose":"Took "+m.dose}</button>
           <button class="rx-undo" data-undo="${m.k}" ${c?"":"disabled"} aria-label="Undo last ${m.name} dose">Undo</button></div>

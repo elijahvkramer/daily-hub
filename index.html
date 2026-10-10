@@ -53,6 +53,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <!-- iOS launch screens, newest devices first -->
+<link rel="apple-touch-startup-image" href="splash-1260x2736.png" media="(device-width:420px) and (device-height:912px) and (-webkit-device-pixel-ratio:3)">
 <link rel="apple-touch-startup-image" href="splash-1320x2868.png" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3)">
 <link rel="apple-touch-startup-image" href="splash-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)">
 <link rel="apple-touch-startup-image" href="splash-1206x2622.png" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3)">
@@ -6728,7 +6729,14 @@ async function renderNowStrip(d){
   // no way to delete the fingerprint deadline. Deleting an auto one hides it for good,
   // because the hidden list is keyed on the server's stable cal:<date>:<slug> id.
   const api = window.__nowApi && window.__nowApi.isReady() ? window.__nowApi : null;
-  const ov = nowOverrides();
+  let ov = nowOverrides();
+  // Oct 2026: chips now really sync (todos/main -> now). Chips and hides this device kept locally while
+  // sync was broken join the shared list once, so every device ends up showing the same strip.
+  if(api && api.importLocal && (ov.added.length || ov.hidden.length)){
+    api.importLocal(ov.added, ov.hidden);
+    ov = { added: [], hidden: [] }; nowSaveOverrides(ov);
+  }
+  if(api) ov.hidden = ov.hidden.concat(api.getState().hidden || []);
   let base = api ? api.getState().chips : null;
   if(api && !api.getState().seeded){ const cfg = await fetchNowConfig(); if(cfg && cfg.chips && cfg.chips.length){ api.seed(cfg.chips); return; } }
   if(!base){ const cfg = await fetchNowConfig(); base = ((cfg && cfg.chips) || []).map(c => ({...c, id: c.id || "file:" + c.label})); }
@@ -6885,7 +6893,8 @@ function nowEdit(chip, label, date, kind){
         if(api && api.isReady() && !String(id).startsWith("file:")) api.remove(id);
       }
     });
-    o.added.push({ id: "loc:" + Date.now().toString(36), label, date, kind });
+    if(api && api.isReady()) api.add(label, date, kind);          // synced, so the edit shows on every device
+    else o.added.push({ id: "loc:" + Date.now().toString(36), label, date, kind });
   }
   nowSaveOverrides(o);
   renderNowStrip(nowLastDay);
@@ -14702,6 +14711,9 @@ if("serviceWorker" in navigator){
   });
 }
 
+/* --- updates on resume + Add to Home Screen card: app-shell.js (Oct 2026) --- */
+(function(){ const sc = document.createElement("script"); sc.src = "app-shell.js?v=1"; sc.async = true; document.head.appendChild(sc); })();
+
 /* --- offline pill --- */
 function paintNet(){
   const p = $("#netPill"); if(!p) return;
@@ -15649,17 +15661,26 @@ function skyArrive(){
   if(b) b.addEventListener("click", () => { if(typeof PASS !== "undefined" && PASS) mbOpen(); });
 })();
 </script>
+<script src="sync-core.js?v=1"></script>
 <script type="module">
-  // ---- Firebase-backed to-do sync (Urgent + Chill), live across devices ----
-  // Firestore doc todos/main = { urgent:[{id,text,done}], chill:[{id,text,done}] }.
-  // Security rules require an authenticated (anonymous) request; nothing here is
-  // sensitive enough to need more than that, and the alternative (a write-capable
-  // GitHub token shipped in page JS) would be a real security hole, so this is the
-  // deliberate design — see MEMORY.md "Known Issues" if revisiting this.
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
+  // ---- Firebase-backed sync: to-dos, friends, countdown chips, treatment doses (rewritten Oct 10 2026) ----
+  // todos/main   = { items:[{id,text,kind,list,done,due,note,subitems}], history:[...], backupPreMerge,
+  //                  protocol:{ entries:{ "YYYY-MM-DD":{ om:[ms..], mt:[..], am:[..], pb:[..] } } },
+  //                  now:{ chips:[{id,label,date,kind}], hidden:[ids], seeded } }
+  // friends/main = { people:[...] }
+  // Only these two docs are permitted by the security rules (now/main and protocol/main are rejected),
+  // which is why chips and doses live inside todos/main.
+  //
+  // How a change travels (see sync-core.js and docs/APP.md): every edit is an operation saved to
+  // localStorage at once; the screen shows server data + pending ops; a flusher replays the ops in a
+  // Firestore transaction against the LATEST server copy and writes back only the fields that changed.
+  // So the phone and the computer can edit at the same moment without either losing the other's change,
+  // offline edits survive the app being closed, and a to-do write can no longer drop protocol or now.
+  //
+  // Security rules require an authenticated (anonymous) request; nothing here is sensitive enough to
+  // need more, and a write-capable token in page JS would be a real hole, so this is deliberate.
+  const SY = window.DHSync;
+  const FB_V = "10.13.1";
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyBbS7KO_-ji_I82nZZ0UuorW47Unf3BNOE",
     authDomain: "daily-hub-todos.firebaseapp.com",
@@ -15668,66 +15689,6 @@ function skyArrive(){
     messagingSenderId: "816153848388",
     appId: "1:816153848388:web:23127952bba70d7205ea11"
   };
-
-  let todosState = { items: [], history: [] };
-  let todosReady = false;
-  let todoDocRef = null; // assigned once Firestore initializes below; declared out here
-  // (not with const inside the try block) so updateItem() can see it via closure.
-  const HISTORY_CAP = 16; // how many recently-completed items we keep
-  const HISTORY_MAX_AGE_MS = 48 * 60 * 60 * 1000; // auto-purge recently-deleted items older than this
-  // The pre-merge {urgent, chill, ...} snapshot is kept in the doc as a one-time
-  // backup so the old split lists are recoverable; every write carries it through.
-  let preMergeBackup = null;
-
-  // Single source of truth for a write. The doc schema is now
-  //   { items:[{id,text,kind:"urgent"|"chill",done,due,note,subitems}], history:[...] }
-  // — the old top-level `urgent`/`chill` arrays are gone (see backupPreMerge).
-  function writeTodos(next){
-    const payload = { items: next.items || [], history: next.history || [] };
-    if(preMergeBackup) payload.backupPreMerge = preMergeBackup;
-    // the treatment tracker's doses live in this same doc (field `protocol`) because the Firestore
-    // security rules only permit todos/main; every full-document write must carry them through.
-    if(protocolData) payload.protocol = protocolData;
-    return setDoc(todoDocRef, payload);
-  }
-
-  // ---- Treatment tracker bridge (Oct 2026) ----
-  // protocol/main is rejected by the security rules ("Missing or insufficient permissions"), so each
-  // device only ever saw its own doses. The tracker now syncs through todos/main -> `protocol`
-  // = { entries: { "YYYY-MM-DD": { om:[ms..], mt:[..], am:[..], pb:[..] } } }.
-  let protocolData = null;
-  function protocolNotify(){
-    window.__protocolLatest = protocolData;
-    if(typeof window.__onProtocolSnapshot === "function"){
-      try{ window.__onProtocolSnapshot(protocolData); }catch(e){ console.error("Daily Hub: protocol render callback failed", e); }
-    }
-  }
-  window.__protocolApi = {
-    // merge-write one medication-day array; deep-merge keeps every other day/med untouched
-    write(day, k, arr){
-      if(!todoDocRef) return Promise.reject(new Error("sync not ready"));
-      const entries = { ...((protocolData && protocolData.entries) || {}) };
-      entries[day] = { ...(entries[day] || {}), [k]: arr };
-      protocolData = { entries };   // optimistic, so a to-do write in the same tick still carries it
-      return setDoc(todoDocRef, { protocol: { entries: { [day]: { [k]: arr } } } }, { merge: true });
-    }
-  };
-
-  // ---- Friends check-in (shares the same Firebase app/auth as to-dos above) ----
-  let friendsState = { people: [] };
-  let friendsReady = false;
-  let friendsDocRef = null;
-  // ---- Now-strip countdowns / deadlines (Eli adds and removes these himself; synced) ----
-  let nowState = { chips: [] };
-  let nowReady = false;
-  let nowDocRef = null;
-  let unsubscribeNow = null;
-  function nowNotify(){
-    if(typeof window.__onNowSnapshot === "function"){
-      try{ window.__onNowSnapshot(nowState); }catch(e){ console.error("Daily Hub: now-strip render callback failed", e); }
-    }
-  }
-  const FRIEND_HISTORY_CAP = 40; // per-channel "last call / last hangout" needs a deeper log than 8
   const DEFAULT_FRIEND_FREQ = 21; // days — a sensible "every few weeks" default
   const FRIEND_SEED = [
     "Hayden Miller","Jack Reynolds","Caleb Ronningen","Bo Nordberg","Max Halpern",
@@ -15736,304 +15697,290 @@ function skyArrive(){
     "Kenton Wilson","Luke Atkinson","Ben Hempbill","Thomas Gotuzzo","Dami Olatunji",
     "Paul Gagnier","Zach Campinini","Ben Chlarson","Connor Kavanaugh","Soya Goto"
   ];
-  function friendsNotify(){
-    if(typeof window.__onFriendsSnapshot === "function"){
-      try{ window.__onFriendsSnapshot(friendsState); }catch(e){ console.error("Daily Hub: friends render callback failed", e); }
-    }
-  }
+  const MIRROR = "dh-sync-mirror1:";       // last server copy of each doc, for instant/offline first paint
+  const HEAL_FIELDS = ["protocol", "now", "backupPreMerge"];
 
   function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  const memStore = (() => { const m = new Map(); return { get length(){ return m.size; }, key: i => [...m.keys()][i],
+    getItem: k => m.has(k) ? m.get(k) : null, setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; })();
+  let store = memStore; try{ localStorage.setItem("dh-ob-probe", "1"); localStorage.removeItem("dh-ob-probe"); store = localStorage; }catch(e){}
+  const outbox = SY.makeOutbox(store);
+  const volatile = [];                      // ops that could not be persisted (storage full): memory only
+  const pending = name => outbox.list(name).concat(volatile.filter(o => o.doc === name)).sort((a, b) => a.seq - b.seq);
 
-  // shared helper for the new per-item fields (due/note/subitems): finds the
-  // item by id, runs mutator on a shallow copy of it, and writes the whole
-  // doc back (same last-write-wins full-document model as add/remove/toggle
-  // below — see MEMORY.md "Known Issues" if this ever needs a proper
-  // per-item-document rework).
-  function updateItem(id, mutator){
-    const next = { ...todosState, items: todosState.items.map(t => t.id === id ? mutator({ ...t }) : t) };
-    writeTodos(next).catch(err => console.error("Daily Hub: failed to update to-do", err));
-  }
+  const readMirror = name => { try{ return JSON.parse(store.getItem(MIRROR + name) || "null"); }catch(e){ return null; } };
+  const writeMirror = (name, data) => { try{ store.setItem(MIRROR + name, JSON.stringify(data)); }catch(e){} };
 
-  function notify(){
-    if(typeof window.__onTodosSnapshot === "function"){
-      try{ window.__onTodosSnapshot(todosState); }catch(e){ console.error("Daily Hub: to-do render callback failed", e); }
+  // server[name]: last known server data (null = doc known not to exist, undefined = nothing known yet)
+  const server = { todos: readMirror("todos") || undefined, friends: readMirror("friends") || undefined };
+
+  let todosState = { items: [], history: [] }, todosReady = false;
+  let friendsState = { people: [] }, friendsReady = false;
+  let nowState = { chips: [], hidden: [], seeded: false }, nowReady = false;
+  let protocolData = null;
+  const syncStatus = { pending: 0, error: null, online: navigator.onLine, connected: false };
+  const last = {};
+  const changed = (k, v) => { const j = JSON.stringify(v); if(last[k] === j) return false; last[k] = j; return true; };
+
+  function call(name, arg, what){
+    if(typeof window[name] === "function"){
+      try{ window[name](arg); }catch(e){ console.error("Daily Hub: " + what + " render callback failed", e); }
     }
   }
+  function protocolNotify(){ window.__protocolLatest = protocolData; call("__onProtocolSnapshot", protocolData, "protocol"); }
+  function statusNotify(){
+    syncStatus.pending = pending("todos").length + pending("friends").length;
+    syncStatus.online = navigator.onLine;
+    if(changed("status", syncStatus)) call("__onSyncStatus", { ...syncStatus }, "sync status");
+  }
+  window.__syncStatus = () => ({ ...syncStatus, pending: pending("todos").length + pending("friends").length });
 
+  // recompute what the screen shows for one doc and tell only the parts whose data changed
+  function publish(name){
+    if(name === "todos"){
+      const ops = pending("todos");
+      if(server.todos === undefined && !ops.length) return;
+      const v = SY.project("todos", server.todos || {}, ops);
+      todosState = { items: v.items, history: v.history };
+      const n = v.now && typeof v.now === "object" ? v.now : {};
+      nowState = { chips: Array.isArray(n.chips) ? n.chips : [], hidden: Array.isArray(n.hidden) ? n.hidden : [], seeded: !!n.seeded };
+      protocolData = v.protocol && typeof v.protocol === "object" ? v.protocol : null;
+      if(server.todos !== undefined){ todosReady = true; nowReady = true; }
+      if(todosReady && changed("todos", todosState)) call("__onTodosSnapshot", todosState, "to-do");
+      if(nowReady && changed("now", nowState)) call("__onNowSnapshot", nowState, "now-strip");
+      if(changed("protocol", protocolData)) protocolNotify();
+    }else{
+      if(!server.friends && !pending("friends").length) return;
+      const v = SY.project("friends", server.friends || null, pending("friends"));
+      if(!Array.isArray(v.people)) return;          // not seeded yet: stay "not ready", like before
+      friendsState = { people: v.people };
+      friendsReady = true;
+      if(changed("friends", friendsState)) call("__onFriendsSnapshot", friendsState, "friends");
+    }
+    statusNotify();
+  }
+
+  let kick = () => {};                       // replaced once Firebase is up
+  function enqueue(name, op){
+    const full = outbox.add(name, op);
+    if(full.volatile) volatile.push(full);
+    publish(name);
+    kick(name);
+  }
+
+  // ---------------- public APIs (same names and signatures the page already calls) ----------------
+  // compatibility: any code that still hands over a whole to-do list goes through a transaction too,
+  // and only replaces items/history — protocol and now are never part of it
+  window.__writeTodos = next => { enqueue("todos", { t: "todo.replace", items: (next && next.items) || [], history: (next && next.history) || [] }); return Promise.resolve(); };
+  const item = id => todosState.items.find(t => t.id === id);
+  window.__todosApi = {
+    isReady: () => todosReady,
+    getState: () => todosState,
+    add(text, kind, list){
+      text = (text || "").trim(); if(!text) return;
+      enqueue("todos", { t: "todo.add", item: { id: genId(), text, kind: kind === "chill" ? "chill" : "urgent", list: list === "work" ? "work" : "personal", done: false } });
+    },
+    remove(id){ enqueue("todos", { t: "todo.remove", itemId: id, at: new Date().toISOString() }); },
+    /* the urgent/chill switch — a field flip, so the item keeps its place with its due date, note and checklist */
+    setKind(id, kind){ enqueue("todos", { t: "todo.patch", itemId: id, set: { kind: kind === "chill" ? "chill" : "urgent" } }); },
+    /* Work/Personal switch (Eli's request, Aug 2026) */
+    setList(id, list){ enqueue("todos", { t: "todo.patch", itemId: id, set: { list: list === "work" ? "work" : "personal" } }); },
+    // sends the resulting value, not "flip", so replaying it can never flip it back
+    toggle(id){ const t = item(id); if(t) enqueue("todos", { t: "todo.patch", itemId: id, set: { done: !t.done } }); },
+    setDue(id, due){ enqueue("todos", due ? { t: "todo.patch", itemId: id, set: { due } } : { t: "todo.patch", itemId: id, unset: ["due"] }); },
+    setNote(id, note){ const v = (note || "").trim(); enqueue("todos", v ? { t: "todo.patch", itemId: id, set: { note: v } } : { t: "todo.patch", itemId: id, unset: ["note"] }); },
+    setText(id, text){
+      text = (text || "").trim(); if(!text) return;   // renaming to blank is a no-op, not a delete
+      enqueue("todos", { t: "todo.patch", itemId: id, set: { text } });
+    },
+    addSub(id, text){ text = (text || "").trim(); if(!text) return; enqueue("todos", { t: "todo.sub.add", itemId: id, sub: { id: genId(), text, done: false } }); },
+    toggleSub(id, subId){
+      const s = ((item(id) || {}).subitems || []).find(x => x.id === subId);
+      if(s) enqueue("todos", { t: "todo.sub.patch", itemId: id, subId, set: { done: !s.done } });
+    },
+    setSubText(id, subId, text){ text = (text || "").trim(); if(!text) return; enqueue("todos", { t: "todo.sub.patch", itemId: id, subId, set: { text } }); },
+    removeSub(id, subId){ enqueue("todos", { t: "todo.sub.remove", itemId: id, subId }); },
+    restore(historyId){
+      const e = (todosState.history || []).find(h => h.id === historyId); if(!e) return;
+      // deterministic id, so restoring the same entry on two devices gives one item, not two
+      enqueue("todos", { t: "todo.restore", historyId, item: { id: "r" + historyId, text: e.text, kind: e.kind === "chill" ? "chill" : "urgent", list: e.list === "work" ? "work" : "personal", done: false } });
+    },
+    reorder(orderedIds){ if(Array.isArray(orderedIds) && orderedIds.length) enqueue("todos", { t: "todo.reorder", ids: orderedIds.slice() }); }
+  };
+
+  window.__friendsApi = {
+    isReady: () => friendsReady,
+    getState: () => friendsState,
+    add(name, freqDays){
+      name = (name || "").trim(); if(!name) return;
+      const fd = Number(freqDays) > 0 ? Number(freqDays) : DEFAULT_FRIEND_FREQ;
+      enqueue("friends", { t: "friend.add", person: { id: genId(), name, freqDays: fd, lastContact: null, history: [] } });
+    },
+    remove(id){ enqueue("friends", { t: "friend.remove", personId: id }); },
+    rename(id, name){ name = (name || "").trim(); if(!name) return; enqueue("friends", { t: "friend.patch", personId: id, set: { name } }); },
+    setFreq(id, freqDays){ const fd = Number(freqDays) > 0 ? Number(freqDays) : DEFAULT_FRIEND_FREQ; enqueue("friends", { t: "friend.patch", personId: id, set: { freqDays: fd } }); },
+    // Undo support for the Friends page: put one person back exactly as they were
+    replace(person){ if(person && person.id) enqueue("friends", { t: "friend.replace", person }); },
+    restore(person, index){ if(person && person.id) enqueue("friends", { t: "friend.restore", person, index }); },
+    // whenIso (optional) back-dates a catch-up; lastContact is always the most recent touchpoint
+    logContact(id, method, whenIso){
+      const t = whenIso ? new Date(whenIso) : new Date();
+      enqueue("friends", { t: "friend.log", personId: id, date: (isFinite(t.getTime()) ? t : new Date()).toISOString(), method: (method || "").trim() });
+    }
+  };
+
+  // Now-strip countdowns / deadlines (Eli adds and removes these himself; synced via todos/main -> now)
+  window.__nowApi = {
+    isReady: () => nowReady,
+    getState: () => nowState,
+    add(label, date, kind){
+      label = (label || "").trim(); if(!label || !/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return;
+      enqueue("todos", { t: "now.add", chip: { id: genId(), label, date, kind: kind === "deadline" ? "deadline" : "countdown" } });
+    },
+    // removes a synced chip, and hides a calendar/file chip of that id on every device
+    remove(id){ enqueue("todos", { t: "now.remove", ids: [String(id)] }); },
+    seed(chips){   // one-time import of the old data/now.json.enc list (ids match the page's "file:" fallback ids)
+      if(nowState.seeded || !Array.isArray(chips)) return;
+      enqueue("todos", { t: "now.seed", chips: chips.map(c => ({ id: c.id || "file:" + c.label, label: c.label, date: c.date, kind: c.kind })) });
+    },
+    // a device's old local-only chips and hides (kept before chips could sync) join the shared list
+    importLocal(added, hidden){
+      if((added && added.length) || (hidden && hidden.length)) enqueue("todos", { t: "now.import", added: added || [], hidden: hidden || [] });
+    }
+  };
+
+  // Treatment tracker: doses are unique ms timestamps; add/remove one exact dose (never a whole array)
+  window.__protocolApi = {
+    add(day, k, ts){ enqueue("todos", { t: "dose.add", day, k, ts }); },
+    remove(day, k, ts){ enqueue("todos", { t: "dose.remove", day, k, ts }); },
+    current: () => protocolData
+  };
+
+  // first paint from the last copy this device saw (works offline and before Firebase loads)
+  publish("todos"); publish("friends");
+  window.addEventListener("storage", e => { if(e.key && e.key.indexOf(SY.PREFIX) === 0){ publish("todos"); publish("friends"); } });   // another tab queued an edit
+
+  // ---------------- Firebase connection and the flusher ----------------
   try{
-    const app = initializeApp(FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    todoDocRef = doc(db, "todos", "main");
-    friendsDocRef = doc(db, "friends", "main");
-    nowDocRef = doc(db, "now", "main");
+    const [A, AU, F] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${FB_V}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${FB_V}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${FB_V}/firebase-firestore.js`)
+    ]);
+    const app = A.initializeApp(FIREBASE_CONFIG);
+    const auth = AU.getAuth(app);
+    let db;
+    try{
+      // IndexedDB cache: a cold offline launch still has the last data; shared safely across tabs
+      db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) });
+    }catch(e){ db = F.getFirestore(app); }
+    const refs = { todos: F.doc(db, "todos", "main"), friends: F.doc(db, "friends", "main") };
+    let user = null, maintenance = false;
+    const flushing = { todos: false, friends: false }, retryAt = { todos: 0, friends: 0 }, backoff = { todos: 0, friends: 0 };
+    let loggedErr = "";
 
-    // Attach the Firestore listener only once we actually have an authenticated
-    // user — subscribing before sign-in resolves races against our own security
-    // rules (request.auth != null) and onSnapshot does not auto-retry after a
-    // permission-denied error, so getting this order right matters.
-    let unsubscribeTodos = null;
-    let unsubscribeFriends = null;
-    onAuthStateChanged(auth, user => {
-      if(!user) return;
-      if(!unsubscribeTodos) unsubscribeTodos = onSnapshot(todoDocRef, snap => {
-        const data = snap.exists() ? (snap.data() || {}) : {};
-        if(data.backupPreMerge) preMergeBackup = data.backupPreMerge;
-        protocolData = (data.protocol && typeof data.protocol === "object") ? data.protocol : null;
-        protocolNotify();
-
-        // ---- one-time migration: the two separate urgent/chill arrays fold into
-        // a single ordered `items` list where urgency is a per-item field. The
-        // pre-merge doc is stashed under backupPreMerge so nothing is lost. Any
-        // later writer that still appends to the legacy arrays gets folded in
-        // too, rather than silently disappearing. ----
-        const legacyU = Array.isArray(data.urgent) ? data.urgent : [];
-        const legacyC = Array.isArray(data.chill) ? data.chill : [];
-        let items = Array.isArray(data.items) ? data.items.slice() : null;
-        let needsWrite = false;
-
-        if(!items){
-          items = [
-            ...legacyU.map(t => ({ ...t, kind: "urgent" })),
-            ...legacyC.map(t => ({ ...t, kind: "chill" }))
-          ];
-          needsWrite = true;
-        }else{
-          const known = new Set(items.map(t => t.id));
-          const strays = [
-            ...legacyU.filter(t => !known.has(t.id)).map(t => ({ ...t, kind: "urgent" })),
-            ...legacyC.filter(t => !known.has(t.id)).map(t => ({ ...t, kind: "chill" }))
-          ];
-          if(strays.length){ items = items.concat(strays); needsWrite = true; }
-        }
-        items = items.map(t => ({ ...t, kind: t.kind === "chill" ? "chill" : "urgent" }));
-
-        let history = Array.isArray(data.history) ? data.history : null;
-        if(!history){
-          history = [
-            ...(Array.isArray(data.historyUrgent) ? data.historyUrgent : []).map(h => ({ ...h, kind: "urgent" })),
-            ...(Array.isArray(data.historyChill) ? data.historyChill : []).map(h => ({ ...h, kind: "chill" }))
-          ].sort((a,b) => String(b.doneAt||"").localeCompare(String(a.doneAt||""))).slice(0, HISTORY_CAP);
-          needsWrite = true;
-        }
-
-        // Recently-deleted entries older than 48h are purged automatically
-        // (Eli's request, Aug 2026) -- unparsable/missing timestamps are kept
-        // rather than risk silently dropping a legit entry.
-        const historyCutoff = Date.now() - HISTORY_MAX_AGE_MS;
-        const freshHistory = history.filter(h => {
-          const t = Date.parse(h.doneAt);
-          return !Number.isFinite(t) || t >= historyCutoff;
+    async function flush(name){
+      if(!user || flushing[name] || !navigator.onLine || Date.now() < retryAt[name]) return;
+      const ops = pending(name).slice(0, 100);
+      const maint = name === "todos" && maintenance;
+      if(!ops.length && !maint) return;
+      flushing[name] = true;
+      try{
+        const tx = F.runTransaction(db, async tr => {
+          const snap = await tr.get(refs[name]);
+          const before = snap.exists() ? snap.data() : null;
+          const after = SY.project(name, before, ops);
+          const diff = SY.changedFields(before || {}, after);
+          if(!Object.keys(diff).length) return;
+          if(snap.exists()) tr.update(refs[name], diff); else tr.set(refs[name], diff);
         });
-        if(freshHistory.length !== history.length){
-          history = freshHistory;
-          needsWrite = true;
-        }
+        // a hung request must not block the queue forever; replaying later is harmless (ops are idempotent)
+        await Promise.race([tx, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("timeout"), { code: "deadline-exceeded" })), 25000))]);
+        const done = new Set(ops.map(o => o.oid));
+        outbox.remove([...done]);
+        for(let i = volatile.length - 1; i >= 0; i--) if(done.has(volatile[i].oid)) volatile.splice(i, 1);
+        if(maint) maintenance = false;
+        backoff[name] = 0; retryAt[name] = 0; syncStatus.error = null; syncStatus.connected = true; loggedErr = "";
+        publish(name);
+      }catch(err){
+        const code = (err && err.code) || String(err);
+        syncStatus.error = code;
+        backoff[name] = Math.min(60000, backoff[name] ? backoff[name] * 2 : 2000);
+        retryAt[name] = Date.now() + backoff[name];
+        if(code !== "unavailable" && code !== "deadline-exceeded" && loggedErr !== code){ loggedErr = code; console.error("Daily Hub: sync write failed (kept on this device, will retry)", err); }
+        setTimeout(() => flush(name), backoff[name] + 50);
+      }finally{
+        flushing[name] = false;
+        statusNotify();
+      }
+      if(pending(name).length && !retryAt[name]) setTimeout(() => flush(name), 0);
+    }
+    kick = name => { if(name) flush(name); else { flush("todos"); flush("friends"); } };
+    const kickAll = () => { retryAt.todos = retryAt.friends = 0; kick(); statusNotify(); };
+    window.addEventListener("online", kickAll);
+    window.addEventListener("offline", statusNotify);
+    document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") kickAll(); });
+    setInterval(() => { if(pending("todos").length || pending("friends").length) kick(); }, 20000);
 
-        if(needsWrite && !preMergeBackup && (legacyU.length || legacyC.length)){
-          preMergeBackup = {
-            urgent: legacyU, chill: legacyC,
-            historyUrgent: Array.isArray(data.historyUrgent) ? data.historyUrgent : [],
-            historyChill: Array.isArray(data.historyChill) ? data.historyChill : [],
-            at: new Date().toISOString()
-          };
+    // a writer elsewhere (older code, a script) replaced the doc without a field this page owns:
+    // put back the last value this device saw, only if the field is still missing on the server
+    function selfHeal(name, data){
+      if(name !== "todos" || !data) return;
+      const prev = readMirror("todos") || {};
+      HEAL_FIELDS.forEach(f => {
+        if(data[f] === undefined && prev[f] !== undefined){
+          console.warn("Daily Hub: todos/main lost field '" + f + "' — restoring it from this device's last copy");
+          enqueue("todos", { t: "field.restore", field: f, value: prev[f] });
         }
-
-        todosState = { items, history };
-        todosReady = true;
-        notify();
-        if(needsWrite) writeTodos(todosState).catch(err => console.error("Daily Hub: to-do merge write failed", err));
-      }, err => {
-        console.error("Daily Hub: to-do sync listener failed", err);
-        if(typeof window.__onProtocolError === "function") window.__onProtocolError();
       });
-      if(!unsubscribeFriends) unsubscribeFriends = onSnapshot(friendsDocRef, snap => {
+    }
+
+    function listen(name){
+      return F.onSnapshot(refs[name], snap => {
+        const fromCache = snap.metadata.fromCache;
         if(!snap.exists()){
-          // first-ever load: seed the friend list so lastContact starts as "today"
-          // rather than every name showing up alarmingly overdue on day one.
-          const nowIso = new Date().toISOString();
-          const seeded = {
-            people: FRIEND_SEED.map(name => ({
-              id: genId(), name, freqDays: DEFAULT_FRIEND_FREQ, lastContact: nowIso, history: []
-            }))
-          };
-          setDoc(friendsDocRef, seeded).catch(err => console.error("Daily Hub: failed to seed friends list", err));
-          return; // the setDoc above will trigger this listener again with real data
+          if(fromCache) return;                                  // only the server can say "no such doc"
+          server[name] = null;
+          if(name === "friends" && !pending("friends").some(o => o.t === "friend.seed")){
+            // first-ever load: seed so lastContact starts as "today" rather than everyone overdue on day one
+            const nowIso = new Date().toISOString();
+            enqueue("friends", { t: "friend.seed", people: FRIEND_SEED.map(nm => ({ id: genId(), name: nm, freqDays: DEFAULT_FRIEND_FREQ, lastContact: nowIso, history: [] })) });
+          }
+          if(name === "todos"){ server.todos = {}; publish("todos"); }
+          return;
         }
         const data = snap.data() || {};
-        friendsState = { people: Array.isArray(data.people) ? data.people : [] };
-        friendsReady = true;
-        friendsNotify();
-      }, err => { console.error("Daily Hub: friends sync listener failed", err); });
-    });
-    onAuthStateChanged(auth, user => {
-      if(!user) return;
-      if(!unsubscribeNow) unsubscribeNow = onSnapshot(nowDocRef, snap => {
-        const data = snap.exists() ? (snap.data() || {}) : {};
-        nowState = { chips: Array.isArray(data.chips) ? data.chips : [], seeded: !!data.seeded };
-        nowReady = true;
-        nowNotify();
-      }, err => { console.error("Daily Hub: now-strip sync listener failed", err); });
-    });
-    signInAnonymously(auth).catch(err => console.error("Daily Hub: anonymous sign-in failed", err));
-
-    window.__nowApi = {
-      isReady: () => nowReady,
-      getState: () => nowState,
-      add(label, date, kind){
-        label = (label || "").trim(); if(!label || !/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return;
-        const next = { chips: [...nowState.chips, { id: genId(), label, date, kind: kind === "deadline" ? "deadline" : "countdown" }], seeded: true };
-        setDoc(nowDocRef, next).catch(err => console.error("Daily Hub: failed to add countdown", err));
-      },
-      remove(id){
-        const next = { chips: nowState.chips.filter(c => c.id !== id), seeded: true };
-        setDoc(nowDocRef, next).catch(err => console.error("Daily Hub: failed to remove countdown", err));
-      },
-      seed(chips){   // one-time import of the old data/now.json.enc list
-        if(nowState.seeded || !Array.isArray(chips)) return;
-        const next = { chips: chips.map(c => ({ id: genId(), label: c.label, date: c.date, kind: c.kind === "deadline" ? "deadline" : "countdown" })), seeded: true };
-        setDoc(nowDocRef, next).catch(err => console.error("Daily Hub: failed to seed countdowns", err));
-      }
-    };
-
-    window.__todosApi = {
-      isReady: () => todosReady,
-      getState: () => todosState,
-      add(text, kind, list){
-        text = (text || "").trim();
-        if(!text) return;
-        const next = { ...todosState, items: [...todosState.items, { id: genId(), text, kind: kind === "chill" ? "chill" : "urgent", list: list === "work" ? "work" : "personal", done: false }] };
-        writeTodos(next).catch(err => console.error("Daily Hub: failed to save to-do", err));
-      },
-      remove(id){
-        const removed = todosState.items.find(t => t.id === id);
-        const next = { ...todosState, items: todosState.items.filter(t => t.id !== id) };
-        if(removed){
-          const entry = { id: removed.id, text: removed.text, kind: removed.kind || "urgent", list: removed.list === "work" ? "work" : "personal", doneAt: new Date().toISOString() };
-          next.history = [entry, ...(todosState.history || [])].slice(0, HISTORY_CAP);
+        if(!fromCache) selfHeal(name, data);
+        server[name] = data;
+        writeMirror(name, data);
+        if(!fromCache) syncStatus.connected = true;
+        if(name === "todos" && !fromCache && Object.keys(SY.changedFields(data, SY.normalizeTodos(data))).length){
+          maintenance = true; kick("todos");                     // 48h purge / legacy fold, done transactionally
         }
-        writeTodos(next).catch(err => console.error("Daily Hub: failed to remove to-do", err));
-      },
-      /* the urgent/chill switch — a field flip, so the item keeps its place in
-         the list along with its due date, note and checklist */
-      setKind(id, kind){
-        updateItem(id, t => { t.kind = kind === "chill" ? "chill" : "urgent"; return t; });
-      },
-      /* Work/Personal switch (Eli's request, Aug 2026) -- same field-flip
-         pattern as setKind, keeps due date/note/checklist intact. */
-      setList(id, list){
-        updateItem(id, t => { t.list = list === "work" ? "work" : "personal"; return t; });
-      },
-      toggle(id){
-        const next = { ...todosState, items: todosState.items.map(t => t.id === id ? { ...t, done: !t.done } : t) };
-        writeTodos(next).catch(err => console.error("Daily Hub: failed to update to-do", err));
-      },
-      setDue(id, due){
-        updateItem(id, t => { if(due){ t.due = due; } else { delete t.due; } return t; });
-      },
-      setNote(id, note){
-        updateItem(id, t => { const v = (note||"").trim(); if(v){ t.note = v; } else { delete t.note; } return t; });
-      },
-      setText(id, text){
-        text = (text || "").trim();
-        if(!text) return;   // renaming to blank is a no-op, not a delete
-        updateItem(id, t => { t.text = text; return t; });
-      },
-      addSub(id, text){
-        text = (text||"").trim();
-        if(!text) return;
-        updateItem(id, t => { t.subitems = [...(t.subitems||[]), { id: genId(), text, done: false }]; return t; });
-      },
-      toggleSub(id, subId){
-        updateItem(id, t => { t.subitems = (t.subitems||[]).map(s => s.id === subId ? { ...s, done: !s.done } : s); return t; });
-      },
-      setSubText(id, subId, text){
-        text = (text||"").trim();
-        if(!text) return;
-        updateItem(id, t => { t.subitems = (t.subitems||[]).map(s => s.id === subId ? { ...s, text } : s); return t; });
-      },
-      removeSub(id, subId){
-        updateItem(id, t => { t.subitems = (t.subitems||[]).filter(s => s.id !== subId); return t; });
-      },
-      restore(historyId){
-        const entry = (todosState.history || []).find(h => h.id === historyId);
-        if(!entry) return;
-        const next = {
-          ...todosState,
-          items: [...todosState.items, { id: genId(), text: entry.text, kind: entry.kind === "chill" ? "chill" : "urgent", list: entry.list === "work" ? "work" : "personal", done: false }],
-          history: todosState.history.filter(h => h.id !== historyId)
-        };
-        writeTodos(next).catch(err => console.error("Daily Hub: failed to restore to-do", err));
-      },
-      reorder(orderedIds){
-        const byId = {};
-        todosState.items.forEach(t => { byId[t.id] = t; });
-        const reordered = orderedIds.map(id => byId[id]).filter(Boolean);
-        // safety: if the drag's computed order doesn't account for every current
-        // item (e.g. another device added/removed one mid-drag), skip the write
-        // rather than silently dropping items
-        if(reordered.length !== todosState.items.length) return;
-        writeTodos({ ...todosState, items: reordered }).catch(err => console.error("Daily Hub: failed to reorder to-dos", err));
-      }
-    };
+        publish(name);
+      }, err => {
+        console.error("Daily Hub: " + name + " sync listener failed", err);
+        if(name === "todos") call("__onProtocolError", null, "protocol");
+      });
+    }
 
-    window.__friendsApi = {
-      isReady: () => friendsReady,
-      getState: () => friendsState,
-      add(name, freqDays){
-        name = (name || "").trim();
-        if(!name) return;
-        const fd = Number(freqDays) > 0 ? Number(freqDays) : DEFAULT_FRIEND_FREQ;
-        const next = { people: [...friendsState.people, { id: genId(), name, freqDays: fd, lastContact: null, history: [] }] };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to add friend", err));
-      },
-      remove(id){
-        const next = { people: friendsState.people.filter(p => p.id !== id) };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to remove friend", err));
-      },
-      rename(id, name){
-        name = (name || "").trim();
-        if(!name) return;
-        const next = { people: friendsState.people.map(p => p.id === id ? { ...p, name } : p) };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to rename friend", err));
-      },
-      setFreq(id, freqDays){
-        const fd = Number(freqDays) > 0 ? Number(freqDays) : DEFAULT_FRIEND_FREQ;
-        const next = { people: friendsState.people.map(p => p.id === id ? { ...p, freqDays: fd } : p) };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to update friend frequency", err));
-      },
-      // Undo support for the Friends page: put one person back exactly as they were
-      replace(person){
-        if(!person || !person.id) return;
-        const next = { people: friendsState.people.map(p => p.id === person.id ? person : p) };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to restore friend", err));
-      },
-      restore(person, index){
-        if(!person || !person.id || friendsState.people.some(p => p.id === person.id)) return;
-        const people = friendsState.people.slice();
-        people.splice(Math.max(0, Math.min(Number(index) || 0, people.length)), 0, person);
-        setDoc(friendsDocRef, { people }).catch(err => console.error("Daily Hub: failed to re-add friend", err));
-      },
-      // whenIso (optional) back-dates a catch-up ("yesterday", "last weekend"); history stays
-      // newest-first and lastContact is always the most recent touchpoint, never moved backward.
-      logContact(id, method, whenIso){
-        const t = whenIso ? new Date(whenIso) : new Date();
-        const iso = (isFinite(t.getTime()) ? t : new Date()).toISOString();
-        const next = {
-          people: friendsState.people.map(p => {
-            if(p.id !== id) return p;
-            const hist = [{ date: iso, method: (method || "").trim() }, ...(p.history || [])]
-              .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, FRIEND_HISTORY_CAP);
-            const prevLast = p.lastContact ? new Date(p.lastContact).getTime() : 0;
-            const lastContact = new Date(iso).getTime() > prevLast ? iso : p.lastContact;
-            return { ...p, lastContact, history: hist };
-          })
-        };
-        setDoc(friendsDocRef, next).catch(err => console.error("Daily Hub: failed to log friend contact", err));
+    // Attach listeners only once signed in: the rules need request.auth, and onSnapshot does not retry
+    // after a permission-denied error, so the order matters.
+    let unsub = null, triedSignIn = false;
+    AU.onAuthStateChanged(auth, u => {
+      user = u || null;
+      if(!u){
+        if(!triedSignIn){ triedSignIn = true; AU.signInAnonymously(auth).catch(err => { if(navigator.onLine) console.error("Daily Hub: anonymous sign-in failed", err); }); }
+        return;
       }
-    };
+      if(!unsub) unsub = [listen("todos"), listen("friends")];
+      kickAll();
+    });
+    // offline at launch: sign-in waits for the network
+    window.addEventListener("online", () => { if(!auth.currentUser){ triedSignIn = true; AU.signInAnonymously(auth).catch(() => {}); } });
   }catch(e){
-    console.error("Daily Hub: to-do sync failed to initialize", e);
+    console.error("Daily Hub: sync failed to initialize (edits are kept on this device)", e);
+    call("__onProtocolError", null, "protocol");
   }
 </script>
 <script type="module">
@@ -16043,7 +15990,7 @@ function skyArrive(){
   // (the to-do module owns the connection and hands snapshots to window.__onProtocolSnapshot; see its
   // "Treatment tracker bridge"). Each tap on "Take" appends a timestamp; "Undo" removes the last one.
   // A localStorage copy keeps it working offline, and unconfirmed local changes ("dirty") are retried.
-  const START = "2026-10-07", DAYS = 14, BUILD = "10-10e", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
+  const START = "2026-10-07", DAYS = 14, BUILD = "10-10s1", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
     { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
@@ -16056,21 +16003,22 @@ function skyArrive(){
   let synced = null, viewDate = null;
   let dirty = {}; try{ dirty = JSON.parse(localStorage.getItem(DIRTY_KEY) || "{}") || {}; }catch(e){}
   const saveDirty = () => { try{ localStorage.setItem(DIRTY_KEY, JSON.stringify(dirty)); }catch(e){} };
-  const inflight = new Set(); let seq = 0;
-  const markDirty = (day, k) => { dirty[day + "|" + k] = ++seq; saveDirty(); };
-  // write the latest local array for one medication-day to the cloud; clears its dirty flag once confirmed
-  function pushRemote(day, k){
-    const key = day + "|" + k, mine = dirty[key];
-    const fail = err => { console.error("Daily Hub: protocol sync failed", err); inflight.delete(key); if(synced !== false){ synced = false; render(); } };
-    inflight.add(key);
-    try{
-      window.__protocolApi.write(day, k, list(day, k)).then(() => {
-        inflight.delete(key);
-        if(dirty[key] === mine){ delete dirty[key]; saveDirty(); }
-        if(synced !== true){ synced = true; render(); }
-      }).catch(fail);
-    }catch(err){ fail(err); }
+  // Oct 10 2026: each Take/Undo is ONE dose operation (add or remove that exact timestamp), queued
+  // durably and applied on the server against its latest copy — two devices logging at once both
+  // count, and an offline dose survives the app being closed. (Was: whole-array writes, last one won.)
+  const HANDOFF_KEY = "dh_rx_handoff_v1";
+  function syncDose(op, day, k, ts){
+    try{ window.__protocolApi[op](day, k, ts); }
+    catch(err){ console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } }
   }
+  const uniqueTs = (a, ts) => { while(a.includes(ts)) ts++; return ts; };   // doses are a set of unique timestamps
+  function footText(){
+    const st = window.__syncStatus ? window.__syncStatus() : null;
+    if(synced === false) return "Saved on this device only \u2014 cloud sync unavailable";
+    if(st && st.pending) return st.online ? "Syncing\u2026" : "Saved on this device \u00b7 syncs when you\u2019re back online";
+    return "Synced across devices \u00b7 build " + BUILD;
+  }
+  { const prev = window.__onSyncStatus; window.__onSyncStatus = s => { if(prev) try{ prev(s); }catch(e){} render(); }; }
 
   const pad = n => String(n).padStart(2, "0");
   const ymd = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
@@ -16172,7 +16120,7 @@ function skyArrive(){
           <button class="rx-undo" data-undo="${m.k}" ${c?"":"disabled"} aria-label="Undo last ${m.name} dose">Undo</button></div>
           <div class="rx-last">${c ? "Last dose " + fmtT(a[c-1]) : "None yet"}</div></div>`;
       }).join("")}</div>
-      <div class="rx-foot">${synced === false ? "Saved on this device only — cloud sync unavailable" : "Synced across devices \u00b7 build " + BUILD}</div>`;
+      <div class="rx-foot">${footText()}</div>`;
     el.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => { viewDate = addDays(viewDate, +b.dataset.nav); render(); });
     el.querySelectorAll("[data-take]").forEach(b => b.onclick = () => change(b.dataset.take, 1));
     el.querySelectorAll("[data-undo]").forEach(b => b.onclick = () => change(b.dataset.undo, -1));
@@ -16181,14 +16129,16 @@ function skyArrive(){
   function change(k, dir){
     const e = state.entries[viewDate] = { ...(state.entries[viewDate] || {}) };
     const a = (e[k] || []).slice();
+    let ts;
     if(dir > 0){
       // logging a past day: stamp noon so it sorts sensibly; today: stamp now
-      a.push(viewDate === todayStr() ? Date.now() : parse(viewDate).getTime() + 12*36e5);
-    }else a.pop();
+      ts = uniqueTs(a, viewDate === todayStr() ? Date.now() : parse(viewDate).getTime() + 12*36e5);
+      a.push(ts);
+    }else ts = a.pop();
     e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
     render(); checkReminder();
-    markDirty(viewDate, k); pushRemote(viewDate, k);
+    if(ts !== undefined) syncDose(dir > 0 ? "add" : "remove", viewDate, k, ts);
   }
 
   window.__rxMount = () => { viewDate = null; render(); checkReminder(); };
@@ -16320,42 +16270,35 @@ function skyArrive(){
   function logToday(k){
     const day = todayStr();
     const e = state.entries[day] = { ...(state.entries[day] || {}) };
-    const a = (e[k] || []).slice(); a.push(Date.now()); e[k] = a;
+    const a = (e[k] || []).slice(), ts = uniqueTs(a, Date.now()); a.push(ts); e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
-    markDirty(day, k);
-    try{ pushRemote(day, k); }catch(err){ console.error("Daily Hub: protocol sync failed", err); }   // one failed write must never stop the next dose being logged
+    syncDose("add", day, k, ts);   // never throws: one failed write must never stop the next dose being logged
   }
 
-  /* Reconcile the cloud copy with this device's copy, per medication-day:
-       - only on this device            -> keep it and push it up (this is how the phone's doses reach the cloud)
-       - local change not yet confirmed -> local wins until its write is acknowledged
-       - first sync on this device      -> union of both (nothing logged anywhere is lost)
-       - otherwise                      -> cloud wins, so Undo and new doses made on another device show up here */
-  const union = (a, b) => Array.from(new Set([...a, ...b])).sort((x, y) => x - y);
+  /* What arrives here is the cloud copy WITH this device's not-yet-confirmed doses already applied
+     (sync-core.js), so it is simply adopted. null = the cloud has no tracker data: keep the local copy.
+     One-time hand-off (Oct 10 2026): doses this device logged under the old whole-array sync that never
+     reached the cloud are sent as single doses. It only ever adds, so nothing logged anywhere is lost. */
   window.__onProtocolSnapshot = data => {
-    const cloud = (data && data.entries) || {};
-    let migrate = true; try{ migrate = !localStorage.getItem(MIG_KEY); }catch(e){}
-    const merged = {}, days = new Set([...Object.keys(cloud), ...Object.keys(state.entries)]);
-    days.forEach(d => {
-      const cv = cloud[d] || {}, lv = state.entries[d] || {}, row = {};
-      new Set([...Object.keys(cv), ...Object.keys(lv)]).forEach(k => {
-        const c = Array.isArray(cv[k]) ? cv[k] : null, l = Array.isArray(lv[k]) ? lv[k] : null, key = d + "|" + k;
-        let v;
-        if(c === null) v = l;
-        else if(dirty[key] !== undefined) v = l || c;
-        else if(migrate && l) v = union(c, l);
-        else v = c;
-        row[k] = v;
-        const same = c !== null && JSON.stringify(c) === JSON.stringify(v);
-        if(same && dirty[key] !== undefined) delete dirty[key];
-        else if(!same && v && (c !== null || v.length) && dirty[key] === undefined) dirty[key] = ++seq;
-      });
-      merged[d] = row;
-    });
-    state.entries = merged;
-    saveDirty();
-    try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: merged })); if(migrate) localStorage.setItem(MIG_KEY, "1"); }catch(err){}
-    Object.keys(dirty).forEach(key => { if(!inflight.has(key)){ const [d, k] = key.split("|"); pushRemote(d, k); } });
+    let cloud = (data && data.entries) || null;
+    if(cloud){
+      let handed = true; try{ handed = !!localStorage.getItem(HANDOFF_KEY); }catch(e){}
+      if(!handed){
+        try{ localStorage.setItem(HANDOFF_KEY, "1"); }catch(e){}
+        let migrate = true; try{ migrate = !localStorage.getItem(MIG_KEY); }catch(e){}
+        Object.keys(state.entries).forEach(d => Object.keys(state.entries[d] || {}).forEach(k => {
+          if(!migrate && dirty[d + "|" + k] === undefined) return;
+          const c = (cloud[d] || {})[k] || [];
+          (state.entries[d][k] || []).forEach(ts => { if(typeof ts === "number" && !c.includes(ts)) syncDose("add", d, k, ts); });
+        }));
+        dirty = {}; saveDirty();
+        try{ localStorage.setItem(MIG_KEY, "1"); }catch(e){}
+        const cur = window.__protocolApi && window.__protocolApi.current();
+        if(cur && cur.entries) cloud = cur.entries;
+      }
+      state.entries = JSON.parse(JSON.stringify(cloud));
+      try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
+    }
     synced = true; render(); loaded = true; checkReminder();
   };
   window.__onProtocolError = () => { synced = false; render(); loaded = true; checkReminder(); };

@@ -53,6 +53,7 @@ Firestore's IndexedDB cache is enabled so a cold offline launch still shows the 
 
 - The page is fetched network-first with `no-store` (existing), so any cold launch runs the latest deploy.
 - iOS often *resumes* a suspended app instead of relaunching it, so the page checks for a new deploy on every resume: `HEAD index.html`; if the ETag moved, fetch it and compare a SHA-256 of the bytes with what is running (data-only deploys change the ETag but not the bytes).
+- Known limit: an edit that leaves the page's byte size unchanged reaches an already-open app within 3 h (any relaunch gets it immediately).
 - To keep cellular use low, the page is only re-downloaded when the ETag's size part changes, or at most every 3 h when only the timestamp moved. A hash this device already ran (an edge cache still serving an older deploy) never counts as new.
 - `sync-core.js` and `app-shell.js` are fetched network-first by the service worker, so they always match the page. When changing them, also bump `?v=` in `index.html` and `sw.js`.
 - New version found on resume with nothing being typed and no dialog open → reload silently (the unlocked session survives a reload — it is in `sessionStorage`; pending edits survive — they are in the outbox). Otherwise a small "New version — tap to update" pill, so an update never interrupts typing.

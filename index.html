@@ -15718,6 +15718,7 @@ function skyArrive(){
   // ops already committed but not yet seen in a server snapshot: still applied to the view (they are
   // idempotent), so the screen never briefly rolls back between the commit and its snapshot
   const echo = { todos: [], friends: [] };
+  const snapSeq = { todos: 0, friends: 0 };   // non-cache snapshots seen, to tell which copy is newer
   const pending = name => echo[name].concat(queued(name));
 
   const readMirror = name => { try{ return JSON.parse(store.getItem(MIRROR + name) || "null"); }catch(e){ return null; } };
@@ -15916,6 +15917,10 @@ function skyArrive(){
           maint = name === "todos" && maintenance;
           if(!ops.length && !maint) return;
           let committed = null;
+          const seqAtStart = snapSeq[name];
+          // a transaction that hangs on a half-dead connection keeps the lock (so nothing is replayed out of
+          // order); after 30 s just say so — edits stay queued on this device
+          const slow = setTimeout(() => { syncStatus.error = "slow"; statusNotify(); }, 30000);
           await F.runTransaction(db, async tr => {
             const snap = await tr.get(refs[name]);
             const before = snap.exists() ? snap.data() : null;
@@ -15938,8 +15943,11 @@ function skyArrive(){
           const done = new Set(ops.map(o => o.oid));
           outbox.remove([...done]);
           for(let i = volatile.length - 1; i >= 0; i--) if(done.has(volatile[i].oid)) volatile.splice(i, 1);
+          clearTimeout(slow);
           echo[name] = echo[name].concat(ops);
-          if(committed) server[name] = committed;
+          // adopt the committed copy only if no newer server snapshot arrived meanwhile (the watch stream and
+          // the commit reply travel separately); our own ops are covered by echo either way
+          if(committed && snapSeq[name] === seqAtStart) server[name] = committed;
           if(maint) maintenance = false;
         });
         backoff[name] = 0; retryAt[name] = 0; syncStatus.error = null; syncStatus.connected = true; loggedErr = "";
@@ -15988,7 +15996,7 @@ function skyArrive(){
             const nowIso = new Date().toISOString();
             enqueue("friends", { t: "friend.seed", people: FRIEND_SEED.map(nm => ({ id: genId(), name: nm, freqDays: DEFAULT_FRIEND_FREQ, lastContact: nowIso, history: [] })) });
           }
-          echo[name] = [];
+          echo[name] = []; snapSeq[name]++;
           if(name === "todos"){ server.todos = {}; publish("todos"); }
           return;
         }
@@ -15996,7 +16004,7 @@ function skyArrive(){
         if(!fromCache) selfHeal(name, data);
         server[name] = data;
         writeMirror(name, data);
-        if(!fromCache){ syncStatus.connected = true; echo[name] = []; }   // this copy includes everything committed so far
+        if(!fromCache){ syncStatus.connected = true; echo[name] = []; snapSeq[name]++; }   // this copy includes everything committed so far
         if(name === "todos" && !fromCache && Object.keys(SY.changedFields(data, SY.normalizeTodos(data))).length){
           maintenance = true; kick("todos");                     // 48h purge / legacy fold, done transactionally
         }

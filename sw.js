@@ -160,11 +160,12 @@ self.addEventListener("fetch", e => {
   if(url.pathname.endsWith(".js")){
     e.respondWith((async () => {
       const c = await caches.open(SHELL_CACHE);
-      try{
-        const res = await fetch(new Request(req.url, { cache: "no-store", credentials: "same-origin" }));
-        if(res.ok) c.put(req, res.clone());
-        return res;
-      }catch(err){ return (await c.match(req)) || Response.error(); }
+      const hit = await c.match(req);
+      const net = fetch(new Request(req.url, { cache: "no-store", credentials: "same-origin" }))
+        .then(res => { if(res.ok) c.put(req, res.clone()); return res; });
+      if(!hit) return net.catch(() => Response.error());
+      // on a crawling connection don't hold the launch hostage: after 4 s use the cached copy
+      return Promise.race([net, new Promise(r => setTimeout(() => r(hit), 4000))]).catch(() => hit);
     })());
     return;
   }
@@ -180,6 +181,9 @@ self.addEventListener("fetch", e => {
 
 self.addEventListener("message", e => {
   if(e.data && e.data.type === "dh-hello") e.waitUntil(reloadOldPages());
+  // pre-sync pages send "precache" on every resume: on a phone with only the old page open, that is
+  // the moment to reload it (current pages answer the ping and are left alone)
+  if(e.data === "precache" && e.waitUntil) e.waitUntil(reloadOldPages());
   if(e.data === "precache") precacheLatest();
   if(e.data === "skipWaiting") self.skipWaiting();
 });

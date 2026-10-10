@@ -254,4 +254,21 @@ test("unknown or malformed ops are skipped, not fatal", () => {
   assert.strictEqual(d.items.length, 3);
 });
 
+test("field.restore wins over pending edits queued before it (reviewer repro)", () => {
+  const srv = new Server(base());
+  const lostProtocol = JSON.parse(JSON.stringify(srv.docs.todos.protocol));
+  const now0 = { chips: [{ id: "c1", label: "Old chip", date: "2027-01-01", kind: "countdown" }], hidden: ["cal:x"], seeded: true };
+  srv.docs.todos.now = now0;
+  const d = new Device(srv);
+  d.do("todos", { t: "dose.add", day: "2026-10-10", k: "om", ts: 999 });
+  d.do("todos", { t: "now.add", chip: { id: "c2", label: "New chip", date: "2027-02-01" } });
+  srv.docs.todos = { items: srv.docs.todos.items, history: [] };            // old-code writer drops fields
+  d.do("todos", { t: "field.restore", field: "protocol", value: lostProtocol });
+  d.do("todos", { t: "field.restore", field: "now", value: now0 });
+  d.flush("todos");
+  assert.deepStrictEqual(srv.docs.todos.protocol.entries["2026-10-10"].om, [100, 999]);
+  assert.deepStrictEqual(srv.docs.todos.now.chips.map(c => c.id), ["c1", "c2"]);
+  assert.deepStrictEqual(srv.docs.todos.now.hidden, ["cal:x"]);
+});
+
 console.log(`\n${n} sync tests passed`);

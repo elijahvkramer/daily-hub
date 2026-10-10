@@ -5,7 +5,7 @@
    this checks GitHub for a new index.html: HEAD first (cheap); if the ETag moved, fetch the page and
    compare a SHA-256 of its bytes with the copy that is running (data-only deploys move the ETag but
    not the bytes). A real change found on resume, with nothing being typed and no dialog open, reloads
-   at once — the unlocked session lives in sessionStorage and pending edits in the sync outbox, so a
+   at once \u2014 the unlocked session lives in sessionStorage and pending edits in the sync outbox, so a
    reload loses neither. Otherwise a small pill offers it, so an update never interrupts typing.
 
    Old pages. The service worker pings open pages when a new version activates; a page answers here.
@@ -22,17 +22,25 @@
       if(e.data && e.data.type === "dh-ping" && e.source) e.source.postMessage({ type: "dh-pong" });
     });
     try{ navigator.serviceWorker.startMessages(); }catch(e){}
+    // tell the worker a current page is open, so it can reload any pre-sync pages left in other tabs
+    navigator.serviceWorker.ready.then(function(reg){ if(reg.active) reg.active.postMessage({ type: "dh-hello" }); }).catch(function(){});
   }
 
   /* ---------- update check ---------- */
-  var base = null, offered = false, hiddenAt = 0, checking = false;
+  var base = null, offered = false, hiddenAt = 0, checking = false, lastFull = 0;
+  var FULL_EVERY = 3 * 60 * 60 * 1000;   // same-size page: re-hash at most every 3h (data deploys move the ETag every ~30 min)
+  var SEEN = "dh-seen-builds";
+  // GitHub Pages ETags look like W/"<mtime hex>-<size hex>"; the size part only moves when the page does
+  function etagSize(t){ var m = /-([0-9a-f]+)"?$/i.exec(t || ""); return m ? m[1] : null; }
+  function seen(){ try{ return JSON.parse(localStorage.getItem(SEEN) || "[]"); }catch(e){ return []; } }
+  function remember(h){ try{ var a = seen().filter(function(x){ return x !== h; }); a.push(h); localStorage.setItem(SEEN, JSON.stringify(a.slice(-8))); }catch(e){} }
   function hex(buf){ return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2, "0"); }).join(""); }
   function sha(buf){ return crypto.subtle.digest("SHA-256", buf).then(hex); }
 
   // what is running = the bytes the service worker served for this page (it stores them as it serves)
   function baseline(){
     var fromCache = ("caches" in window) ? caches.keys().then(function(keys){
-      var shell = keys.filter(function(k){ return k.indexOf("shell-") === 0; });
+      var shell = keys.filter(function(k){ return k.indexOf("shell-") === 0; }).sort().reverse();   // newest first
       return shell.reduce(function(p, k){
         return p.then(function(hit){ return hit || caches.open(k).then(function(c){ return c.match(KEY_PATH); }); });
       }, Promise.resolve(null));
@@ -41,7 +49,7 @@
       return res || fetch(INDEX, { cache: "no-store" });       // no service worker yet: ask the network
     }).then(function(res){
       var etag = res.headers.get("etag");
-      return res.arrayBuffer().then(sha).then(function(h){ base = { etag: etag, hash: h }; });
+      return res.arrayBuffer().then(sha).then(function(h){ base = { etag: etag, hash: h }; lastFull = Date.now(); remember(h); });
     }).catch(function(){});
   }
 
@@ -51,12 +59,17 @@
     return fetch(INDEX, { method: "HEAD", cache: "no-store" }).then(function(h){
       var etag = h.headers.get("etag");
       if(!h.ok || (etag && etag === base.etag)) return false;
+      // same byte size: almost always a data-only deploy, so only re-download the page now and then
+      if(etagSize(etag) && etagSize(etag) === etagSize(base.etag) && Date.now() - lastFull < FULL_EVERY){ base.etag = etag; return false; }
+      lastFull = Date.now();
       // through the service worker, which also refreshes the offline copy
       return fetch(INDEX, { cache: "no-store" }).then(function(r){
         if(!r.ok) return false;
         var e2 = r.headers.get("etag") || etag;
         return r.arrayBuffer().then(sha).then(function(h2){
           if(h2 === base.hash){ base.etag = e2; return false; }   // a data-only deploy: same page
+          // a copy this device already ran = an edge server still holding an older deploy, not an update
+          if(seen().indexOf(h2) >= 0) return false;
           return true;
         });
       });
@@ -65,6 +78,8 @@
 
   // nothing would be lost by reloading right now
   function safeToReload(){
+    var g = document.getElementById("gate");
+    if(g && g.getClientRects().length && getComputedStyle(g).display !== "none") return false;   // Face ID / passphrase in progress
     var a = document.activeElement;
     if(a && a !== document.body && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return false;
     var open = Array.prototype.some.call(document.querySelectorAll(".modal-overlay, [aria-modal='true']"), function(el){
@@ -77,7 +92,7 @@
     if(offered) return; offered = true;
     var b = document.createElement("button");
     b.type = "button"; b.id = "dhUpdate";
-    b.textContent = "New version ready · tap to update";
+    b.textContent = "New version ready \u00b7 tap to update";
     b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));" +
       "z-index:2147482500;border:0;border-radius:999px;padding:11px 18px;font:800 13px/1.2 var(--dh-font,-apple-system,sans-serif);" +
       "background:var(--ink,#16181D);color:var(--card,#fff);box-shadow:0 12px 30px -8px rgba(0,0,0,.45);cursor:pointer";
@@ -105,6 +120,8 @@
   var DISMISS = "dh-install-dismissed";
   function installCard(){
     if(navigator.standalone !== false) return;                    // only iOS Safari defines it, and false = not installed
+    var ua = navigator.userAgent || "";
+    if(!/Safari\//.test(ua) || /CriOS|FxiOS|EdgiOS|GSA\/|FBAN|FBAV|Instagram|Line\//.test(ua)) return;   // in-app browsers can't add to Home Screen
     try{ if(localStorage.getItem(DISMISS)) return; }catch(e){}
     var share = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
     var plus = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-3px"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>';
@@ -115,16 +132,24 @@
       "box-shadow:0 18px 50px -12px rgba(0,0,0,.45);border:1px solid var(--hairline,rgba(0,0,0,.08));font:500 14px/1.4 var(--dh-font,-apple-system,sans-serif)";
     c.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">' +
       '<b style="font-size:16px;font-weight:800">Get the Daily Hub app</b>' +
-      '<button type="button" id="dhInstallX" aria-label="Dismiss" style="border:0;background:transparent;color:inherit;font-size:20px;line-height:1;padding:4px 6px;cursor:pointer;opacity:.6">×</button></div>' +
-      '<div style="display:flex;gap:10px;align-items:baseline;margin:6px 0"><b style="min-width:16px">1</b><span>Tap ' + share + ' <b>Share</b> in Safari’s toolbar.</span></div>' +
+      '<button type="button" id="dhInstallX" aria-label="Dismiss" style="border:0;background:transparent;color:inherit;font-size:20px;line-height:1;padding:4px 6px;cursor:pointer;opacity:.6">\u00d7</button></div>' +
+      '<div style="display:flex;gap:10px;align-items:baseline;margin:6px 0"><b style="min-width:16px">1</b><span>Tap ' + share + ' <b>Share</b> (on newer iOS it\u2019s under <b>\u2022\u2022\u2022</b> by the address bar).</span></div>' +
       '<div style="display:flex;gap:10px;align-items:baseline;margin:6px 0"><b style="min-width:16px">2</b><span>Choose ' + plus + ' <b>Add to Home Screen</b>, then <b>Add</b>.</span></div>' +
-      '<div style="font-size:12px;opacity:.65;margin-top:8px">It opens full screen and updates itself. You’ll enter your passphrase once inside the app.</div>';
+      '<div style="font-size:12px;opacity:.65;margin-top:8px">It opens full screen and updates itself. You\u2019ll enter your passphrase once inside the app.</div>';
     document.body.appendChild(c);
     c.querySelector("#dhInstallX").addEventListener("click", function(){
       try{ localStorage.setItem(DISMISS, "1"); }catch(e){}
       c.remove();
     });
   }
+  /* black-translucent status bar text is always white: give it a dark band over the light passphrase screen */
+  (function(){
+    var st = document.createElement("style");
+    st.textContent = "body.standalone #gate::before{content:'';position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top);" +
+      "background:rgba(14,16,22,.55);z-index:5;pointer-events:none}";
+    document.head.appendChild(st);
+  })();
+
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(installCard, 1200); });
   else setTimeout(installCard, 1200);
 })();

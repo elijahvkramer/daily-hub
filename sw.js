@@ -2,7 +2,7 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-10-10e";
+const VERSION = "dh-2026-10-10s1";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";
@@ -30,15 +30,20 @@ self.addEventListener("activate", e => {
     for(const k of all) if(!keep.has(k)) await caches.delete(k);
     await self.clients.claim();
     precacheLatest();               // pull down the newest editions for offline use
-    if(upgrading) reloadOldPages(); // only an upgrade can leave old pages open
+    if(upgrading){ const m = await caches.open(SHELL_CACHE); await m.put("__upgraded", new Response("1")); }   // a page's hello then checks for old tabs
   })());
 });
 
 /* Pages from before Oct 10 2026 write whole lists to Firestore and would undo the new sync's
    protections (and cannot notice an update on their own). New pages answer this ping from
-   app-shell.js; any open page that does not answer is reloaded once onto the current version. */
+   app-shell.js; any open page that does not answer is reloaded once onto the current version.
+   Triggered by the first current page's hello after an upgrade, inside that message event's
+   waitUntil — so the worker stays alive for it and it never delays activation or page loads. */
 async function reloadOldPages(){
   try{
+    const m = await caches.open(SHELL_CACHE);
+    if(!(await m.match("__upgraded"))) return;
+    await m.delete("__upgraded");
     const wins = await self.clients.matchAll({ type: "window" });
     if(!wins.length) return;
     const answered = new Set();
@@ -150,6 +155,20 @@ self.addEventListener("fetch", e => {
     return;
   }
 
+  /* our own scripts (sync-core.js, app-shell.js): network first, so the page and its scripts are never
+     from two different deploys; the cached copy is the offline fallback */
+  if(url.pathname.endsWith(".js")){
+    e.respondWith((async () => {
+      const c = await caches.open(SHELL_CACHE);
+      try{
+        const res = await fetch(new Request(req.url, { cache: "no-store", credentials: "same-origin" }));
+        if(res.ok) c.put(req, res.clone());
+        return res;
+      }catch(err){ return (await c.match(req)) || Response.error(); }
+    })());
+    return;
+  }
+
   /* everything else same-origin: cache, revalidate in the background */
   e.respondWith((async () => {
     const c = await caches.open(SHELL_CACHE);
@@ -160,6 +179,7 @@ self.addEventListener("fetch", e => {
 });
 
 self.addEventListener("message", e => {
+  if(e.data && e.data.type === "dh-hello") e.waitUntil(reloadOldPages());
   if(e.data === "precache") precacheLatest();
   if(e.data === "skipWaiting") self.skipWaiting();
 });

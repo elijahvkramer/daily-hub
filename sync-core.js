@@ -214,8 +214,11 @@
   /* server data + ops -> the data the screen shows (and the data a transaction writes) */
   function project(docName, server, ops, now){
     let d = docName === "todos" ? normalizeTodos(server, now) : (server ? clone(server) : {});
-    arr(ops).forEach(op => {
-      const f = APPLY[op.t];
+    // a field.restore (put back a field another writer dropped) must land BEFORE pending edits to that
+    // field, or a pending dose/chip would recreate the field first and the restore would be skipped
+    const list = arr(ops).filter(o => o && o.t === "field.restore").concat(arr(ops).filter(o => !o || o.t !== "field.restore"));
+    list.forEach(op => {
+      const f = op && APPLY[op.t];
       if(!f){ return; }                 // unknown op from a newer build: leave it for that build
       try{ f(d, op); }catch(e){ /* one malformed op must never block the rest */ }
     });

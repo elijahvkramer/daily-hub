@@ -32,7 +32,7 @@ function makeFirebase(dev){
       for(let attempt = 0; attempt < 5; attempt++){
         const writes = [], seen = {};
         const tr = {
-          get: async ref => { seen[ref.id] = SERVER.ver[ref.id] || 0; await new Promise(r => setImmediate(r)); return snapOf(ref.id); },
+          get: async ref => { seen[ref.id] = SERVER.ver[ref.id] || 0; await new Promise(r => dev.txDelay ? setTimeout(r, dev.txDelay) : setImmediate(r)); return snapOf(ref.id); },
           update: (ref, d) => writes.push(() => serverWrite(ref.id, { ...SERVER.docs[ref.id], ...clone(d) })),
           set: (ref, d) => writes.push(() => serverWrite(ref.id, clone(d)))
         };
@@ -57,12 +57,24 @@ function makeFirebase(dev){
 /* ---------------- a device = its own window/localStorage running the real modules ---------------- */
 class Store { constructor(){ this.m = new Map(); } get length(){ return this.m.size; } key(i){ return [...this.m.keys()][i]; }
   getItem(k){ return this.m.has(k) ? this.m.get(k) : null; } setItem(k, v){ this.m.set(k, String(v)); } removeItem(k){ this.m.delete(k); } }
-function device(name, seedLocal){
-  const dev = { name, online: true, commits: 0, logs: [], errors: [] };
-  const store = new Store(); Object.entries(seedLocal || {}).forEach(([k, v]) => store.setItem(k, v));
+// Web Locks: one manager per browser (tabs sharing a store share it)
+const LOCKS = new Map();
+function lockManager(){
+  const chains = new Map();
+  return { request(name, fn){
+    const prev = chains.get(name) || Promise.resolve();
+    const run = prev.then(() => fn());
+    chains.set(name, run.catch(() => {}));
+    return run;
+  } };
+}
+function device(name, seedLocal, sharedStore){
+  const dev = { name, online: true, commits: 0, logs: [], errors: [], txDelay: 0 };
+  const store = sharedStore || new Store(); Object.entries(seedLocal || {}).forEach(([k, v]) => store.setItem(k, v));
+  if(!LOCKS.has(store)) LOCKS.set(store, lockManager());
   const listeners = {};
   const win = {
-    localStorage: store, navigator: { onLine: true }, setTimeout, clearTimeout, setInterval: () => 0, setImmediate,
+    localStorage: store, navigator: { onLine: true, locks: LOCKS.get(store) }, setTimeout, clearTimeout, setInterval: () => 0, setImmediate,
     console: { log: () => {}, warn: (...a) => dev.logs.push(a.join(" ")), error: (...a) => dev.errors.push(a.map(String).join(" ")) },
     addEventListener: (t, f) => { (listeners[t] = listeners[t] || []).push(f); },
     document: { getElementById: () => null, addEventListener: () => {}, hidden: false, visibilityState: "visible", title: "Daily Hub", documentElement: { style: {} } },
@@ -189,6 +201,42 @@ async function settle(){ for(let i = 0; i < 8; i++) await tick(15); }
   P.__todosApi.reorder(ids); await settle();
   assert.ok(SERVER.docs["todos/main"].items.some(x => x.text === "Mid-drag"), "mid-drag add kept");
   console.log("ok reorder keeps concurrent add");
+
+  // two tabs share one outbox: a slow tab must never re-commit Take after the fast tab committed Undo
+  const shared = new Store();
+  const tabA = device("tabA", { dh_rx_handoff_v1: "1" }, shared), tabB = device("tabB", { dh_rx_handoff_v1: "1" }, shared);
+  await settle();
+  tabB.txDelay = 150;
+  tabA.win.__protocolApi.add("2026-10-12", "om", 5);
+  tabB.goOnline();
+  await tick(60);
+  tabA.win.__protocolApi.remove("2026-10-12", "om", 5);
+  await tick(500); await settle();
+  assert.deepStrictEqual(SERVER.docs["todos/main"].protocol.entries["2026-10-12"].om, [], "Undo survives a slow second tab");
+  console.log("ok two tabs: no out-of-order re-commit");
+
+  // offline device with queued edits + an old page drops protocol/now: reconnect restores, then applies
+  const q = device("q", { dh_rx_handoff_v1: "1" });
+  await settle();
+  const chipsBefore = clone(SERVER.docs["todos/main"].now.chips).length;
+  q.online = false;
+  q.win.__protocolApi.add("2026-10-12", "pb", 4242);
+  q.win.__nowApi.add("Offline chip", "2027-03-01", "countdown");
+  const keep = SERVER.docs["todos/main"];
+  serverWrite("todos/main", { items: keep.items, history: keep.history });
+  q.goOnline(); await tick(300); await settle();
+  const after = SERVER.docs["todos/main"];
+  assert.deepStrictEqual(after.protocol.entries["2026-10-10"].mt, [700, 777], "tracker history kept");
+  assert.ok(after.protocol.entries["2026-10-12"].pb.includes(4242));
+  assert.strictEqual(after.now.chips.length, chipsBefore + 1, "old chips kept + new one");
+  console.log("ok reconnect after a field-dropping writer: restored, then queued edits applied");
+
+  // legacy hand-off with several unsynced doses across days (reviewer repro)
+  const h = device("h", { dh_rx_v1: JSON.stringify({ entries: { "2026-10-08": { om: [50] }, "2026-10-09": { om: [1, 60], mt: [70] } } }) });
+  await settle();
+  const e = SERVER.docs["todos/main"].protocol.entries;
+  assert.ok(e["2026-10-08"].om.includes(50) && e["2026-10-09"].om.includes(60) && e["2026-10-09"].mt.includes(70), "every legacy dose handed off");
+  console.log("ok legacy hand-off keeps every dose");
 
   for(const d of [phone, mac, phone2]){
     const bad = d.errors.filter(e => !/sync write failed/.test(e));

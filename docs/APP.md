@@ -40,7 +40,10 @@ All synced data lives in two documents the rules allow:
 2. The screen shows `server snapshot + pending ops`, so edits appear instantly, online or off.
 3. A flusher replays pending ops inside a Firestore **transaction**: read the latest doc, apply the ops to *that*, write back only the top-level fields that changed. Concurrent edits from another device are preserved, and fields other code owns (`protocol`, `now`, `backupPreMerge`) are never touched by a to-do edit.
 4. Ops are idempotent (add-if-absent, remove-if-present, set-field, set-done-to-value, deterministic ids for restores), so a commit whose acknowledgement was lost replays harmlessly.
-5. Ops leave the queue only after the commit succeeds. Offline, they wait (surviving app kills) and flush on `online`, on app resume, and every 20 s while pending.
+5. One flusher per document across all tabs of a browser (Web Locks), reading the queue inside the lock, so a slow tab can never re-commit an op after a newer one (Take → Undo).
+6. Committed ops keep applying to the view until the next server snapshot arrives, so the screen never flickers back.
+7. If a field this page owns (`protocol`, `now`, `backupPreMerge`) is missing on the server, the transaction first restores this device's last copy, then applies queued edits.
+8. Ops leave the queue only after the commit succeeds. Offline, they wait (surviving app kills) and flush on `online`, on app resume, and every 20 s while pending.
 
 Conflict semantics: different items/fields → both kept. Same field of the same item edited on two devices → the later commit wins for that field only. Delete vs. edit → delete wins (the item sits in Recently deleted). Doses are a set of unique millisecond timestamps, so two devices logging at once both count; Undo removes that exact timestamp.
 
@@ -50,6 +53,8 @@ Firestore's IndexedDB cache is enabled so a cold offline launch still shows the 
 
 - The page is fetched network-first with `no-store` (existing), so any cold launch runs the latest deploy.
 - iOS often *resumes* a suspended app instead of relaunching it, so the page checks for a new deploy on every resume: `HEAD index.html`; if the ETag moved, fetch it and compare a SHA-256 of the bytes with what is running (data-only deploys change the ETag but not the bytes).
+- To keep cellular use low, the page is only re-downloaded when the ETag's size part changes, or at most every 3 h when only the timestamp moved. A hash this device already ran (an edge cache still serving an older deploy) never counts as new.
+- `sync-core.js` and `app-shell.js` are fetched network-first by the service worker, so they always match the page. When changing them, also bump `?v=` in `index.html` and `sw.js`.
 - New version found on resume with nothing being typed and no dialog open → reload silently (the unlocked session survives a reload — it is in `sessionStorage`; pending edits survive — they are in the outbox). Otherwise a small "New version — tap to update" pill, so an update never interrupts typing.
 - Tabs still running code from before this change cannot be told to update, and their whole-document writes would undo the new protections. When the new service worker activates it pings every open page; pages that do not answer (old code) are reloaded once.
 
@@ -65,5 +70,7 @@ Firestore's IndexedDB cache is enabled so a cold offline launch still shows the 
 | Firebase SDK unreachable | Edits still queue locally and show on screen; they flush when it loads |
 
 ## Security
+
+To-dos, friends, chips and doses are stored unencrypted on each device (localStorage mirror and outbox, Firestore's IndexedDB cache), as Firestore data already was in memory; the encrypted `data/*.enc` files are unaffected. Reasonable for a personal phone with a passcode; say so if that should change.
 
 No new secrets. The Firebase web config is a public identifier, not a credential; access is governed by the rules. No GitHub token is in page JavaScript. Rules and billing unchanged.

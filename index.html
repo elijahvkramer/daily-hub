@@ -6733,8 +6733,9 @@ async function renderNowStrip(d){
   // Oct 2026: chips now really sync (todos/main -> now). Chips and hides this device kept locally while
   // sync was broken join the shared list once, so every device ends up showing the same strip.
   if(api && api.importLocal && (ov.added.length || ov.hidden.length)){
-    api.importLocal(ov.added, ov.hidden);
-    ov = { added: [], hidden: [] }; nowSaveOverrides(ov);
+    const moving = ov;
+    ov = { added: [], hidden: [] }; nowSaveOverrides(ov);        // clear first: importLocal re-renders this strip
+    api.importLocal(moving.added, moving.hidden);
   }
   if(api) ov.hidden = ov.hidden.concat(api.getState().hidden || []);
   let base = api ? api.getState().chips : null;
@@ -15679,7 +15680,14 @@ function skyArrive(){
   //
   // Security rules require an authenticated (anonymous) request; nothing here is sensitive enough to
   // need more, and a write-capable token in page JS would be a real hole, so this is deliberate.
+  // sync-core.js normally arrives as a classic script just above; if that request failed, try once more
+  if(!window.DHSync){ try{ await import("./sync-core.js?v=1"); }catch(e){} }
   const SY = window.DHSync;
+  if(!SY){
+    console.error("Daily Hub: sync-core.js did not load — sync is off for this visit");
+    if(typeof window.__onProtocolError === "function") try{ window.__onProtocolError(); }catch(e){}
+    throw new Error("sync-core.js missing");
+  }
   const FB_V = "10.13.1";
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyBbS7KO_-ji_I82nZZ0UuorW47Unf3BNOE",
@@ -15706,10 +15714,21 @@ function skyArrive(){
   let store = memStore; try{ localStorage.setItem("dh-ob-probe", "1"); localStorage.removeItem("dh-ob-probe"); store = localStorage; }catch(e){}
   const outbox = SY.makeOutbox(store);
   const volatile = [];                      // ops that could not be persisted (storage full): memory only
-  const pending = name => outbox.list(name).concat(volatile.filter(o => o.doc === name)).sort((a, b) => a.seq - b.seq);
+  const queued = name => outbox.list(name).concat(volatile.filter(o => o.doc === name)).sort((a, b) => a.seq - b.seq);
+  // ops already committed but not yet seen in a server snapshot: still applied to the view (they are
+  // idempotent), so the screen never briefly rolls back between the commit and its snapshot
+  const echo = { todos: [], friends: [] };
+  const pending = name => echo[name].concat(queued(name));
 
   const readMirror = name => { try{ return JSON.parse(store.getItem(MIRROR + name) || "null"); }catch(e){ return null; } };
-  const writeMirror = (name, data) => { try{ store.setItem(MIRROR + name, JSON.stringify(data)); }catch(e){} };
+  const writeMirror = (name, data) => {
+    try{
+      const out = { ...data };
+      // keep owned fields that the incoming copy lost, so they stay available for self-heal
+      if(name === "todos"){ const prev = readMirror("todos") || {}; HEAL_FIELDS.forEach(f => { if(out[f] === undefined && prev[f] !== undefined) out[f] = prev[f]; }); }
+      store.setItem(MIRROR + name, JSON.stringify(out));
+    }catch(e){}
+  };
 
   // server[name]: last known server data (null = doc known not to exist, undefined = nothing known yet)
   const server = { todos: readMirror("todos") || undefined, friends: readMirror("friends") || undefined };
@@ -15729,11 +15748,11 @@ function skyArrive(){
   }
   function protocolNotify(){ window.__protocolLatest = protocolData; call("__onProtocolSnapshot", protocolData, "protocol"); }
   function statusNotify(){
-    syncStatus.pending = pending("todos").length + pending("friends").length;
+    syncStatus.pending = queued("todos").length + queued("friends").length;
     syncStatus.online = navigator.onLine;
     if(changed("status", syncStatus)) call("__onSyncStatus", { ...syncStatus }, "sync status");
   }
-  window.__syncStatus = () => ({ ...syncStatus, pending: pending("todos").length + pending("friends").length });
+  window.__syncStatus = () => ({ ...syncStatus, pending: queued("todos").length + queued("friends").length, online: navigator.onLine });
 
   // recompute what the screen shows for one doc and tell only the parts whose data changed
   function publish(name){
@@ -15748,7 +15767,8 @@ function skyArrive(){
       if(server.todos !== undefined){ todosReady = true; nowReady = true; }
       if(todosReady && changed("todos", todosState)) call("__onTodosSnapshot", todosState, "to-do");
       if(nowReady && changed("now", nowState)) call("__onNowSnapshot", nowState, "now-strip");
-      if(changed("protocol", protocolData)) protocolNotify();
+      // only once a real copy exists: projecting doses onto "nothing" would hide this device's history
+      if(server.todos !== undefined && changed("protocol", protocolData)) protocolNotify();
     }else{
       if(!server.friends && !pending("friends").length) return;
       const v = SY.project("friends", server.friends || null, pending("friends"));
@@ -15879,27 +15899,49 @@ function skyArrive(){
     const flushing = { todos: false, friends: false }, retryAt = { todos: 0, friends: 0 }, backoff = { todos: 0, friends: 0 };
     let loggedErr = "";
 
+    const LEGACY = ["urgent", "chill", "historyUrgent", "historyChill"];
+    // One flusher at a time per doc across ALL tabs of this browser (Web Locks), and the queue is read
+    // inside the lock: a slow transaction in one tab can never re-commit an op after another tab has
+    // already committed it and a newer op (e.g. Take then Undo).
+    const withLock = (name, fn) => (navigator.locks && navigator.locks.request)
+      ? navigator.locks.request("dh-flush-" + name, fn) : fn();
     async function flush(name){
       if(!user || flushing[name] || !navigator.onLine || Date.now() < retryAt[name]) return;
-      const ops = pending(name).slice(0, 100);
-      const maint = name === "todos" && maintenance;
-      if(!ops.length && !maint) return;
+      if(!queued(name).length && !(name === "todos" && maintenance)) return;
       flushing[name] = true;
+      let ops = [], maint = false;
       try{
-        const tx = F.runTransaction(db, async tr => {
-          const snap = await tr.get(refs[name]);
-          const before = snap.exists() ? snap.data() : null;
-          const after = SY.project(name, before, ops);
-          const diff = SY.changedFields(before || {}, after);
-          if(!Object.keys(diff).length) return;
-          if(snap.exists()) tr.update(refs[name], diff); else tr.set(refs[name], diff);
+        await withLock(name, async () => {
+          ops = queued(name).slice(0, 100);
+          maint = name === "todos" && maintenance;
+          if(!ops.length && !maint) return;
+          let committed = null;
+          await F.runTransaction(db, async tr => {
+            const snap = await tr.get(refs[name]);
+            const before = snap.exists() ? snap.data() : null;
+            // self-heal inside the transaction too: if a field this page owns vanished from the server
+            // (an old page or a script rewrote the doc), put back this device's last copy BEFORE applying
+            // queued edits — otherwise a queued dose/chip would recreate the field with only itself in it
+            const prev = name === "todos" && before ? (readMirror("todos") || {}) : {};
+            const heal = name === "todos" && before ? HEAL_FIELDS.filter(f => before[f] === undefined && prev[f] !== undefined)
+              .map(f => ({ t: "field.restore", field: f, value: prev[f] })) : [];
+            const after = SY.project(name, before, heal.concat(ops));
+            const diff = SY.changedFields(before || {}, after);
+            const write = { ...diff };
+            // the legacy split lists are folded into items; remove them so a deleted item can't come back
+            if(name === "todos" && before) LEGACY.forEach(k => { if(before[k] !== undefined) write[k] = F.deleteField(); });
+            committed = { ...(before || {}), ...diff };
+            if(name === "todos") LEGACY.forEach(k => delete committed[k]);
+            if(!Object.keys(write).length) return;
+            if(snap.exists()) tr.update(refs[name], write); else tr.set(refs[name], diff);
+          });
+          const done = new Set(ops.map(o => o.oid));
+          outbox.remove([...done]);
+          for(let i = volatile.length - 1; i >= 0; i--) if(done.has(volatile[i].oid)) volatile.splice(i, 1);
+          echo[name] = echo[name].concat(ops);
+          if(committed) server[name] = committed;
+          if(maint) maintenance = false;
         });
-        // a hung request must not block the queue forever; replaying later is harmless (ops are idempotent)
-        await Promise.race([tx, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("timeout"), { code: "deadline-exceeded" })), 25000))]);
-        const done = new Set(ops.map(o => o.oid));
-        outbox.remove([...done]);
-        for(let i = volatile.length - 1; i >= 0; i--) if(done.has(volatile[i].oid)) volatile.splice(i, 1);
-        if(maint) maintenance = false;
         backoff[name] = 0; retryAt[name] = 0; syncStatus.error = null; syncStatus.connected = true; loggedErr = "";
         publish(name);
       }catch(err){
@@ -15907,20 +15949,20 @@ function skyArrive(){
         syncStatus.error = code;
         backoff[name] = Math.min(60000, backoff[name] ? backoff[name] * 2 : 2000);
         retryAt[name] = Date.now() + backoff[name];
-        if(code !== "unavailable" && code !== "deadline-exceeded" && loggedErr !== code){ loggedErr = code; console.error("Daily Hub: sync write failed (kept on this device, will retry)", err); }
+        if(code !== "unavailable" && loggedErr !== code){ loggedErr = code; console.error("Daily Hub: sync write failed (kept on this device, will retry)", err); }
         setTimeout(() => flush(name), backoff[name] + 50);
       }finally{
         flushing[name] = false;
         statusNotify();
       }
-      if(pending(name).length && !retryAt[name]) setTimeout(() => flush(name), 0);
+      if(queued(name).length && !retryAt[name]) setTimeout(() => flush(name), 0);
     }
     kick = name => { if(name) flush(name); else { flush("todos"); flush("friends"); } };
     const kickAll = () => { retryAt.todos = retryAt.friends = 0; kick(); statusNotify(); };
     window.addEventListener("online", kickAll);
     window.addEventListener("offline", statusNotify);
     document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") kickAll(); });
-    setInterval(() => { if(pending("todos").length || pending("friends").length) kick(); }, 20000);
+    setInterval(() => { if(queued("todos").length || queued("friends").length) kick(); }, 20000);
 
     // a writer elsewhere (older code, a script) replaced the doc without a field this page owns:
     // put back the last value this device saw, only if the field is still missing on the server
@@ -15941,11 +15983,12 @@ function skyArrive(){
         if(!snap.exists()){
           if(fromCache) return;                                  // only the server can say "no such doc"
           server[name] = null;
-          if(name === "friends" && !pending("friends").some(o => o.t === "friend.seed")){
+          if(name === "friends" && !queued("friends").some(o => o.t === "friend.seed")){
             // first-ever load: seed so lastContact starts as "today" rather than everyone overdue on day one
             const nowIso = new Date().toISOString();
             enqueue("friends", { t: "friend.seed", people: FRIEND_SEED.map(nm => ({ id: genId(), name: nm, freqDays: DEFAULT_FRIEND_FREQ, lastContact: nowIso, history: [] })) });
           }
+          echo[name] = [];
           if(name === "todos"){ server.todos = {}; publish("todos"); }
           return;
         }
@@ -15953,7 +15996,7 @@ function skyArrive(){
         if(!fromCache) selfHeal(name, data);
         server[name] = data;
         writeMirror(name, data);
-        if(!fromCache) syncStatus.connected = true;
+        if(!fromCache){ syncStatus.connected = true; echo[name] = []; }   // this copy includes everything committed so far
         if(name === "todos" && !fromCache && Object.keys(SY.changedFields(data, SY.normalizeTodos(data))).length){
           maintenance = true; kick("todos");                     // 48h purge / legacy fold, done transactionally
         }
@@ -16016,6 +16059,7 @@ function skyArrive(){
     const st = window.__syncStatus ? window.__syncStatus() : null;
     if(synced === false) return "Saved on this device only \u2014 cloud sync unavailable";
     if(st && st.pending) return st.online ? "Syncing\u2026" : "Saved on this device \u00b7 syncs when you\u2019re back online";
+    if(st && !st.connected) return st.online ? "Connecting\u2026 \u00b7 build " + BUILD : "Offline \u00b7 showing the last synced copy";
     return "Synced across devices \u00b7 build " + BUILD;
   }
   { const prev = window.__onSyncStatus; window.__onSyncStatus = s => { if(prev) try{ prev(s); }catch(e){} render(); }; }
@@ -16279,23 +16323,28 @@ function skyArrive(){
      (sync-core.js), so it is simply adopted. null = the cloud has no tracker data: keep the local copy.
      One-time hand-off (Oct 10 2026): doses this device logged under the old whole-array sync that never
      reached the cloud are sent as single doses. It only ever adds, so nothing logged anywhere is lost. */
+  let handingOff = false;
   window.__onProtocolSnapshot = data => {
+    if(handingOff) return;                     // the hand-off's own sends call back in here; finish it first
     let cloud = (data && data.entries) || null;
+    let handed = true; try{ handed = !!localStorage.getItem(HANDOFF_KEY); }catch(e){}
+    if(!handed){
+      // collect from a copy BEFORE sending anything: each send re-publishes into this function
+      const local = JSON.parse(JSON.stringify(state.entries || {})), have = cloud || {}, send = [];
+      let migrate = true; try{ migrate = !localStorage.getItem(MIG_KEY); }catch(e){}
+      Object.keys(local).forEach(d => Object.keys(local[d] || {}).forEach(k => {
+        if(!migrate && dirty[d + "|" + k] === undefined && (have[d] || {})[k] !== undefined) return;
+        const c = (have[d] || {})[k] || [];
+        (local[d][k] || []).forEach(ts => { if(typeof ts === "number" && !c.includes(ts)) send.push([d, k, ts]); });
+      }));
+      try{ localStorage.setItem(HANDOFF_KEY, "1"); localStorage.setItem(MIG_KEY, "1"); }catch(e){}
+      handingOff = true;
+      try{ send.forEach(([d, k, ts]) => syncDose("add", d, k, ts)); }finally{ handingOff = false; }
+      dirty = {}; saveDirty();
+      const cur = window.__protocolApi && window.__protocolApi.current();
+      if(cur && cur.entries) cloud = cur.entries;
+    }
     if(cloud){
-      let handed = true; try{ handed = !!localStorage.getItem(HANDOFF_KEY); }catch(e){}
-      if(!handed){
-        try{ localStorage.setItem(HANDOFF_KEY, "1"); }catch(e){}
-        let migrate = true; try{ migrate = !localStorage.getItem(MIG_KEY); }catch(e){}
-        Object.keys(state.entries).forEach(d => Object.keys(state.entries[d] || {}).forEach(k => {
-          if(!migrate && dirty[d + "|" + k] === undefined) return;
-          const c = (cloud[d] || {})[k] || [];
-          (state.entries[d][k] || []).forEach(ts => { if(typeof ts === "number" && !c.includes(ts)) syncDose("add", d, k, ts); });
-        }));
-        dirty = {}; saveDirty();
-        try{ localStorage.setItem(MIG_KEY, "1"); }catch(e){}
-        const cur = window.__protocolApi && window.__protocolApi.current();
-        if(cur && cur.entries) cloud = cur.entries;
-      }
       state.entries = JSON.parse(JSON.stringify(cloud));
       try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
     }

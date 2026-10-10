@@ -15685,8 +15685,33 @@ function skyArrive(){
   function writeTodos(next){
     const payload = { items: next.items || [], history: next.history || [] };
     if(preMergeBackup) payload.backupPreMerge = preMergeBackup;
+    // the treatment tracker's doses live in this same doc (field `protocol`) because the Firestore
+    // security rules only permit todos/main; every full-document write must carry them through.
+    if(protocolData) payload.protocol = protocolData;
     return setDoc(todoDocRef, payload);
   }
+
+  // ---- Treatment tracker bridge (Oct 2026) ----
+  // protocol/main is rejected by the security rules ("Missing or insufficient permissions"), so each
+  // device only ever saw its own doses. The tracker now syncs through todos/main -> `protocol`
+  // = { entries: { "YYYY-MM-DD": { om:[ms..], mt:[..], am:[..], pb:[..] } } }.
+  let protocolData = null;
+  function protocolNotify(){
+    window.__protocolLatest = protocolData;
+    if(typeof window.__onProtocolSnapshot === "function"){
+      try{ window.__onProtocolSnapshot(protocolData); }catch(e){ console.error("Daily Hub: protocol render callback failed", e); }
+    }
+  }
+  window.__protocolApi = {
+    // merge-write one medication-day array; deep-merge keeps every other day/med untouched
+    write(day, k, arr){
+      if(!todoDocRef) return Promise.reject(new Error("sync not ready"));
+      const entries = { ...((protocolData && protocolData.entries) || {}) };
+      entries[day] = { ...(entries[day] || {}), [k]: arr };
+      protocolData = { entries };   // optimistic, so a to-do write in the same tick still carries it
+      return setDoc(todoDocRef, { protocol: { entries: { [day]: { [k]: arr } } } }, { merge: true });
+    }
+  };
 
   // ---- Friends check-in (shares the same Firebase app/auth as to-dos above) ----
   let friendsState = { people: [] };
@@ -15754,6 +15779,8 @@ function skyArrive(){
       if(!unsubscribeTodos) unsubscribeTodos = onSnapshot(todoDocRef, snap => {
         const data = snap.exists() ? (snap.data() || {}) : {};
         if(data.backupPreMerge) preMergeBackup = data.backupPreMerge;
+        protocolData = (data.protocol && typeof data.protocol === "object") ? data.protocol : null;
+        protocolNotify();
 
         // ---- one-time migration: the two separate urgent/chill arrays fold into
         // a single ordered `items` list where urgency is a per-item field. The
@@ -15816,7 +15843,10 @@ function skyArrive(){
         todosReady = true;
         notify();
         if(needsWrite) writeTodos(todosState).catch(err => console.error("Daily Hub: to-do merge write failed", err));
-      }, err => { console.error("Daily Hub: to-do sync listener failed", err); });
+      }, err => {
+        console.error("Daily Hub: to-do sync listener failed", err);
+        if(typeof window.__onProtocolError === "function") window.__onProtocolError();
+      });
       if(!unsubscribeFriends) unsubscribeFriends = onSnapshot(friendsDocRef, snap => {
         if(!snap.exists()){
           // first-ever load: seed the friend list so lastContact starts as "today"
@@ -16008,17 +16038,12 @@ function skyArrive(){
 </script>
 <script type="module">
   // ---- Treatment dose tracker (H. pylori protocol) ----
-  // Firestore doc protocol/main = { start:"YYYY-MM-DD", entries:{ "YYYY-MM-DD": { om:[ms..], mt:[..], am:[..], pb:[..] } } }
-  // Each tap on "Take" appends a timestamp; "Undo" removes the last one. A localStorage copy keeps
-  // it working if Firestore is slow or the security rules don't yet allow the protocol doc.
-  import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-  const CFG = { apiKey:"AIzaSyBbS7KO_-ji_I82nZZ0UuorW47Unf3BNOE", authDomain:"daily-hub-todos.firebaseapp.com",
-    projectId:"daily-hub-todos", storageBucket:"daily-hub-todos.firebasestorage.app",
-    messagingSenderId:"816153848388", appId:"1:816153848388:web:23127952bba70d7205ea11" };
-  const START = "2026-10-07", DAYS = 14, LS_KEY = "dh_rx_v1";
+  // Synced exactly like the to-do list: the doses live in Firestore doc todos/main, field `protocol` =
+  //   { entries:{ "YYYY-MM-DD": { om:[ms..], mt:[..], am:[..], pb:[..] } } }
+  // (the to-do module owns the connection and hands snapshots to window.__onProtocolSnapshot; see its
+  // "Treatment tracker bridge"). Each tap on "Take" appends a timestamp; "Undo" removes the last one.
+  // A localStorage copy keeps it working offline, and unconfirmed local changes ("dirty") are retried.
+  const START = "2026-10-07", DAYS = 14, LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
     { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
@@ -16028,7 +16053,24 @@ function skyArrive(){
 
   let state = { start: START, entries: {} };
   try{ const c = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if(c && c.entries) state = { start: START, entries: c.entries }; }catch(e){}
-  let ref = null, synced = null, viewDate = null;
+  let synced = null, viewDate = null;
+  let dirty = {}; try{ dirty = JSON.parse(localStorage.getItem(DIRTY_KEY) || "{}") || {}; }catch(e){}
+  const saveDirty = () => { try{ localStorage.setItem(DIRTY_KEY, JSON.stringify(dirty)); }catch(e){} };
+  const inflight = new Set(); let seq = 0;
+  const markDirty = (day, k) => { dirty[day + "|" + k] = ++seq; saveDirty(); };
+  // write the latest local array for one medication-day to the cloud; clears its dirty flag once confirmed
+  function pushRemote(day, k){
+    const key = day + "|" + k, mine = dirty[key];
+    const fail = err => { console.error("Daily Hub: protocol sync failed", err); inflight.delete(key); if(synced !== false){ synced = false; render(); } };
+    inflight.add(key);
+    try{
+      window.__protocolApi.write(day, k, list(day, k)).then(() => {
+        inflight.delete(key);
+        if(dirty[key] === mine){ delete dirty[key]; saveDirty(); }
+        if(synced !== true){ synced = true; render(); }
+      }).catch(fail);
+    }catch(err){ fail(err); }
+  }
 
   const pad = n => String(n).padStart(2, "0");
   const ymd = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
@@ -16106,9 +16148,7 @@ function skyArrive(){
     e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
     render(); checkReminder();
-    if(ref) setDoc(ref, { start: START, entries: { [viewDate]: { [k]: a } } }, { merge: true })
-      .then(() => { if(synced !== true){ synced = true; render(); } })
-      .catch(err => { console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } });
+    markDirty(viewDate, k); pushRemote(viewDate, k);
   }
 
   window.__rxMount = () => { viewDate = null; render(); checkReminder(); };
@@ -16242,31 +16282,44 @@ function skyArrive(){
     const e = state.entries[day] = { ...(state.entries[day] || {}) };
     const a = (e[k] || []).slice(); a.push(Date.now()); e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
-    try{
-      if(ref) setDoc(ref, { start: START, entries: { [day]: { [k]: a } } }, { merge: true })
-        .then(() => { if(synced !== true){ synced = true; render(); } })
-        .catch(err => { console.error("Daily Hub: protocol sync failed", err); if(synced !== false){ synced = false; render(); } });
-    }catch(err){ console.error("Daily Hub: protocol sync failed", err); }   // one failed write must never stop the next dose being logged
+    markDirty(day, k);
+    try{ pushRemote(day, k); }catch(err){ console.error("Daily Hub: protocol sync failed", err); }   // one failed write must never stop the next dose being logged
   }
 
-  try{
-    const app = getApps().length ? getApp() : initializeApp(CFG);
-    const auth = getAuth(app), db = getFirestore(app);
-    ref = doc(db, "protocol", "main");
-    let unsub = null;
-    onAuthStateChanged(auth, user => {
-      if(!user || unsub) return;
-      unsub = onSnapshot(ref, snap => {
-        const data = snap.exists() ? (snap.data() || {}) : {};
-        // cloud wins per medication-day, but keep any local-only entries not yet pushed
-        const merged = { ...state.entries };
-        for(const [d, v] of Object.entries(data.entries || {})) merged[d] = { ...(merged[d] || {}), ...v };
-        state.entries = merged;
-        try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: merged })); }catch(err){}
-        synced = true; render(); loaded = true; checkReminder();
-      }, err => { console.error("Daily Hub: protocol listener failed", err); synced = false; render(); loaded = true; checkReminder(); });
+  /* Reconcile the cloud copy with this device's copy, per medication-day:
+       - only on this device            -> keep it and push it up (this is how the phone's doses reach the cloud)
+       - local change not yet confirmed -> local wins until its write is acknowledged
+       - first sync on this device      -> union of both (nothing logged anywhere is lost)
+       - otherwise                      -> cloud wins, so Undo and new doses made on another device show up here */
+  const union = (a, b) => Array.from(new Set([...a, ...b])).sort((x, y) => x - y);
+  window.__onProtocolSnapshot = data => {
+    const cloud = (data && data.entries) || {};
+    let migrate = true; try{ migrate = !localStorage.getItem(MIG_KEY); }catch(e){}
+    const merged = {}, days = new Set([...Object.keys(cloud), ...Object.keys(state.entries)]);
+    days.forEach(d => {
+      const cv = cloud[d] || {}, lv = state.entries[d] || {}, row = {};
+      new Set([...Object.keys(cv), ...Object.keys(lv)]).forEach(k => {
+        const c = Array.isArray(cv[k]) ? cv[k] : null, l = Array.isArray(lv[k]) ? lv[k] : null, key = d + "|" + k;
+        let v;
+        if(c === null) v = l;
+        else if(dirty[key] !== undefined) v = l || c;
+        else if(migrate && l) v = union(c, l);
+        else v = c;
+        row[k] = v;
+        const same = c !== null && JSON.stringify(c) === JSON.stringify(v);
+        if(same && dirty[key] !== undefined) delete dirty[key];
+        else if(!same && v && (c !== null || v.length) && dirty[key] === undefined) dirty[key] = ++seq;
+      });
+      merged[d] = row;
     });
-  }catch(e){ console.error("Daily Hub: protocol tracker init failed", e); synced = false; }
+    state.entries = merged;
+    saveDirty();
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: merged })); if(migrate) localStorage.setItem(MIG_KEY, "1"); }catch(err){}
+    Object.keys(dirty).forEach(key => { if(!inflight.has(key)){ const [d, k] = key.split("|"); pushRemote(d, k); } });
+    synced = true; render(); loaded = true; checkReminder();
+  };
+  window.__onProtocolError = () => { synced = false; render(); loaded = true; checkReminder(); };
+  if(window.__protocolLatest !== undefined) window.__onProtocolSnapshot(window.__protocolLatest);   // a snapshot may have landed first
   render();
 </script>
 </body>

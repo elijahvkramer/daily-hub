@@ -162,7 +162,7 @@ self.addEventListener("fetch", e => {
       const c = await caches.open(SHELL_CACHE);
       const hit = await c.match(req);
       const net = fetch(new Request(req.url, { cache: "no-store", credentials: "same-origin" }))
-        .then(res => { if(res.ok) c.put(req, res.clone()); return res; });
+        .then(res => { if(res.ok){ c.put(req, res.clone()); return res; } return hit || res; });
       if(!hit) return net.catch(() => Response.error());
       // on a crawling connection don't hold the launch hostage: after 4 s use the cached copy
       return Promise.race([net, new Promise(r => setTimeout(() => r(hit), 4000))]).catch(() => hit);

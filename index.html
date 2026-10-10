@@ -15921,7 +15921,7 @@ function skyArrive(){
           // a transaction that hangs on a half-dead connection keeps the lock (so nothing is replayed out of
           // order); after 30 s just say so — edits stay queued on this device
           const slow = setTimeout(() => { syncStatus.error = "slow"; statusNotify(); }, 30000);
-          await F.runTransaction(db, async tr => {
+          try{ await F.runTransaction(db, async tr => {
             const snap = await tr.get(refs[name]);
             const before = snap.exists() ? snap.data() : null;
             // self-heal inside the transaction too: if a field this page owns vanished from the server
@@ -15939,11 +15939,10 @@ function skyArrive(){
             if(name === "todos") LEGACY.forEach(k => delete committed[k]);
             if(!Object.keys(write).length) return;
             if(snap.exists()) tr.update(refs[name], write); else tr.set(refs[name], diff);
-          });
+          }); }finally{ clearTimeout(slow); }
           const done = new Set(ops.map(o => o.oid));
           outbox.remove([...done]);
           for(let i = volatile.length - 1; i >= 0; i--) if(done.has(volatile[i].oid)) volatile.splice(i, 1);
-          clearTimeout(slow);
           echo[name] = echo[name].concat(ops);
           // adopt the committed copy only if no newer server snapshot arrived meanwhile (the watch stream and
           // the commit reply travel separately); our own ops are covered by echo either way

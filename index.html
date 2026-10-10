@@ -16043,7 +16043,7 @@ function skyArrive(){
   // (the to-do module owns the connection and hands snapshots to window.__onProtocolSnapshot; see its
   // "Treatment tracker bridge"). Each tap on "Take" appends a timestamp; "Undo" removes the last one.
   // A localStorage copy keeps it working offline, and unconfirmed local changes ("dirty") are retried.
-  const START = "2026-10-07", DAYS = 14, BUILD = "10-10d", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
+  const START = "2026-10-07", DAYS = 14, BUILD = "10-10e", LS_KEY = "dh_rx_v1", DIRTY_KEY = "dh_rx_dirty_v1", MIG_KEY = "dh_rx_migrated_v1";
   const MEDS = [
     { k:"om", name:"Omeprazole",     dose:"1 capsule",  target:2, times:"6:30a · 5:00p" },
     { k:"mt", name:"Metronidazole",  dose:"1 tablet",   target:4, times:"8:00a · 1:00p · 3:30p · 6:30p" },
@@ -16118,19 +16118,16 @@ function skyArrive(){
   }
 
   /* ---- which dose times are covered (Oct 2026) ----
-     Each logged dose is matched to the nearest still-open scheduled time of that medication, so
-     taking one late or skipping one lands on the right time. Per time: taken (check), due (passed,
-     inside the 3-hour reminder window), missed (window over, or a past day), or upcoming. */
+     Doses always fill the schedule from earliest to latest: the 1st dose logged covers the 1st time,
+     the 2nd covers the 2nd, and so on, so the earliest time is never shown as open while a dose exists.
+     Per time: taken (check), due (passed, inside the 3-hour reminder window), missed (window over,
+     or a past day), or upcoming. Display only; the pop-up reminder keeps its own time-based rule. */
   const slotLbl = ([h, mi]) => ((h % 12) || 12) + ":" + pad(mi) + (h < 12 ? "a" : "p");
   const CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5-5.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function slotInfo(day, k){
     const slots = SLOTS[k].map(([h, mi]) => slotMs(day, h, mi));
-    const doses = list(day, k).slice().sort((a, b) => a - b), taken = slots.map(() => null);
-    doses.forEach(t => {
-      let best = -1, bd = Infinity;
-      slots.forEach((sl, i) => { if(taken[i] === null){ const d = Math.abs(t - sl); if(d < bd){ bd = d; best = i; } } });
-      if(best >= 0) taken[best] = t;
-    });
+    const doses = list(day, k).slice().sort((a, b) => a - b);
+    const taken = slots.map((_, i) => i < doses.length ? doses[i] : null);
     const now = Date.now(), tod = todayStr();
     return slots.map((sl, i) => ({
       label: slotLbl(SLOTS[k][i]), at: taken[i],

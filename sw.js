@@ -2,14 +2,16 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-10-10a";
+const VERSION = "dh-2026-10-10e";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";
+const LIB_CACHE   = "lib-v1";        // Firebase SDK: versioned URLs never change, so the app syncs offline-launched too
 
 const SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
-  "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./favicon.svg"
+  "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./favicon.svg",
+  "./sync-core.js?v=1", "./app-shell.js?v=1"
 ];
 
 self.addEventListener("install", e => {
@@ -22,12 +24,35 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil((async () => {
-    const keep = new Set([SHELL_CACHE, DATA_CACHE, IMG_CACHE]);
-    for(const k of await caches.keys()) if(!keep.has(k)) await caches.delete(k);
+    const keep = new Set([SHELL_CACHE, DATA_CACHE, IMG_CACHE, LIB_CACHE]);
+    const all = await caches.keys();
+    const upgrading = all.some(k => k.startsWith("shell-") && k !== SHELL_CACHE);
+    for(const k of all) if(!keep.has(k)) await caches.delete(k);
     await self.clients.claim();
     precacheLatest();               // pull down the newest editions for offline use
+    if(upgrading) reloadOldPages(); // only an upgrade can leave old pages open
   })());
 });
+
+/* Pages from before Oct 10 2026 write whole lists to Firestore and would undo the new sync's
+   protections (and cannot notice an update on their own). New pages answer this ping from
+   app-shell.js; any open page that does not answer is reloaded once onto the current version. */
+async function reloadOldPages(){
+  try{
+    const wins = await self.clients.matchAll({ type: "window" });
+    if(!wins.length) return;
+    const answered = new Set();
+    const onMsg = ev => { if(ev.data && ev.data.type === "dh-pong" && ev.source) answered.add(ev.source.id); };
+    self.addEventListener("message", onMsg);
+    wins.forEach(c => { try{ c.postMessage({ type: "dh-ping" }); }catch(e){} });
+    await new Promise(r => setTimeout(r, 8000));
+    self.removeEventListener("message", onMsg);
+    for(const c of wins){
+      if(answered.has(c.id) || !c.url.startsWith(self.registration.scope)) continue;
+      try{ await c.navigate(c.url); }catch(e){}
+    }
+  }catch(e){}
+}
 
 /* grab the most recent few of each kind so a cold offline launch still has content */
 async function precacheLatest(){
@@ -69,6 +94,19 @@ self.addEventListener("fetch", e => {
       if(hit) return hit;
       try{ const res = await fetch(req); if(res.ok) c.put(req, res.clone()); return res; }
       catch(err){ return hit || Response.error(); }
+    })());
+    return;
+  }
+  /* Firebase SDK modules — cache-first: each URL is a fixed version, so a cold offline launch can still
+     load sync and show the last data instead of nothing */
+  if(url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")){
+    e.respondWith((async () => {
+      const c = await caches.open(LIB_CACHE);
+      const hit = await c.match(req.url);
+      if(hit) return hit;
+      const res = await fetch(req);
+      if(res.ok) c.put(req.url, res.clone());
+      return res;
     })());
     return;
   }

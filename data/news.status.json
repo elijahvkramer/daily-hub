@@ -1,13 +1,13 @@
 {
- "updated": "2026-10-11T19:44:17+00:00",
+ "updated": "2026-10-11T23:39:46+00:00",
  "date": "2026-10-11",
  "items": 26,
- "had_photos": 15,
- "filled_this_run": 9,
- "from_feed": 3,
- "from_article": 3,
- "from_wikipedia": 3,
- "feed_pool": 138,
+ "had_photos": 24,
+ "filled_this_run": 0,
+ "from_feed": 0,
+ "from_article": 0,
+ "from_wikipedia": 0,
+ "feed_pool": 139,
  "videos": 0,
  "with_video": 0,
  "still_missing": 2,
@@ -20,6 +20,6 @@
   "Sports": 6
  },
  "dropped_stale": 0,
- "topped_up": 2,
- "guard_feeds_ok": 23
+ "topped_up": 0,
+ "guard_feeds_ok": 0
 }

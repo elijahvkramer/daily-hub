@@ -2299,7 +2299,7 @@
   .bf-stage{max-width:720px;margin:10px auto 0}
   .bf-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .bf-back{margin:0}
-  .bf-card{position:relative;border-radius:28px;overflow:hidden;min-height:440px;display:flex;align-items:flex-end;color:#fff;box-shadow:0 30px 60px -20px rgba(0,0,0,.45);cursor:pointer;isolation:isolate}
+  .bf-card{position:relative;border-radius:28px;overflow:hidden;min-height:540px;display:flex;flex-direction:column;color:#fff;background:#0B1220;box-shadow:0 30px 60px -20px rgba(0,0,0,.45);cursor:pointer;isolation:isolate}
   /* Eli, Sep 2026: "I want the animation to be better / slower." The card now settles in
      over ~0.9s -- it arrives, unblurs and comes to rest -- and the text inside rises after
      it, one line at a time, so a new card reads like a page turning rather than a snap. */
@@ -2318,15 +2318,17 @@
   @media(prefers-reduced-motion:reduce){
     .bf-card,.bf-card *{animation:none !important}
   }
+  .bf-vis{position:relative;flex:1 1 auto;min-height:320px;overflow:hidden}
   .bf-aurora{position:absolute;inset:0;width:100%;height:100%;z-index:0;filter:saturate(1.2)}
   .bf-photo{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .8s ease}
   .bf-photo.on{opacity:1}
-  .bf-photo img{width:100%;height:100%;object-fit:cover;display:block;animation:kb 18s ease-in-out infinite alternate;mask-image:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.35) 70%,transparent);-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.35) 70%,transparent)}
+  .bf-photo img{width:100%;height:100%;object-fit:cover;display:block;animation:kb 24s ease-in-out infinite alternate}
+  .bf-vis-word{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
   @keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.12) translate(-1.5%,-1%)}}
   .bf-year{position:absolute;top:18px;right:22px;z-index:2;font-family:Georgia,serif;font-size:clamp(64px,12vw,120px);font-weight:900;line-height:1;letter-spacing:-.04em;color:rgba(255,255,255,.14);pointer-events:none}
-  .bf-inner{position:relative;z-index:3;padding:34px 30px 28px;width:100%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.45) 55%,rgba(0,0,0,.65))}
-  .bf-kick{font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;opacity:.85;margin-bottom:12px}
-  .bf-text{font-family:Georgia,serif;font-size:clamp(21px,3.2vw,30px);font-weight:700;line-height:1.28;letter-spacing:-.01em;text-wrap:balance;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+  .bf-inner{position:relative;z-index:3;flex:none;padding:20px 26px 22px;width:100%;background:#0B1220;border-top:1px solid rgba(255,255,255,.1)}
+  .bf-kick{font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:8px}
+  .bf-text{font-family:Georgia,serif;font-size:clamp(20px,3vw,27px);font-weight:700;line-height:1.28;letter-spacing:-.01em;text-wrap:balance;text-shadow:0 2px 14px rgba(0,0,0,.35)}
   .bf-title{font-size:clamp(24px,3.6vw,34px)} .bf-sub{font-size:15px;line-height:1.5;opacity:.85;margin-top:10px;max-width:56ch}
   .bf-word{font-family:Georgia,serif;font-style:italic;font-size:clamp(40px,7vw,68px);font-weight:700;line-height:1;letter-spacing:-.02em;text-shadow:0 2px 14px rgba(0,0,0,.35)}
   .bf-say{font-size:14px;opacity:.85;margin-top:8px;font-weight:700} .bf-def{font-size:18px;line-height:1.45;margin-top:14px;max-width:52ch} .bf-ex{font-size:14px;opacity:.85;margin-top:10px;font-style:italic}
@@ -2339,7 +2341,7 @@
   .bf-dots{display:flex;gap:7px} .bf-dots span{width:8px;height:8px;border-radius:50%;background:color-mix(in srgb, var(--ink) 18%, transparent);transition:transform .2s,background .2s}
   .bf-dots span.seen{background:color-mix(in srgb, var(--gold) 55%, transparent)} .bf-dots span.on{background:var(--gold);transform:scale(1.35)}
   .bf-hint{text-align:center;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:12px;min-height:14px}
-  @media(max-width:600px){.bf-card{min-height:420px;border-radius:22px}.bf-inner{padding:26px 20px 22px}}
+  @media(max-width:600px){.bf-card{min-height:500px;border-radius:22px}.bf-vis{min-height:280px}.bf-inner{padding:18px 20px 20px}}
 
   /* ---------- news, redesigned as a news site ---------- */
   .nw-ph{position:relative;background:color-mix(in srgb, var(--ink) 6%, transparent);overflow:hidden;display:none}
@@ -11368,262 +11370,178 @@ async function renderBrainFoodGate(){ return renderBrainFoodDeck(true); }
    The day's three picks are frozen into localStorage the first time the deck is opened, so
    re-opening it later the same day shows the same cards rather than re-rolling. Only when a
    whole bank has been exhausted does that kind's ledger reset and start a fresh cycle. */
+/* Brain Food banks -- [headline, one-line detail, Wikipedia article title for the photo].
+   Fun facts and history tidbits are picked by calendar day from these lists (see bfPick), so every
+   device shows the same card on the same day and nothing repeats until the whole list has run. */
 const BF_FACT_BANK = [
-  "A day on Venus is longer than its year — it takes 243 Earth days to spin once and 225 to orbit the Sun.",
-  "Honey found in Egyptian tombs was still edible after 3,000 years; its low water content and acidity make it nearly immortal.",
-  "Octopuses have three hearts, and two of them stop beating whenever the animal swims.",
-  "The Eiffel Tower can stand about 15 centimetres taller in summer, because iron expands in the heat.",
-  "Bananas are berries in the botanical sense, but strawberries are not.",
-  "There are more possible arrangements of a shuffled deck of cards than there are atoms on Earth.",
-  "Wombat droppings are cubic, shaped by the last stretch of an unusually elastic intestine.",
-  "Sharks existed before trees: the first sharks swam roughly 400 million years ago, and the first trees appeared about 350 million years ago.",
-  "Sound travels about 4.3 times faster through water than through air.",
-  "A group of flamingos is called a flamboyance.",
-  "The human nose can distinguish something on the order of a trillion different smells.",
-  "Antarctica is technically the world's largest desert — it receives almost no precipitation.",
-  "Hot water can freeze faster than cold water under the right conditions, an effect named after a Tanzanian schoolboy, Erasto Mpemba.",
-  "Scotland's national animal is the unicorn.",
-  "Cows have best friends and get measurably stressed when separated from them.",
-  "The shortest war in recorded history lasted about 38 minutes, between Britain and Zanzibar.",
-  "Lightning strikes the Earth roughly 8 million times a day.",
-  "A bolt of lightning is about five times hotter than the surface of the Sun.",
-  "Butterflies taste with their feet, using chemoreceptors on their legs.",
-  "The Sahara Desert was green grassland with lakes as recently as 6,000 years ago.",
-  "Your body contains roughly the same number of bacterial cells as human cells.",
-  "Venus is the only planet in our solar system that rotates clockwise as seen from above its north pole.",
-  "The inventor of the Pringles can, Fredric Baur, was buried in one at his request.",
-  "Sea otters hold hands while sleeping so they do not drift apart.",
-  "The dot over a lowercase i or j is called a tittle.",
-  "Nearly 20 percent of the oxygen you breathe comes from the Amazon; most of the rest comes from ocean plankton.",
-  "The unicorn-like narwhal's tusk is actually a tooth that grows through its upper lip.",
-  "There is enough DNA in a single human body to stretch to the Sun and back roughly 60 times.",
-  "A teaspoon of neutron star material would weigh about six billion tons on Earth.",
-  "Bees can recognise individual human faces by combining features the way we do.",
-  "The loudest animal on Earth relative to its size is a two-millimetre water boatman, which sings by rubbing its abdomen.",
-  "Glass is not a slow-moving liquid; old window panes are thicker at the bottom because of how they were made.",
-  "The Moon is drifting away from Earth at about 3.8 centimetres a year.",
-  "Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid.",
-  "Bubble wrap was originally invented as textured wallpaper.",
-  "Oxford University is older than the Aztec Empire.",
-  "A single strand of spider silk is stronger than steel of the same diameter.",
-  "Penguins propose to their mates with a pebble.",
-  "There is a species of jellyfish, Turritopsis dohrnii, that can revert to its juvenile stage and effectively avoid dying of old age.",
-  "The world's quietest room, at Microsoft's headquarters, measures background noise below the sound of your own blood.",
-  "An ostrich's eye is bigger than its brain.",
-  "Norway knighted a penguin named Nils Olav, who holds a rank in the Norwegian King's Guard.",
-  "The smell of fresh rain has a name: petrichor, coined by two Australian scientists in 1964.",
-  "Humans share about 60 percent of their DNA with bananas.",
-  "The tongue of a blue whale can weigh as much as an elephant.",
-  "Pineapples take about two years to grow a single fruit.",
-  "There are more trees on Earth than stars in the Milky Way — roughly three trillion to a few hundred billion.",
-  "Tardigrades can survive the vacuum of space, and several have done so on orbital experiments.",
-  "The Great Wall of China is not visible to the naked eye from the Moon.",
-  "A hummingbird's heart can beat more than 1,200 times a minute in flight.",
-  "Ketchup was sold in the 1830s as a patent medicine for indigestion.",
-  "Mount Everest grows about four millimetres a year as India pushes into Asia.",
-  "Peanuts are legumes, not nuts, and they grow underground.",
-  "Astronauts get taller in space — the spine decompresses by up to five centimetres.",
-  "Crows can hold grudges against specific human faces for years and teach that grudge to their offspring.",
-  "The hashtag symbol's formal name is octothorpe.",
-  "Coffee is the second most traded commodity by volume among developing countries, behind crude oil.",
-  "Sloths can hold their breath longer than dolphins — up to 40 minutes — by slowing their heart rate.",
-  "Iceland has no mosquitoes.",
-  "The word 'salary' comes from the Latin for salt, which Roman soldiers were sometimes paid to buy.",
-  "A cloud can weigh more than a million pounds and still float, because the air beneath it is denser.",
-  "Elephants are the only mammals that cannot jump.",
-  "There are more public libraries in the United States than McDonald's locations.",
-  "The Statue of Liberty's exterior copper is about the thickness of two pennies.",
-  "Rats laugh when tickled, at an ultrasonic frequency humans cannot hear.",
-  "Saturn's density is low enough that it would float in a sufficiently large body of water.",
-  "The first webcam was pointed at a coffee pot in a Cambridge University lab so researchers could avoid wasted trips.",
-  "Alaska is simultaneously the westernmost, easternmost and northernmost U.S. state, because the Aleutians cross the 180th meridian.",
-  "A 'jiffy' is an actual unit of time: one hundredth of a second in some engineering contexts.",
-  "Giraffes have the same number of neck vertebrae as humans — seven.",
-  "Wild dolphins have signature whistles that function like names and are used to address one another.",
-  "The average cumulus cloud holds about as much water as 100 elephants weigh.",
-  "The heart of a shrimp is located in its head.",
-  "Canada has more lakes than the rest of the world combined.",
-  "Nutmeg is toxic in large doses and was once worth more by weight than gold.",
-  "Your stomach lining replaces itself roughly every three to four days.",
-  "The inventor of the frisbee was turned into a frisbee after he died; his ashes were moulded into discs.",
-  "A shrimp's eye can have more than a dozen types of colour receptor; humans have three.",
-  "The longest recorded flight of a chicken is 13 seconds.",
-  "Baby elephants suck their trunks the way human infants suck their thumbs.",
-  "Russia's land area is larger than the surface area of Pluto.",
-  "The Hawaiian alphabet has just 13 letters.",
-  "A bolt of lightning contains enough energy to toast about 100,000 slices of bread.",
-  "Sea cucumbers can expel their internal organs to deter predators and then regrow them.",
-  "The Mariana Trench is deeper than Mount Everest is tall — by more than two kilometres.",
-  "Nearly all the gold on Earth's surface arrived via asteroid bombardment after the planet's core had formed.",
-  "Vending machines kill more people annually than sharks do.",
-  "The shortest commercial flight in the world, in Scotland's Orkney Islands, takes under two minutes.",
-  "The colour orange was named after the fruit, not the other way around.",
-  "A snail can sleep for up to three years when conditions are dry.",
-  "There is a basketball court on the top floor of the U.S. Supreme Court building, nicknamed the Highest Court in the Land.",
-  "Hummingbirds are the only birds that can fly backwards.",
-  "The Dead Sea is so salty that almost nothing lives in it, and it is about ten times saltier than the ocean.",
-  "Redheads need roughly 20 percent more general anaesthetic than average.",
-  "Polar bear fur is not white; each hair is hollow and transparent, and their skin underneath is black.",
-  "Pigeons can distinguish between paintings by Monet and Picasso.",
-  "The plastic tips on shoelaces are called aglets.",
-  "Neptune has only completed one orbit of the Sun since its discovery in 1846.",
-  "The human brain uses about 20 percent of the body's energy while making up 2 percent of its mass.",
-  "An eagle's eyesight is roughly four to eight times sharper than a human's.",
-  "Bamboo can grow nearly a metre in a single day in the right species and conditions.",
-  "There are about 10 quintillion insects alive on Earth at any moment.",
-  "Napoleon was of average height for a Frenchman of his era; the short jokes came from British propaganda and a units mix-up.",
-  "Water can boil and freeze at the same time at its triple point, a precise combination of temperature and pressure.",
-  "The Moon has moonquakes, some lasting more than ten minutes because the dry rock rings like a bell.",
-  "A group of pugs is called a grumble.",
-  "Sunflowers track the Sun only while young; mature flowers settle facing east to warm up faster and attract more pollinators.",
-  "The longest word in most English dictionaries, pneumonoultramicroscopicsilicovolcanoconiosis, was coined largely to be long.",
-  "Wolves howl in harmony, deliberately avoiding matching pitch so the pack sounds larger.",
-  "Chameleons change colour mainly to regulate temperature and signal mood, not to match their background.",
-  "There are roughly 60,000 miles of blood vessels in an adult human body.",
-  "The fear of long words is, unhelpfully, called hippopotomonstrosesquippedaliophobia.",
-  "Ants do not have lungs; oxygen enters through tiny holes called spiracles along their bodies.",
-  "A group of jellyfish is called a smack.",
-  "Fingernails grow roughly three times faster than toenails, and faster on your dominant hand.",
-  "The Amazon River is so powerful that fresh water is detectable in the Atlantic more than 100 miles offshore.",
-  "Some species of bamboo flower simultaneously worldwide, once every 60 to 120 years, then die.",
-  "The average human will walk the equivalent of three times around the Earth in a lifetime.",
-  "Lobsters were once considered poor-man's food in colonial America and fed to prisoners and servants.",
-  "A snowflake can take up to an hour to fall from cloud to ground.",
-  "Cats cannot taste sweetness; the gene for the sweet receptor is broken in the whole cat family.",
-  "Mosquitoes are drawn to carbon dioxide from more than 50 metres away.",
-  "The average lead pencil can draw a line roughly 35 miles long.",
-  "A 'moment' was a real medieval unit of time equal to about 90 seconds."
+  ["A mantis shrimp punches at 50 mph","The strike boils the water around its claw and can crack aquarium glass.","Mantis shrimp"],
+  ["Octopuses have three hearts","Two feed the gills, one feeds the body, and that one stops while it swims.","Octopus"],
+  ["A day on Venus outlasts its year","It spins once every 243 Earth days but circles the Sun in 225.","Venus"],
+  ["Honey never spoils","Jars from Egyptian tombs were still edible after 3,000 years.","Honey"],
+  ["Wombats make cube-shaped poop","The corners keep it from rolling away, which helps mark territory.","Wombat"],
+  ["Sea otters hold hands while they sleep","It stops the raft from drifting apart overnight.","Sea otter"],
+  ["A narwhal's tusk is a tooth","One spiralled tooth grows through the upper lip, up to 10 feet long.","Narwhal"],
+  ["Tardigrades survive outer space","These 1 mm 'water bears' have endured vacuum and radiation in orbit.","Tardigrade"],
+  ["Crows remember faces for years","They even teach the grudge to their young.","American crow"],
+  ["A hummingbird's heart beats 1,200 times a minute","In flight. They are also the only birds that can fly backwards.","Hummingbird"],
+  ["Polar bear fur isn't white","Each hair is clear and hollow, and the skin underneath is black.","Polar bear"],
+  ["Giraffes have seven neck bones","The same count as you. Each one is just enormous.","Giraffe"],
+  ["Butterflies taste with their feet","Sensors on their legs tell them whether a leaf is worth landing on.","Monarch butterfly"],
+  ["Cleopatra lived closer to the Moon landing than to the Great Pyramid","The pyramid was already about 2,500 years old when she was born.","Cleopatra"],
+  ["Oxford is older than the Aztec Empire","Teaching began there around 1096; Tenochtitlan was founded in 1325.","University of Oxford"],
+  ["Lightning is five times hotter than the Sun's surface","Around 30,000 °C for a split second.","Lightning"],
+  ["The Eiffel Tower grows in summer","Heat expands the iron, lifting it up to about 15 cm.","Eiffel Tower"],
+  ["Saturn is less dense than water","It would float in a bathtub big enough to hold it.","Saturn"],
+  ["The Moon is drifting away","About 3.8 cm farther from Earth every year.","Moon"],
+  ["A teaspoon of neutron star weighs billions of tons","All that mass is squeezed into a sphere the size of a city.","Neutron star"],
+  ["Sloths can hold their breath for 40 minutes","Slowing the heart lets them outlast a dolphin.","Sloth"],
+  ["Axolotls regrow lost limbs","Even parts of their heart and brain.","Axolotl"],
+  ["Flamingos are pink because of their food","Algae and shrimp pigments do it; chicks hatch gray.","Flamingo"],
+  ["Elephants can't jump","They are the only mammals that can't get off the ground.","African elephant"],
+  ["Dolphins call each other by name","Each has a signature whistle that others use to address it.","Bottlenose dolphin"],
+  ["Bananas are berries, strawberries aren't","Botanically, a berry grows from a single flower's ovary.","Banana"],
+  ["Peanuts grow underground","They are legumes, cousins of beans rather than nuts.","Peanut"],
+  ["Iceland has no mosquitoes","Its sudden freeze-thaw swings make breeding too unreliable.","Iceland"],
+  ["The Sahara was green 6,000 years ago","Lakes and grassland covered what is now the world's biggest hot desert.","Sahara"],
+  ["Antarctica is the largest desert","It gets almost no precipitation, across 5.5 million square miles of ice.","Antarctica"],
+  ["The Dead Sea is ten times saltier than the ocean","It is so dense that you float without trying.","Dead Sea"],
+  ["Everest is still growing","About 4 mm a year as India pushes into Asia.","Mount Everest"],
+  ["The Mariana Trench is deeper than Everest is tall","Its floor sits roughly 36,000 feet down.","Mariana Trench"],
+  ["The smell of rain has a name","Petrichor, coined by two Australian scientists in 1964.","Petrichor"],
+  ["One jellyfish can age backwards","Turritopsis dohrnii can revert to its juvenile form.","Turritopsis dohrnii"],
+  ["Honeybees recognize human faces","They piece features together much as we do.","Honey bee"],
+  ["Spider silk rivals steel","Weight for weight it is stronger, and it stretches.","Spider silk"],
+  ["Penguins propose with pebbles","A gentoo male offers a smooth stone to the one he wants.","Gentoo penguin"],
+  ["A blue whale's heart weighs about 400 lb","It is the largest heart of any animal alive.","Blue whale"],
+  ["Chameleons change color for mood and temperature","Camouflage is the smaller part of the story.","Chameleon"],
+  ["Sharks are older than trees","About 400 million years, against 350 million for the first forests.","Shark"],
+  ["Cows have best friends","Separated pairs show higher stress and faster heart rates.","Cattle"],
+  ["Wolves howl in harmony","They avoid matching pitches so the pack sounds bigger.","Gray wolf"],
+  ["Mosquitoes can smell you from 50 m away","They track the carbon dioxide you breathe out.","Mosquito"],
+  ["Some bamboo grows a meter a day","Fast enough that you could nearly watch it climb.","Bamboo"],
+  ["You can't see the Great Wall from the Moon","It is hard to pick out even from low orbit.","Great Wall of China"],
+  ["The Statue of Liberty's skin is two pennies thick","Its copper shell is about 2.4 mm.","Statue of Liberty"],
+  ["Neptune has completed one orbit since its discovery","A Neptune year is 165 Earth years; the lap closed in 2011.","Neptune"],
+  ["Your brain uses 20% of your energy","From about 2% of your body weight.","Human brain"],
+  ["You carry about as many bacteria as human cells","Roughly 38 trillion of each.","Human microbiome"],
+  ["Birds are living dinosaurs","Small feathered theropods survived the asteroid; sparrows descend from them.","Dinosaur"],
+  ["Sound travels four times faster in water","About 1,480 m/s, against 343 in air.","Speed of sound"],
+  ["Bubble wrap began as wallpaper","Its inventors tried to sell it as textured wall covering in 1957.","Bubble wrap"],
+  ["Ketchup was once sold as medicine","In the 1830s a doctor marketed tomato ketchup for indigestion.","Ketchup"],
+  ["Nutmeg once cost more than gold","Wars were fought over the tiny Banda Islands that grew it.","Nutmeg"],
+  ["Hot water can freeze faster than cold","It is called the Mpemba effect, and scientists still argue about why.","Mpemba effect"],
+  ["Coffee beans are seeds","They sit inside a cherry-like fruit.","Coffee"],
+  ["Rats laugh when tickled","The chirps are ultrasonic, too high for human ears.","Brown rat"],
+  ["An ostrich's eye is bigger than its brain","Each eyeball is about 5 cm across.","Ostrich"],
+  ["Bees dance to give directions","The waggle dance encodes the angle and distance to flowers.","Waggle dance"],
+  ["Lobster was once prison food","Colonial servants complained about being fed it too often.","Lobster"],
+  ["Coast redwoods drink fog","They absorb water straight through their needles.","Sequoia sempervirens"],
+  ["Pigeons can tell Monet from Picasso","Trained birds sorted paintings by artist in a 1995 study.","Rock dove"],
+  ["Platypus fur glows under UV light","It fluoresces blue-green.","Platypus"],
+  ["Koalas have fingerprints","Nearly indistinguishable from yours.","Koala"],
+  ["Capybaras get along with everyone","Birds, monkeys and even caimans lounge on them.","Capybara"],
+  ["Sea cucumbers regrow their organs","They can expel their insides to escape a predator.","Sea cucumber"],
+  ["Frigatebirds sleep while flying","They doze in 10-second naps and stay up for weeks.","Frigatebird"],
+  ["Snow leopards can't roar","They chuff, mew and purr instead.","Snow leopard"],
+  ["Reindeer eyes change color with the seasons","Gold in summer, blue in winter to catch more light.","Reindeer"],
+  ["Starfish have no brain","And no blood; seawater circulates through them.","Starfish"],
+  ["Whale sharks are the largest fish","Up to 40 feet long, and they eat plankton.","Whale shark"],
+  ["The northern lights come from the Sun","Charged particles from the solar wind hit the upper atmosphere.","Aurora"],
+  ["Parts of the Atacama haven't seen rain in centuries","It is the driest non-polar desert on Earth.","Atacama Desert"],
+  ["Lake Baikal holds a fifth of Earth's fresh surface water","It is also the deepest lake, at 1,642 m.","Lake Baikal"]
 ];
 
 const BF_HIST_BANK = [
-  "In 1440, Johannes Gutenberg began assembling the movable-type press that would put a book within reach of ordinary Europeans within a generation.",
-  "In 1492, Christopher Columbus made landfall in the Bahamas, having badly underestimated the size of the Earth.",
-  "In 1517, Martin Luther published his Ninety-five Theses, and the printing press turned a local academic quarrel into the Reformation.",
-  "In 1588, storms and English fireships scattered the Spanish Armada, ending Philip II's plan to invade England.",
-  "In 1602, the Dutch East India Company issued the first publicly traded shares, inventing the stock market as we know it.",
-  "In 1607, English settlers founded Jamestown, and more than half of them were dead within a year.",
-  "In 1620, the Mayflower Compact was signed aboard ship because the passengers had landed far north of their charter.",
-  "In 1666, the Great Fire of London burned for four days and destroyed roughly 13,000 houses, but killed remarkably few people.",
-  "In 1687, Isaac Newton published the Principia, explaining the orbits of planets and the fall of an apple with the same equation.",
-  "In 1721, Robert Walpole became Britain's first de facto prime minister in the wake of the South Sea Bubble.",
-  "In 1752, Britain and its colonies skipped eleven days to adopt the Gregorian calendar; 2 September was followed by 14 September.",
-  "In 1776, the Declaration of Independence was approved on 4 July, but most delegates did not sign it until August.",
-  "In 1783, the Montgolfier brothers sent a sheep, a duck and a rooster aloft in a balloon to see whether altitude was survivable.",
-  "In 1787, the U.S. Constitution was drafted in a closed Philadelphia room during one of the hottest summers on record.",
-  "In 1803, the Louisiana Purchase doubled the size of the United States for about four cents an acre.",
-  "In 1815, the eruption of Mount Tambora led to the following 'year without a summer' and crop failures across the Northern Hemisphere.",
-  "In 1816, Mary Shelley began writing Frankenstein during that same sunless summer on Lake Geneva.",
-  "In 1825, the Erie Canal opened and cut the cost of moving freight from Buffalo to New York City by about 90 percent.",
-  "In 1831, Charles Darwin boarded HMS Beagle as an unpaid gentleman naturalist, largely to keep the captain company.",
-  "In 1844, Samuel Morse sent the message 'What hath God wrought' from Washington to Baltimore by telegraph.",
-  "In 1848, gold was found at Sutter's Mill, and San Francisco grew from a village of 1,000 to a city of 25,000 in two years.",
-  "In 1851, the Great Exhibition opened in London's Crystal Palace, a building of iron and glass assembled in months.",
-  "In 1859, Edwin Drake drilled the first commercial oil well in Pennsylvania at a depth of just 69 feet.",
-  "In 1863, the first stretch of the London Underground opened, running steam locomotives through tunnels.",
-  "In 1865, the Thirteenth Amendment abolished slavery in the United States, eight months after the Emancipation Proclamation took effect.",
-  "In 1869, the Suez Canal opened, cutting the sea route from London to Bombay roughly in half.",
-  "In 1869, the golden spike joined the American transcontinental railroad at Promontory Summit, Utah.",
-  "In 1876, Alexander Graham Bell filed his telephone patent hours before a rival, Elisha Gray, filed a caveat for a similar idea.",
-  "In 1879, Thomas Edison's team found a carbon filament that burned for over 13 hours, making electric light practical.",
-  "In 1883, Krakatoa erupted with a blast heard nearly 3,000 miles away, the loudest sound in recorded history.",
-  "In 1886, Coca-Cola was first sold at an Atlanta pharmacy, averaging about nine servings a day in its first year.",
-  "In 1889, the Eiffel Tower opened to mixed reviews; a petition of Paris artists had called it a 'useless monstrosity'.",
-  "In 1896, the first modern Olympic Games were held in Athens, with 14 nations competing.",
-  "In 1903, the Wright brothers flew 120 feet at Kitty Hawk, a distance shorter than the wingspan of a modern airliner.",
-  "In 1906, the San Francisco earthquake and the fires that followed destroyed roughly 80 percent of the city.",
-  "In 1908, Henry Ford introduced the Model T, and by 1925 the price had fallen from $850 to under $300.",
-  "In 1912, the Titanic sank on its maiden voyage after receiving multiple ice warnings it did not act on.",
-  "In 1913, the Federal Reserve was created in response to the Panic of 1907, which J.P. Morgan had personally helped contain.",
-  "In 1914, an unofficial Christmas truce broke out along stretches of the Western Front, with soldiers trading food and songs.",
-  "In 1918, the influenza pandemic began killing more people than the First World War had, with estimates running past 50 million.",
-  "In 1920, American women won the vote when Tennessee ratified the Nineteenth Amendment by a single legislator's change of mind.",
-  "In 1928, Alexander Fleming returned from holiday to find mould killing bacteria in a dish he had forgotten to clean.",
-  "In 1929, the Wall Street Crash wiped out a decade of gains in weeks, though the market's true bottom came in 1932.",
-  "In 1930, Clyde Tombaugh discovered Pluto by comparing photographic plates taken days apart.",
-  "In 1933, the Glass-Steagall Act separated commercial and investment banking in the United States, a wall that stood until 1999.",
-  "In 1935, the Social Security Act was signed, originally covering about 60 percent of American workers.",
-  "In 1936, the BBC began the world's first regular high-definition television service, broadcasting to a few hundred sets.",
-  "In 1938, a radio adaptation of The War of the Worlds aired, and the scale of the panic it caused was itself largely a press invention.",
-  "In 1939, the first commercially available helicopter flight took place in the United States with Igor Sikorsky at the controls.",
-  "In 1944, roughly 156,000 Allied troops landed in Normandy in the largest seaborne invasion ever attempted.",
-  "In 1945, the United Nations Charter was signed in San Francisco by 50 nations.",
-  "In 1947, Bell Labs demonstrated the first working transistor, the component underneath essentially all modern electronics.",
-  "In 1947, Chuck Yeager broke the sound barrier over the Mojave with two broken ribs he had not reported.",
-  "In 1948, the Marshall Plan began sending about $13 billion to rebuild Western Europe.",
-  "In 1953, Watson and Crick published the double-helix structure of DNA, leaning heavily on Rosalind Franklin's X-ray work.",
-  "In 1954, Roger Bannister ran a mile in 3:59.4, and the record fell again within seven weeks.",
-  "In 1955, Rosa Parks refused to move from her bus seat in Montgomery, beginning a boycott that lasted 381 days.",
-  "In 1957, the Soviet Union launched Sputnik, a 184-pound sphere whose beeping was audible on amateur radios worldwide.",
-  "In 1958, the integrated circuit was demonstrated by Jack Kilby at Texas Instruments using a sliver of germanium.",
-  "In 1960, the bathyscaphe Trieste carried two men to the bottom of the Mariana Trench, nearly seven miles down.",
-  "In 1961, Yuri Gagarin orbited the Earth once in 108 minutes and became the first human in space.",
-  "In 1963, the first successful liver transplant was attempted in Denver, and the field spent years learning from its failures.",
-  "In 1964, the Civil Rights Act was signed after the longest filibuster in Senate history to that point.",
-  "In 1967, Christiaan Barnard performed the first human heart transplant in Cape Town; the patient lived 18 days.",
-  "In 1969, Apollo 11 landed on the Moon with about 25 seconds of fuel remaining in the descent stage.",
-  "In 1969, the first message was sent over ARPANET; the system crashed after two letters of the word 'login'.",
-  "In 1971, Ray Tomlinson sent the first network email and chose the @ symbol because it was otherwise unused in names.",
-  "In 1971, the United States ended the dollar's convertibility to gold, dismantling the Bretton Woods system.",
-  "In 1973, the OPEC oil embargo quadrupled crude prices and introduced Americans to the 55 mph speed limit.",
-  "In 1974, the first universal product code was scanned in an Ohio supermarket, on a pack of chewing gum.",
-  "In 1975, Microsoft was founded, initially to write a BASIC interpreter for a mail-order computer kit.",
-  "In 1976, Apple Computer was founded on April Fools' Day, and its third co-founder sold his stake for $800 twelve days later.",
-  "In 1977, the Voyager probes launched; both are still transmitting from interstellar space decades later.",
-  "In 1978, the 401(k) provision entered the U.S. tax code almost unnoticed, and a benefits consultant spotted its potential two years later.",
-  "In 1979, the Sony Walkman went on sale in Japan and made private, portable listening ordinary.",
-  "In 1980, smallpox was declared eradicated, the only human disease ever eliminated in the wild.",
-  "In 1981, IBM shipped its first personal computer, and its decision to license rather than own the operating system reshaped the industry.",
-  "In 1983, Stanislav Petrov judged a Soviet missile-warning alert to be a false alarm and declined to report it up the chain.",
-  "In 1985, scientists identified the hole in the Antarctic ozone layer, leading to the Montreal Protocol two years later.",
-  "In 1986, the Chernobyl reactor exploded during a safety test that had been repeatedly postponed.",
-  "In 1987, markets fell more than 20 percent in a single day on Black Monday, still the largest one-day percentage drop on record.",
-  "In 1989, Tim Berners-Lee circulated a proposal at CERN that his manager annotated 'vague, but exciting'.",
-  "In 1989, the Berlin Wall opened after an East German official misread a note at a press conference.",
-  "In 1990, the Hubble Space Telescope launched with a flawed mirror that took a 1993 servicing mission to correct.",
-  "In 1991, the World Wide Web went public, and the first website simply explained what the web was.",
-  "In 1994, the Channel Tunnel opened after six years of digging from both sides that met within centimetres.",
-  "In 1995, Amazon sold its first book, a technical text on computational thought, out of a Seattle garage.",
-  "In 1997, IBM's Deep Blue beat world champion Garry Kasparov over six games.",
-  "In 1998, Google was incorporated in a garage in Menlo Park, financed partly by a $100,000 cheque written before the company legally existed.",
-  "In 1999, the euro was introduced for accounting purposes, three years before any notes or coins circulated.",
-  "In 2000, the dot-com bubble peaked in March, and the Nasdaq would not regain that level for fifteen years.",
-  "In 2001, Wikipedia launched as a side project meant to feed articles into a more formal encyclopedia that never took off.",
-  "In 2004, Facebook launched from a Harvard dorm room, restricted at first to students with a harvard.edu address.",
-  "In 2007, the first iPhone went on sale with no app store; third-party apps arrived a year later.",
-  "In 2008, Lehman Brothers filed the largest bankruptcy in U.S. history, with more than $600 billion in assets.",
-  "In 2009, the Bitcoin network produced its first block, with a newspaper headline about bank bailouts written into it.",
-  "In 2010, the Deepwater Horizon spill released an estimated 4.9 million barrels of oil into the Gulf of Mexico.",
-  "In 2012, a car-sized rover named Curiosity landed on Mars using a rocket-powered crane that lowered it on cables.",
-  "In 2015, the Paris Agreement was adopted by 196 parties, setting a target of well under two degrees of warming.",
-  "In 2016, gravitational waves were detected for the first time, a century after Einstein predicted them.",
-  "In 2019, astronomers released the first image of a black hole, assembled from petabytes of data shipped on hard drives.",
-  "In 2020, markets fell into the fastest bear market in history in 33 days, then recovered the losses within five months.",
-  "In 1348, the Black Death reached England, and within two years it had killed perhaps a third of the population.",
-  "In 1215, English barons forced King John to seal Magna Carta, which he then asked the Pope to annul within weeks.",
-  "In 1066, William of Normandy won at Hastings after a feigned retreat drew the English shield wall out of position.",
-  "In 800, Charlemagne was crowned emperor in Rome on Christmas Day, reportedly without prior warning.",
-  "In 79, Vesuvius buried Pompeii and Herculaneum, preserving a Roman town in extraordinary detail.",
-  "In 1453, the fall of Constantinople ended the Roman Empire's last remnant after 1,100 years.",
-  "In 1543, Copernicus published his heliocentric model, receiving the first printed copy on the day he died.",
-  "In 1607, the first recorded use of the word 'bankrupt' in English law appeared, from the Italian for a broken bench.",
-  "In 1720, the South Sea Bubble burst, taking with it investors including Isaac Newton, who reportedly lost a fortune.",
-  "In 1773, colonists dumped 342 chests of tea into Boston Harbor, worth roughly $1.7 million in today's money.",
-  "In 1799, the Rosetta Stone was found by French soldiers digging fortifications in Egypt.",
-  "In 1804, Haiti declared independence after the only successful large-scale slave revolt in modern history.",
-  "In 1836, Texas declared independence from Mexico and spent nearly a decade as its own republic.",
-  "In 1857, the first transatlantic telegraph cable attempt failed; the successful cable came in 1866.",
-  "In 1871, the Great Chicago Fire destroyed about three square miles and left roughly a third of the city homeless.",
-  "In 1893, New Zealand became the first self-governing country to grant women the vote.",
-  "In 1901, Marconi received a transatlantic radio signal in Newfoundland that many physicists insisted was impossible.",
-  "In 1911, Roald Amundsen reached the South Pole a month ahead of Robert Falcon Scott, whose party did not survive the return.",
-  "In 1927, Charles Lindbergh flew from New York to Paris alone in 33 and a half hours without a front windscreen.",
-  "In 1931, the Empire State Building was completed in 410 days, ahead of schedule and under budget.",
-  "In 1941, the Manhattan Project's predecessor was authorised, eventually employing 130,000 people who mostly did not know its purpose.",
-  "In 1952, Britain's Great Smog killed thousands in London and led directly to the Clean Air Act of 1956.",
-  "In 1962, the Cuban Missile Crisis brought the superpowers within days of nuclear war before a quiet trade over Turkish missiles ended it.",
-  "In 1972, the last humans to date left the Moon, and Apollo 17's crew spent about 75 hours on the surface.",
-  "In 1993, the first web browser with inline images, Mosaic, made the web visual and traffic grew more than a thousandfold in a year."
+  ["1455","Gutenberg prints his Bible","Movable type put books within reach of ordinary people.","Gutenberg Bible"],
+  ["1492","Columbus lands in the Bahamas","He had badly underestimated the size of the Earth.","Christopher Columbus"],
+  ["1543","Copernicus puts the Sun at the center","His book reached him on the day he died.","Nicolaus Copernicus"],
+  ["1602","The first public shares are sold","The Dutch East India Company invented the stock market.","Dutch East India Company"],
+  ["1666","The Great Fire of London","Four days of fire destroyed about 13,000 houses.","Great Fire of London"],
+  ["1687","Newton publishes the Principia","One set of laws explains falling apples and orbiting planets.","Isaac Newton"],
+  ["1776","The Declaration of Independence is adopted","Most delegates didn't sign until August.","United States Declaration of Independence"],
+  ["1783","The first balloon passengers fly","A sheep, a duck and a rooster went up over Versailles.","Montgolfier brothers"],
+  ["1799","The Rosetta Stone is found","French soldiers dug it up in Egypt, and it unlocked hieroglyphs.","Rosetta Stone"],
+  ["1803","The Louisiana Purchase doubles the US","Roughly four cents an acre.","Louisiana Purchase"],
+  ["1815","Mount Tambora erupts","The following year had no summer across the Northern Hemisphere.","Mount Tambora"],
+  ["1825","The Erie Canal opens","It cut freight costs from Buffalo to New York by about 90%.","Erie Canal"],
+  ["1844","Morse sends the first long-distance telegram","'What hath God wrought,' from Washington to Baltimore.","Samuel Morse"],
+  ["1851","The Great Exhibition opens in London","Its Crystal Palace went up in iron and glass in months.","The Crystal Palace"],
+  ["1859","The first US oil well is drilled","Just 69 feet down, in Pennsylvania.","Drake Well"],
+  ["1869","The golden spike joins the railroad","Coast to coast by rail, at Promontory Summit, Utah.","First transcontinental railroad"],
+  ["1869","The Suez Canal opens","It cut the sea route from London to Bombay roughly in half.","Suez Canal"],
+  ["1876","Bell patents the telephone","He filed hours before a rival filed a similar claim.","Alexander Graham Bell"],
+  ["1879","Edison makes light bulbs practical","A carbon filament burned for over 13 hours.","Thomas Edison"],
+  ["1883","Krakatoa erupts","The blast was heard nearly 3,000 miles away.","Krakatoa"],
+  ["1896","The first modern Olympics","Athens hosted athletes from 14 nations.","1896 Summer Olympics"],
+  ["1903","The Wright brothers fly","Their first flight covered 120 feet at Kitty Hawk.","Wright brothers"],
+  ["1906","San Francisco shakes and burns","The quake and fires destroyed about 80% of the city.","1906 San Francisco earthquake"],
+  ["1908","Ford introduces the Model T","The price fell from $850 to under $300 by 1925.","Ford Model T"],
+  ["1912","The Titanic sinks","It had received several ice warnings.","Titanic"],
+  ["1914","The Panama Canal opens","It saved ships the long trip around South America.","Panama Canal"],
+  ["1928","Fleming notices penicillin","Mold had killed the bacteria in a dish he'd left out.","Penicillin"],
+  ["1929","Wall Street crashes","Years of gains vanished in weeks.","Wall Street crash of 1929"],
+  ["1930","Pluto is discovered","Clyde Tombaugh compared photo plates taken days apart.","Pluto"],
+  ["1931","The Empire State Building is finished","Built in 410 days, ahead of schedule.","Empire State Building"],
+  ["1935","Social Security becomes law","It first covered about 60% of American workers.","Social Security Act"],
+  ["1944","D-Day","About 156,000 Allied troops landed in Normandy.","Normandy landings"],
+  ["1947","The first transistor works","Nearly all modern electronics sit on top of it.","Transistor"],
+  ["1953","Watson and Crick publish the DNA double helix","Rosalind Franklin's X-ray work was key.","DNA"],
+  ["1954","Bannister breaks the four-minute mile","3:59.4, and the record fell again within seven weeks.","Roger Bannister"],
+  ["1955","Rosa Parks keeps her seat","The Montgomery bus boycott that followed lasted 381 days.","Rosa Parks"],
+  ["1957","Sputnik goes up","A 184-pound beeping sphere kicked off the space race.","Sputnik 1"],
+  ["1961","Gagarin orbits the Earth","108 minutes made him the first human in space.","Yuri Gagarin"],
+  ["1969","Apollo 11 lands on the Moon","About 25 seconds of descent fuel were left.","Apollo 11"],
+  ["1971","The first network email is sent","Ray Tomlinson picked the @ symbol because nothing else used it.","Ray Tomlinson"],
+  ["1974","The first barcode is scanned","A pack of chewing gum in an Ohio supermarket.","Barcode"],
+  ["1977","The Voyagers launch","Both are still transmitting from interstellar space.","Voyager 1"],
+  ["1979","The Walkman goes on sale","Private, portable music became ordinary.","Walkman"],
+  ["1980","Smallpox is declared eradicated","The only human disease ever wiped out in the wild.","Smallpox"],
+  ["1989","The Berlin Wall opens","An official misread a note at a press conference.","Berlin Wall"],
+  ["1990","Hubble launches with a flawed mirror","A 1993 repair mission fixed its vision.","Hubble Space Telescope"],
+  ["1994","The Channel Tunnel opens","Crews digging from both sides met within centimeters.","Channel Tunnel"],
+  ["1997","Deep Blue beats Kasparov","The first time a computer beat a reigning chess champion in a match.","Deep Blue (chess computer)"],
+  ["2007","The first iPhone goes on sale","It launched with no app store.","IPhone"],
+  ["2009","Bitcoin's first block is mined","A bank-bailout headline is embedded in it.","Bitcoin"],
+  ["2012","Curiosity lands on Mars","A rocket-powered crane lowered it on cables.","Curiosity (rover)"],
+  ["2019","The first image of a black hole","Built from petabytes of data flown out on hard drives.","Event Horizon Telescope"],
+  ["1348","The Black Death reaches England","Within two years it killed perhaps a third of the population.","Black Death"],
+  ["1215","King John seals Magna Carta","He asked the Pope to annul it within weeks.","Magna Carta"],
+  ["1066","William wins at Hastings","A feigned retreat pulled the English line apart.","Battle of Hastings"],
+  ["79","Vesuvius buries Pompeii","A Roman town preserved in extraordinary detail.","Pompeii"],
+  ["1453","Constantinople falls","It ended the Roman Empire's last remnant after 1,100 years.","Fall of Constantinople"],
+  ["1773","The Boston Tea Party","Colonists dumped 342 chests of tea into the harbor.","Boston Tea Party"],
+  ["1804","Haiti declares independence","The only successful large-scale slave revolt in modern history.","Haitian Revolution"],
+  ["1871","The Great Chicago Fire","About a third of the city was left homeless.","Great Chicago Fire"],
+  ["1893","New Zealand's women win the vote","The first self-governing country to grant it.","Kate Sheppard"],
+  ["1911","Amundsen reaches the South Pole","A month ahead of Scott, whose party didn't survive the return.","Roald Amundsen"],
+  ["1927","Lindbergh flies New York to Paris","33 hours alone, with no front windscreen.","Charles Lindbergh"],
+  ["1952","London's Great Smog","It killed thousands and led to the Clean Air Act.","Great Smog of London"],
+  ["1962","The Cuban Missile Crisis","The superpowers came within days of nuclear war.","Cuban Missile Crisis"],
+  ["1972","Apollo 17 leaves the Moon","No human has been back since.","Apollo 17"],
+  ["1993","Mosaic makes the web visual","Web traffic grew more than a thousandfold in a year.","Mosaic (web browser)"],
+  ["1987","Black Monday","Stocks fell over 20% in a single day, still the record.","Black Monday (1987)"],
+  ["1913","The Federal Reserve is created","A response to the Panic of 1907.","Federal Reserve"],
+  ["1920","American women win the vote","Tennessee ratified the 19th Amendment by a single vote.","Nineteenth Amendment to the United States Constitution"],
+  ["1945","The United Nations is founded","50 nations signed the Charter in San Francisco.","United Nations"],
+  ["1948","The Marshall Plan begins","About $13 billion went to rebuild Western Europe.","Marshall Plan"],
+  ["1964","The Civil Rights Act is signed","It followed the longest filibuster in Senate history to that point.","Civil Rights Act of 1964"],
+  ["1981","IBM ships its first PC","Licensing the operating system reshaped the industry.","IBM Personal Computer"],
+  ["1991","The World Wide Web goes public","The first website simply explained what the web was.","World Wide Web"],
+  ["1998","Google is incorporated","In a Menlo Park garage, backed by a $100,000 check.","Google"],
+  ["2004","Facebook launches from a Harvard dorm","It began open only to harvard.edu addresses.","Facebook"],
+  ["2008","Lehman Brothers collapses","The largest bankruptcy in US history.","Lehman Brothers"],
+  ["2016","Gravitational waves are detected","A century after Einstein predicted them.","LIGO"],
+  ["1986","Chernobyl explodes","It happened during a safety test that had been repeatedly postponed.","Chernobyl disaster"]
 ];
+
+/* The day's card is a pure function of the calendar day: same on every device, and it walks
+   the whole list before it can come back around. */
+function bfDayNum(day){ const p = String(day).split("-").map(Number); return Math.floor(Date.UTC(p[0], p[1]-1, p[2]) / 86400000); }
+function bfPick(bank, day, salt){
+  const n = bank.length, gcd = (a, b) => b ? gcd(b, a % b) : a;
+  let stride = 31; while(gcd(stride, n) !== 1) stride++;
+  return bank[(bfDayNum(day) * stride + salt) % n];
+}
 
 const BF_LEDGER_KEY = "dh-bf-ledger";
 function bfLedger(){ try{ return JSON.parse(localStorage.getItem(BF_LEDGER_KEY) || "{}") || {}; }catch(e){ return {}; } }
@@ -11657,24 +11575,14 @@ function bfNextUnseen(kind, bank, day, textOf){
 /* The whole day's Brain Food, chosen once and then frozen. */
 async function bfTodaysCards(close){
   const day = todayCT(), key = "dh-bf-day-" + day;
-  try{ const saved = JSON.parse(localStorage.getItem(key) || "null"); if(saved && saved.v === 2) return saved; }catch(e){}
-  const out = { v:2, day };
-
-  const briefFact = close && close.funFact;
-  if(briefFact && !bfSeen("fact", briefFact)){
-    out.fact = { text: briefFact, subject: close.funFactSubject, image: close.funFactImage };
-  } else {
-    const t = bfNextUnseen("fact", BF_FACT_BANK, day);
-    if(t) out.fact = { text: t };
-  }
-
-  const briefHist = close && close.historyTidbit;
-  if(briefHist && !bfSeen("history", briefHist)){
-    out.history = { text: briefHist, subject: close.historySubject, image: close.historyImage };
-  } else {
-    const t = bfNextUnseen("history", BF_HIST_BANK, day);
-    if(t) out.history = { text: t };
-  }
+  try{ const saved = JSON.parse(localStorage.getItem(key) || "null"); if(saved && saved.v === 3) return saved; }catch(e){}
+  const out = { v:3, day };
+  /* Fact and history no longer come from the morning brief (it repeated, and each device kept its
+     own ledger). They are a pure function of the date, so every device agrees. */
+  const f = bfPick(BF_FACT_BANK, day, 0);
+  out.fact = { text: f[0], sub: f[1], subject: f[2] };
+  const h = bfPick(BF_HIST_BANK, day, 17);
+  out.history = { year: h[0], text: h[1], sub: h[2], subject: h[3] };
 
   const briefWord = close && close.word;
   if(briefWord && briefWord.term && !bfSeen("word", briefWord.term)){
@@ -11685,9 +11593,6 @@ async function bfTodaysCards(close){
     const w = bank.length ? bfNextUnseen("word", bank, day, x => x.term) : null;
     out.word = w || briefWord || null;
   }
-
-  if(out.fact) bfMark("fact", out.fact.text);
-  if(out.history) bfMark("history", out.history.text);
   if(out.word && out.word.term) bfMark("word", out.word.term);
   try{ localStorage.setItem(key, JSON.stringify(out)); }catch(e){}
   return out;
@@ -11889,8 +11794,8 @@ async function renderBrainFoodDeck(gate){
   if(!today.fact && !today.history && !today.word){ try{ localStorage.setItem("dh-bf-seen", todayCT()); }catch(e){} renderGamesLauncher(); return; }
   $("#heroEyebrow").textContent = ""; $("#heroTitle").textContent = ""; $("#heroSub").textContent = ""; $("#heroDateline").textContent = ""; $("#staleNote").style.display = "none";
   const cards = [];
-  if(today.fact) cards.push({ kind:"fact", kicker:"Fun fact", text: today.fact.text, subject: today.fact.subject, image: today.fact.image });
-  if(today.history){ const yr = (today.history.text.match(/^In\s+(\d{2,4})\b/) || today.history.text.match(/\b(1\d{3}|20\d{2})\b/) || [])[1]; cards.push({ kind:"history", kicker:"History tidbit", text: today.history.text, subject: today.history.subject, image: today.history.image, year: yr }); }
+  if(today.fact) cards.push({ kind:"fact", kicker:"Fun fact", text: today.fact.text, sub: today.fact.sub, subject: today.fact.subject });
+  if(today.history) cards.push({ kind:"history", kicker:"On this day in " + today.history.year, text: today.history.text, sub: today.history.sub, subject: today.history.subject });
   if(today.word) cards.push({ kind:"word", kicker:"Word of the day", word: today.word });
   cards.push({ kind:"done", kicker:"That's today's Brain Food", text: gate ? "On to the games." : "See you tomorrow." });
   let i = 0;
@@ -11898,18 +11803,22 @@ async function renderBrainFoodDeck(gate){
   const paint = (dir) => {
     bfStopAnim();
     const c = cards[i];
+    const vis = c.kind === "word"
+      ? `<div class="bf-vis-word"><div class="bf-word">${esc(c.word.term)}</div><div class="bf-say">${esc(c.word.respell || c.word.ipa || "")}${c.word.pos ? ` · <i>${esc(c.word.pos)}</i>` : ""}</div></div>` : "";
     const body = c.kind === "word"
-      ? `<div class="bf-word">${esc(c.word.term)}</div><div class="bf-say">${esc(c.word.respell || c.word.ipa || "")}${c.word.pos ? ` · <i>${esc(c.word.pos)}</i>` : ""}</div><div class="bf-def">${esc(c.word.definition || "")}</div>${c.word.example ? `<div class="bf-ex">“${esc(c.word.example)}”</div>` : ""}`
+      ? `<div class="bf-def">${esc(c.word.definition || "")}</div>${c.word.example ? `<div class="bf-ex">“${esc(c.word.example)}”</div>` : ""}`
       : c.kind === "done" ? `<div class="bf-text bf-title">${esc(c.text)}</div>`
-      : `<div class="bf-text">${esc(c.text)}</div>`;
+      : `<div class="bf-text">${esc(c.text)}</div>${c.sub ? `<div class="bf-sub">${esc(c.sub)}</div>` : ""}`;
     const cta = c.kind === "word" ? `<button class="bf-btn" id="bfQuiz">Take the word quiz</button>`
       : c.kind === "done" ? `<button class="bf-btn bf-primary" id="bfGames">Games →</button>` : "";
     panel.innerHTML = `<div class="bf-stage">
       <div class="bf-top"><span class="bf-date">${esc(niceDate(todayCT()))}</span><span class="bf-count">${i+1} / ${cards.length}</span>${gate ? "" : `<button class="pbtn game-back bf-back" id="bfBack">← Games</button>`}</div>
-      <div class="bf-card ${dir === "next" ? "in-r" : dir === "prev" ? "in-l" : "in"} bf-${c.kind}" id="bfCard">
-        <canvas class="bf-aurora" id="bfAurora"></canvas>
-        ${c.year ? `<div class="bf-year">${esc(c.year)}</div>` : ""}
-        <div class="bf-photo" id="bfPhoto"></div>
+      <div class="bf-card ${dir === "next" ? "in-r" : dir === "prev" ? "in-l" : "in"} bfk-${c.kind}" id="bfCard">
+        <div class="bf-vis">
+          <canvas class="bf-aurora" id="bfAurora"></canvas>
+          <div class="bf-photo" id="bfPhoto"></div>
+          ${vis}
+        </div>
         <div class="bf-inner">
           <div class="bf-kick">${esc(c.kicker)}</div>
           ${body}
@@ -11924,7 +11833,7 @@ async function renderBrainFoodDeck(gate){
       <div class="bf-hint">${i < cards.length-1 ? "Swipe or tap the card for the next one" : "Tap the card for the games"}</div>
     </div>`;
     /* the card reads its own words and dresses itself: palette + motion motif */
-    const scene = bfScene(c.kind, [c.text, c.subject, c.kicker, c.sub, c.word && c.word.definition, c.word && c.word.term].filter(Boolean).join(" "));
+    const scene = bfScene(c.kind, [c.text, c.sub, c.subject, c.word && c.word.definition, c.word && c.word.term].filter(Boolean).join(" "));
     $("#bfCard").dataset.motif = scene.motif || "";
     bfStartAurora($("#bfAurora"), scene.palette, scene.motif);
     // subject photo (brief-supplied URL, else Wikipedia exact-title lookup) -- Ken Burns behind the text

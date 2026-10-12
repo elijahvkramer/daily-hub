@@ -2734,27 +2734,52 @@
   .ag-card .ag-scroll{flex:1 1 0;min-height:0;max-height:520px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;margin:0 -6px;padding:0 6px 26px;
     -webkit-mask-image:linear-gradient(#000 calc(100% - 34px),transparent);mask-image:linear-gradient(#000 calc(100% - 34px),transparent)}
   .ag-card .ag-scroll::-webkit-scrollbar{display:none}
-  .ag-group + .ag-group{margin-top:22px}
-  .ag-gl{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600;letter-spacing:.01em;color:rgba(255,255,255,.78);margin-bottom:6px}
-  .ag-gl em{font-style:normal;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.5)}
-  .ag-row{position:relative;padding:12px 0 13px 20px;border-bottom:1px solid rgba(255,255,255,.12);transition:opacity .2s}
-  .ag-row:last-child{border-bottom:none}
-  .ag-time{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
-  .ag-name{position:relative;margin-top:2px;font-size:25px;line-height:1.14;font-weight:400;letter-spacing:-.012em;color:#fff;overflow-wrap:anywhere}
-  .ag-name::before{content:"";position:absolute;left:-20px;top:.46em;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55)}
-  .ag-where{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.58);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ag-row.past{opacity:.42}
-  .ag-row.now .ag-name::before{background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
-  .ag-row.now .ag-name{font-weight:500}
-  .ag-nowpill{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);color:color-mix(in srgb,var(--ag-a) 55%,#06121c)}
-  .ag-row.is-todo .ag-name{font-size:19px}
-  .ag-row.is-todo .ag-name::before{border-radius:2px;width:5px;height:5px;top:.58em}
-  .ag-empty{display:flex;align-items:center;gap:10px;padding:10px 0 4px 2px;font-size:15px;color:rgba(255,255,255,.72)}
-  .ag-check{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.2);display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0}
+  /* Oct 12 redesign: header + all-day chips + timeline; every event at the same weight */
+  .ag-card{display:flex;flex-direction:column}
+  .ag-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+  .ag-kick{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .ag-date{margin-top:3px;font-family:var(--disp,inherit);font-size:26px;line-height:1.1;font-weight:500;letter-spacing:-.02em;color:#fff}
+  .ag-sum{margin-top:5px;font-size:13px;font-weight:600;color:rgba(255,255,255,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34ch}
+  .ag-count{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:62px;height:62px;border-radius:18px;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+  .ag-count b{font-size:24px;line-height:1;font-weight:600;letter-spacing:-.02em;color:#fff;text-transform:none;margin-bottom:2px}
+  .ag-chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}
+  .ag-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:7px 12px 7px 10px;border-radius:12px;
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);font-size:13.5px;font-weight:600;color:#fff}
+  .ag-chip i{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--kc,#fff);box-shadow:0 0 0 2.5px rgba(255,255,255,.28)}
+  .ag-chip-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ag-chip-k{flex:0 0 auto;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.6)}
+  .ag-line{position:relative}
+  .ag-line::before{content:"";position:absolute;left:79px;top:14px;bottom:14px;width:2px;border-radius:2px;background:rgba(255,255,255,.18)}
+  .ag-ev{position:relative;display:grid;grid-template-columns:64px 32px minmax(0,1fr);align-items:start;padding:9px 0}
+  .ag-when{text-align:right;padding-top:3px;font-variant-numeric:tabular-nums}
+  .ag-when b{display:block;font-size:16px;line-height:1.1;font-weight:600;color:#fff;letter-spacing:-.01em}
+  .ag-when small{font-size:10px;font-weight:700;margin-left:2px;color:rgba(255,255,255,.66)}
+  .ag-when span{display:block;margin-top:3px;font-size:11px;font-weight:600;color:rgba(255,255,255,.58)}
+  .ag-node{justify-self:center;margin-top:5px;width:14px;height:14px;border-radius:50%;position:relative;z-index:1;
+    background:color-mix(in srgb,var(--kc,#fff) 42%,#fff);box-shadow:0 0 0 3px color-mix(in srgb,var(--kc,#fff) 45%,transparent)}
+  .ag-node svg{position:absolute;inset:0;width:14px;height:14px;fill:none;stroke:#0b2338;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ag-body{min-width:0;padding:1px 0 2px 4px}
+  .ag-card .ag-name{font-size:19px;line-height:1.22;font-weight:500;letter-spacing:-.012em;color:#fff;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ag-where{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ag-ev.past .ag-name{color:rgba(255,255,255,.72)}
+  .ag-ev.past .ag-when b{color:rgba(255,255,255,.66)}
+  .ag-ev.past .ag-node{background:rgba(255,255,255,.88);box-shadow:0 0 0 3px rgba(255,255,255,.16)}
+  .ag-ev.now{margin:2px -10px;padding:11px 10px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22)}
+  .ag-ev.now .ag-node{animation:agPulse 2.2s ease-out infinite}
+  @keyframes agPulse{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--kc,#fff) 40%,transparent),0 0 0 3px rgba(255,255,255,.4)}100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--kc,#fff) 40%,transparent),0 0 0 14px rgba(255,255,255,0)}}
+  .ag-nowpill{display:inline-block;margin-top:7px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:#fff;color:#0b2338}
+  .ag-nowline{position:relative;height:22px;margin:2px 0;display:flex;align-items:center}
+  .ag-nowline::after{content:"";position:absolute;left:72px;right:0;top:50%;height:2px;border-radius:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,.12))}
+  .ag-nowline::before{content:"";position:absolute;left:75px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.25);z-index:1}
+  .ag-nowline span{width:64px;text-align:right;font-size:10.5px;font-weight:800;letter-spacing:.04em;color:#fff;font-variant-numeric:tabular-nums}
+  .ag-empty{display:flex;align-items:center;gap:10px;padding:10px 0 4px 2px;font-size:15px;color:rgba(255,255,255,.78)}
+  .ag-check{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0}
   .todo-today-row .agenda-card.ag-card{flex:1;display:flex;flex-direction:column;min-width:0}
   html.glass[data-mode="dark"] .agenda-card.ag-card{--ag-a:color-mix(in srgb,var(--accent, var(--gold)) 62%,#000)}
   @media(max-width:900px){.ag-card .ag-scroll{flex:0 1 auto;max-height:460px}}
-  @media(max-width:600px){.agenda-card.ag-card,html.glass .agenda-card.ag-card{min-height:240px;padding:18px 18px 14px}.ag-name{font-size:22px}}
+  @media(max-width:600px){.agenda-card.ag-card,html.glass .agenda-card.ag-card{min-height:240px;padding:18px 18px 14px}.ag-card .ag-name{font-size:17px}.ag-date{font-size:22px}}
 
   /* ---------- To-Dos ---------- */
   .todo-card{display:flex;flex-direction:column;padding:20px 20px 16px}
@@ -2985,6 +3010,19 @@
   .cal-legend span{display:inline-flex;align-items:center;gap:6px}
   .cal-legend i{width:9px;height:9px;border-radius:3px;background:var(--kc)}
   .ct-row .ct-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--kc,var(--gold));margin-right:6px;vertical-align:middle}
+  /* Multi-day events, Oct 12: the bar is styled exactly like a single-day event chip (same tint,
+     same coloured left edge, same type) and every day number sits in the same 22px box, so a bar
+     crossing from today into tomorrow stays on one straight line instead of stepping up a row. */
+  .cal-cell .cn,.cal-card .cal-cell .cn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex:0 0 22px;margin:0 0 6px;line-height:1}
+  .cal-card .cal-cell-lanes{margin:0 -7px 4px -6px;gap:3px}
+  .cal-card .cal-cell-bar,.cal-cell-bar{height:21px;line-height:21px;font-size:11px;font-weight:700;color:var(--ink);padding:0 6px;border-radius:0;
+    background:color-mix(in srgb,var(--kc,#3A6EA5) 16%,var(--card,#fff));box-shadow:none}
+  .cal-card .cal-cell-bar.start,.cal-cell-bar.start{margin-left:6px;border-top-left-radius:7px;border-bottom-left-radius:7px;box-shadow:inset 3px 0 0 var(--kc,#3A6EA5);padding-left:8px}
+  .cal-card .cal-cell-bar.end,.cal-cell-bar.end{margin-right:7px;border-top-right-radius:7px;border-bottom-right-radius:7px}
+  .cal-card .cal-cell-bar:not(.end)::after{content:"";float:right;width:0;height:0;margin-top:7px;border:3.5px solid transparent;border-left-color:color-mix(in srgb,var(--kc,#3A6EA5) 55%,transparent);margin-right:-2px}
+  .cal-card .cal-cell-lane-empty,.cal-cell-lane-empty{height:21px}
+  .cal-card .cal-cell.has:hover .cal-cell-bar{background:color-mix(in srgb,var(--kc,#3A6EA5) 24%,var(--card,#fff))}
+  html[data-mode="dark"] .cal-card .cal-cell-bar{background:color-mix(in srgb,var(--kc,#3A6EA5) 30%,transparent);color:var(--ink)}
   .ag-row.k-birthday .ag-name::before,.ag-row.k-holiday .ag-name::before,.ag-row.k-family .ag-name::before,.ag-row.k-couple .ag-name::before,.ag-row.k-work .ag-name::before{background:var(--kc);box-shadow:0 0 0 3px rgba(255,255,255,.35)}
 
 
@@ -3176,6 +3214,9 @@
 #mb .ib:focus-visible{outline:2px solid #fff}
 #mb .ib-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff}
 #mb .ib-f{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mb .ib-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8fd0ff;box-shadow:0 0 0 2px rgba(143,208,255,.25);margin:0 7px 1px 0;vertical-align:middle}
+#mb .ib-imp{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.04em;margin-left:8px;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,#f5b301 22%,transparent);color:inherit;vertical-align:1px}
+#mb .ib.ib-read .ib-f,#mb .ib.ib-read .ib-s{font-weight:500;opacity:.78}
 #mb .ib-s{font-size:14px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mb .ib-n{font-size:12.5px;color:var(--mb-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mb .ib-t{font-size:12px;color:var(--mb-dim);white-space:nowrap}
@@ -3367,8 +3408,8 @@ html.glass.sky .agenda-card.ag-card{
   background:radial-gradient(70% 50% at 100% 0%,color-mix(in srgb,var(--sun) 40%,transparent),transparent 70%),
              linear-gradient(170deg,var(--sky-top) 0%,var(--sky-mid) 62%,color-mix(in srgb,var(--sky-low) 70%,var(--sky-mid)) 100%);
   border:1px solid rgba(255,255,255,.14);box-shadow:0 26px 50px -28px color-mix(in srgb,var(--sky-top) 80%,#000)}
-html.glass.sky .ag-name{font-family:var(--disp);font-weight:300;letter-spacing:-.025em}
-html.glass.sky .ag-nowpill{color:var(--sky-top)}
+html.glass.sky .ag-card .ag-name{font-family:var(--disp);font-weight:400;letter-spacing:-.02em}
+html.glass.sky .ag-nowpill,html.glass.sky .ag-node svg{color:var(--sky-top);stroke:var(--sky-top)}
 
 /* loose controls that sit on the band */
 html.glass.sky .pbtn{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -5961,56 +6002,84 @@ function agendaItems(list, dateStr){
     const p = parseEventLead(ev.lead, ev.body, dateStr);
     const title = (p.title || (ev.body || "").split(" · ")[0] || ev.lead || "Event").replace(/\s*—\s*$/, "");
     const where = (ev.body || "").split(" · ").slice(1).join(" · ");
+    /* a multi-day event that is still running today keeps going past midnight: it is never "past"
+       today, and the row says when it ends instead of a same-day end time */
+    const through = (ev.endDate && dateStr && ev.endDate > dateStr) ? ev.endDate : null;
     out.push({
       i, title, where, dateStr: p.dateStr, isTodo: !!ev.isTodo, cat: ev.isTodo ? "todo" : calCat(ev.cat, ev.body),
-      start: p.startMin,
-      end: (p.endMin != null && p.startMin != null && p.endMin > p.startMin) ? p.endMin : null
+      start: p.startMin, through,
+      end: (!through && p.endMin != null && p.startMin != null && p.endMin > p.startMin) ? p.endMin : null
     });
   });
   // all-day / due items first, then by start time
   return out.sort((a, b) => (a.start == null ? -1 : a.start) - (b.start == null ? -1 : b.start) || a.i - b.i);
 }
-function agendaRowHTML(a, state){
-  const time = a.start == null
-    ? (a.isTodo ? "Due" : "All day")
-    : fmtClock(a.start) + (a.end != null ? " – " + fmtClock(a.end) : "");
-  return `<div class="ag-row k-${esc(a.cat || "personal")}${state ? " " + state : ""}${a.isTodo ? " is-todo" : ""}" title="${esc(a.where || a.title)}">
-      <div class="ag-time">${time}${state === "now" ? `<span class="ag-nowpill">Now</span>` : ""}</div>
-      <div class="ag-name">${esc(a.title)}</div>${a.where ? `<div class="ag-where">${esc(a.where)}</div>` : ""}
+/* ---------- Today card (Oct 12 redesign) ----------
+   Eli: "it shouldn't only highlight one thing" -- the old card lit up the all-day rows and faded
+   everything that had already happened to near-invisible, so one line shouted and the rest
+   whispered. Now every event reads at the same weight: all-day items sit as colour-keyed chips
+   up top, timed events run down a timeline with a time column, a coloured node per event (filled
+   with a check once it is done), and a live "now" marker drawn between what has happened and what
+   is next. Today only -- no Tomorrow group. */
+function agShortDay(ds){
+  return new Date(ds + "T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
+}
+function agChipHTML(a){
+  const lbl = a.isTodo ? "Due" : (a.through ? "Through " + agShortDay(a.through) : "All day");
+  return `<div class="ag-chip k-${esc(a.cat || "personal")}" title="${esc(a.where || a.title)}"><i></i><span class="ag-chip-t">${esc(a.title)}</span><span class="ag-chip-k">${esc(lbl)}</span></div>`;
+}
+function agEventHTML(a, state){
+  const endTxt = a.through ? "thru " + agShortDay(a.through) : (a.end != null ? fmtClock(a.end) : "");
+  const [hm, ap] = fmtClock(a.start).split(" ");
+  return `<div class="ag-ev k-${esc(a.cat || "personal")}${state ? " " + state : ""}" title="${esc(a.where || a.title)}">
+      <div class="ag-when"><b>${hm}<small>${ap}</small></b>${endTxt ? `<span>${esc(endTxt)}</span>` : ""}</div>
+      <div class="ag-node">${state === "past" ? `<svg viewBox="0 0 12 12"><path d="M3 6.2 5.1 8.3 9 4"/></svg>` : ""}</div>
+      <div class="ag-body"><div class="ag-name">${esc(a.title)}</div>${a.where ? `<div class="ag-where">${esc(a.where)}</div>` : ""}${state === "now" ? `<span class="ag-nowpill">Happening now</span>` : ""}</div>
     </div>`;
 }
-function agendaGroupHTML(label, dateTxt, items, nowMin, live){
-  const rows = items.map(a => {
-    let state = "";
-    if(live && a.start != null){
-      const end = a.end != null ? a.end : a.start + 30;
-      state = nowMin >= end ? "past" : (nowMin >= a.start ? "now" : "");
-    }
-    return agendaRowHTML(a, state);
-  }).join("");
-  return `<section class="ag-group">
-      <div class="ag-gl"><span>${label}</span><em>${esc(dateTxt)}</em></div>
-      ${rows || `<div class="ag-empty"><span class="ag-check">✓</span>Nothing scheduled</div>`}
-    </section>`;
-}
-function buildTodayScheduleHTML(todayList, todayDate, radarList){
+function buildTodayScheduleHTML(todayList, todayDate){
   const nowMin = (() => {
     const t = new Date().toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour12:false,hour:"2-digit",minute:"2-digit"});
-    return +t.slice(0,2)*60 + +t.slice(3,5);
+    return (+t.slice(0,2) % 24)*60 + +t.slice(3,5);
   })();
   const isToday = !todayDate || todayDate === todayCT();
   const base = todayDate ? new Date(todayDate + "T12:00:00") : new Date();
-  const short = d => d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
-  const tmw = new Date(base.getTime() + 864e5);
-  const tmwStr = `${tmw.getFullYear()}-${String(tmw.getMonth()+1).padStart(2,"0")}-${String(tmw.getDate()).padStart(2,"0")}`;
+  const items = agendaItems(todayList, todayDate);
+  const allDay = items.filter(a => a.start == null), timed = items.filter(a => a.start != null);
+  const stateOf = a => {
+    if(!isToday) return "";
+    const end = a.through ? 24*60 : (a.end != null ? a.end : a.start + 30);
+    return nowMin >= end ? "past" : (nowMin >= a.start ? "now" : "");
+  };
+  let rows = "", nowPlaced = !isToday, left = 0;
+  timed.forEach(a => {
+    const st = stateOf(a);
+    if(st !== "past") left++;
+    if(!nowPlaced && a.start > nowMin){
+      rows += `<div class="ag-nowline"><span>${esc(fmtClock(nowMin))}</span></div>`; nowPlaced = true;
+    }
+    rows += agEventHTML(a, st);
+  });
+  if(!nowPlaced && timed.length) rows += `<div class="ag-nowline"><span>${esc(fmtClock(nowMin))}</span></div>`;
 
-  const todayItems = agendaItems(todayList, todayDate);
-  let h = agendaGroupHTML("Today", short(base), todayItems, nowMin, isToday);
-  if(radarList){
-    const tomorrow = agendaItems(radarList, todayDate).filter(a => a.dateStr === tmwStr);
-    h += agendaGroupHTML("Tomorrow", short(tmw), tomorrow, nowMin, false);
-  }
-  return `<div class="bento-card agenda-card ag-card"><div class="ag-scroll">${h}</div></div>`;
+  const next = isToday ? timed.find(a => stateOf(a) === "now") || timed.find(a => a.start > nowMin) : null;
+  let sum;
+  if(!items.length) sum = "A clear day";
+  else if(!timed.length) sum = `${allDay.length} all-day item${allDay.length === 1 ? "" : "s"}`;
+  else if(!isToday) sum = `${timed.length} event${timed.length === 1 ? "" : "s"}`;
+  else if(next) sum = stateOf(next) === "now" ? `Now: ${next.title}` : `Next up at ${fmtClock(next.start)}`;
+  else sum = "All done for today";
+  const count = timed.length ? `<span class="ag-count"><b>${isToday ? left : timed.length}</b> ${isToday ? "to go" : "events"}</span>` : "";
+
+  return `<div class="bento-card agenda-card ag-card">
+    <div class="ag-top">
+      <div><div class="ag-kick">${isToday ? "Today" : esc(base.toLocaleDateString("en-US",{weekday:"long"}))}</div>
+        <div class="ag-date">${esc(base.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}))}</div>
+        <div class="ag-sum">${esc(sum)}</div></div>${count}
+    </div>
+    ${allDay.length ? `<div class="ag-chips">${allDay.map(agChipHTML).join("")}</div>` : ""}
+    <div class="ag-scroll">${timed.length ? `<div class="ag-line">${rows}</div>` : (items.length ? "" : `<div class="ag-empty"><span class="ag-check">✓</span>Nothing on the calendar. The day is yours.</div>`)}</div>
+  </div>`;
 }
 /* kept as a no-op: the old hour grid needed to be scrolled to the first event once on screen */
 function wireDayView(){}
@@ -15159,7 +15228,7 @@ function mbOpen(){
       <div class="mb-hits" id="mbHits"></div>
       <div class="mb-deck">
         <section class="mb-p" id="mbPf"><h3>Your portfolio <small id="mbPfS"></small></h3><div id="mbPfB"><span class="mb-ld"></span></div></section>
-        <section class="mb-p" id="mbIb"><h3>Important email <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
+        <section class="mb-p" id="mbIb"><h3>Inbox <small id="mbIbS"></small></h3><div id="mbIbB"><span class="mb-ld"></span></div></section>
         <section class="mb-p mb-wide" id="mbHl"><h3>Top headlines <small id="mbHlS"></small></h3><div id="mbHlB"><span class="mb-ld"></span></div></section>
         <section class="mb-p mb-wide" id="mbMk"><h3>Markets <small id="mbMkS"></small></h3><div id="mbMkB"><span class="mb-ld"></span></div></section>
       </div>
@@ -15552,11 +15621,29 @@ async function mbLoadNews(){
   }));
 }
 
-/* ---- inbox (Gmail Important + unread, last 24h) ---- */
+/* ---- inbox ----
+   Oct 12, 2026: the panel had never shown mail -- its only feed needed Gmail OAuth secrets that
+   were never set up. A Claude scheduled task now reads the inbox through Eli's Gmail connector
+   and seals it with the site's public key (scripts/seal_inbox.py, envelope v:"pk1"). The private
+   key is in data/inbox.key.enc, encrypted with the passphrase like everything else. The older
+   passphrase envelope from refresh_inbox.py still opens too. */
+let inboxKeyP = null;
+async function openInbox(env){
+  if(!env || env.v !== "pk1") return decryptEntry(env, PASS);
+  if(!inboxKeyP) inboxKeyP = (async () => {
+    const kf = await decryptEntry(await fetchDataFile("data/inbox.key.enc"), PASS);
+    return crypto.subtle.importKey("pkcs8", b64(kf.pkcs8), {name:"RSA-OAEP", hash:"SHA-256"}, false, ["decrypt"]);
+  })().catch(e => { inboxKeyP = null; throw e; });
+  const priv = await inboxKeyP;
+  const raw = await crypto.subtle.decrypt({name:"RSA-OAEP"}, priv, b64(env.k));
+  const aes = await crypto.subtle.importKey("raw", raw, {name:"AES-GCM"}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(env.iv)}, aes, b64(env.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
 async function mbLoadInbox(){
   const body = $("#mbIbB"); if(!body) return;
   let j = null, missing = false;
-  try{ j = await decryptEntry(await fetchDataFile("data/inbox.json.enc"), PASS); }
+  try{ j = await openInbox(await fetchDataFile("data/inbox.json.enc")); }
   catch(e){ missing = true; }
   if(!$("#mbIbB")) return;
   if(missing || !j || !j.connected){
@@ -15565,12 +15652,13 @@ async function mbLoadInbox(){
   }
   const items = j.items || [];
   const age = j.updated ? Date.now() - Date.parse(j.updated) : 0;
-  $("#mbIbS").textContent = (items.length ? `${j.total > items.length ? j.total : items.length} unread` : "") + (age > 3*3600e3 ? (items.length ? ", " : "") + "checked " + relTimeAgo(j.updated) : "");
-  if(!items.length){ body.innerHTML = `<div class="mb-empty">No important unread mail since yesterday.</div>`; return; }
+  const unread = j.unread != null ? j.unread : (j.source ? items.filter(m => m.unread).length : items.length);
+  $("#mbIbS").textContent = (unread ? `${unread} unread` : (items.length ? "all caught up" : "")) + (age > 3*3600e3 ? (items.length ? " · " : "") + "checked " + relTimeAgo(j.updated) : "");
+  if(!items.length){ body.innerHTML = `<div class="mb-empty">Inbox zero. Nothing new in the last few days.</div>`; return; }
   const hue = s => { let x = 0; for(const c of String(s)) x = (x*31 + c.charCodeAt(0)) >>> 0; return x % 360; };
-  body.innerHTML = items.slice(0, 5).map(m => `<a class="ib" href="https://mail.google.com/mail/u/0/#inbox/${encodeURIComponent(m.threadId||m.id)}" target="_blank" rel="noopener">
+  body.innerHTML = items.slice(0, 5).map(m => `<a class="ib${m.unread === false ? " ib-read" : ""}" href="https://mail.google.com/mail/u/0/#inbox/${encodeURIComponent(m.threadId||m.id)}" target="_blank" rel="noopener">
       <span class="ib-av" style="background:hsl(${hue(m.email||m.from)} 55% 46%)">${esc((m.from||"?").trim().charAt(0).toUpperCase())}</span>
-      <span style="min-width:0"><div class="ib-f">${esc(m.from)}</div><div class="ib-s">${esc(m.subject)}</div><div class="ib-n">${esc(m.snippet)}</div></span>
+      <span style="min-width:0"><div class="ib-f">${m.unread ? `<i class="ib-dot"></i>` : ""}${esc(m.from)}${m.important ? `<em class="ib-imp">Important</em>` : ""}</div><div class="ib-s">${esc(m.subject)}</div><div class="ib-n">${esc(m.snippet)}</div></span>
       <span class="ib-t">${esc(relTimeAgo(m.date))}</span></a>`).join("");
 }
 

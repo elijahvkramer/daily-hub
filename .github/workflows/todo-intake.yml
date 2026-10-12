@@ -1,0 +1,65 @@
+name: To-do Intake
+
+# Adds to-dos queued by Claude (scripts/queue_todo.py) to the Firestore list (todos/main).
+# Why: Claude's cloud sessions -- every phone chat -- cannot reach Firestore, so "add this to my
+# to-do list" used to depend on Eli's Mac being awake. GitHub is reachable from everywhere, so the
+# to-do is pushed into data/todo-queue/ and this workflow, which can reach Google, delivers it.
+# Fires on the push itself; Hub Heartbeat re-dispatches it if anything is ever left in the queue.
+on:
+  push:
+    branches: [main]
+    paths: ["data/todo-queue/**"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: todo-intake
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet cryptography
+
+      - name: Deliver queued to-dos to Firestore
+        env:
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
+        run: |
+          printf '%s' "$CAL_PASSPHRASE" > "$RUNNER_TEMP/p.txt"
+          set +e
+          python3 scripts/todo_intake.py "$RUNNER_TEMP/p.txt" .
+          rc=$?
+          rm -f "$RUNNER_TEMP/p.txt"
+          echo "rc=$rc" >> "$GITHUB_ENV"
+
+      - name: Clear delivered items from the queue
+        run: |
+          git config user.email "elijahvkramer@gmail.com"
+          git config user.name "Daily Hub Bot"
+          git add -A data/todo-queue
+          if git diff --cached --quiet; then echo "nothing to clear"; exit 0; fi
+          git commit -qm "to-do intake: delivered queued items"
+          for attempt in 1 2 3 4; do
+            git push -q origin HEAD:main && exit 0
+            sleep $((attempt * 4))
+            git pull -q --rebase origin main || { git rebase --abort; break; }
+          done
+          # Not fatal: the items are already in Firestore and intake is add-if-absent by id, so a
+          # leftover queue file is simply cleared on the next run.
+          echo "::warning::could not clear the queue this run; the next run will"
+
+      - name: Fail loudly if anything was left undelivered
+        if: env.rc != '0'
+        run: |
+          echo "::error::to-do intake did not deliver everything (exit $rc) -- see the step above"
+          exit 1

@@ -92,11 +92,11 @@ Time window — strict: Tuesday-Friday, only cover things that happened in the p
 
 Every article you rely on must carry a visible publication date inside the window; an undated page is not evidence of timing.
 
-**Dates are verified by code, so record them honestly (Oct 8, 2026).** An edition ran a Kentucky "pro day" story under today's dateline that cited a 2025 article — an annual event is exactly how last year's coverage passes for today's. Every item therefore carries `published`: the ISO date (`YYYY-MM-DD`) printed on the article page you read, copied from the page, never assumed, never today's date by default. If you cannot find a publication date on the page, do not use that article. For anything that recurs every year (a pro day, a combine, a draft, a trade deadline, an earnings date, an anniversary, a budget vote), confirm the year on the page before you write a word. `scripts/news_guard.py` re-reads each article's own date after you publish and deletes anything older than four days, so a wrong or missing date costs you the story.
+**Dates are verified by code, so record them honestly (Oct 8, 2026).** An edition ran a Kentucky "pro day" story under today's dateline that cited a 2025 article — an annual event is exactly how last year's coverage passes for today's. Every item therefore carries `published`: the ISO date (`YYYY-MM-DD`) printed on the article page you read, copied from the page, never assumed, never today's date by default. If you cannot find a publication date on the page, do not use that article. For anything that recurs every year (a pro day, a combine, a draft, a trade deadline, an earnings date, an anniversary, a budget vote), confirm the year on the page before you write a word. `scripts/news_guard.py` opens each article page and reads the page's OWN publication metadata — the date you type into `published` is never trusted (Oct 12, 2026: a run stamped 2026-10-10 on a CBS Sports article from 2023, the year Oklahoma beat Texas 34-30; Eli caught it). Anything older than four days, or whose page shows no date at all, is deleted. The readiness check below does the same page read before you publish, so you see the real date first. Before writing any story, look at the date on the article itself, and for any recurring event (a rivalry game, a pro day, a draft, an election, an earnings date) confirm the YEAR — a search result about "Oklahoma vs. Texas" may well be from a previous season.
 
 **Depth floor.** Every section must carry at least 4 items — never one, never zero (Tech sat empty for days in early October because the rules above ate every candidate). If fewer than 4 qualify, in this order: (a) look one more time with a different query and different outlets (trade press, regional papers, beat writers, wire services); (b) for a genuinely new development on a story that already ran, report the development as its own item; (c) use the full window, including the evening before. Do not pad with undated or out-of-window items. The guard tops up anything still short from fresh wire feeds, but those fillers have no `detail` page — yours should always be better.
 
-Topics, in this order (each its own section; if a topic looks quiet, search again before giving up — a "nothing new" note is a last resort, not a default; never pad with stale stories):
+Topics, in this order (each its own section; if a topic looks quiet, search again with different outlets — there is no such thing as a quiet section, and an empty or one-story section is never acceptable; never pad with stale stories):
 
 1. US Military & Foreign Conflict
 2. Politics & Policy
@@ -147,6 +147,14 @@ Write `/tmp/news.json`:
 ```
 
 Photos: see "Source + photo per item" above — `img` from the article itself first, `imgQuery` only as a fallback, never the same `imgQuery` twice in one section. A missing photo is fine; a wrong one is not. Validate: `python3 -c "import json;json.load(open('/tmp/news.json'))"`.
+
+**Mandatory readiness check (Oct 12, 2026).** That morning's edition shipped with two stories in total — the run decided it was "a quiet weekend" and left four sections empty. A weekend (Monday's 72-hour window) has MORE news than a weekday, never less. Before you encrypt anything, run:
+
+```
+python3 scripts/enforce_news.py --check /tmp/news.json --date=$(date -u +%F)
+```
+
+It must print `READY`. If it prints `NOT READY`, every line it lists is a defect: go back to research (new queries, different outlets — wire services, regional papers, trade press, beat writers) and fix each one, then run the check again. Do not publish until it says READY. Never write glance chips, a subtitle or a headline that call a section or the day "quiet", "light" or "slow". After you publish, a deterministic floor (`scripts/enforce_news.py`) runs in the workflow and tops up any section still under four stories from wire feeds — those fillers are noticeably worse than your stories, so treat it as a safety net you should never need.
 
 Encrypt and publish the same way as market (own commit or combined):
 

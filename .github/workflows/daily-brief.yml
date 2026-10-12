@@ -25,7 +25,15 @@ on:
     - cron: "7 12 * * *"
     - cron: "7 13 * * *"
 
-  workflow_dispatch: {}
+  # `auto: true` is how Hub Heartbeat (hub-heartbeat.yml) asks for the brief: it still goes through
+  # the publish guard below, so it can never publish twice. A plain manual run (auto unset) skips
+  # the guard and always redoes the day, as before.
+  workflow_dispatch:
+    inputs:
+      auto:
+        description: "Set by Hub Heartbeat; leave false to force a redo"
+        required: false
+        default: "false"
 
 jobs:
   publish:
@@ -57,7 +65,7 @@ jobs:
       #    PRIOR trading day's close, which is final long before 4am.
       - name: Decide whether this tick should publish
         id: guard
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.auto == 'true'
         run: |
           HOUR=$(TZ="America/Chicago" date +%-H)
           TODAY=$(date -u +%F)
@@ -91,6 +99,34 @@ jobs:
         env:
           CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
 
+      # THE NEWS FLOOR (Oct 12, 2026). The model published a two-story edition ("a quiet weekend")
+      # and this job went green, because nothing after the model ever counted the stories. This
+      # step is deterministic Python: it drops stale stories, tops every section up to at least
+      # four from fresh publisher feeds (widening the window if needed), gives fillers their own
+      # article text, and repairs "quiet day" framing. If the model published nothing at all it
+      # builds the edition from the feeds, so News can never be empty. Runs even if the model
+      # step crashed.
+      - name: Enforce the news floor
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
+        run: |
+          printf '%s' "$CAL_PASSPHRASE" > "$RUNNER_TEMP/p.txt"
+          git config user.email "elijahvkramer@gmail.com"
+          git config user.name "Daily Hub Bot"
+          TODAY=$(date -u +%F)
+          for attempt in 1 2 3 4; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            python3 scripts/enforce_news.py "$RUNNER_TEMP/p.txt" . --date="$TODAY"
+            git add -A data
+            if git diff --cached --quiet; then echo "edition already meets the floor"; break; fi
+            git commit -qm "news floor: $TODAY"
+            if git push -q origin HEAD:main; then echo "pushed"; break; fi
+            sleep $((attempt * 5))
+          done
+          rm -f "$RUNNER_TEMP/p.txt"
+
       # The action fails the job whenever Claude exceeds --max-turns, even when the brief
       # published perfectly. That is exactly what happened 2026-09-04: the brief published
       # at 6:57am and the run still went red, at 105 turns against a cap of 100. Run status
@@ -99,13 +135,31 @@ jobs:
       # today genuinely did not publish.
       - name: Verify today actually published
         if: steps.guard.outputs.skip != 'true'
+        env:
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
         run: |
           TODAY=$(date -u +%F)
           git fetch -q --depth=1 origin main
           git show origin/main:data/manifest.json > /tmp/verify.json
-          if TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/verify.json')).get('news',[]) else 1)"; then
-            echo "$TODAY published successfully."
-          else
+          if ! TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/verify.json')).get('news',[]) else 1)"; then
             echo "::error::$TODAY did NOT publish -- the brief is missing from the manifest."
             exit 1
           fi
+          # Published is not enough: count the stories (Oct 12 shipped two and went green).
+          printf '%s' "$CAL_PASSPHRASE" > "$RUNNER_TEMP/p.txt"
+          git show "origin/main:data/news/$TODAY.json.enc" > "$RUNNER_TEMP/n.enc"
+          python3 scripts/decrypt_calendar.py "$RUNNER_TEMP/n.enc" "$RUNNER_TEMP/p.txt" "$RUNNER_TEMP/n.json" >/dev/null
+          rm -f "$RUNNER_TEMP/p.txt"
+          python3 - "$RUNNER_TEMP/n.json" <<'PY'
+          import json, sys
+          sys.path.insert(0, "scripts")
+          import news_guard
+          counts = news_guard.section_counts(json.load(open(sys.argv[1])))
+          print("section counts:", counts)
+          thin = [t for t, n in counts.items() if n < news_guard.MIN_ITEMS]
+          if thin:
+              print("::error::news floor not met (fewer than %d stories) in: %s" % (news_guard.MIN_ITEMS, ", ".join(thin)))
+              sys.exit(1)
+          print("every section meets the floor")
+          PY
+          rm -f "$RUNNER_TEMP/n.json" "$RUNNER_TEMP/n.enc"

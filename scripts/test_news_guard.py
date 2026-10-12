@@ -58,9 +58,27 @@ class Guard(unittest.TestCase):
             {"lead": "No link at all"},
         ]}]}
         dropped = g.drop_stale(ed, NOW, lambda u, t=12, mb=0: (200, "", pages[u], None), {"page": 5})
-        self.assertEqual(len(dropped), 1)
+        self.assertEqual(len(dropped), 2)                 # the 2025 page, and the story with no source to vet
         self.assertIn("pro day", dropped[0])
-        self.assertEqual([i["lead"] for i in ed["sections"][0]["items"]], ["Giants name starter", "No link at all"])
+        self.assertEqual([i["lead"] for i in ed["sections"][0]["items"]], ["Giants name starter"])
+
+    def test_brief_claimed_date_is_not_trusted_oct12(self):
+        """Oct 12, 2026: the brief wrote published=2026-10-10 on a 2023 CBS Sports article."""
+        page = b'<meta property="article:published_time" content="2023-10-08T13:00:00Z">'
+        ed = {"sections": [{"title": "Sports", "items": [
+            {"lead": "No. 12 Oklahoma shocked No. 3 Texas 34-30", "published": "2026-10-10",
+             "url": "https://www.cbssports.com/college-football/news/week-6-report-card"}]}]}
+        now = datetime.datetime(2026, 10, 12, 15, 0, tzinfo=UTC)
+        dropped = g.drop_stale(ed, now, lambda u, t=12, mb=0: (200, "", page, None), {"page": 5})
+        self.assertEqual(len(dropped), 1)
+        self.assertIn("2023", dropped[0])
+        self.assertEqual(ed["sections"][0]["items"], [])
+
+    def test_check_plain_reads_the_page(self):
+        page = b'<meta property="article:published_time" content="2023-10-08T13:00:00Z">'
+        ed = {"sections": [{"title": "Sports", "items": [{"lead": "Old game", "published": "2026-10-10", "url": "https://x/y"}]}]}
+        probs = g.check_plain(ed, "2026-10-12", fetch=lambda u, t=12, mb=0: (200, "", page, None))
+        self.assertTrue(any("ARTICLE IS OLD" in p and "2023-10-08" in p for p in probs))
 
     def test_page_checked_once(self):
         calls = []
@@ -131,6 +149,61 @@ class TopUp(unittest.TestCase):
         before = [len(s["items"]) for s in ed["sections"]]
         g.top_up(ed, NOW, self.pool())
         self.assertEqual(before, [len(s["items"]) for s in ed["sections"]])
+
+
+class Enforce(unittest.TestCase):
+    """Oct 12, 2026: an edition with two stories in total must come out full."""
+    def fake_web(self):
+        recent = rfc(datetime.datetime.now(UTC) - datetime.timedelta(hours=6))
+        def items(prefix, words, n=8):
+            import random
+            r = random.Random(prefix)
+            junk = lambda: " ".join("".join(r.choice("bcdfgklmnprstvz") + r.choice("aeiou") for _ in range(3)) for _ in range(5))
+            return [(f"{words[i % len(words)]} {junk()}", f"https://{prefix}/{i}", "", recent, None) for i in range(n)]
+        mil = ["Ukraine drone strike", "Pentagon troops deploy", "Israel ceasefire", "Navy warship missile"]
+        pol = ["Senate passes bill", "White House policy", "Supreme Court vote", "Governor election"]
+        feeds = {}
+        for url, (outlet, b) in g.FEEDS.items():
+            if b & {"world", "us"}:
+                feeds[url] = rss(items(outlet.replace(" ", "") + "w", mil + pol))
+            elif "tech" in b:
+                feeds[url] = rss(items(outlet.replace(" ", "") + "t", ["AI model", "chip launch"]))
+            elif b & {"science", "odd"}:
+                feeds[url] = rss(items(outlet.replace(" ", "") + "s", ["comet", "record-breaking pumpkin"]))
+            else:
+                feeds[url] = rss(items(outlet.replace(" ", "") + "x", ["NFL", "Kentucky Wildcats", "UFC"]))
+        paras = ["Officials confirmed on Saturday that the measure passed after a long night of negotiation between both parties in the chamber.",
+                 "Analysts said the outcome would reshape spending priorities for the coming fiscal year and could shift several state budgets as well.",
+                 "Critics warned that implementation details remain unclear, and several advocacy groups said they would challenge parts of it in court.",
+                 "The next step is a review by the committee, which is expected to publish its findings before the end of the month according to aides."]
+        page = ("<html><body>" + "".join(f"<p>{x}</p>" for x in paras) + "</body></html>").encode()
+        def fetch(u, t=12, mb=0):
+            if u in feeds:
+                return 200, "", feeds[u], None
+            return 200, "", page, None
+        return fetch
+
+    def test_two_story_edition_is_filled_and_reframed(self):
+        today = datetime.datetime.now(UTC).date().isoformat()
+        ed = g.skeleton(today)
+        ed["subtitle"] = "A quiet weekend on the US political and military front."
+        ed["glance"][1]["teaser"] = "Light weekend news cycle"
+        ed["sections"][3]["items"] = [{"lead": "Labour held the seat.", "body": "x", "url": "https://es/1", "published": today}]
+        ed.pop("auto_edition")
+        changed, rep = g.enforce(ed, today, "/nonexistent", "pw", lambda *a: {}, self.fake_web())
+        self.assertTrue(changed)
+        self.assertEqual(rep["still_thin"], [], rep["section_counts"])
+        self.assertNotIn("quiet", ed["subtitle"].lower())
+        self.assertNotIn("Light", ed["glance"][1]["teaser"])
+        self.assertGreater(rep["details_added"], 0)
+        self.assertTrue(any(i.get("detail") for s in ed["sections"] for i in s["items"] if i.get("auto")))
+
+    def test_check_plain_flags_thin_and_quiet(self):
+        ed = g.skeleton("2026-10-12")
+        ed["glance"][0]["teaser"] = "A quiet weekend"
+        probs = g.check_plain(ed, "2026-10-12")
+        self.assertEqual(sum("needs at least" in p for p in probs), 6)
+        self.assertTrue(any("quiet" in p for p in probs))
 
 
 if __name__ == "__main__":

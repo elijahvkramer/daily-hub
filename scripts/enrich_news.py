@@ -475,14 +475,17 @@ def main():
     # so stale stories never get a photo spent on them, and fillers arrive with their own.
     guard_changed, guard = False, {}
     try:
-        guard_changed, guard = news_guard.run(
+        # enforce() = run() + widened top-up + filler article text + framing repair (Oct 12)
+        guard_changed, guard = news_guard.enforce(
             edition, date, repo, passphrase, decrypt_json,
             lambda u, t=12, mb=700_000: get(u, timeout=t, max_bytes=mb))
         for line in guard["dropped_stale"]:
             print(f"  - dropped stale story: {line}")
         if guard["added"]:
             print(f"  + topped up from feeds: {guard['added']}")
-        print(f"  section counts: {guard['section_counts']} (feeds ok {guard['feeds_ok']}, pool {guard['pool']})")
+        if guard.get("widened"):
+            print(f"  + widened top-up: {guard['widened']}")
+        print(f"  section counts: {guard['section_counts']} (feeds ok {guard['feeds_ok']}, pool {guard['pool']}, still thin: {guard.get('still_thin')})")
     except Exception as e:  # noqa: BLE001
         print(f"  ! news guard failed (edition left as-is): {e}", file=sys.stderr)
 
@@ -538,7 +541,9 @@ def _write_status(repo, date, items, missing, filled, got, videos, guard):
               "section_counts": guard.get("section_counts", {}),
               "dropped_stale": len(guard.get("dropped_stale", [])),
               "topped_up": sum(guard.get("added", {}).values()),
-              "guard_feeds_ok": guard.get("feeds_ok", 0)}
+              "guard_feeds_ok": guard.get("feeds_ok", 0),
+              "still_thin": guard.get("still_thin", []),
+              "details_added": guard.get("details_added", 0)}
     try:
         with open(os.path.join(repo, "data", "news.status.json"), "w") as f:
             json.dump({"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), **status}, f, indent=1)

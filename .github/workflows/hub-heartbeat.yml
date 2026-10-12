@@ -1,0 +1,81 @@
+name: Hub Heartbeat
+
+# Why this exists (Oct 12, 2026): GitHub's cron is best-effort, and for this repo it is often
+# much worse than that. Calendar Refresh asks for ~100 runs a weekday; on Oct 12 GitHub ran it
+# at 09:45 UTC and then not once for the next nine hours. Everything that rides on it -- the
+# news repair, portfolio quotes, rates, inbox, the calendar itself -- froze with it, and the
+# two-story news edition published that morning was never repaired.
+#
+# The fix is to stop depending on the scheduler for the heartbeat. This job stays alive for
+# ~5h40m and, every 15 minutes, dispatches Calendar Refresh itself (and the morning brief, when
+# it is due and not yet published). Before it ends it dispatches the next heartbeat, so the
+# chain carries itself around the clock. Dispatches made with the workflow's own token DO start
+# runs (workflow_dispatch is the documented exception to the "GITHUB_TOKEN events don't trigger
+# workflows" rule). The two cron lines below are only a restart in case the chain ever breaks;
+# the concurrency group keeps it to one heartbeat at a time. The repo is public, so these
+# Actions minutes are free.
+on:
+  workflow_dispatch: {}
+  # pushing a change to this file starts the chain right away
+  push:
+    branches: [main]
+    paths: [".github/workflows/hub-heartbeat.yml"]
+  schedule:
+    - cron: "17 * * * *"
+    - cron: "47 * * * *"
+
+concurrency:
+  group: hub-heartbeat
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  beat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Tick every 15 minutes
+        run: |
+          end=$(( $(date +%s) + 335*60 ))
+          busy() {   # queued / in-progress runs of a workflow file
+            gh run list -R "$REPO" -w "$1" -L 10 --json status \
+              -q '[.[] | select(.status != "completed")] | length' 2>/dev/null || echo 1
+          }
+          while [ "$(date +%s)" -lt "$end" ]; do
+            stamp="$(TZ=America/Chicago date +'%a %H:%M %Z')"
+            if [ "$(busy calendar-refresh.yml)" = "0" ]; then
+              gh workflow run calendar-refresh.yml -R "$REPO" --ref main && echo "$stamp  calendar refresh dispatched" \
+                || echo "$stamp  calendar refresh dispatch failed"
+            else
+              echo "$stamp  calendar refresh already queued/running"
+            fi
+
+            # to-dos queued from a phone chat (scripts/queue_todo.py) that a push trigger missed
+            queued=$(gh api "repos/$REPO/contents/data/todo-queue?ref=main" -q '[.[] | select(.name | endswith(".json"))] | length' 2>/dev/null || echo 0)
+            if [ "${queued:-0}" != "0" ] && [ "$(busy todo-intake.yml)" = "0" ]; then
+              gh workflow run todo-intake.yml -R "$REPO" --ref main && echo "$stamp  to-do intake dispatched ($queued queued)"
+            fi
+
+            HOUR=$(TZ=America/Chicago date +%-H)
+            TODAY=$(date -u +%F)
+            if [ "$HOUR" -ge 4 ] && [ "$HOUR" -le 17 ]; then
+              published=$(gh api "repos/$REPO/contents/data/manifest.json?ref=main" -q .content 2>/dev/null \
+                | base64 -d 2>/dev/null \
+                | T="$TODAY" python3 -c "import json,os,sys; print('yes' if os.environ['T'] in json.load(sys.stdin).get('news',[]) else 'no')" 2>/dev/null \
+                || echo unknown)
+              if [ "$published" = "no" ] && [ "$(busy daily-brief.yml)" = "0" ]; then
+                gh workflow run daily-brief.yml -R "$REPO" --ref main -f auto=true && echo "$stamp  morning brief dispatched"
+              fi
+            fi
+            sleep 900
+          done
+
+      - name: Hand off to the next heartbeat
+        if: always()
+        run: gh workflow run hub-heartbeat.yml -R "$REPO" --ref main

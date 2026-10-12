@@ -15,7 +15,7 @@ Every source is independent and best-effort: a symbol that cannot be fetched is 
 site falls back to its live path. The file is rebuilt at most every REBUILD_HOURS (it moves once a day,
 and every rebuild is a commit), and never fails the calendar refresh that runs it.
 
-Layout: {"v": 2, "updated": iso, "series": {"<site symbol>": {"t": [epoch...], "c": [close...]}}}
+Layout: {"v": 3, "updated": iso, "series": {"<site symbol>": {"t": [epoch...], "c": [close...]}}}
 Oct 2026 fix (Eli: "5Y shows day by day through 2026/2025, then only Sunday by Sunday further back"):
 every series is now kept at the source's own resolution (daily) for the whole ~5 years. The old
 thin() collapsed everything older than 400 days to one point per ISO week, so the chart's density
@@ -46,7 +46,8 @@ from dh_crypto import decrypt_json, encrypt_json, read_passphrase  # noqa: E402
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
 REBUILD_HOURS = 6
-FORMAT_VERSION = 2        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning
+FORMAT_VERSION = 3        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
+                          # v3 = BTC/ETH from CryptoCompare (v2 had CoinGecko's 365 days, and no crypto in the All file)
 MAX_DAYS = 1830           # ~5 years
 ALL_REBUILD_HOURS = 24
 ALL_START_YEAR = 1990     # Treasury daily par yield curve data starts in 1990 for these maturities

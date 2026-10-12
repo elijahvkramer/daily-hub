@@ -25,15 +25,16 @@ const src = [
   grabLine("const esc ="), grabFunction("longDate"), grabFunction("fullDate"),
   grabLine("const dayEpoch"), grabLine("const MON3"), grabFunction("niceTimeTicks"), grabFunction("dateAxisSVG"),
   grabFunction("placeChartTip"), grabFunction("drawSmChart"),
+  grabLine("const BOARD_SPAN_DAYS"), grabFunction("boardWindowStart"), grabFunction("boardSliceSparse"), grabFunction("boardSliceShort"),
   "const usd = (v,d) => '$' + Number(v).toFixed(d == null ? 2 : d);",
-  "this.api = { niceTimeTicks, dateAxisSVG, drawSmChart, dayEpoch, fullDate, longDate };"
+  "this.api = { boardSliceSparse, boardSliceShort, niceTimeTicks, dateAxisSVG, drawSmChart, dayEpoch, fullDate, longDate };"
 ].join("\n");
 
 const stubEl = () => ({ addEventListener(){}, setAttribute(){}, style:{}, getBoundingClientRect: () => ({left:0,width:760}) });
 const ctx = { $: () => stubEl(), console };
 vm.createContext(ctx);
 vm.runInContext(src, ctx);
-const { niceTimeTicks, drawSmChart, dayEpoch, fullDate } = ctx.api;
+const { niceTimeTicks, drawSmChart, dayEpoch, fullDate, boardSliceSparse, boardSliceShort } = ctx.api;
 
 const DAY = 86400;
 const iso = e => new Date(e * 1000).toISOString().slice(0, 10);
@@ -114,6 +115,30 @@ t("bottom axis: calendar ticks with years, no weekday-only end labels", () => {
 t("single-day and two-point series don't blow up", () => {
   xsOf([{ x: end, d: iso(end), v: 1 }], { dateAxis: true, fmtTip: () => "" });
   xsOf([{ x: end - DAY, d: "", v: 1 }, { x: end, d: "", v: 2 }], { dateAxis: true, fmtTip: () => "" });
+});
+
+/* ---- Bitcoin: the server history was capped at one year, so a "5Y" slice was really 1Y ---- */
+const nowS = Date.now() / 1000;
+const daily = days => { const t = []; for(let d = days; d >= 0; d--) t.push(nowS - d * DAY); return { t, c: t.map((_, i) => 100 + i) }; };
+t("a 1-year series is flagged as short for 5Y, but not for 1Y / 6M / 1M", () => {
+  const btc = daily(365);
+  assert.strictEqual(boardSliceShort(btc, "5Y"), true);
+  for(const rk of ["1Y", "6M", "3M", "1M"]) assert.strictEqual(boardSliceShort(btc, rk), false, rk);
+});
+t("a real 5-year series is not short, and ALL is never judged short", () => {
+  assert.strictEqual(boardSliceShort(daily(1830), "5Y"), false);
+  assert.strictEqual(boardSliceShort(daily(365), "ALL"), false);
+});
+t("YTD only counts as short if it misses a large part of the year", () => {
+  assert.strictEqual(boardSliceShort(daily(400), "YTD"), false);
+  assert.strictEqual(boardSliceShort(daily(10), "YTD"), nowS - Date.UTC(new Date().getFullYear(), 0, 1) / 1000 > 17 * DAY);
+});
+t("weekly-thinned old data is still flagged sparse", () => {
+  const t0 = []; for(let d = 1830; d > 400; d -= 7) t0.push(nowS - d * DAY); for(let d = 400; d >= 0; d--) t0.push(nowS - d * DAY);
+  assert.strictEqual(boardSliceSparse({ t: t0, c: t0.map(() => 1) }, "5Y"), true, "the old thinned file (~600 points over 5 years) must be flagged");
+  assert.strictEqual(boardSliceSparse(daily(1830), "5Y"), false, "a daily series must not be");
+  const weekly = []; for(let d = 1830; d >= 0; d -= 7) weekly.push(nowS - d * DAY);
+  assert.strictEqual(boardSliceSparse({ t: weekly, c: weekly.map(() => 1) }, "5Y"), true);
 });
 
 console.log(`\n${n} tests passed`);

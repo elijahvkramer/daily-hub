@@ -68,6 +68,49 @@ class FreshnessTests(unittest.TestCase):
         self.assertFalse(rh.is_fresh({}, 6, 8, rh.FORMAT_VERSION))
 
 
+class CryptoTests(unittest.TestCase):
+    def rows(self, n):
+        now = int(time.time()) // DAY * DAY
+        return [{"time": now - (n - i) * DAY, "close": 0 if i < 5 else 100.0 + i} for i in range(n + 1)]
+
+    def test_full_history_and_pre_listing_zeros_skipped(self):
+        resp = mock.Mock(); resp.json.return_value = {"Data": {"Data": self.rows(4000)}}
+        with mock.patch.object(rh, "get", return_value=resp):
+            allh = rh.cryptocompare_history(None, "BTC", None)
+            five = rh.cryptocompare_history(None, "BTC", rh.MAX_DAYS)
+        self.assertEqual(len(allh["t"]), 4001 - 5)             # whole history, zeros dropped
+        self.assertLessEqual(len(five["t"]), 1832)             # main file keeps ~5 years
+        self.assertGreater(len(five["t"]), 1800, "BTC's 5Y must really be five years (CoinGecko gave one)")
+
+    def test_build_series_btc_covers_five_years_and_all(self):
+        resp = mock.Mock(); resp.json.return_value = {"Data": {"Data": self.rows(4000)}}
+        with mock.patch.object(rh, "get", return_value=resp), \
+             mock.patch.object(rh, "treasury_history", return_value={}), \
+             mock.patch.object(rh, "mortgage_history", return_value={}), \
+             mock.patch.object(rh, "cnbc_history", return_value=None):
+            main, _ = rh.build_series(None, {}, rh.MAX_DAYS)
+            allf, _ = rh.build_series(None, {}, None)
+        self.assertGreater(len(main["BTC-USD"]["t"]), 1800)
+        self.assertGreater(len(allf["BTC-USD"]["t"]), 3900)
+
+    def test_falls_back_to_coingecko_only_for_the_main_file(self):
+        cg = {"prices": [[(int(time.time()) - (400 - i) * DAY) * 1000, 100.0 + i] for i in range(401)]}
+        cgr = mock.Mock(); cgr.json.return_value = cg
+
+        def fake_get(session, url, timeout=25):
+            if "cryptocompare" in url:
+                raise RuntimeError("down")
+            return cgr
+        with mock.patch.object(rh, "get", fake_get), mock.patch.object(rh, "time") as tm, \
+             mock.patch.object(rh, "treasury_history", return_value={}), mock.patch.object(rh, "mortgage_history", return_value={}), \
+             mock.patch.object(rh, "cnbc_history", return_value=None):
+            tm.time.side_effect = time.time
+            main, _ = rh.build_series(None, {}, rh.MAX_DAYS)
+            allf, _ = rh.build_series(None, {}, None)
+        self.assertIn("BTC-USD", main)          # one year is better than nothing for the main file
+        self.assertNotIn("BTC-USD", allf)       # but a one-year series must never pose as "all time"
+
+
 class CnbcTests(unittest.TestCase):
     def test_finer_range_wins_where_ranges_overlap(self):
         now = int(time.time())

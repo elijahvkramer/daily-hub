@@ -9614,12 +9614,26 @@ function closeBoardModal(){
   if(BM && BM._esc) document.removeEventListener("keydown", BM._esc);
   BM = null;
 }
-/* A server slice is "sparse" when it holds clearly fewer points than a daily series would for its span
-   (the pre-Oct-2026 file kept one point a WEEK beyond 13 months). ALL is mixed density by nature, so exempt. */
+/* Where a window should begin (epoch s), or null for ALL. */
+function boardWindowStart(rk){
+  if(rk === "YTD") return Date.UTC(new Date().getFullYear(), 0, 1) / 1000;
+  return BOARD_SPAN_DAYS[rk] ? Date.now()/1000 - BOARD_SPAN_DAYS[rk]*86400 : null;
+}
+/* A server slice is not good enough to draw when it is either
+     sparse     -- clearly fewer points than a daily series would hold for its span (the pre-Oct-2026 file kept one
+                   point a WEEK beyond 13 months), or
+     short      -- it doesn't reach back to the start of the window. Bitcoin's server history came from a source
+                   capped at one year, so its "5Y" slice was really 1Y and passed for 5Y (Eli, Oct 2026).
+   ALL is mixed density and open-ended by nature, so only the window ranges are judged. */
 function boardSliceSparse(sl, rk){
   if(!sl || rk === "ALL") return false;
   const n = sl.t.length, days = (sl.t[n-1] - sl.t[0]) / 86400;
   return days > 20 && n < days * 0.55;
+}
+function boardSliceShort(sl, rk){
+  const start = boardWindowStart(rk); if(!sl || start == null) return false;
+  const windowDays = (Date.now()/1000 - start) / 86400;
+  return (sl.t[0] - start) / 86400 > Math.max(7, windowDays * 0.08);
 }
 async function boardSeries(sym, rk){
   S.boardSer = S.boardSer || {};
@@ -9631,15 +9645,18 @@ async function boardSeries(sym, rk){
   const fromHist = async () => {
     await Promise.all([boardHistory(), rk === "ALL" ? boardHistoryAll() : null]);
     const sl = boardHistSlice(sym, rk);
-    return sl ? { price: sl.c[sl.c.length-1], prev: sl.c[0], series: { t: sl.t, c: sl.c, daily: true }, sparse: boardSliceSparse(sl, rk) } : null;
+    return sl ? { price: sl.c[sl.c.length-1], prev: sl.c[0], series: { t: sl.t, c: sl.c, daily: true },
+                  sparse: boardSliceSparse(sl, rk), short: boardSliceShort(sl, rk) } : null;
   };
   const liveDaily = (ms) => withDeadline(boardChart(sym, cfg.r, cfg.i), ms, null);
   let q = null;
   if(rk !== "1D" && rk !== "1W") q = await fromHist();          // multi-month windows are daily closes anyway
-  /* the server file is thinner than daily for this window: prefer the live daily bars, keep the file as the fallback */
-  if(q && q.sparse && !isMort){
+  /* the server file is thinner than daily, or doesn't reach back far enough, for this window: prefer the live
+     daily bars, and keep the file as the fallback (flagged, so the chart can say what it is really showing) */
+  if(q && (q.sparse || q.short) && !isMort){
     const lv = await liveDaily(rk === "5Y" ? 9000 : 6500);
-    if(lv && lv.series && lv.series.c && lv.series.c.length > q.series.c.length) q = lv;
+    const lt = lv && lv.series && lv.series.t, lc = lv && lv.series && lv.series.c;
+    if(lc && lc.length > q.series.c.length && (!q.short || (lt && lt[0] < q.series.t[0]))) q = lv;
   }
   /* today's shape is already on the board from the live quote: use it instantly, no new request */
   if(!q && rk === "1D"){ const h = S.boardLive && S.boardLive[sym]; if(h && h.series && h.series.c && h.series.c.filter(v => v != null).length >= 3) q = h; }
@@ -9706,8 +9723,12 @@ async function renderBoardChart(){
   if(raw.length < 2 && !cur._alt){
     /* this window has nothing right now: show the nearest one that does, and say so */
     cur._alt = true;
-    for(const alt of ["1M","3M","1W","6M","1Y","YTD","5Y","1D"]){
+    /* only try windows that can answer instantly (already cached, or cut from the server history): trying
+       each one over the network in turn left the spinner going for the better part of a minute */
+    for(const alt of ["1Y","6M","3M","1M","YTD","5Y","1W","1D"]){
       if(alt === rk) continue;
+      const cached = S.boardSer && S.boardSer[cur.sym + "|" + alt];
+      if(!cached && !(alt !== "1D" && alt !== "1W" && boardHistSlice(cur.sym, alt)) && !(alt === "1D" && S.boardLive && S.boardLive[cur.sym])) continue;
       const qa = await boardSeries(cur.sym, alt);
       if(BM !== cur) return;
       const ok = qa && qa.series && qa.series.c && qa.series.c.filter(v => v != null).length >= 2;
@@ -9733,6 +9754,10 @@ async function renderBoardChart(){
   const etOpts = {timeZone:"America/New_York"};
   const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA", etOpts);
   /* header: the change AND the dates it spans, with the year (the old end labels said "Fri, Oct 18" and nothing else) */
+  if(q.short && !cur._note && rk !== "ALL"){
+    const yrs = (raw[raw.length-1].ts - raw[0].ts) / 86400 / 365.25;
+    cur._note = `only ${yrs < 1 ? Math.max(1, Math.round(yrs*12)) + " months" : yrs.toFixed(1) + " years"} of history available`;
+  }
   const spanTxt = (rk === "1D") ? esc(BOARD_RANGES[rk].lab) : `${esc(fullDate(dstr(raw[0].ts)))} \u2192 ${esc(fullDate(dstr(raw[raw.length-1].ts)))}`;
   if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${spanTxt}${cur._note ? ` · <i style="font-style:normal;color:var(--muted)">${esc(cur._note)}</i>` : ""}`;
   if(rk === "1D"){

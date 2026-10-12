@@ -62,6 +62,10 @@ CNBC_CHART = "https://ts-api.cnbc.com/harmony/app/charts/{rng}.json?symbol={sym}
 TREASURY_COLS = {"^IRX": "3 Mo", "2YY=F": "2 Yr", "^TNX": "10 Yr", "^TYX": "30 Yr"}
 # site symbol -> CoinGecko id
 COINGECKO_IDS = {"BTC-USD": "bitcoin", "ETH-USD": "ethereum"}
+# CoinGecko's free tier stops at 365 days, which made BTC's "5Y" chart a 1-year chart and left ALL empty (Oct 2026).
+# CryptoCompare's daily history needs no key and returns the whole history in one call (allData=true).
+CRYPTOCOMPARE = "https://min-api.cryptocompare.com/data/v2/histoday?fsym={fsym}&tsym=USD&allData=true"
+CRYPTOCOMPARE_SYMS = {"BTC-USD": "BTC", "ETH-USD": "ETH"}
 GOLD_FALLBACK = ("GC=F", "pax-gold")        # PAXG tracks spot gold; used only if CNBC has nothing
 # site symbol -> CNBC symbol candidates (first that answers wins)
 CNBC_SYMS = {"^GSPC": [".SPX"], "^IXIC": [".IXIC"], "^DJI": [".DJI"], "VTI": ["VTI"],
@@ -167,6 +171,20 @@ def coingecko_history(session, sym, cid):
     return prepare(sorted(pts)) if len(pts) > 20 else None
 
 
+def cryptocompare_history(session, fsym, max_days=MAX_DAYS):
+    """Full daily close history for a coin. Rows before the coin traded come back as zeros: skipped."""
+    j = get(session, CRYPTOCOMPARE.format(fsym=fsym), timeout=45).json()
+    rows = ((j.get("Data") or {}).get("Data")) or []
+    pts = []
+    for r in rows:
+        try:
+            if r.get("close"):
+                pts.append((int(r["time"]), float(r["close"])))
+        except (TypeError, ValueError, KeyError):
+            continue
+    return prepare(sorted(pts), max_days) if len(pts) > 20 else None
+
+
 def cnbc_bars(session, rng, sym):
     j = get(session, CNBC_CHART.format(rng=rng, sym=requests.utils.quote(sym, safe="")), timeout=20).json()
     bars = (((j or {}).get("barData") or {}).get("priceBars")) or []
@@ -236,18 +254,20 @@ def build_series(session, previous_series, max_days, include_crypto=True):
     for sym, ser in mortgage_history(session, max_days).items():
         put(sym, ser, "pmms")
 
-    if include_crypto:                   # CoinGecko's free tier tops out at 365 days, so not for All
-        def cg(item):
-            sym, cid = item
+    if include_crypto:
+        for sym, cid in COINGECKO_IDS.items():
+            ser, how = None, ""
             try:
-                return sym, coingecko_history(session, sym, cid)
+                ser, how = cryptocompare_history(session, CRYPTOCOMPARE_SYMS[sym], max_days), "cryptocompare"
             except Exception as e:  # noqa: BLE001
-                print(f"  ! coingecko {cid}: {str(e)[:120]}", file=sys.stderr)
-                return sym, None
-
-        for sym, ser in map(cg, COINGECKO_IDS.items()):
-            put(sym, ser, "coingecko")
-            time.sleep(1.5)                          # CoinGecko's free tier is rate-limited
+                print(f"  ! cryptocompare {sym}: {str(e)[:120]}", file=sys.stderr)
+            if not ser and max_days is not None:      # last resort: CoinGecko, which only reaches back one year
+                try:
+                    ser, how = coingecko_history(session, sym, cid), "coingecko"
+                except Exception as e:  # noqa: BLE001
+                    print(f"  ! coingecko {cid}: {str(e)[:120]}", file=sys.stderr)
+                time.sleep(1.5)                       # CoinGecko's free tier is rate-limited
+            put(sym, ser, how)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
         futs = {ex.submit(cnbc_history, session, sym, c, max_days): sym for sym, c in CNBC_SYMS.items()}
@@ -257,7 +277,7 @@ def build_series(session, previous_series, max_days, include_crypto=True):
             except Exception as e:  # noqa: BLE001
                 print(f"  ! cnbc {futs[f]}: {str(e)[:120]}", file=sys.stderr)
 
-    if include_crypto:
+    if include_crypto and max_days is not None:
         gsym, gid = GOLD_FALLBACK
         if gsym not in series:
             try:
@@ -314,7 +334,7 @@ def main():
         else:
             session = make_session()
             carry = prev_all.get("series", {}) if prev_all.get("v") == FORMAT_VERSION else {}
-            series, fresh = build_series(session, carry, None, include_crypto=False)
+            series, fresh = build_series(session, carry, None)
             if fresh:
                 write_payload(all_path, series, passphrase)
                 print(f"wrote {all_path}: {len(series)} series ({', '.join(fresh)})")

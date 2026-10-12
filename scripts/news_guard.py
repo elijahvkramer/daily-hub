@@ -346,7 +346,7 @@ def classify(cand, section_title):
     if "random" in t:
         return bool(b & {"science", "odd"})
     if "sport" in t:
-        return "sports" in b
+        return "sports" in b and not re.search(r"\bhigh school\b|\bprep\b|\brecruiting class rankings?\b", text, re.I)
     return False
 
 
@@ -536,12 +536,22 @@ def refresh_framing(edition, thin_before):
         sec = secs.get(sec_index(g.get("label")))
         if not sec or not sec.get("items"):
             continue
-        if QUIET_WORDS.search(g.get("teaser", "")) or sec.get("title") in thin_before and any(i.get("auto") for i in sec["items"]):
+        orphan = max((similar(g.get("teaser", ""), f"{i.get('lead','')} {i.get('body','')}") for i in sec["items"]), default=0) < 0.34
+        if orphan or QUIET_WORDS.search(g.get("teaser", "")) or sec.get("title") in thin_before and any(i.get("auto") for i in sec["items"]):
             first = next((i for i in sec["items"] if not i.get("auto")), sec["items"][0])
             nt = _short(first.get("lead"))
             if nt and nt != g.get("teaser"):
                 g["teaser"] = nt
                 changed = True
+    # a headline about a story that has since been removed (e.g. dropped as stale) must go too
+    leads = [f"{i.get('lead','')} {i.get('body','')}" for s in edition.get("sections", []) for i in s.get("items", [])]
+    for line in (edition.get("headline") or "").split("\n"):
+        if line.strip() and leads and max(similar(line, t) for t in leads) < 0.34:
+            tops = [s["items"][0] for s in edition.get("sections", []) if s.get("items")]
+            if tops:
+                edition["headline"] = "\n".join(_short(t.get("lead"), 9) for t in tops[:2])
+                changed = True
+            break
     if QUIET_WORDS.search(edition.get("subtitle", "") or ""):
         tops = [s["items"][0].get("lead", "") for s in edition.get("sections", []) if s.get("items")][:3]
         edition["subtitle"] = " ".join(re.sub(r"\s+", " ", t).strip().rstrip(".") + "." for t in tops if t)
@@ -576,6 +586,9 @@ def enforce(edition, date, repo, passphrase, decrypt, fetch, detail_budget=14):
     before = json.dumps(edition, sort_keys=True)
     thin_before = thin_sections(edition)
     now = edition_now(date)
+    for s in edition.get("sections", []):     # earlier fillers that today's rules would not pick
+        if "sport" in (s.get("title") or "").lower():
+            s["items"] = [i for i in s.get("items", []) if not (i.get("auto") and re.search(r"\bhigh school\b", i.get("lead", ""), re.I))]
     _, rep = run(edition, date, repo, passphrase, decrypt, fetch)
     widened = {}
     if thin_sections(edition):

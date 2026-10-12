@@ -68,47 +68,74 @@ class FreshnessTests(unittest.TestCase):
         self.assertFalse(rh.is_fresh({}, 6, 8, rh.FORMAT_VERSION))
 
 
+class FakeBitstamp:
+    """Serves Bitstamp's real response shape, honouring `start` and the 1000-candle page limit."""
+    def __init__(self, first_ts, n_days):
+        self.rows = [(first_ts + i * DAY, 100.0 + i) for i in range(n_days)]
+        self.calls = 0
+
+    def __call__(self, session, url, timeout=25):
+        self.calls += 1
+        start = int(url.split("start=")[1])
+        page = [r for r in self.rows if r[0] >= start][:1000]
+        resp = mock.Mock()
+        resp.json.return_value = {"data": {"pair": "BTC/USD", "ohlc": [
+            {"timestamp": str(t), "open": "1", "high": "1", "low": "1", "close": f"{c:.2f}", "volume": "1"} for t, c in page]}}
+        return resp
+
+
 class CryptoTests(unittest.TestCase):
-    def rows(self, n):
-        now = int(time.time()) // DAY * DAY
-        return [{"time": now - (n - i) * DAY, "close": 0 if i < 5 else 100.0 + i} for i in range(n + 1)]
+    def fake(self, n_days):
+        today = int(time.time()) // DAY * DAY
+        return FakeBitstamp(today - (n_days - 1) * DAY, n_days)
 
-    def test_full_history_and_pre_listing_zeros_skipped(self):
-        resp = mock.Mock(); resp.json.return_value = {"Data": {"Data": self.rows(4000)}}
-        with mock.patch.object(rh, "get", return_value=resp):
-            allh = rh.cryptocompare_history(None, "BTC", None)
-            five = rh.cryptocompare_history(None, "BTC", rh.MAX_DAYS)
-        self.assertEqual(len(allh["t"]), 4001 - 5)             # whole history, zeros dropped
-        self.assertLessEqual(len(five["t"]), 1832)             # main file keeps ~5 years
-        self.assertGreater(len(five["t"]), 1800, "BTC's 5Y must really be five years (CoinGecko gave one)")
+    def test_pages_through_the_whole_history(self):
+        fb = self.fake(4200)
+        with mock.patch.object(rh, "get", fb):
+            out = rh.bitstamp_history(None, "btcusd", "2011-09-01", None)
+        self.assertEqual(len(out["t"]), 4200)
+        self.assertEqual({b - a for a, b in zip(out["t"], out["t"][1:])}, {DAY})
+        self.assertEqual(fb.calls, 5)                                 # 4 full pages + 1 partial
 
-    def test_build_series_btc_covers_five_years_and_all(self):
-        resp = mock.Mock(); resp.json.return_value = {"Data": {"Data": self.rows(4000)}}
-        with mock.patch.object(rh, "get", return_value=resp), \
+    def test_five_year_window_is_really_five_years(self):
+        with mock.patch.object(rh, "get", self.fake(4200)):
+            out = rh.bitstamp_history(None, "btcusd", "2011-09-01", rh.MAX_DAYS)
+        self.assertGreater(len(out["t"]), 1820, "BTC's 5Y must be five years (CoinGecko gave one)")
+        self.assertLessEqual(len(out["t"]), 1832)
+
+    def test_build_series_btc_and_eth_cover_five_years_and_all(self):
+        with mock.patch.object(rh, "get", self.fake(4200)), \
              mock.patch.object(rh, "treasury_history", return_value={}), \
              mock.patch.object(rh, "mortgage_history", return_value={}), \
              mock.patch.object(rh, "cnbc_history", return_value=None):
-            main, _ = rh.build_series(None, {}, rh.MAX_DAYS)
+            main, fresh = rh.build_series(None, {}, rh.MAX_DAYS)
             allf, _ = rh.build_series(None, {}, None)
-        self.assertGreater(len(main["BTC-USD"]["t"]), 1800)
-        self.assertGreater(len(allf["BTC-USD"]["t"]), 3900)
+        self.assertGreater(len(main["BTC-USD"]["t"]), 1820)
+        self.assertGreater(len(allf["BTC-USD"]["t"]), 4000)
+        self.assertIn("ETH-USD", allf)
+        self.assertIn("BTC-USD:bitstamp", fresh)
 
     def test_falls_back_to_coingecko_only_for_the_main_file(self):
         cg = {"prices": [[(int(time.time()) - (400 - i) * DAY) * 1000, 100.0 + i] for i in range(401)]}
         cgr = mock.Mock(); cgr.json.return_value = cg
 
         def fake_get(session, url, timeout=25):
-            if "cryptocompare" in url:
+            if "bitstamp" in url:
                 raise RuntimeError("down")
             return cgr
-        with mock.patch.object(rh, "get", fake_get), mock.patch.object(rh, "time") as tm, \
+        with mock.patch.object(rh, "get", fake_get), mock.patch.object(rh.time, "sleep", lambda s: None), \
              mock.patch.object(rh, "treasury_history", return_value={}), mock.patch.object(rh, "mortgage_history", return_value={}), \
              mock.patch.object(rh, "cnbc_history", return_value=None):
-            tm.time.side_effect = time.time
             main, _ = rh.build_series(None, {}, rh.MAX_DAYS)
             allf, _ = rh.build_series(None, {}, None)
         self.assertIn("BTC-USD", main)          # one year is better than nothing for the main file
         self.assertNotIn("BTC-USD", allf)       # but a one-year series must never pose as "all time"
+
+    def test_bad_rows_are_skipped_not_fatal(self):
+        resp = mock.Mock()
+        resp.json.return_value = {"data": {"ohlc": [{"timestamp": "x", "close": "1"}, {"close": "2"}, {"timestamp": "1700000000", "close": "n/a"}]}}
+        with mock.patch.object(rh, "get", return_value=resp):
+            self.assertIsNone(rh.bitstamp_history(None, "btcusd", "2020-01-01", None))
 
 
 class CnbcTests(unittest.TestCase):

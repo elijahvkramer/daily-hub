@@ -15,7 +15,7 @@ Every source is independent and best-effort: a symbol that cannot be fetched is 
 site falls back to its live path. The file is rebuilt at most every REBUILD_HOURS (it moves once a day,
 and every rebuild is a commit), and never fails the calendar refresh that runs it.
 
-Layout: {"v": 3, "updated": iso, "series": {"<site symbol>": {"t": [epoch...], "c": [close...]}}}
+Layout: {"v": 4, "updated": iso, "series": {"<site symbol>": {"t": [epoch...], "c": [close...]}}}
 Oct 2026 fix (Eli: "5Y shows day by day through 2026/2025, then only Sunday by Sunday further back"):
 every series is now kept at the source's own resolution (daily) for the whole ~5 years. The old
 thin() collapsed everything older than 400 days to one point per ISO week, so the chart's density
@@ -46,8 +46,8 @@ from dh_crypto import decrypt_json, encrypt_json, read_passphrase  # noqa: E402
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
 REBUILD_HOURS = 6
-FORMAT_VERSION = 3        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
-                          # v3 = BTC/ETH from CryptoCompare (v2 had CoinGecko's 365 days, and no crypto in the All file)
+FORMAT_VERSION = 4        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
+                          # v4 = BTC/ETH from Bitstamp (v2 had CoinGecko's 365 days and no crypto in the All file; v3's source never answered)
 MAX_DAYS = 1830           # ~5 years
 ALL_REBUILD_HOURS = 24
 ALL_START_YEAR = 1990     # Treasury daily par yield curve data starts in 1990 for these maturities
@@ -64,9 +64,11 @@ TREASURY_COLS = {"^IRX": "3 Mo", "2YY=F": "2 Yr", "^TNX": "10 Yr", "^TYX": "30 Y
 # site symbol -> CoinGecko id
 COINGECKO_IDS = {"BTC-USD": "bitcoin", "ETH-USD": "ethereum"}
 # CoinGecko's free tier stops at 365 days, which made BTC's "5Y" chart a 1-year chart and left ALL empty (Oct 2026).
-# CryptoCompare's daily history needs no key and returns the whole history in one call (allData=true).
-CRYPTOCOMPARE = "https://min-api.cryptocompare.com/data/v2/histoday?fsym={fsym}&tsym=USD&allData=true"
-CRYPTOCOMPARE_SYMS = {"BTC-USD": "BTC", "ETH-USD": "ETH"}
+# CryptoCompare was tried next and returned nothing from GitHub's runners (it wants an API key now). Bitstamp's public
+# OHLC endpoint needs no key, returns up to 1000 daily candles per call, and reaches back to 2011 (BTC) / 2017 (ETH);
+# its response shape was checked against the live API: {"data": {"ohlc": [{"timestamp": "...", "close": "..."}]}}.
+BITSTAMP = "https://www.bitstamp.net/api/v2/ohlc/{pair}/?step=86400&limit=1000&start={start}"
+BITSTAMP_PAIRS = {"BTC-USD": ("btcusd", "2011-09-01"), "ETH-USD": ("ethusd", "2017-08-01")}   # pair, first day with data
 GOLD_FALLBACK = ("GC=F", "pax-gold")        # PAXG tracks spot gold; used only if CNBC has nothing
 # site symbol -> CNBC symbol candidates (first that answers wins)
 CNBC_SYMS = {"^GSPC": [".SPX"], "^IXIC": [".IXIC"], "^DJI": [".DJI"], "VTI": ["VTI"],
@@ -172,17 +174,25 @@ def coingecko_history(session, sym, cid):
     return prepare(sorted(pts)) if len(pts) > 20 else None
 
 
-def cryptocompare_history(session, fsym, max_days=MAX_DAYS):
-    """Full daily close history for a coin. Rows before the coin traded come back as zeros: skipped."""
-    j = get(session, CRYPTOCOMPARE.format(fsym=fsym), timeout=45).json()
-    rows = ((j.get("Data") or {}).get("Data")) or []
+def bitstamp_history(session, pair, first_day, max_days=MAX_DAYS):
+    """Daily closes from Bitstamp, oldest first, paged 1000 candles at a time (BTC's whole history is ~5 calls)."""
+    start = int(datetime.datetime.strptime(first_day, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).timestamp())
+    if max_days is not None:
+        start = max(start, int(time.time()) - max_days * 86400)
     pts = []
-    for r in rows:
-        try:
-            if r.get("close"):
-                pts.append((int(r["time"]), float(r["close"])))
-        except (TypeError, ValueError, KeyError):
-            continue
+    for _ in range(40):                                    # hard stop: 40 pages is >100 years of daily candles
+        j = get(session, BITSTAMP.format(pair=pair, start=start), timeout=30).json()
+        rows = ((j.get("data") or {}).get("ohlc")) or []
+        got = []
+        for r in rows:
+            try:
+                got.append((int(r["timestamp"]), float(r["close"])))
+            except (TypeError, ValueError, KeyError):
+                continue
+        pts.extend(got)
+        if len(rows) < 1000 or not got or got[-1][0] < start:
+            break
+        start = got[-1][0] + 86400
     return prepare(sorted(pts), max_days) if len(pts) > 20 else None
 
 
@@ -259,9 +269,10 @@ def build_series(session, previous_series, max_days, include_crypto=True):
         for sym, cid in COINGECKO_IDS.items():
             ser, how = None, ""
             try:
-                ser, how = cryptocompare_history(session, CRYPTOCOMPARE_SYMS[sym], max_days), "cryptocompare"
+                pair, first_day = BITSTAMP_PAIRS[sym]
+                ser, how = bitstamp_history(session, pair, first_day, max_days), "bitstamp"
             except Exception as e:  # noqa: BLE001
-                print(f"  ! cryptocompare {sym}: {str(e)[:120]}", file=sys.stderr)
+                print(f"  ! bitstamp {sym}: {str(e)[:120]}", file=sys.stderr)
             if not ser and max_days is not None:      # last resort: CoinGecko, which only reaches back one year
                 try:
                     ser, how = coingecko_history(session, sym, cid), "coingecko"

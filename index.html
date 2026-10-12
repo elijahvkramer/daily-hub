@@ -4024,6 +4024,68 @@ function longDate(d){
   const dt = new Date(d+"T12:00:00");
   return dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
 }
+/* "Oct 9, 2026": month, day AND year, no weekday. The price charts used shortDate ("Fri, Oct 18") on their
+   two end labels, which says neither which year nor anything useful about the span (Eli, Oct 2026). */
+function fullDate(d){
+  const dt = new Date(d+"T12:00:00");
+  return dt.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+
+/* ---- price-chart time axis (Oct 2026) ----
+   Eli: the 5Y chart drew every day for the recent past but only Sunday-by-Sunday further back, because
+   points were spaced by INDEX (point i of n) rather than by DATE, and the data itself was thinner the
+   older it got. Charts now place every point by its calendar date on one linear time axis, so spacing
+   is always true to time whatever the data density, and label evenly spaced, readable ticks. */
+const dayEpoch = d => Date.UTC(+d.slice(0,4), +d.slice(5,7)-1, +d.slice(8,10), 12) / 1000;   // "YYYY-MM-DD" -> epoch s at 12:00 UTC
+const MON3 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+/* Calendar-aligned ticks (days / months / years) across [t0,t1], no more than ~maxTicks of them.
+   Returns [{ts, label}] with ts on the same dayEpoch scale. */
+function niceTimeTicks(t0, t1, maxTicks){
+  maxTicks = maxTicks || 6;
+  const spanDays = (t1 - t0) / 86400;
+  if(!(spanDays > 0)) return [];
+  const STEPS = [["d",1],["d",2],["d",5],["d",7],["d",14],["m",1],["m",2],["m",3],["m",6],["y",1],["y",2],["y",5],["y",10],["y",20]];
+  const UNIT_DAYS = {d:1, m:30.44, y:365.25};
+  let pick = STEPS[STEPS.length-1];
+  for(const st of STEPS){ if(spanDays / (UNIT_DAYS[st[0]] * st[1]) <= maxTicks){ pick = st; break; } }
+  const unit = pick[0], n = pick[1], out = [];
+  const A = new Date(t0*1000);
+  const noon = (y, m, d) => Date.UTC(y, m, d, 12) / 1000;
+  if(unit === "d"){
+    let cur = noon(A.getUTCFullYear(), A.getUTCMonth(), A.getUTCDate());
+    if(n >= 7){ while(new Date(cur*1000).getUTCDay() !== 1) cur += 86400; }      // weekly steps land on Mondays
+    if(cur < t0 - 43200) cur += 86400;
+    for(; cur <= t1 + 43200; cur += n * 86400){
+      const D = new Date(cur*1000); out.push({ ts: cur, label: MON3[D.getUTCMonth()] + " " + D.getUTCDate() });
+    }
+  } else if(unit === "m"){
+    let y = A.getUTCFullYear(), m = A.getUTCMonth();
+    if(noon(y, m, 1) < t0 - 43200){ m++; }                                       // first of next month
+    while(m % n !== 0) m++;                                                       // align to Jan / Apr / Jul / Oct etc.
+    for(;; m += n){
+      const ts = noon(y + Math.floor(m/12), ((m % 12) + 12) % 12, 1);
+      if(ts > t1 + 43200) break;
+      const D = new Date(ts*1000); out.push({ ts, label: MON3[D.getUTCMonth()] + " \u2019" + String(D.getUTCFullYear()).slice(2) });
+    }
+  } else {
+    let y = A.getUTCFullYear();
+    if(noon(y, 0, 1) < t0 - 43200) y++;
+    while(y % n !== 0) y++;
+    for(; noon(y, 0, 1) <= t1 + 43200; y += n) out.push({ ts: noon(y, 0, 1), label: String(y) });
+  }
+  return out;
+}
+/* The bottom axis of a date-proportional chart: a small tick and a label at each calendar-aligned position.
+   Labels near either edge anchor inward so nothing is clipped. */
+function dateAxisSVG(x0, x1, o){
+  const ticks = niceTimeTicks(x0, x1, o.maxTicks || (o.W < 480 ? 4 : 6)), w = o.W - o.PL - o.PR;
+  return ticks.map(t => {
+    const x = o.PL + w * (t.ts - x0) / ((x1 - x0) || 1);
+    const anchor = x < o.PL + 22 ? "start" : (x > o.W - o.PR - 22 ? "end" : "middle");
+    return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${o.H-o.PB}" y2="${o.H-o.PB+4}" stroke="var(--hairline)" stroke-width="1"/>
+      <text x="${x.toFixed(1)}" y="${o.H-o.PB+17}" text-anchor="${anchor}" font-size="${o.fs}" fill="var(--muted)" font-family="inherit">${esc(t.label)}</text>`;
+  }).join("");
+}
 
 /* ================= boot ================= */
 async function boot(){
@@ -7300,8 +7362,13 @@ const BOARD_RANGES = {
   "6M":  { r:"6mo", i:"1d",  lab:"Past 6 months" },
   "YTD": { r:"ytd", i:"1d",  lab:"Year to date" },
   "1Y":  { r:"1y",  i:"1d",  lab:"Past year" },
-  "5Y":  { r:"5y",  i:"1wk", lab:"Past 5 years" }
+  "5Y":  { r:"5y",  i:"1wk", lab:"Past 5 years" },
+  "ALL": { r:"max", i:"1mo", lab:"All time" }
 };
+/* The tiles only need first close -> latest and a rough shape, so their 5Y / ALL requests stay coarse (one
+   batched call for every symbol; a daily 5-year batch hangs the free proxies). The price-history window,
+   which draws ONE symbol, asks for daily bars for every range. */
+const BOARD_CHART_CFG = { "5Y": { r:"5y", i:"1d" }, "ALL": { r:"max", i:"1d" } };
 async function boardChartOne(sym, range, interval){
   /* Two Yahoo hosts x the proxies (plus corsproxy.io, board-only): any one answer wins. A single flaky
      proxy used to leave the price-history window empty. */
@@ -7359,14 +7426,27 @@ async function boardHistory(){
   })();
   return S._boardHistP;
 }
+/* The longest history the server could build (data/history_all.json.enc), fetched only when ALL is chosen. */
+async function boardHistoryAll(){
+  if(S.boardHistAll !== undefined) return S.boardHistAll;
+  if(!S._boardHistAllP) S._boardHistAllP = (async () => {
+    try{ const j = await decryptEntry(await fetchDataFile("data/history_all.json.enc"), PASS); S.boardHistAll = (j && j.series) ? j : null; }
+    catch(e){ S.boardHistAll = null; }
+    return S.boardHistAll;
+  })();
+  return S._boardHistAllP;
+}
 const BOARD_SPAN_DAYS = { "1W":7, "1M":31, "3M":92, "6M":183, "1Y":366, "5Y":1830 };
-/* a window cut out of the server-side history: {t:[epoch], c:[close]} or null */
+/* a window cut out of the server-side history: {t:[epoch], c:[close]} or null.
+   ALL reads only the all-time file: the main file stops at five years, and calling that "all time" would mislead. */
 function boardHistSlice(sym, rk){
-  const h = S.boardHist && S.boardHist.series && S.boardHist.series[sym];
+  const src = rk === "ALL" ? (S.boardHistAll && S.boardHistAll.series) : (S.boardHist && S.boardHist.series);
+  const h = src && src[sym];
   if(!h || !h.t || h.t.length < 2) return null;
   if(/^MORT/.test(sym) && (rk === "1D" || rk === "1W")) return null;     // a weekly survey has no intraday or one-week view
   let from;
-  if(rk === "YTD") from = Date.UTC(new Date().getFullYear(), 0, 1) / 1000;
+  if(rk === "ALL") from = 0;
+  else if(rk === "YTD") from = Date.UTC(new Date().getFullYear(), 0, 1) / 1000;
   else if(BOARD_SPAN_DAYS[rk]) from = Date.now()/1000 - BOARD_SPAN_DAYS[rk]*86400;
   else return null;
   const t = [], c = [];
@@ -7433,6 +7513,7 @@ async function setBoardRange(rk){
   if(!BOARD_RANGES[rk]) return;
   S.boardRange = rk; S._boardRangeTok = (S._boardRangeTok || 0) + 1; const tok = S._boardRangeTok;
   boardRepaint();
+  if(rk === "ALL") boardHistoryAll().then(() => { if(S._boardRangeTok === tok) boardRepaint(); });
   if(rk === "1D") return;
   await boardRangeLoad(rk);
   if(S._boardRangeTok === tok) boardRepaint();
@@ -7445,11 +7526,16 @@ function boardFmt(spec, n){
 /* Today's session as a soft area chart across the whole tile -- the shape of the day at a glance. */
 let _gradN = 0;
 function boardSpark(q, up){
-  const c = q && q.series && q.series.c ? q.series.c.filter(v => v != null) : [];
-  if(c.length < 3) return `<span class="bp-spark"></span>`;
+  /* a series that carries real dates ({t, daily:true}) is drawn on a time axis; intraday bars and anything
+     without dates keep their even per-bar spacing */
+  const raw = q && q.series && q.series.c ? q.series.c : [];
+  const tt = (q && q.series && q.series.daily && q.series.t && q.series.t.length === raw.length) ? q.series.t : null;
+  const pairs = []; raw.forEach((v,i) => { if(v != null) pairs.push([tt ? tt[i] : pairs.length, v]); });
+  if(pairs.length < 3) return `<span class="bp-spark"></span>`;
+  const c = pairs.map(p => p[1]), x0 = pairs[0][0], xs = (pairs[pairs.length-1][0] - x0) || 1;
   const W = 120, H = 38, pad = 3;
   const min = Math.min(...c), max = Math.max(...c), span = (max - min) || 1;
-  const pts = c.map((v,i) => [i/(c.length-1)*W, H - pad - (v-min)/span*(H-pad*2)]);
+  const pts = pairs.map(p => [(p[0]-x0)/xs*W, H - pad - (p[1]-min)/span*(H-pad*2)]);
   const d = pts.map((pt,i) => `${i?"L":"M"}${pt[0].toFixed(1)} ${pt[1].toFixed(1)}`).join(" ");
   const col = up ? "var(--up)" : "var(--down)";
   const id = "bsg" + (++_gradN);
@@ -7506,7 +7592,7 @@ function boardHTML(rates, prices, live){
     let sparkHTML = p.q ? boardSpark(p.q, up) : `<span class="bp-spark"></span>`;
     if(!(p.q && p.q.series && p.q.series.c && p.q.series.c.filter(v => v != null).length >= 3) && p.spec.live){
       const sl = boardHistSlice(p.spec.live, rng === "1D" ? "1M" : rng);
-      if(sl) sparkHTML = boardSpark({ series:{ c: sl.c } }, sl.c[sl.c.length-1] >= sl.c[0]);
+      if(sl) sparkHTML = boardSpark({ series:{ t: sl.t, c: sl.c, daily: true } }, sl.c[sl.c.length-1] >= sl.c[0]);
     }
     const clk = p.spec.live ? ` data-bsym="${esc(p.spec.live)}" data-blab="${esc(p.spec.label)}" role="button" tabindex="0" title="${esc(p.spec.label)} price history"` : "";
     return head + `<div class="bp-tile${p.missing ? " bp-wait" : ""}${p.spec.live ? " bp-click" : ""}"${clk} style="--tc:${m.c || "var(--gold)"}">
@@ -8927,7 +9013,7 @@ function renderPortfolio(){
   h += `<div class="pb-side">
     <section class="pcard pb-hist">
       <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
-      <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y"].map(r => `<button data-r="${r}" class="${(P.histRange||"Today")===r?"on":""}">${r}</button>`).join("")}</div>
+      <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y","ALL"].map(r => `<button data-r="${r}" class="${(P.histRange||"Today")===r?"on":""}">${r}</button>`).join("")}</div>
       <div class="pb-histhead" id="histHead"></div>
       <div id="histBody" style="position:relative"></div>
       <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
@@ -9043,8 +9129,8 @@ setInterval(() => pAutoRefreshTick(false), 5*60*1000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) pAutoRefreshTick(true); });
 
 /* ---------- portfolio value history ---------- */
-async function fetchHistSym(sym){
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5y`;
+async function fetchHistSym(sym, range){
+  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=${range || "5y"}`;
   const urls = NR_PROXY_URLS(target);   // same three-proxy race the newsroom uses -- allorigins goes down for stretches and corsproxy.io now wants a paid key, so two was really one
   for(const u of urls){
     try{
@@ -9148,6 +9234,27 @@ async function loadHistory(){
   if(Object.keys(P.histData).length) pHistCacheSave(P.histData);
   P.histLoading = false; P.histReady = true;
   if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc({risk:true}); }
+}
+
+/* ALL range for the portfolio chart: each holding's complete daily history (Yahoo range=max), fetched one
+   symbol at a time -- the free CORS proxies tolerate that far better than a burst (see pSparkHist above) --
+   only when ALL is first chosen, and kept in memory (not localStorage: ~30 years x a dozen symbols is large). */
+async function loadHistoryAll(){
+  if(P.histAllReady || P.histAllLoading) return;
+  P.histAllLoading = true; P.histAllData = P.histAllData || {};
+  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
+  let done = 0;
+  for(const s of syms){
+    if(!P.histAllData[s]){
+      const h = await Promise.race([fetchHistSym(s, "max"), new Promise(res => setTimeout(() => res(null), 20000))]);
+      if(h && h.t && h.t.length) P.histAllData[s] = h;
+    }
+    done++;
+    const el = $("#histAllProg"); if(el) el.textContent = `Loading full price history\u2026 ${done} of ${syms.length}`;
+  }
+  P.histAllLoading = false;
+  if(Object.keys(P.histAllData).length){ P.histAllStamp = Date.now(); P.histAllReady = true; }
+  if(S.tab === "portfolio" && P.histRange === "ALL") renderHistory();
 }
 
 /* ---------- intraday (today's session, for the Today snapshot chart) ---------- */
@@ -9302,20 +9409,34 @@ function buildIntradayChart(ser, dayChange, axisNote){
    session open (13:30/14:30 UTC), so the UTC date IS the New York trading date; the old
    code used the device's local zone, which shifted every bar a day for anyone abroad. */
 let histMemo = null;
-function histSeries(){
-  const spineSym = P.histData["SPY"] ? "SPY" : Object.keys(P.histData)[0];
+/* allMode: the ALL range. Each holding's full history (P.histAllData, where it loaded) replaces its 5-year
+   series, and the chart starts on the first day EVERY holding has a price -- before that the value would be
+   a flat guess (the snapshot price) for whatever hadn't started trading yet. */
+function histSeries(allMode){
+  const data = allMode ? Object.assign({}, P.histData, P.histAllData || {}) : P.histData;
+  const spineSym = data["SPY"] ? "SPY" : Object.keys(data)[0];
   if(!spineSym) return null;
-  const memoKey = [P.histStamp||0, P.acct, P.fetched ? P.liveAt : 0, Object.keys(P.histData).length].join("|");
+  const memoKey = [allMode ? "A" : "S", P.histStamp||0, P.histAllStamp||0, P.acct, P.fetched ? P.liveAt : 0, Object.keys(data).length].join("|");
   if(histMemo && histMemo.key === memoKey) return histMemo.pts;
   const dstr = ts => new Date(ts*1000).toISOString().slice(0,10);
-  for(const h of Object.values(P.histData)) if(!h.d || h.d.length !== h.t.length) h.d = h.t.map(dstr);
-  const spine = P.histData[spineSym].d;
+  for(const h of Object.values(data)) if(!h.d || h.d.length !== h.t.length) h.d = h.t.map(dstr);
+  let spine = data[spineSym].d;
   const maps = {};
-  for(const [sym,h] of Object.entries(P.histData)){
+  for(const [sym,h] of Object.entries(data)){
     const m = {}; h.d.forEach((d,i) => { if(h.c[i] != null) m[d] = h.c[i]; });
     maps[sym] = m;
   }
   const positions = pView(), last = {};
+  if(allMode){
+    let startD = "";
+    positions.forEach(p => {
+      if(p.type === "cash") return;
+      const h = data[p.fetchSymbol || p.ticker]; if(!h) return;
+      const i0 = h.c.findIndex(v => v != null); if(i0 < 0) return;
+      if(h.d[i0] > startD) startD = h.d[i0];
+    });
+    if(startD) spine = spine.filter(d => d >= startD);
+  }
   const pts = spine.map(d => {
     let total = 0;
     positions.forEach(p => {
@@ -9341,28 +9462,46 @@ function renderHistory(){
   const range = P.histRange || "Today";
   if(range === "Today"){ renderHistoryIntraday(body); return; }
   if(!P.histReady){ body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; loadHistory(); return; }
-  const all = histSeries();
-  if(!all || all.length < 2){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; $("#histHead").textContent = ""; return; }
-  let cutoff;
-  if(range === "YTD"){
-    const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0);
-    cutoff = jan1.toLocaleDateString("en-CA");
-  } else {
-    const days = HIST_RANGES[range] || HIST_RANGES["1M"];
-    cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA");
+  const allMode = range === "ALL";
+  if(allMode && !P.histAllReady){
+    body.innerHTML = `<div class="spinner" style="margin:46px auto 8px"></div><div id="histAllProg" style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:30px">${P.histAllLoading ? "Loading full price history\u2026" : ""}</div>`;
+    $("#histHead").textContent = "";
+    if(P.histAllLoading) return;
+    loadHistoryAll().then(() => {
+      if(!P.histAllReady && S.tab === "portfolio" && P.histRange === "ALL"){
+        const b = $("#histBody"); if(b) b.innerHTML = `<div class="empty">Full price history is unavailable right now \u2014 pick another range, or try ALL again in a moment.</div>`;
+      }
+    });
+    return;
   }
-  let pts = all.filter(p => p.d >= cutoff);
-  if(pts.length < 2) pts = all.slice(-2);
+  const all = histSeries(allMode);
+  if(!all || all.length < 2){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; $("#histHead").textContent = ""; return; }
+  let pts;
+  if(allMode) pts = all;
+  else {
+    let cutoff;
+    if(range === "YTD"){
+      const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0);
+      cutoff = jan1.toLocaleDateString("en-CA");
+    } else {
+      const days = HIST_RANGES[range] || HIST_RANGES["1M"];
+      cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA");
+    }
+    pts = all.filter(p => p.d >= cutoff);
+    if(pts.length < 2) pts = all.slice(-2);
+  }
 
   const first = pts[0].v, lastV = pts[pts.length-1].v, delta = lastV - first;
   const dPct = first > 0 ? delta/first*100 : 0;
-  $("#histHead").innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(pts[0].d))} → ${esc(shortDate(pts[pts.length-1].d))}`;
+  $("#histHead").innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(fullDate(pts[0].d))} → ${esc(fullDate(pts[pts.length-1].d))}`;
 
   const W = Math.max(320, Math.round(body.clientWidth || 800)), H = 200, PL = 70, PR = 12, PT = 10, PB = 26;
   const vals = pts.map(p => p.v);
   let min = Math.min(...vals), max = Math.max(...vals);
   const pad = (max-min)*0.06 || max*0.005; min -= pad; max += pad;
-  const X = i => PL + (W-PL-PR) * (pts.length === 1 ? 0 : i/(pts.length-1));
+  /* x = calendar date on one linear axis, so every range spaces points by time, not by how many there are */
+  const xs = pts.map(p => dayEpoch(p.d)), x0 = xs[0], xSpan = (xs[xs.length-1] - x0) || 1;
+  const X = i => PL + (W-PL-PR) * (pts.length === 1 ? 0 : (xs[i]-x0)/xSpan);
   const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
   const col = delta >= 0 ? "var(--up)" : "var(--down)";
   let line = "", area = `M ${X(0)} ${H-PB}`;
@@ -9380,15 +9519,17 @@ function renderHistory(){
     <circle cx="${X(pts.length-1).toFixed(1)}" cy="${Y(lastV).toFixed(1)}" r="4" fill="${col}"/>
     <line id="histHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="var(--gold)" stroke-width="1" style="display:none"/>
     <circle id="histDot" r="4.5" fill="var(--gold)" style="display:none"/>
-    <text x="${PL}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="inherit">${esc(shortDate(pts[0].d))}</text>
-    <text x="${W-PR}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="inherit">${esc(shortDate(pts[pts.length-1].d))}</text>
+    ${dateAxisSVG(x0, xs[xs.length-1], {PL, PR, W, H, PB, fs:11})}
     <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="histHit"/>
   </svg><div class="hist-tip" id="histTip"></div>`;
   const svg = $("#histSvg"), tip = $("#histTip"), hair = $("#histHair"), dot = $("#histDot");
   $("#histHit").addEventListener("mousemove", e => {
     const r = svg.getBoundingClientRect();
     const fx = (e.clientX - r.left) / r.width * W;
-    const i = Math.max(0, Math.min(pts.length-1, Math.round((fx-PL)/((W-PL-PR)/(pts.length-1)))));
+    const target = x0 + Math.max(0, Math.min(1, (fx-PL)/(W-PL-PR))) * xSpan;
+    let lo = 0, hi = xs.length - 1;                      // nearest point by DATE (xs ascending)
+    while(lo < hi){ const mid = (lo + hi) >> 1; if(xs[mid] < target) lo = mid + 1; else hi = mid; }
+    const i = (lo > 0 && Math.abs(xs[lo-1] - target) <= Math.abs(xs[lo] - target)) ? lo - 1 : lo;
     const px = X(i), py = Y(pts[i].v);
     hair.setAttribute("x1", px); hair.setAttribute("x2", px); hair.style.display = "block";
     dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.style.display = "block";
@@ -9473,23 +9614,37 @@ function closeBoardModal(){
   if(BM && BM._esc) document.removeEventListener("keydown", BM._esc);
   BM = null;
 }
+/* A server slice is "sparse" when it holds clearly fewer points than a daily series would for its span
+   (the pre-Oct-2026 file kept one point a WEEK beyond 13 months). ALL is mixed density by nature, so exempt. */
+function boardSliceSparse(sl, rk){
+  if(!sl || rk === "ALL") return false;
+  const n = sl.t.length, days = (sl.t[n-1] - sl.t[0]) / 86400;
+  return days > 20 && n < days * 0.55;
+}
 async function boardSeries(sym, rk){
   S.boardSer = S.boardSer || {};
   const key = sym + "|" + rk, hit = S.boardSer[key];
   if(hit && Date.now() - hit.at < 600000) return hit.q;
-  const cfg = BOARD_RANGES[rk];
+  const cfg = BOARD_CHART_CFG[rk] || BOARD_RANGES[rk];
+  const isMort = /^MORT/.test(sym);
   /* A window cut from the server-side history: instant, and needs no proxy at all. */
   const fromHist = async () => {
-    await boardHistory();
+    await Promise.all([boardHistory(), rk === "ALL" ? boardHistoryAll() : null]);
     const sl = boardHistSlice(sym, rk);
-    return sl ? { price: sl.c[sl.c.length-1], prev: sl.c[0], series: { t: sl.t, c: sl.c, daily: true } } : null;
+    return sl ? { price: sl.c[sl.c.length-1], prev: sl.c[0], series: { t: sl.t, c: sl.c, daily: true }, sparse: boardSliceSparse(sl, rk) } : null;
   };
+  const liveDaily = (ms) => withDeadline(boardChart(sym, cfg.r, cfg.i), ms, null);
   let q = null;
   if(rk !== "1D" && rk !== "1W") q = await fromHist();          // multi-month windows are daily closes anyway
+  /* the server file is thinner than daily for this window: prefer the live daily bars, keep the file as the fallback */
+  if(q && q.sparse && !isMort){
+    const lv = await liveDaily(rk === "5Y" ? 9000 : 6500);
+    if(lv && lv.series && lv.series.c && lv.series.c.length > q.series.c.length) q = lv;
+  }
   /* today's shape is already on the board from the live quote: use it instantly, no new request */
   if(!q && rk === "1D"){ const h = S.boardLive && S.boardLive[sym]; if(h && h.series && h.series.c && h.series.c.filter(v => v != null).length >= 3) q = h; }
-  if(!q && !/^MORT/.test(sym)){
-    q = await withDeadline(boardChart(sym, cfg.r, cfg.i), 4500, null);   // short cap: never leave the chart spinning
+  if(!q && !isMort){
+    q = await liveDaily((rk === "5Y" || rk === "ALL") ? 9000 : 4500);   // short cap: never leave the chart spinning
   }
   if(!q || !q.series){                                                     // fall back to what the board already holds
     const have = rk === "1D" ? (S.boardLive && S.boardLive[sym]) : (S.boardRangeData && S.boardRangeData[rk] && S.boardRangeData[rk][sym]);
@@ -9576,7 +9731,10 @@ async function renderBoardChart(){
   if(priceEl) priceEl.innerHTML = `${esc(fmtV(now))} <span class="pchgline ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)}) ${esc(rk === "1D" ? "today" : BOARD_RANGES[rk].lab.toLowerCase())}</span>`;
   const intraday = (rk === "1D" || rk === "1W") && !(q.series && q.series.daily);
   const etOpts = {timeZone:"America/New_York"};
-  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${esc(BOARD_RANGES[rk].lab)}${cur._note ? ` · <i style="font-style:normal;color:var(--muted)">${esc(cur._note)}</i>` : ""}`;
+  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA", etOpts);
+  /* header: the change AND the dates it spans, with the year (the old end labels said "Fri, Oct 18" and nothing else) */
+  const spanTxt = (rk === "1D") ? esc(BOARD_RANGES[rk].lab) : `${esc(fullDate(dstr(raw[0].ts)))} \u2192 ${esc(fullDate(dstr(raw[raw.length-1].ts)))}`;
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${esc(dTxt)} (${pctS(dPct)})</span>&nbsp; ${spanTxt}${cur._note ? ` · <i style="font-style:normal;color:var(--muted)">${esc(cur._note)}</i>` : ""}`;
   if(rk === "1D"){
     const st = q.series.start, en = q.series.end;
     const timed = st != null && en != null && en > st;
@@ -9588,17 +9746,25 @@ async function renderBoardChart(){
     });
     return;
   }
-  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA", etOpts);
-  drawSmChart(body, raw.map(p => ({x: intraday ? p.ts : dstr(p.ts), v:p.v})), {
-    timeAxis:false, fmtY: fmtV,
-    fmtX0: p => intraday ? shortDate(dstr(p.x)) : shortDate(p.x),
-    fmtX1: p => intraday ? shortDate(dstr(p.x)) : shortDate(p.x),
-    fmtTip: p => `${esc(intraday ? new Date(p.x*1000).toLocaleString("en-US",{...etOpts,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " ET" : longDate(p.x))} · <span class="tv">${esc(fmtV(p.v))}</span>`
+  if(intraday){
+    /* a week of 30-minute bars: even per-bar spacing (overnight and weekend gaps are not drawn), one label per trading day */
+    drawSmChart(body, raw.map(p => ({x:p.ts, v:p.v})), {
+      dayTicks:true, fmtY: fmtV,
+      fmtTip: p => `${esc(new Date(p.x*1000).toLocaleString("en-US",{...etOpts,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))} ET \u00b7 <span class="tv">${esc(fmtV(p.v))}</span>`
+    });
+    return;
+  }
+  /* daily closes on a true date axis. Several bars can share one date (a live partial bar on top of the close): keep the last. */
+  const byDay = new Map(); raw.forEach(p => byDay.set(dstr(p.ts), p.v));
+  const dpts = [...byDay.entries()].sort((a,b) => a[0] < b[0] ? -1 : 1).map(([d,v]) => ({x: dayEpoch(d), d, v}));
+  drawSmChart(body, dpts, {
+    dateAxis:true, fmtY: fmtV,
+    fmtTip: p => `${esc(longDate(p.d))} \u00b7 <span class="tv">${esc(fmtV(p.v))}</span>`
   });
 }
 
 /* ---------- stock detail modal (price history + your cost basis) ---------- */
-const SM_RANGES = ["Today","1W","1M","3M","6M","YTD","1Y","5Y"];
+const SM_RANGES = ["Today","1W","1M","3M","6M","YTD","1Y","5Y","ALL"];
 let SM = null;   // { ticker, sym, range }
 function closeStockModal(){
   const ov = $("#stockModalOverlay"); if(ov) ov.remove();
@@ -9674,12 +9840,32 @@ function renderStockChart(pos){
     return;
   }
 
-  const hist = P.stockHist[sym];
+  let hist = P.stockHist[sym];
+  if(range === "ALL"){
+    /* the full history (Yahoo range=max) is fetched the first time ALL is chosen for a holding */
+    P.stockAll = P.stockAll || {}; P.stockAllLoading = P.stockAllLoading || {};
+    const have = (P.histAllData && P.histAllData[sym]) || P.stockAll[sym];
+    if(have) hist = have;
+    else if(P.stockAll[sym] === false){ body.innerHTML = `<div class="empty">Full price history isn't available for ${esc(pos.ticker)} right now \u2014 pick another range.</div>`; if(head) head.textContent = ""; return; }
+    else {
+      body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; if(head) head.textContent = "";
+      if(!P.stockAllLoading[sym]){
+        P.stockAllLoading[sym] = true;
+        Promise.race([fetchHistSym(sym, "max"), new Promise(res => setTimeout(() => res(null), 20000))]).then(h => {
+          P.stockAllLoading[sym] = false;
+          P.stockAll[sym] = (h && h.t && h.t.length) ? h : false;
+          if(SM && SM.sym === sym && SM.range === "ALL") renderStockChart(pos);
+        });
+      }
+      return;
+    }
+  }
   if(!hist || !hist.t || !hist.t.length){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; if(head) head.textContent = ""; return; }
   const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA");
   let pts = hist.t.map((ts,i) => ({d: dstr(ts), v: hist.c[i]})).filter(p => p.v != null);
   let cutoff;
-  if(range === "YTD"){ const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0); cutoff = jan1.toLocaleDateString("en-CA"); }
+  if(range === "ALL") cutoff = "0000-00-00";
+  else if(range === "YTD"){ const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0); cutoff = jan1.toLocaleDateString("en-CA"); }
   else { const days = HIST_RANGES[range] || HIST_RANGES["1M"]; cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA"); }
   let view = pts.filter(p => p.d >= cutoff);
   if(view.length < 2) view = pts.slice(-2);
@@ -9689,14 +9875,14 @@ function renderStockChart(pos){
   if(pos.price != null && view[view.length-1].d < today) view.push({d: today, v: pos.price});
 
   const first = view[0].v, last = view[view.length-1].v, delta = last - first, dPct = first ? delta/first*100 : 0;
-  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(shortDate(view[0].d))} → ${esc(shortDate(view[view.length-1].d))}`;
-  drawSmChart(body, view.map(p => ({x:p.d, v:p.v})), {
-    timeAxis:false,
+  if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; ${esc(fullDate(view[0].d))} → ${esc(fullDate(view[view.length-1].d))}`;
+  drawSmChart(body, view.map(p => ({x:dayEpoch(p.d), d:p.d, v:p.v})), {
+    dateAxis:true,
     refLine: pos.hasCost ? pos.avgCost : null, refLabel: pos.hasCost ? `Your cost ${usd(pos.avgCost)}` : "",
-    fmtX0: p => shortDate(p.x), fmtX1: p => shortDate(p.x),
-    fmtTip: p => `${esc(longDate(p.x))} · <span class="tv">${usd(p.v)}</span>`
+    fmtTip: p => `${esc(longDate(p.d))} · <span class="tv">${usd(p.v)}</span>`
   });
 }
+
 /* self-contained chart renderer for the stock modal -- deliberately not shared with
    renderHistory()/renderHistoryIntraday() above so changes here can't affect the
    already-working portfolio-value chart (a little duplication, on purpose). */
@@ -9721,15 +9907,24 @@ function placeChartTip(tip, container, px, py, W, H, html){
   const y = Math.max(th * 1.2, py / H * ch);
   tip.style.top = y.toFixed(1) + "px";
 }
+/* Three ways to place points, chosen by the caller:
+     timeAxis  -- one trading session, x = timestamp between the session's open and close ("Open" / "Close")
+     dateAxis  -- daily closes, x = calendar date (epoch s at noon UTC) on one linear time axis, ticks at calendar boundaries
+     (neither) -- evenly spaced bars (a week of 30-minute bars), with dayTicks:true labelling each trading day
+   Every point's x position follows its date/time, never its index, so mixed data density can't bend the axis. */
 function drawSmChart(body, pts, opts){
   const W=760, H=230, PL=58, PR=14, PT=12, PB=28;
   const vals = pts.map(p=>p.v).concat(opts.refLine!=null ? [opts.refLine] : []);
   let min=Math.min(...vals), max=Math.max(...vals);
   const pad=(max-min)*0.06||max*0.01; min-=pad; max+=pad;
-  const span = opts.timeAxis ? ((opts.end-opts.start)||1) : null;
-  const X = (p,i) => opts.timeAxis
+  const mode = opts.timeAxis ? "time" : (opts.dateAxis ? "date" : "index");
+  const span = mode === "time" ? ((opts.end-opts.start)||1) : null;
+  const dx0 = pts[0].x, dx1 = pts[pts.length-1].x, dspan = (dx1-dx0)||1;
+  const X = (p,i) => mode === "time"
     ? PL + (W-PL-PR) * Math.max(0, Math.min(1, (p.x-opts.start)/span))
-    : PL + (W-PL-PR) * (pts.length===1 ? 0 : i/(pts.length-1));
+    : mode === "date"
+      ? PL + (W-PL-PR) * (pts.length===1 ? 0 : (p.x-dx0)/dspan)
+      : PL + (W-PL-PR) * (pts.length===1 ? 0 : i/(pts.length-1));
   const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
   const delta = pts[pts.length-1].v - pts[0].v;
   const col = delta >= 0 ? "var(--up)" : "var(--down)";
@@ -9743,6 +9938,22 @@ function drawSmChart(body, pts, opts){
     ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="var(--topbar-muted)" stroke-width="1.5" stroke-dasharray="5,4"/>
        <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="inherit" font-weight="700">${esc(opts.refLabel||"")}</text>`
     : "";
+  let axis;
+  if(mode === "date"){
+    axis = dateAxisSVG(dx0, dx1, {PL, PR, W, H, PB, fs:10.5});
+  } else if(mode === "index" && opts.dayTicks){
+    const dk = ts => new Date(ts*1000).toLocaleDateString("en-US",{timeZone:"America/New_York",weekday:"short",day:"numeric"});
+    let prevK = null; axis = "";
+    pts.forEach((p,i) => {
+      const k = dk(p.x); if(k === prevK) return; prevK = k;
+      const x = X(p,i), anchor = x < PL + 22 ? "start" : "middle";
+      axis += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${H-PB}" y2="${H-PB+4}" stroke="var(--hairline)" stroke-width="1"/>
+        <text x="${x.toFixed(1)}" y="${H-PB+17}" text-anchor="${anchor}" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(k)}</text>`;
+    });
+  } else {
+    axis = `<text x="${PL}" y="${H-7}" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX0(pts[0]))}</text>
+    <text x="${W-PR}" y="${H-7}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX1(pts[pts.length-1]))}</text>`;
+  }
   body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" id="smSvg">
     <defs><linearGradient id="smGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".18"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
     ${grid}
@@ -9752,8 +9963,7 @@ function drawSmChart(body, pts, opts){
     <circle cx="${X(pts[pts.length-1],pts.length-1).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="3.5" fill="${col}"/>
     <line id="smHair" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="var(--gold)" stroke-width="1" style="display:none"/>
     <circle id="smDot" r="4" fill="var(--gold)" style="display:none"/>
-    <text x="${PL}" y="${H-7}" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX0(pts[0]))}</text>
-    <text x="${W-PR}" y="${H-7}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="inherit">${esc(opts.fmtX1(pts[pts.length-1]))}</text>
+    ${axis}
     <rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="transparent" id="smHit"/>
   </svg><div class="hist-tip" id="smTip"></div>`;
   const svg = $("#smSvg"), tip = $("#smTip"), hair = $("#smHair"), dot = $("#smDot");
@@ -9761,10 +9971,13 @@ function drawSmChart(body, pts, opts){
     const r = svg.getBoundingClientRect();
     const fx = (e.clientX - r.left) / r.width * W;
     let idx;
-    if(opts.timeAxis){
-      const targetX = opts.start + Math.max(0, Math.min(1, (fx-PL)/(W-PL-PR))) * span;
-      idx = 0; let best = Infinity;
-      pts.forEach((p,i) => { const d = Math.abs(p.x - targetX); if(d < best){ best = d; idx = i; } });
+    if(mode === "time" || mode === "date"){
+      const frac = Math.max(0, Math.min(1, (fx-PL)/(W-PL-PR)));
+      const targetX = mode === "time" ? opts.start + frac * span : dx0 + frac * dspan;
+      /* points are sorted by x: binary search for the nearest */
+      let lo = 0, hi = pts.length - 1;
+      while(lo < hi){ const mid = (lo + hi) >> 1; if(pts[mid].x < targetX) lo = mid + 1; else hi = mid; }
+      idx = (lo > 0 && Math.abs(pts[lo-1].x - targetX) <= Math.abs(pts[lo].x - targetX)) ? lo - 1 : lo;
     } else {
       idx = Math.max(0, Math.min(pts.length-1, Math.round((fx-PL)/((W-PL-PR)/(pts.length-1||1)))));
     }

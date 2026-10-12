@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-12T19:25:59+00:00",
+ "updated": "2026-10-12T19:40:47+00:00",
  "date": "2026-10-12",
  "items": 24,
  "had_photos": 23,
@@ -7,7 +7,7 @@
  "from_feed": 0,
  "from_article": 0,
  "from_wikipedia": 0,
- "feed_pool": 136,
+ "feed_pool": 135,
  "videos": 0,
  "with_video": 0,
  "still_missing": 1,
@@ -20,8 +20,8 @@
   "Sports": 4
  },
  "dropped_stale": 0,
- "topped_up": 1,
- "guard_feeds_ok": 34,
+ "topped_up": 0,
+ "guard_feeds_ok": 0,
  "still_thin": [],
- "details_added": 7
+ "details_added": 0
 }

@@ -17070,21 +17070,23 @@ function skyArrive(){
 
   window.__rxMount = () => { viewDate = null; render(); checkReminder(); };
 
-  /* ---------- site-wide dose reminder (Eli, Oct 2026) ----------
-     When a scheduled dose time passes and that medication hasn't been logged, the whole site is covered
-     by a reminder you have to answer: take it and confirm, or say you can't right now and be reminded
-     again later (15 min / 30 min / 1 hr). It is device-independent: "taken" is judged from the logged
-     dose timestamps (which sync), so a dose logged on your phone clears the popup on your computer.
-     A dose counts as handled if any dose of that medication was logged from 45 minutes before its
-     scheduled time onward; the popup stops chasing a dose 3 hours after its time. */
+  /* ---------- site-wide dose reminder (Eli, Oct 2026; reworked Oct 13) ----------
+     When a scheduled dose time passes and that medication hasn't been logged, a pop-up covers the site.
+     It is acknowledge-only: one "OK" button, no "taken" confirmation and no snooze choices. Tapping OK
+     just dismisses it; if the dose still isn't logged on the tracker 15 minutes later, it comes back
+     (and keeps coming back every 15 minutes after each OK until the dose is logged or its window ends).
+     A dose logged AHEAD of schedule counts: doses fill the schedule earliest to latest (same rule as the
+     tracker's time chips), so e.g. a Pepto-Bismol logged at 10:42 covers the 12:00 time and it never
+     pops up. "Taken" is judged from the logged dose timestamps (which sync), so a dose logged on your
+     phone clears the pop-up on your computer. The pop-up stops chasing a dose 3 hours after its time. */
   const SLOTS = {
     om: [[6,30],[17,0]],
     mt: [[8,0],[13,0],[15,30],[18,30]],     // antibiotics only after food
     am: [[8,0],[13,0]],
     pb: [[6,30],[12,0],[17,0],[21,0]]
   };
-  const EARLY_MS = 45*60e3, WINDOW_MS = 3*60*60e3, SNOOZE_KEY = "dh_rx_snooze_v1";
-  let loaded = false, remindEl = null, pillEl = null, baseTitle = null;
+  const WINDOW_MS = 3*60*60e3, REPEAT_MS = 15*60e3, ACK_KEY = "dh_rx_ack_v1";
+  let loaded = false, remindEl = null, baseTitle = null;
   const slotMs = (day, h, mi) => { const d = parse(day); d.setHours(h, mi, 0, 0); return d.getTime(); };
   const fmtSlot = ms => new Date(ms).toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
 
@@ -17093,15 +17095,16 @@ function skyArrive(){
     if(n < 1 || n > DAYS) return [];
     const now = Date.now(), out = [];
     MEDS.forEach(m => {
-      const arr = list(today, m.k), last = arr.length ? Math.max(...arr) : 0;
+      // dose i (0-based) covers time i, even if it was logged early; only uncovered times can be due
+      const have = list(today, m.k).length;
       const due = SLOTS[m.k].map(([h, mi]) => slotMs(today, h, mi))
-        .filter(t => t <= now && now - t <= WINDOW_MS && last < t - EARLY_MS);
+        .filter((t, i) => i >= have && t <= now && now - t <= WINDOW_MS);
       if(due.length) out.push({ m, slot: Math.max(...due) });
     });
     return out;
   }
-  const readSnooze = () => { try{ return JSON.parse(localStorage.getItem(SNOOZE_KEY) || "null"); }catch(e){ return null; } };
-  const writeSnooze = v => { try{ if(v) localStorage.setItem(SNOOZE_KEY, JSON.stringify(v)); else localStorage.removeItem(SNOOZE_KEY); }catch(e){} };
+  const readAck = () => { try{ return JSON.parse(localStorage.getItem(ACK_KEY) || "null"); }catch(e){ return null; } };
+  const writeAck = v => { try{ if(v) localStorage.setItem(ACK_KEY, JSON.stringify(v)); else localStorage.removeItem(ACK_KEY); }catch(e){} };
 
   function remindCss(){
     if(document.getElementById("rx-remind-css")) return;
@@ -17123,31 +17126,20 @@ function skyArrive(){
     #rxRemind .rr-ok{width:100%;border:0;border-radius:14px;padding:15px 16px;font-size:16px;font-weight:900;cursor:pointer;
       background:var(--ink,#14161B);color:var(--card,#fff)}
     #rxRemind .rr-ok:active{transform:scale(.99)}
-    #rxRemind .rr-later{margin-top:16px;padding-top:14px;border-top:1px solid var(--hairline,rgba(0,0,0,.1))}
-    #rxRemind .rr-later-t{font-size:12px;font-weight:700;color:var(--muted,#6B7280);margin-bottom:8px}
-    #rxRemind .rr-snz{display:flex;gap:8px}
-    #rxRemind .rr-snz button{flex:1;border:1px solid var(--hairline,rgba(0,0,0,.14));background:transparent;color:var(--ink,#14161B);
-      border-radius:12px;padding:10px 6px;font-size:13px;font-weight:800;cursor:pointer}
-    #rxPill{position:fixed;right:16px;bottom:16px;z-index:2147482000;border:0;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:900;cursor:pointer;
-      background:var(--ink,#14161B);color:var(--card,#fff);box-shadow:0 12px 30px -8px rgba(0,0,0,.5)}
     `;
     document.head.appendChild(st);
   }
   function closeRemind(){ if(remindEl){ remindEl.remove(); remindEl = null; } document.documentElement.style.overflow = ""; }
-  function closePill(){ if(pillEl){ pillEl.remove(); pillEl = null; } }
 
-  function showRemind(due){
-    remindCss(); closePill();
-    const sig = due.map(d => d.m.k + "@" + d.slot).join("|");
+  function showRemind(due, sig){
+    remindCss();
     const since = fmtSlot(Math.min(...due.map(d => d.slot)));
     const html = `<div class="rr-card" role="alertdialog" aria-modal="true" aria-labelledby="rrT">
       <div class="rr-kick">Treatment reminder</div>
       <h2 id="rrT">Time to take your ${due.length > 1 ? "meds" : due[0].m.name.toLowerCase()}</h2>
-      <div class="rr-sub">Due ${esc2(since)}${due.length > 1 ? "" : ""} · confirm once you have taken ${due.length > 1 ? "them" : "it"}</div>
+      <div class="rr-sub">Due ${esc2(since)} &middot; log ${due.length > 1 ? "them" : "it"} on the tracker once taken</div>
       <div class="rr-list">${due.map(d => `<div class="rr-med"><span class="rr-name">${d.m.name}</span><span class="rr-dose">${d.m.dose}</span></div>`).join("")}</div>
-      <button class="rr-ok" type="button" id="rrOk">I took ${due.length > 1 ? "them" : "it"} &mdash; confirm</button>
-      <div class="rr-later"><div class="rr-later-t">Not near your protocol? Remind me again in</div>
-        <div class="rr-snz"><button type="button" data-snz="15">15 min</button><button type="button" data-snz="30">30 min</button><button type="button" data-snz="60">1 hour</button></div></div>
+      <button class="rr-ok" type="button" id="rrOk">OK</button>
     </div>`;
     if(remindEl && remindEl.dataset.sig === sig) return;           // already showing exactly this
     closeRemind();
@@ -17155,39 +17147,25 @@ function skyArrive(){
     document.body.appendChild(remindEl);
     document.documentElement.style.overflow = "hidden";
     remindEl.querySelector("#rrOk").onclick = () => {
-      due.forEach(d => logToday(d.m.k));
-      writeSnooze(null); closeRemind(); render(); checkReminder();
+      writeAck({ sig, at: Date.now() });                           // acknowledge only: nothing is logged for you
+      closeRemind(); document.title = baseTitle;
+      setTimeout(checkReminder, REPEAT_MS + 500);                  // come back if it still isn't logged
     };
-    remindEl.querySelectorAll("[data-snz]").forEach(b => b.onclick = () => {
-      writeSnooze({ until: Date.now() + (+b.dataset.snz)*60e3, sig });
-      closeRemind(); checkReminder();
-    });
     setTimeout(() => { const ok = remindEl && remindEl.querySelector("#rrOk"); if(ok) ok.focus(); }, 60);
   }
   const esc2 = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-  function showPill(due, until){
-    remindCss();
-    const mins = Math.max(1, Math.round((until - Date.now())/60e3));
-    if(!pillEl){
-      pillEl = document.createElement("button"); pillEl.id = "rxPill"; pillEl.type = "button";
-      pillEl.onclick = () => { writeSnooze(null); checkReminder(); };
-      document.body.appendChild(pillEl);
-    }
-    pillEl.textContent = "Dose due \u00b7 reminder in " + mins + " min \u2014 tap to take it now";
-  }
 
   function checkReminder(){
     try{
       const unlocked = (typeof PASS !== "undefined") && !!PASS;     // nothing before the passphrase is entered
       const due = (unlocked && loaded) ? dueDoses() : [];
       if(baseTitle === null) baseTitle = document.title;
-      if(!due.length){ closeRemind(); closePill(); writeSnooze(null); document.title = baseTitle; return; }
-      document.title = "Meds due \u00b7 " + baseTitle;
+      if(!due.length){ closeRemind(); writeAck(null); document.title = baseTitle; return; }
       const sig = due.map(d => d.m.k + "@" + d.slot).join("|");
-      const sn = readSnooze();
-      if(sn && sn.sig === sig && sn.until > Date.now()){ closeRemind(); showPill(due, sn.until); return; }
-      showRemind(due);
+      const ack = readAck();
+      if(ack && ack.sig === sig && Date.now() - ack.at < REPEAT_MS){ closeRemind(); document.title = baseTitle; return; }
+      document.title = "Meds due \u00b7 " + baseTitle;
+      showRemind(due, sig);
     }catch(e){ console.error("Daily Hub: dose reminder failed", e); }
   }
   setInterval(checkReminder, 15000);

@@ -17064,7 +17064,7 @@ function skyArrive(){
     }else ts = a.pop();
     e[k] = a;
     try{ localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries })); }catch(err){}
-    render(); checkReminder();
+    render(); checkReminder(true);
     if(ts !== undefined) syncDose(dir > 0 ? "add" : "remove", viewDate, k, ts);
   }
 
@@ -17073,8 +17073,9 @@ function skyArrive(){
   /* ---------- site-wide dose reminder (Eli, Oct 2026; reworked Oct 13) ----------
      When a scheduled dose time passes and that medication hasn't been logged, a pop-up covers the site.
      It is acknowledge-only: one "OK" button, no "taken" confirmation and no snooze choices. Tapping OK
-     just dismisses it; if the dose still isn't logged on the tracker 15 minutes later, it comes back
-     (and keeps coming back every 15 minutes after each OK until the dose is logged or its window ends).
+     just dismisses it; if a dose is still unlogged an hour later, it comes back (about once an hour after
+     each OK until the dose is logged or its window ends). The hour is one shared cooldown, so logging a
+     dose never re-triggers it, and a log/undo click can only close the pop-up, never open one.
      A dose logged AHEAD of schedule counts: doses fill the schedule earliest to latest (same rule as the
      tracker's time chips), so e.g. a Pepto-Bismol logged at 10:42 covers the 12:00 time and it never
      pops up. "Taken" is judged from the logged dose timestamps (which sync), so a dose logged on your
@@ -17085,7 +17086,7 @@ function skyArrive(){
     am: [[8,0],[13,0]],
     pb: [[6,30],[12,0],[17,0],[21,0]]
   };
-  const WINDOW_MS = 3*60*60e3, REPEAT_MS = 15*60e3, ACK_KEY = "dh_rx_ack_v1";
+  const WINDOW_MS = 3*60*60e3, REPEAT_MS = 60*60e3, ACK_KEY = "dh_rx_ack_v1";
   let loaded = false, remindEl = null, baseTitle = null;
   const slotMs = (day, h, mi) => { const d = parse(day); d.setHours(h, mi, 0, 0); return d.getTime(); };
   const fmtSlot = ms => new Date(ms).toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
@@ -17147,15 +17148,16 @@ function skyArrive(){
     document.body.appendChild(remindEl);
     document.documentElement.style.overflow = "hidden";
     remindEl.querySelector("#rrOk").onclick = () => {
-      writeAck({ sig, at: Date.now() });                           // acknowledge only: nothing is logged for you
+      writeAck({ at: Date.now() });                                // acknowledge only: nothing is logged for you
       closeRemind(); document.title = baseTitle;
-      setTimeout(checkReminder, REPEAT_MS + 500);                  // come back if it still isn't logged
+      setTimeout(checkReminder, REPEAT_MS + 500);                  // come back in about an hour if it still isn't logged
     };
     setTimeout(() => { const ok = remindEl && remindEl.querySelector("#rrOk"); if(ok) ok.focus(); }, 60);
   }
   const esc2 = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-  function checkReminder(){
+  /* quiet = called because a dose was just logged/undone: it may close or refresh the pop-up but never opens one */
+  function checkReminder(quiet){
     try{
       const unlocked = (typeof PASS !== "undefined") && !!PASS;     // nothing before the passphrase is entered
       const due = (unlocked && loaded) ? dueDoses() : [];
@@ -17163,7 +17165,9 @@ function skyArrive(){
       if(!due.length){ closeRemind(); writeAck(null); document.title = baseTitle; return; }
       const sig = due.map(d => d.m.k + "@" + d.slot).join("|");
       const ack = readAck();
-      if(ack && ack.sig === sig && Date.now() - ack.at < REPEAT_MS){ closeRemind(); document.title = baseTitle; return; }
+      // one shared cooldown: after an OK, nothing re-pops for REPEAT_MS, even if the set of overdue doses changes
+      if(ack && Date.now() - ack.at < REPEAT_MS){ closeRemind(); document.title = baseTitle; return; }
+      if(quiet === true && !remindEl) return;
       document.title = "Meds due \u00b7 " + baseTitle;
       showRemind(due, sig);
     }catch(e){ console.error("Daily Hub: dose reminder failed", e); }

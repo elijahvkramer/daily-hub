@@ -2,7 +2,7 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-10-10s1";
+const VERSION = "dh-2026-10-14s1";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";

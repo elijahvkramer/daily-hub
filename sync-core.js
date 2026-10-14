@@ -16,6 +16,7 @@
   "use strict";
   const HISTORY_CAP = 16;                        // recently-deleted to-dos kept
   const HISTORY_MAX_AGE_MS = 48 * 60 * 60 * 1000; // ...for at most 48h (Eli, Aug 2026)
+  const SUBDONE_CAP = 20;                         // checked-off checklist items kept per to-do (same 48h window)
   const FRIEND_HISTORY_CAP = 40;
   const HIDDEN_CAP = 400;                         // hidden countdown ids remembered
 
@@ -41,6 +42,15 @@
         legacyC.filter(t => !known.has(t.id)).map(t => ({ ...t, kind: "chill" })));
     }
     items = items.map(t => ({ ...t, kind: kindOf(t.kind) }));
+    // checked-off checklist items expire after 48h, like recently-completed to-dos
+    items = items.map(t => {
+      if(!Array.isArray(t.subdone)) return t;
+      const keep = t.subdone.filter(s => { const at = Date.parse(s.doneAt); return !Number.isFinite(at) || at >= now - HISTORY_MAX_AGE_MS; });
+      if(keep.length === t.subdone.length) return t;
+      const next = { ...t };
+      if(keep.length) next.subdone = keep; else delete next.subdone;
+      return next;
+    });
     let history = Array.isArray(data.history) ? data.history : null;
     if(!history){
       history = [
@@ -114,6 +124,30 @@
     },
     "todo.sub.remove"(d, o){
       mapItem(d, o.itemId, t => { t.subitems = arr(t.subitems).filter(s => s.id !== o.subId); return t; });
+    },
+    /* checking a checklist item off takes it out of the list, like a regular to-do: it moves to the
+       item's own `subdone` list (kept 48h, newest first) and can be added back. Both ops are
+       replay-safe: complete is a no-op once the item is gone, restore a no-op once it is back. */
+    "todo.sub.complete"(d, o){
+      mapItem(d, o.itemId, t => {
+        const subs = arr(t.subitems);
+        const s = subs.find(x => x.id === o.subId);
+        if(!s) return t;
+        t.subitems = subs.filter(x => x.id !== o.subId);
+        t.subdone = [{ id: s.id, text: s.text, doneAt: o.at || new Date().toISOString() },
+          ...arr(t.subdone).filter(x => x.id !== s.id)].slice(0, SUBDONE_CAP);
+        return t;
+      });
+    },
+    "todo.sub.restore"(d, o){
+      mapItem(d, o.itemId, t => {
+        const gone = arr(t.subdone).find(x => x.id === o.subId);
+        if(!gone) return t;
+        t.subdone = arr(t.subdone).filter(x => x.id !== o.subId);
+        const subs = arr(t.subitems);
+        if(!subs.some(x => x.id === gone.id)) t.subitems = [...subs, { id: gone.id, text: gone.text, done: false }];
+        return t;
+      });
     },
     "todo.restore"(d, o){
       d.items = arr(d.items); d.history = arr(d.history);

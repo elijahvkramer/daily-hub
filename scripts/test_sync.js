@@ -93,7 +93,7 @@ test("replay after lost ack is idempotent (no duplicates)", () => {
   const srv = new Server(base()); const d = new Device(srv);
   d.do("todos", { t: "todo.add", item: { id: "z", text: "Z", kind: "urgent", list: "personal", done: false } });
   d.do("todos", { t: "dose.add", day: "2026-10-11", k: "pb", ts: 5 });
-  d.do("todos", { t: "todo.remove", itemId: "b", at: "2026-10-10T20:00:00.000Z" });
+  d.do("todos", { t: "todo.remove", itemId: "b", at: new Date().toISOString() });
   d.do("friends", { t: "friend.log", personId: "p1", date: "2026-10-10T20:00:00.000Z", method: "text" });
   const ops = d.ob.list("todos"), fops = d.ob.list("friends");
   srv.commit("todos", ops); srv.commit("todos", ops);           // ack lost -> replayed
@@ -165,6 +165,35 @@ test("sub-items: concurrent adds on two devices both kept", () => {
   phone.do("todos", { t: "todo.sub.remove", itemId: "a", subId: "s2" });
   mac.flush("todos"); phone.flush("todos");
   assert.deepStrictEqual(srv.docs.todos.items.find(t => t.id === "a").subitems, [{ id: "s1", text: "one", done: true }]);
+});
+
+test("sub-items: checking one off removes it from the list, can be added back, replays safely", () => {
+  const srv = new Server(base()); const phone = new Device(srv), mac = new Device(srv);
+  phone.do("todos", { t: "todo.sub.add", itemId: "a", sub: { id: "s1", text: "one", done: false } });
+  phone.do("todos", { t: "todo.sub.add", itemId: "a", sub: { id: "s2", text: "two", done: false } });
+  phone.flush("todos"); mac.flush("todos");
+  const at = new Date().toISOString();
+  const done = { t: "todo.sub.complete", itemId: "a", subId: "s1", at };
+  phone.do("todos", done); phone.do("todos", done);               // replayed op
+  phone.flush("todos");
+  let a = srv.docs.todos.items.find(t => t.id === "a");
+  assert.deepStrictEqual(a.subitems.map(s => s.id), ["s2"]);
+  assert.deepStrictEqual(a.subdone, [{ id: "s1", text: "one", doneAt: at }]);
+  const back = { t: "todo.sub.restore", itemId: "a", subId: "s1" };
+  mac.do("todos", back); mac.do("todos", back);                   // replayed op
+  mac.flush("todos");
+  a = srv.docs.todos.items.find(t => t.id === "a");
+  assert.deepStrictEqual(a.subitems, [{ id: "s2", text: "two", done: false }, { id: "s1", text: "one", done: false }]);
+  assert.ok(!a.subdone || a.subdone.length === 0);
+});
+
+test("sub-items: completed ones expire after 48h like recently-completed to-dos", () => {
+  const now = Date.now();
+  const doc = { items: [ { id: "a", text: "A", kind: "urgent", subdone: [
+    { id: "old", text: "old", doneAt: new Date(now - 49 * 3600e3).toISOString() },
+    { id: "new", text: "new", doneAt: new Date(now - 3600e3).toISOString() } ] } ], history: [] };
+  const out = S.normalizeTodos(doc, now);
+  assert.deepStrictEqual(out.items[0].subdone.map(s => s.id), ["new"]);
 });
 
 test("countdown chips: add/remove/edit sync; import of local chips dedupes by label+date", () => {

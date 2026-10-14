@@ -2839,6 +2839,13 @@
   .ti-sub-head{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--muted);margin:0 0 6px;font-variant-numeric:tabular-nums}
   .ti-sub-bar{flex:1;height:4px;border-radius:4px;background:color-mix(in srgb,var(--ink) 9%,transparent);overflow:hidden}
   .ti-sub-bar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .ti-sub-item.ti-sub-leaving{overflow:hidden;opacity:0;padding-top:0;padding-bottom:0;transition:height .24s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .24s ease}
+  .ti-sub-donewrap{margin-top:10px;padding-top:6px;border-top:1px dashed var(--hairline)}
+  .ti-sub-donebtn{border:none;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:3px 6px 3px 0;border-radius:6px;transition:color .15s}
+  .ti-sub-donebtn:hover,.ti-sub-donewrap.open .ti-sub-donebtn{color:var(--gold-dark)}
+  .ti-sub-goneitem{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+  .ti-sub-goneitem .txt{flex:1;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:var(--hairline);color:#8A8F97}
+  .ti-sub-goneitem .when{flex-shrink:0;font-size:11px;font-weight:700;white-space:nowrap;color:var(--muted)}
   .todo-card .ti-sub-list{display:flex;flex-direction:column;gap:1px}
   .todo-card .ti-sub-item{gap:11px;padding:6px 8px;margin:0 -8px;border-radius:10px;cursor:default;font-size:14.5px;font-weight:500;transition:background .12s}
   .todo-card .ti-sub-item:hover{background:color-mix(in srgb,var(--ink) 4.5%,transparent)}
@@ -6260,22 +6267,34 @@ function dueChipLabel(due){
   return dt.toLocaleDateString("en-US", { month:"short", day:"numeric" });
 }
 
-function subChecklistHTML(subitems, itemId){
-  /* Unchecked items always sit above checked ones (Eli, Oct 2026); each group keeps its own order.
-     data-idx is the position in the stored list, so the in-place slide when you tick something
-     lands exactly where the next render will put it. */
+const expandedSubDone = new Set();   // to-do ids whose "completed checklist items" panel is open
+const pendingSubComplete = new Map(); // "todoId:subId" -> timer, for the short undo window after ticking a checklist item
+
+function subChecklistHTML(subitems, itemId, subdone){
+  /* Ticking a checklist item takes it off the list, like a regular to-do (Eli, Oct 2026); it moves to
+     the to-do's own "completed" panel below, where "Add back" puts it on the list again. Items already
+     ticked before this change (done:true) still show struck-through and untick on click.
+     Unchecked items sit above any legacy checked ones; each group keeps its own order. */
+  const gone = Array.isArray(subdone) ? subdone : [];
   const list = (subitems||[]).map((s,i) => ({...s, _i:i})).sort((a,b) => (a.done?1:0) - (b.done?1:0) || a._i - b._i);
-  const done = list.filter(s => s.done).length;
-  const head = list.length
-    ? `<div class="ti-sub-head"><span>${done} of ${list.length} done</span><div class="ti-sub-bar"><span style="width:${Math.round(done/list.length*100)}%"></span></div></div>` : "";
+  const done = list.filter(s => s.done).length + gone.length;
+  const total = list.length + gone.length;
+  const head = total
+    ? `<div class="ti-sub-head"><span>${done} of ${total} done</span><div class="ti-sub-bar"><span style="width:${Math.round(done/total*100)}%"></span></div></div>` : "";
+  const doneOpen = expandedSubDone.has(itemId);
+  const doneBlock = gone.length
+    ? `<div class="ti-sub-donewrap${doneOpen?" open":""}"><button type="button" class="ti-sub-donebtn" data-action="subdone-toggle">&#8635; Completed (${gone.length})</button>${doneOpen
+        ? gone.map(g => `<div class="ti-sub-goneitem"><span class="txt">${esc(g.text)}</span><span class="when">${relTimeAgo(g.doneAt)}</span><button type="button" class="tc-hist-restore" data-action="sub-restore" data-sub="${esc(g.id)}" title="Add back to the checklist">&#8617; Add back</button></div>`).join("")
+        : ""}</div>` : "";
   const rows = list.map(s => {
     const editing = subEditing.has(itemId + ":" + s.id);
-    return `<div class="ti-sub-item${s.done?" done":""}" data-sub="${esc(s.id)}" data-idx="${s._i}"><span class="box" data-action="sub-check" data-sub="${esc(s.id)}" title="Check off">✓</span>${
+    const isDone = s.done || pendingSubComplete.has(itemId + ":" + s.id);
+    return `<div class="ti-sub-item${isDone?" done":""}" data-sub="${esc(s.id)}" data-idx="${s._i}"><span class="box" data-action="sub-check" data-sub="${esc(s.id)}" title="Check off">✓</span>${
       editing ? `<input type="text" class="ti-sub-input" maxlength="140" value="${esc(s.text)}" data-sub="${esc(s.id)}">`
               : `<span class="txt" data-action="sub-edit" data-sub="${esc(s.id)}" title="Click to rename">${esc(s.text)}</span>`
     }<span class="ti-sub-del" data-action="sub-remove" data-sub="${esc(s.id)}" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span></div>`;
   }).join("");
-  return `${head}<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>`;
+  return `${head}<div class="ti-sub-list">${rows}</div><form class="ti-sub-add" data-action="sub-add"><input type="text" placeholder="Add item…" maxlength="140" autocomplete="off"><button type="submit" aria-label="Add">+</button></form>${doneBlock}`;
 }
 
 /* id -> the list it is moving into, set for the length of one urgent/chill transition */
@@ -6296,7 +6315,9 @@ function todoRowsHTML(items){
   return sorted.map((t,i) => {
     const kind = t.kind === "chill" ? "chill" : "urgent";
     const subitems = t.subitems || [];
-    const subDone = subitems.filter(s => s.done).length;
+    const subGone = t.subdone || [];
+    const subTotal = subitems.length + subGone.length;
+    const subDone = subitems.filter(s => s.done).length + subGone.length;
     const noteOn = expandedNotes.has(t.id), subOn = expandedSubs.has(t.id), dueOn = dueEditing.has(t.id);
     const hasNote = !!(t.note && t.note.trim());
     const overdue = !!(t.due && t.due < todayStr);
@@ -6314,7 +6335,7 @@ function todoRowsHTML(items){
     };
     const CARET = `<svg class="ti-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
     const badges = (hasNote ? `<span class="ti-badge ti-badge-note" data-action="note-toggle" title="Show note">${IC.note}Note${CARET}</span>` : "")
-      + (subitems.length ? `<span class="ti-badge ti-badge-sub${subDone===subitems.length?" all":""}" data-action="sub-toggle" title="Show checklist">${IC.list}${subDone}/${subitems.length}${CARET}</span>` : "");
+      + (subTotal ? `<span class="ti-badge ti-badge-sub${subDone===subTotal?" all":""}" data-action="sub-toggle" title="Show checklist">${IC.list}${subDone}/${subTotal}${CARET}</span>` : "");
     const moveTo = (t.list==="work"?"work":"personal")==="work" ? "personal" : "work";
     const pending = pendingComplete.get(t.id);
     const checkedPending = !!pending;
@@ -6349,7 +6370,7 @@ function todoRowsHTML(items){
         <span class="ti-tools">
           <button type="button" class="ti-icon-btn" data-action="list-move" data-to="${moveTo}" title="Move to ${moveTo==="work"?"Work":"Personal"}">${IC.move}</button>
           <button type="button" class="ti-icon-btn${hasNote?" active":""}" data-action="note-toggle" title="Note">${IC.note}</button>
-          <button type="button" class="ti-icon-btn${subitems.length?" active":""}" data-action="sub-toggle" title="Checklist">${IC.list}</button>
+          <button type="button" class="ti-icon-btn${subTotal?" active":""}" data-action="sub-toggle" title="Checklist">${IC.list}</button>
           ${(!t.due && !dueOn) ? `<button type="button" class="ti-icon-btn ti-due-btn" data-action="due-add" title="Set due date">+ due</button>` : ""}
           <span class="ti-del" data-action="remove" title="Remove">${IC.del}</span>
         </span>
@@ -6357,7 +6378,7 @@ function todoRowsHTML(items){
       </div>
       ${checkedPending ? `<div class="ti-undo-bar"><span style="animation-delay:-${undoElapsedMs}ms"></span></div>` : ""}
       <div class="ti-fold${noteOn?" open":""}" data-fold="note"><div class="ti-fold-in"><div class="ti-note-wrap"><div class="ti-note"><span class="ti-note-label">Note</span><textarea placeholder="Write a note…" rows="2">${esc(t.note||"")}</textarea></div></div></div></div>
-      <div class="ti-fold${subOn?" open":""}" data-fold="sub"><div class="ti-fold-in"><div class="ti-sub-wrap">${subChecklistHTML(subitems, t.id)}</div></div></div>
+      <div class="ti-fold${subOn?" open":""}" data-fold="sub"><div class="ti-fold-in"><div class="ti-sub-wrap">${subChecklistHTML(subitems, t.id, subGone)}</div></div></div>
     </div>`;
   }).join("");
 }
@@ -6401,16 +6422,33 @@ function rerenderTodoWrap(root){
    the change is written, so the re-render that follows lands on the same order instead of jumping. */
 function subCheckAnimated(item, id, subId){
   const row = item.querySelector(`.ti-sub-item[data-sub="${subId}"]`);
-  const list = row && row.parentElement;
-  const commit = () => { if(window.__todosApi) window.__todosApi.toggleSub(id, subId); };
-  if(!row || !list || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)){ commit(); return; }
-  flipReorder(list, () => {
-    row.classList.toggle("done");
-    [...list.children].sort((a,b) =>
-      (a.classList.contains("done")?1:0) - (b.classList.contains("done")?1:0) || (+a.dataset.idx) - (+b.dataset.idx)
-    ).forEach(r => list.appendChild(r));
-  }, ".ti-sub-item");
-  setTimeout(commit, 330);
+  const key = id + ":" + subId;
+  const api = window.__todosApi;
+  const sub = (((api && api.getState().items) || []).find(t => t.id === id) || {}).subitems;
+  const s = (sub || []).find(x => x.id === subId);
+  /* a checklist item ticked before this change (still marked done:true) just unticks, as before */
+  if(s && s.done){ if(api) api.toggleSub(id, subId); return; }
+  /* ticked again inside the undo window: cancel */
+  if(pendingSubComplete.has(key)){
+    clearTimeout(pendingSubComplete.get(key));
+    pendingSubComplete.delete(key);
+    if(row){ row.classList.remove("done", "ti-sub-leaving"); row.style.height = ""; }
+    return;
+  }
+  if(row) row.classList.add("done");
+  /* struck through for a moment (tick it again to undo), then it leaves the list and lands in
+     "Completed" -- same idea as a regular to-do, on a shorter fuse */
+  const timer = setTimeout(() => {
+    const finish = () => { if(!pendingSubComplete.has(key)) return; pendingSubComplete.delete(key); if(api) api.completeSub(id, subId); };
+    const r = item.querySelector(`.ti-sub-item[data-sub="${subId}"]`);
+    if(r && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)){
+      r.style.height = r.getBoundingClientRect().height + "px";
+      r.classList.add("ti-sub-leaving");
+      requestAnimationFrame(() => { r.style.height = "0px"; });
+      setTimeout(finish, 240);
+    } else finish();
+  }, 1200);
+  pendingSubComplete.set(key, timer);
 }
 
 function wireTodoRows(root){
@@ -6509,7 +6547,14 @@ function wireTodoRows(root){
       const sinp = wrap.querySelector(`.todo-item[data-id="${id}"] .ti-sub-input`);
       if(sinp){ sinp.focus(); sinp.select(); }
     } else if(action === "sub-remove"){
+      const pk = id + ":" + actionEl.dataset.sub;
+      if(pendingSubComplete.has(pk)){ clearTimeout(pendingSubComplete.get(pk)); pendingSubComplete.delete(pk); }
       if(window.__todosApi) window.__todosApi.removeSub(id, actionEl.dataset.sub);
+    } else if(action === "sub-restore"){
+      if(window.__todosApi) window.__todosApi.restoreSub(id, actionEl.dataset.sub);
+    } else if(action === "subdone-toggle"){
+      if(expandedSubDone.has(id)) expandedSubDone.delete(id); else expandedSubDone.add(id);
+      rerenderTodoWrap(root);
     } else if(action === "list-move"){
       if(window.__todosApi) window.__todosApi.setList(id, actionEl.dataset.to);
     }
@@ -16697,6 +16742,9 @@ function skyArrive(){
     },
     setSubText(id, subId, text){ text = (text || "").trim(); if(!text) return; enqueue("todos", { t: "todo.sub.patch", itemId: id, subId, set: { text } }); },
     removeSub(id, subId){ enqueue("todos", { t: "todo.sub.remove", itemId: id, subId }); },
+    /* ticking a checklist item takes it off the list (like a regular to-do); it can be added back */
+    completeSub(id, subId){ enqueue("todos", { t: "todo.sub.complete", itemId: id, subId, at: new Date().toISOString() }); },
+    restoreSub(id, subId){ enqueue("todos", { t: "todo.sub.restore", itemId: id, subId }); },
     restore(historyId){
       const e = (todosState.history || []).find(h => h.id === historyId); if(!e) return;
       // deterministic id, so restoring the same entry on two devices gives one item, not two

@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-15T19:22:59+00:00",
+ "updated": "2026-10-15T19:26:27+00:00",
  "date": "2026-10-15",
- "items": 25,
+ "items": 27,
  "had_photos": 25,
- "filled_this_run": 0,
+ "filled_this_run": 2,
  "from_feed": 0,
- "from_article": 0,
+ "from_article": 2,
  "from_wikipedia": 0,
  "feed_pool": 0,
  "videos": 0,
@@ -17,19 +17,16 @@
   "Tech & AI": 4,
   "Major International Headlines": 4,
   "Random": 4,
-  "Sports": 5
+  "Sports": 7
  },
  "dropped_stale": 0,
- "topped_up": 0,
- "guard_feeds_ok": 0,
+ "topped_up": 3,
+ "guard_feeds_ok": 43,
  "still_thin": [],
- "details_added": 0,
+ "details_added": 2,
  "sports_groups": {
-  "Favorites": 2,
+  "Favorites": 4,
   "General": 3
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": true,
- "enforced_by": "enforce_news.py"
+ "repairs": 1
 }

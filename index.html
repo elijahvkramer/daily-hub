@@ -9279,6 +9279,12 @@ async function loadHistory(){
   // itself has no timeout (it’s also used by the single-stock detail modal, where
   // that’s fine) -- but a hung request here for one symbol (crypto especially)
   // must not stall the whole chart forever, so each fallback attempt is capped.
+  // Server-side history (data/history.json.enc, built on GitHub's servers) before the slow per-symbol proxy
+  // retries: a holding whose proxy fetch failed (BAI, Oct 2026) otherwise shows no chart and no AI Insight numbers.
+  try{
+    const bh = await withDeadline(boardHistory(), 8000, null);
+    if(bh && bh.series) for(const s of syms) if(!P.histData[s] && bh.series[s] && bh.series[s].c && bh.series[s].c.length > 30) P.histData[s] = {t:bh.series[s].t, c:bh.series[s].c};
+  }catch(e){}
   const missing = syms.filter(s => !P.histData[s]);
   for(const s of missing){
     const h = await Promise.race([fetchHistSym(s), new Promise(res => setTimeout(() => res(null), 15000))]);
@@ -10601,7 +10607,16 @@ async function insGenerate(ticker){
   if(!p){ body.innerHTML = `<p class="ins-empty">That holding is not in the current account view.</p>`; return; }
   p.weight = t.value > 0 ? p.marketValue/t.value*100 : null;
 
-  const st = insSeries(p.fetchSymbol || p.ticker);
+  let st = insSeries(p.fetchSymbol || p.ticker);
+  if(!st){
+    try{
+      const bh = await withDeadline(boardHistory(), 6000, null), sym = p.fetchSymbol || p.ticker;
+      if(bh && bh.series && bh.series[sym] && bh.series[sym].c && bh.series[sym].c.length > 30){
+        P.histData = P.histData || {}; P.histData[sym] = {t:bh.series[sym].t, c:bh.series[sym].c}; st = insSeries(sym);
+      }
+    }catch(e){}
+    if(token !== P.insToken) return;
+  }
   const spyS = insSeries("SPY");
   const built = insBuild(p, st, spyS ? spyS.r63 : null);
   const up = p.dayPct >= 0;

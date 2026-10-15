@@ -46,8 +46,9 @@ from dh_crypto import decrypt_json, encrypt_json, read_passphrase  # noqa: E402
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
 REBUILD_HOURS = 6
-FORMAT_VERSION = 4        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
+FORMAT_VERSION = 5        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
                           # v4 = BTC/ETH from Bitstamp (v2 had CoinGecko's 365 days and no crypto in the All file; v3's source never answered)
+                          # v5 = also every holding (CNBC), so the Portfolio/AI Insight still have history when the browser's proxy fetch fails
 MAX_DAYS = 1830           # ~5 years
 ALL_REBUILD_HOURS = 24
 ALL_START_YEAR = 1990     # Treasury daily par yield curve data starts in 1990 for these maturities
@@ -73,6 +74,31 @@ GOLD_FALLBACK = ("GC=F", "pax-gold")        # PAXG tracks spot gold; used only i
 # site symbol -> CNBC symbol candidates (first that answers wins)
 CNBC_SYMS = {"^GSPC": [".SPX"], "^IXIC": [".IXIC"], "^DJI": [".DJI"], "VTI": ["VTI"],
              "GC=F": ["@GC.1"], "BZ=F": ["@LCO.1", "LCO-CMD"]}
+
+
+def holdings_cnbc_syms(repo, passphrase):
+    """Equity/ETF/fund symbols from the encrypted holdings file -> {site symbol: [CNBC candidates]}.
+
+    Oct 2026: the AI Insight panel for BAI had no price history (so no chart, no moving averages, and it fell
+    back to its local "quick read") because holdings history came only from browser -> public CORS proxy ->
+    Yahoo, and that request failed for BAI. Holdings now get the same server-side CNBC history the market
+    board has; the browser reads it when its own proxy fetch comes back empty. Best-effort: any failure
+    here just means no extra series."""
+    path = os.path.join(repo, "data", "holdings.json.enc")
+    out = {}
+    try:
+        holdings = decrypt_json(json.load(open(path)), passphrase)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! holdings for history: {str(e)[:120]}", file=sys.stderr)
+        return out
+    for p in holdings.get("positions", []):
+        if p.get("type") == "cash":
+            continue
+        sym = p.get("fetchSymbol") or p.get("ticker")
+        if not sym or "-" in sym or sym in CNBC_SYMS or sym in out:
+            continue
+        out[sym] = [sym]
+    return out
 
 
 def get(session, url, timeout=25):
@@ -250,7 +276,7 @@ def load_previous(path, passphrase):
         return {}
 
 
-def build_series(session, previous_series, max_days, include_crypto=True):
+def build_series(session, previous_series, max_days, include_crypto=True, extra_cnbc=None):
     """One pass over every source. Returns (series, fresh); a source that fails keeps its previous series."""
     series = dict(previous_series)        # a failed source keeps its last good series
     fresh = []
@@ -282,7 +308,9 @@ def build_series(session, previous_series, max_days, include_crypto=True):
             put(sym, ser, how)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
-        futs = {ex.submit(cnbc_history, session, sym, c, max_days): sym for sym, c in CNBC_SYMS.items()}
+        all_cnbc = dict(extra_cnbc or {})
+        all_cnbc.update(CNBC_SYMS)
+        futs = {ex.submit(cnbc_history, session, sym, c, max_days): sym for sym, c in all_cnbc.items()}
         for f in concurrent.futures.as_completed(futs):
             try:
                 put(futs[f], f.result(), "cnbc")
@@ -331,7 +359,7 @@ def main():
         # An old-format (weekly-thinned) file is not carried forward: a source that fails this time
         # should leave a series absent (the site then falls back to its live path), not keep sparse data.
         carry = previous.get("series", {}) if previous.get("v") == FORMAT_VERSION else {}
-        series, fresh = build_series(session, carry, MAX_DAYS)
+        series, fresh = build_series(session, carry, MAX_DAYS, extra_cnbc=holdings_cnbc_syms(repo, passphrase))
         if not fresh:
             print("no history source answered; leaving the previous file untouched")
         else:
@@ -346,7 +374,7 @@ def main():
         else:
             session = make_session()
             carry = prev_all.get("series", {}) if prev_all.get("v") == FORMAT_VERSION else {}
-            series, fresh = build_series(session, carry, None)
+            series, fresh = build_series(session, carry, None, extra_cnbc=holdings_cnbc_syms(repo, passphrase))
             if fresh:
                 write_payload(all_path, series, passphrase)
                 print(f"wrote {all_path}: {len(series)} series ({', '.join(fresh)})")

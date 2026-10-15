@@ -163,7 +163,7 @@ class MainTests(unittest.TestCase):
         os.makedirs(os.path.join(repo, "data"), exist_ok=True)
         calls = []
 
-        def fake_build(session, carry, max_days, include_crypto=True):
+        def fake_build(session, carry, max_days, include_crypto=True, extra_cnbc=None):
             calls.append(max_days)
             if max_days is None and not all_ok:
                 raise RuntimeError("boom")

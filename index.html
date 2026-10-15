@@ -2839,6 +2839,9 @@
   .ti-sub-head{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--muted);margin:0 0 6px;font-variant-numeric:tabular-nums}
   .ti-sub-bar{flex:1;height:4px;border-radius:4px;background:color-mix(in srgb,var(--ink) 9%,transparent);overflow:hidden}
   .ti-sub-bar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .ti-sub-item{position:relative}
+  .ti-sub-undo{position:absolute;left:8px;right:8px;bottom:0;height:2px;border-radius:2px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden;pointer-events:none}
+  .ti-sub-item.done .ti-sub-undo span{display:block;height:100%;border-radius:2px;background:var(--up);animation:tiUndoShrink 3s linear forwards}
   .ti-sub-item.ti-sub-leaving{overflow:hidden;opacity:0;padding-top:0;padding-bottom:0;transition:height .24s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .24s ease}
   .ti-sub-donewrap{margin-top:10px;padding-top:6px;border-top:1px dashed var(--hairline)}
   .ti-sub-donebtn{border:none;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:3px 6px 3px 0;border-radius:6px;transition:color .15s}
@@ -6268,7 +6271,7 @@ function dueChipLabel(due){
 }
 
 const expandedSubDone = new Set();   // to-do ids whose "completed checklist items" panel is open
-const pendingSubComplete = new Map(); // "todoId:subId" -> timer, for the short undo window after ticking a checklist item
+const pendingSubComplete = new Map(); // "todoId:subId" -> {timer, startedAt}, for the 3s undo window after ticking a checklist item (same bar as a regular to-do)
 
 function subChecklistHTML(subitems, itemId, subdone){
   /* Ticking a checklist item takes it off the list, like a regular to-do (Eli, Oct 2026); it moves to
@@ -6288,8 +6291,10 @@ function subChecklistHTML(subitems, itemId, subdone){
         : ""}</div>` : "";
   const rows = list.map(s => {
     const editing = subEditing.has(itemId + ":" + s.id);
-    const isDone = s.done || pendingSubComplete.has(itemId + ":" + s.id);
-    return `<div class="ti-sub-item${isDone?" done":""}" data-sub="${esc(s.id)}" data-idx="${s._i}"><span class="box" data-action="sub-check" data-sub="${esc(s.id)}" title="Check off">✓</span>${
+    const pend = pendingSubComplete.get(itemId + ":" + s.id);
+    const isDone = s.done || !!pend;
+    const bar = pend ? `<div class="ti-sub-undo"><span style="animation-delay:-${Math.max(0, Date.now() - pend.startedAt)}ms"></span></div>` : "";
+    return `<div class="ti-sub-item${isDone?" done":""}" data-sub="${esc(s.id)}" data-idx="${s._i}">${bar}<span class="box" data-action="sub-check" data-sub="${esc(s.id)}" title="Check off">✓</span>${
       editing ? `<input type="text" class="ti-sub-input" maxlength="140" value="${esc(s.text)}" data-sub="${esc(s.id)}">`
               : `<span class="txt" data-action="sub-edit" data-sub="${esc(s.id)}" title="Click to rename">${esc(s.text)}</span>`
     }<span class="ti-sub-del" data-action="sub-remove" data-sub="${esc(s.id)}" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span></div>`;
@@ -6430,14 +6435,20 @@ function subCheckAnimated(item, id, subId){
   if(s && s.done){ if(api) api.toggleSub(id, subId); return; }
   /* ticked again inside the undo window: cancel */
   if(pendingSubComplete.has(key)){
-    clearTimeout(pendingSubComplete.get(key));
+    clearTimeout(pendingSubComplete.get(key).timer);
     pendingSubComplete.delete(key);
-    if(row){ row.classList.remove("done", "ti-sub-leaving"); row.style.height = ""; }
+    if(row){
+      row.classList.remove("done", "ti-sub-leaving"); row.style.height = "";
+      const b = row.querySelector(".ti-sub-undo"); if(b) b.remove();
+    }
     return;
   }
-  if(row) row.classList.add("done");
-  /* struck through for a moment (tick it again to undo), then it leaves the list and lands in
-     "Completed" -- same idea as a regular to-do, on a shorter fuse */
+  if(row){
+    row.classList.add("done");
+    if(!row.querySelector(".ti-sub-undo")) row.insertAdjacentHTML("afterbegin", `<div class="ti-sub-undo"><span></span></div>`);
+  }
+  /* struck through with the green bar draining (tick it again to undo), then it leaves the list and
+     lands in "Completed" -- the same 3s window as a regular to-do */
   const timer = setTimeout(() => {
     const finish = () => { if(!pendingSubComplete.has(key)) return; pendingSubComplete.delete(key); if(api) api.completeSub(id, subId); };
     const r = item.querySelector(`.ti-sub-item[data-sub="${subId}"]`);
@@ -6447,8 +6458,8 @@ function subCheckAnimated(item, id, subId){
       requestAnimationFrame(() => { r.style.height = "0px"; });
       setTimeout(finish, 240);
     } else finish();
-  }, 1200);
-  pendingSubComplete.set(key, timer);
+  }, 3000);
+  pendingSubComplete.set(key, { timer, startedAt: Date.now() });
 }
 
 function wireTodoRows(root){
@@ -6548,7 +6559,7 @@ function wireTodoRows(root){
       if(sinp){ sinp.focus(); sinp.select(); }
     } else if(action === "sub-remove"){
       const pk = id + ":" + actionEl.dataset.sub;
-      if(pendingSubComplete.has(pk)){ clearTimeout(pendingSubComplete.get(pk)); pendingSubComplete.delete(pk); }
+      if(pendingSubComplete.has(pk)){ clearTimeout(pendingSubComplete.get(pk).timer); pendingSubComplete.delete(pk); }
       if(window.__todosApi) window.__todosApi.removeSub(id, actionEl.dataset.sub);
     } else if(action === "sub-restore"){
       if(window.__todosApi) window.__todosApi.restoreSub(id, actionEl.dataset.sub);

@@ -4658,7 +4658,7 @@ function sportKicker(it){
     return "My Teams";
   }
   if(SPORT_NAME[it.sport]) return SPORT_NAME[it.sport];
-  if(/\bnfl\b|quarterback|super bowl/i.test(t)) return "NFL";
+  if(/\b(nfl|super bowl|patriots|cowboys|eagles|chiefs|49ers|packers|steelers|ravens|bills|jets|dolphins|bengals|browns|broncos|raiders|chargers|seahawks|rams|cardinals|falcons|panthers|saints|buccaneers|bears|lions|vikings|commanders|texans|colts|jaguars|titans|giants)\b/i.test(t)) return "NFL";
   if(/\bnba\b/i.test(t)) return "NBA";
   if(/\bufc\b/i.test(t)) return "UFC";
   if(/\b(pga|golf)\b/i.test(t)) return "PGA Tour";
@@ -4690,14 +4690,31 @@ function showNewsView(view){
 
   if(view === "front"){
     setNavActive("front");
-    const lead = sections[0] || {title:"", items:[]};
-    const leadItem = (lead.items||[])[0] || {lead:"", body:""};
+    /* Oct 15, 2026: the hero is the story the edition's headline is ABOUT. The headline names the
+       day's biggest story, which is often not the first Military item -- e.g. "Trump Pulls Back on
+       a Public Execution" over a photo of a Houthi missile strike, linking to the wrong article. */
+    const hw = t => new Set(String(t||"").toLowerCase().match(/[a-z]{4,}/g) || []);
+    let heroSi = 0, heroIi = 0, best = 0;
+    // the headline's FIRST line names the lead story; a second line is usually the next story
+    const lines = String(d.headline||"").split("\n").filter(x => x.trim());
+    for(const text of [lines[0] || "", lines.join(" ")]){
+      const hlw = hw(text);
+      sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
+        const w = hw(it.lead + " " + (it.body||"")); let n = 0; hlw.forEach(x => { if(w.has(x)) n++; });
+        const sc = n / Math.max(3, Math.min(hlw.size, w.size));
+        if(sc > best + 0.001){ best = sc; heroSi = si; heroIi = ii; }
+      }));
+      if(best >= 0.34) break;
+    }
+    if(best < 0.25){ heroSi = 0; heroIi = 0; }
+    const lead = sections[heroSi] || {title:"", items:[]};
+    const leadItem = (lead.items||[])[heroIi] || {lead:"", body:""};
     // one card per section (its lead story), skipping the hero's own section
-    const cards = sections.map((sec, si) => si === 0 ? null : nwCard(sec.items[0], si, 0, d, false)).filter(Boolean).join("");
+    const cards = sections.map((sec, si) => si === heroSi ? null : nwCard(sec.items[0], si, 0, d, false)).filter(Boolean).join("");
     // everything else as a compact list
     let more = "";
-    sections.forEach((sec, si) => sec.items.forEach((it, ii) => { if(ii === 0) return; more += `<div class="nw-row" data-open="${si}:${ii}">${it.img ? newsPhoto(it, "nw-row-ph") : ""}<div><div class="nw-row-k">${esc(it.group ? grpLabel(it.group) : secShort(sec.title))}</div><div class="nw-row-t">${esc(headline(it.lead))}</div></div></div>`; }));
-    body.innerHTML = `<section class="nw-hero" data-open="0:0">
+    sections.forEach((sec, si) => sec.items.forEach((it, ii) => { if((si === heroSi && ii === heroIi) || (si !== heroSi && ii === 0)) return; more += `<div class="nw-row" data-open="${si}:${ii}">${it.img ? newsPhoto(it, "nw-row-ph") : ""}<div><div class="nw-row-k">${esc(it.group ? grpLabel(it.group) : secShort(sec.title))}</div><div class="nw-row-t">${esc(headline(it.lead))}</div></div></div>`; }));
+    body.innerHTML = `<section class="nw-hero" data-open="${heroSi}:${heroIi}">
         ${newsPhoto(leadItem, "nw-hero-ph")}
         <div class="nw-hero-b">
           <div class="nw-card-k">${esc(secShort(lead.title))} · Lead story</div>

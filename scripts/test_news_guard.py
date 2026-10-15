@@ -331,6 +331,22 @@ class Oct15Audit(unittest.TestCase):
         it3 = {"lead": "Kentucky football falls to Texas", "body": "Will Stein's team...", "group": "Favorites"}
         self.assertEqual(g.item_group(it3), "General")
 
+    def test_brief_headline_about_another_section_is_kept(self):
+        ed = {"headline": "Trump Pulls Back on a Public Execution\nAs Ukraine Reignites Its Oil War on Russia",
+              "sections": [{"title": "US Military & Foreign Conflict", "items": [
+                  {"lead": "A Houthi missile barrage hit Yemen's presidential palace", "body": "x"},
+                  {"lead": "Zelensky says Ukraine is resuming strikes on Russian oil refineries", "body": "war on Russia oil"}]},
+                  {"title": "Politics & Policy", "items": [
+                  {"lead": "Trump called off plans to livestream the public execution", "body": "Trump pulls back"}]}]}
+        g.refresh_framing(ed, [])
+        self.assertTrue(ed["headline"].startswith("Trump Pulls Back"))
+
+    def test_mixed_feed_story_without_sport_in_headline_is_not_a_favorite(self):
+        c = {"title": "Mark Sanchez reaches settlement in civil lawsuit filed by truck driver",
+             "desc": "The former USC quarterback settled the case.", "url": "https://l/1", "buckets": {"sports"},
+             "source": "Los Angeles Times", "team": "usc", "sport": None, "cats": ""}
+        self.assertIsNone(g.sports_group(c))
+
     def test_edition_window(self):
         self.assertEqual(g.window_days("2026-10-19"), 3)        # Monday
         self.assertEqual(g.window_days("2026-10-15"), 1)

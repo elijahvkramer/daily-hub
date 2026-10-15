@@ -108,7 +108,6 @@ SPORT_FEEDS = {
     "https://kentuckysportsradio.com/feed/": ("Kentucky Sports Radio", None, "uk"),
     "https://www.aseaofblue.com/rss/index.xml": ("A Sea of Blue", None, "uk"),
     "https://www.bigblueview.com/rss/index.xml": ("Big Blue View", "nfl", "nyg"),
-    "https://www.latimes.com/sports/usc/rss2.0.xml": ("Los Angeles Times", None, "usc"),
 }
 ESPN_API = "https://site.api.espn.com/apis/site/v2/sports/"
 ESPN_LEAGUES = {      # ESPN's own news API: exact sport, real photos, publish timestamps
@@ -609,17 +608,25 @@ def classify(cand, section_title):
     return i is not None and place(cand) == i
 
 
+def hint_of(c):
+    """A team hint is trusted only from that team's own beat feed or ESPN's (team-filtered) API.
+    (Oct 15, 2026: the LA Times USC feed tagged "Mark Sanchez reaches settlement in civil lawsuit"
+    -- a former Trojan's legal case -- and it ran as a USC football favorite.)"""
+    return TEAM_OF_SOURCE.get(c.get("source") or "") or (c.get("team") if c.get("source") == "ESPN" else None)
+
+
 def sports_group(cand):
     """'Favorites' (Kentucky men's basketball, NY Giants, USC football), 'General' (NFL, men's
-    college basketball, college football, PGA, UFC, men's Grand Slam tennis, NBA), or None."""
+    college basketball, college football, PGA, UFC, men's Grand Slam tennis, NBA), or None.
+    A feed story's sport comes from its single-sport feed or from its HEADLINE (+ feed tags) --
+    never inferred from a word deep in the summary."""
     text = _txt(cand)
-    sport = cand.get("sport") or sport_of(text)
-    hint = cand.get("team") or TEAM_OF_SOURCE.get(cand.get("source") or "")
-    if fav_team(text, sport, title=cand.get("title", ""), hint=hint):
+    head = f"{cand.get('title', '')} {cand.get('cats', '')}"
+    sport = cand.get("sport") or sport_of(head)
+    if fav_team(text, sport, title=head, hint=hint_of(cand)):
         return "Favorites"
     if OFF_SPORT.search(text) or PREP.search(text):
         return None
-    sport = sport_of(text, cand.get("sport"))
     return "General" if sport else None
 
 
@@ -867,8 +874,8 @@ def top_up(edition, now, pool, prior_urls=(), prior_leads=(), min_items=MIN_ITEM
             if team in covered or sum(1 for i in sec.get("items", []) if i.get("group") == "Favorites") >= 5:
                 continue
             for c in favs:
-                h = c.get("team") or TEAM_OF_SOURCE.get(c.get("source") or "")
-                if fav_team(_txt(c), c.get("sport"), title=c["title"], hint=h) == team and ok(c):
+                if TEAM_RX[team].search(c["title"]) and \
+                        fav_team(_txt(c), c.get("sport"), title=c["title"], hint=hint_of(c)) == team and ok(c):
                     add(sec, c, "Favorites")
                     covered.add(team)
                     break
@@ -1048,8 +1055,11 @@ def refresh_framing(edition, thin_before, force=False):
     hero = secs_list[0]["items"][0]
     leads = [f"{i.get('lead','')} {i.get('body','')}" for s in secs_list for i in s.get("items", [])]
     lines = [x for x in (edition.get("headline") or "").split("\n") if x.strip()]
-    stale = (not lines or any(max(similar(x, t) for t in leads) < 0.34 for x in lines)
-             or "…" in (edition.get("headline") or "") or similar(lines[0], f"{hero.get('lead','')} {hero.get('body','')}") < 0.2)
+    # The brief writes its own two-line headline about the day's biggest story (any section); the
+    # front page shows that story as the hero. Only a headline that matches NO story, or one
+    # stitched from fragments ("…"), is rebuilt -- and then from the lead story, whole.
+    stale = (not lines or any(max(similar(x, t) for t in leads) < 0.25 for x in lines)
+             or "…" in (edition.get("headline") or ""))
     if force or stale:
         nh = _clean_lead(hero.get("lead"))
         if nh and nh != edition.get("headline"):

@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-15T18:42:15+00:00",
+ "updated": "2026-10-15T18:56:30+00:00",
  "date": "2026-10-15",
- "items": 24,
- "had_photos": 24,
- "filled_this_run": 0,
+ "items": 25,
+ "had_photos": 22,
+ "filled_this_run": 3,
  "from_feed": 0,
- "from_article": 0,
+ "from_article": 3,
  "from_wikipedia": 0,
  "feed_pool": 0,
  "videos": 0,
@@ -17,11 +17,16 @@
   "Tech & AI": 4,
   "Major International Headlines": 4,
   "Random": 4,
-  "Sports": 4
+  "Sports": 5
  },
  "dropped_stale": 0,
- "topped_up": 0,
- "guard_feeds_ok": 0,
+ "topped_up": 9,
+ "guard_feeds_ok": 44,
  "still_thin": [],
- "details_added": 0
+ "details_added": 9,
+ "sports_groups": {
+  "Favorites": 2,
+  "General": 3
+ },
+ "repairs": 12
 }

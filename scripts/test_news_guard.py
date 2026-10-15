@@ -301,6 +301,28 @@ class Oct15Audit(unittest.TestCase):
         self.assertNotIn("…", ed["glance"][0]["teaser"])
         self.assertNotIn("Morning", ed["glance"][0]["teaser"])
 
+    def test_duplicate_event_from_two_outlets_runs_once(self):
+        ed = {"sections": [{"title": "Major International Headlines", "items": [
+            {"lead": "Pakistan school collapse kills almost 30 students and a teacher", "auto": True, "buckets": ["world"], "url": "https://c/1"},
+            {"lead": "Pakistan school roof collapse kills at least 34 children and teacher", "auto": True, "buckets": ["world"], "url": "https://g/1"},
+            {"lead": "Albania's prime minister vows not to resign over student-led protests", "auto": True, "buckets": ["world"], "url": "https://g/2"}]}]}
+        g.normalize(ed)
+        self.assertEqual(len(ed["sections"][0]["items"]), 2)
+
+    def test_each_team_with_news_gets_a_story(self):
+        w = NOW - datetime.timedelta(hours=2)
+        mk = lambda t, sp, src, team=None: {"title": t, "desc": "", "url": "https://s/" + str(abs(hash(t))), "when": w, "img": None,
+                                            "source": src, "buckets": {"sports"}, "sport": sp, "team": team, "cats": ""}
+        pool = [mk("Mark Pope previews Kentucky basketball's opener", "mcbb", "ESPN"),
+                mk("Kentucky basketball adds walk-on guard", "mcbb", "ESPN"),
+                mk("NY Giants news: Abdul Carter misses practice", "nfl", "Big Blue View", "nyg"),
+                mk("USC football's Lincoln Riley on the Trojans' defense", "cfb", "ESPN"),
+                mk("Chiefs beat Bills", "nfl", "ESPN"), mk("Lakers sign guard", "nba", "ESPN")]
+        ed = {"sections": [{"title": "Sports", "items": []}]}
+        g.top_up(ed, NOW, pool)
+        teams = {g.team_of(i) for i in ed["sections"][0]["items"]}
+        self.assertTrue({"uk", "nyg", "usc"} <= teams, teams)
+
     def test_edition_window(self):
         self.assertEqual(g.window_days("2026-10-19"), 3)        # Monday
         self.assertEqual(g.window_days("2026-10-15"), 1)

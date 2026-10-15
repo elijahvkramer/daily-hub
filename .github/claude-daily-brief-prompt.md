@@ -1,6 +1,17 @@
 # Daily Hub — combined Market Update + News Briefing (GitHub Actions edition)
 
-You are running unattended, once daily in the early morning Central (triggered by the workflow; see daily-brief.yml), inside a fresh checkout of the `elijahvkramer/daily-hub` repo. This combines what used to be two separate Cowork scheduled tasks (`market-update` and `daily-news-briefing`) into one run. The website JSON schemas, research bar, and writing style are UNCHANGED from those tasks — do not alter them. Work autonomously; note any assumptions in a closing chat/log summary. **STOP CONDITION: the moment Step 4's closing summary is printed, END THE TURN immediately.** Do not re-verify, re-read the files you just published, re-check your work, or do any further research/exploration after that point — the job has a hard 150-turn budget and prior runs have been marked FAILED (despite publishing correctly) purely for continuing to churn after finishing, not for any actual content problem. Finishing in under 60 turns is normal; treat anything past 100 as a sign to wrap up NOW.
+You are running unattended, once daily in the early morning Central (triggered by the workflow; see daily-brief.yml), inside a fresh checkout of the `elijahvkramer/daily-hub` repo. This combines what used to be two separate Cowork scheduled tasks (`market-update` and `daily-news-briefing`) into one run. The website JSON schemas, research bar, and writing style are UNCHANGED from those tasks — do not alter them. Work autonomously; note any assumptions in a closing chat/log summary. **STOP CONDITION: the moment Step 4's closing summary is printed, END THE TURN immediately.** Do not re-verify, re-read the files you just published, re-check your work, or do any further research/exploration after that point — the job has a hard 200-turn budget and prior runs have been marked FAILED (despite publishing correctly) purely for continuing to churn after finishing, not for any actual content problem. Finishing in under 60 turns is normal; treat anything past 100 as a sign to wrap up NOW.
+
+## Order of work — publish each part the moment it is done (Oct 15, 2026)
+
+On Oct 15 this run used all 150 turns and published NOTHING — not the news, not the market section, not Brain Food — because everything was committed only at the very end. So:
+
+1. **News first** (Step 2). As soon as the readiness check passes (or after your second fix round — see below), encrypt it, rebuild the manifest, `git add -A data && git commit -m "publish: news <date>" && git push` (on a rejected push: `git pull --rebase` and push again).
+2. **Market second** (Step 1, weekdays only). Publish it the same way the moment it is written: `publish: market <date>`.
+3. **Brain Food + Daily Case + word** (Step 3). Commit and push: `publish: brain food <date>`.
+4. Step 4's summary, then STOP.
+
+Budget: aim for ~45 turns on news, ~25 on market, ~15 on Step 3. If you pass 120 turns, publish whatever is finished and stop.
 
 ## Where you're running
 
@@ -160,7 +171,7 @@ Photos: see "Source + photo per item" above — `img` from the article itself fi
 python3 scripts/enforce_news.py --check /tmp/news.json --date=$(date -u +%F)
 ```
 
-It must print `READY`. If it prints `NOT READY`, every line it lists is a defect: go back to research (new queries, different outlets — wire services, regional papers, trade press, beat writers) and fix each one, then run the check again. Do not publish until it says READY. Never write glance chips, a subtitle or a headline that call a section or the day "quiet", "light" or "slow". After you publish, a deterministic floor (`scripts/enforce_news.py`) runs in the workflow and tops up any section still under four stories from wire feeds — those fillers are noticeably worse than your stories, so treat it as a safety net you should never need.
+It must print `READY`. If it prints `NOT READY`, every line it lists is a defect: go back to research (new queries, different outlets — wire services, regional papers, trade press, beat writers) and fix each one, then run the check again. **At most two fix rounds:** if the check still lists problems after your second round, remove the items it flags (never publish a flagged story) and publish what remains — the floor that runs after you tops sections back up from verified feeds. An unpublished edition is the worst outcome of all. Never write glance chips, a subtitle or a headline that call a section or the day "quiet", "light" or "slow". After you publish, a deterministic floor (`scripts/enforce_news.py`) runs in the workflow and tops up any section still under four stories from wire feeds — those fillers are noticeably worse than your stories, so treat it as a safety net you should never need.
 
 Encrypt and publish the same way as market (own commit or combined):
 

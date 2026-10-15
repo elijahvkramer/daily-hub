@@ -141,14 +141,14 @@ POLITICS_WORDS = _T(
     r"voters?|polls?|polling|supreme court|governors?|gop|democrats?|democratic|republicans?|tariffs?|shutdown|"
     r"lawmakers|legislat\w+|impeach\w*|attorney general|justice department|doj|fbi|campaign\w*|"
     r"house (speaker|republicans|democrats|vote|passes|committee)|speaker johnson|cabinet|executive order|"
-    r"newsom|rubio|desantis|filibuster|primar(y|ies)|administration|federal (judge|court|agency|workers)|"
+    r"newsom|rubio|desantis|filibuster|primary elections?|primaries|administration|federal (judge|court|agency|workers)|"
     r"medicaid|medicare|social security|immigration|ice agents?|deport\w*|white house)\b")
 TECH_WORDS = _T(
     r"(\bAI\b|artificial intelligence|openai|anthropic|chatgpt|claude|gemini|nvidia|\bchips?\b|semiconductor|"
     r"\bapple\b|google|microsoft|\bmeta\b|amazon|tesla|spacex|software|\bapps?\b|iphone|android|cyber\w*|"
     r"\bhack\w*|robot\w*|start-?ups?|data cent(er|re)s?|smartphones?|quantum|tsmc|asml|crypto\w*|bitcoin|"
     r"\btech\b|technology|internet|social media|tiktok|youtube|x\.com|musk|zuckerberg|altman|deepfakes?|"
-    r"algorithm|computing|silicon|satellites?|ev\b|electric vehicles?|streaming)", )
+    r"algorithm|computing|silicon|satellites?|\bEVs?\b|electric vehicles?|streaming)")
 COMBAT = _T(r"\b(troops?|soldiers?|missiles?|air ?strikes?|war|killed|ceasefire|invasion|shelling|warships?|"
              r"combat|attacks?|bombing|hostages?)\b")
 US_DOMESTIC = _T(r"\b(midterms?|congress|senate|governor|state legislature|u\.?s\.? voters|american voters|"
@@ -164,13 +164,15 @@ HARD_NEWS = _T(r"\b(killed|kills|dead|deaths?|dies|president|prime minister|mini
 JUNK_TITLE = _T(
     r"^(the\s+)?(morning|evening|weekend|daily|midday|nightly)\s+(news\s+)?(brief|briefing|edition|digest|"
     r"roundup|report|rundown|wrap)\b|"
-    r"^[A-Z][A-Z'’.&-]+(\s+[A-Z][A-Z'’.&-]+)+:\s|"                  # ALL-CAPS COLUMNIST: headline
     r"^(watch|video|listen|opinion|analysis|review|letters?|explainer|quiz)\b\s*[:|\-–—]|"
     r"\b(podcast|newsletter|as it happened|crossword|wordle|connections hint|"
     r"horoscopes?|tickets?|best prices|promo codes?|deals? (of|on)|coupons?|odds,? lines|betting|best bets?|"
     r"picks? against the spread|week \d+ picks|expert picks|picks and predictions|props?\b|fantasy football|recipes?|photos? of the (day|week)|in pictures|"
     r"week in pictures|what to watch|how to watch|tv channel|live stream)\b|"
     r"\b(how to|here'?s how|what to know|things to know|what you need to know|essential items|should you)\b")
+# "LIZ PEEK: ...", "MORNING GLORY: ..." -- case-SENSITIVE on purpose: compiled with re.I this also
+# matched ordinary "NY Giants news: ..." and "Will Stein Show Recap: ..." headlines.
+CAPS_BANNER = re.compile(r"^[A-Z][A-Z'’.&-]+(\s+[A-Z][A-Z'’.&-]+)+:\s")
 JUNK_URL = _T(r"/(opinion|opinions|commentisfree|podcasts?|videos?|gallery|galleries|"
               r"pictures|newsletters?|sponsored|shopping|deals|coupons|betting|tickets|picks|fantasy)(/|-|$)")
 OFF_SPORT = _T(r"\b(soccer|premier league|la liga|serie a|bundesliga|champions league|mls|fifa|uefa|psg|"
@@ -282,7 +284,7 @@ TEAM_OF_SOURCE = {"Kentucky Sports Radio": "uk", "A Sea of Blue": "uk", "Big Blu
 
 def is_junk(title, url=""):
     t = (title or "").strip()
-    return bool(JUNK_TITLE.search(t) or JUNK_URL.search(urllib.parse.urlparse(url or "").path)
+    return bool(JUNK_TITLE.search(t) or CAPS_BANNER.search(t) or JUNK_URL.search(urllib.parse.urlparse(url or "").path)
                 or len(re.findall(r"[A-Za-z0-9]+", t)) < 3)
 
 
@@ -678,6 +680,19 @@ def prior_stories(repo, decrypt, passphrase, date, n=3):
     return urls, leads
 
 
+def same_story(title, text, thresh=0.5):
+    """Two headlines about one event (different outlets, different wording)."""
+    head = (text or "")[:len(title or "") + 40]           # the headline part of "lead body"
+    return similar(title, head) >= thresh
+
+
+def team_of(item):
+    """Which favorite team an edition item is about (None for General / non-sports)."""
+    if item.get("group") != "Favorites":
+        return None
+    return item.get("team") or fav_team(f"{item.get('lead', '')} {item.get('body', '')}", item.get("sport"), lenient=True)
+
+
 def order_sports(sec):
     """Favorites first, then General -- stable, so the brief's own order survives inside a group."""
     items = sec.get("items", [])
@@ -726,6 +741,16 @@ def normalize(edition):
                 notes.append(f"moved to {SECTION_ORDER[dest]}: {it.get('lead', '')[:60]}")
             else:
                 keep.append(it)
+        s["items"] = keep
+    seen = []
+    for s in secs:                       # one event, one story: a filler that repeats one goes
+        keep = []
+        for it in s.get("items", []):
+            if it.get("auto") and any(same_story(it.get("lead", ""), x) for x in seen):
+                notes.append(f"removed duplicate: {it.get('lead', '')[:60]}")
+                continue
+            seen.append(it.get("lead", ""))
+            keep.append(it)
         s["items"] = keep
     for s in secs:
         if sec_index(s.get("title")) == 5:
@@ -777,7 +802,11 @@ def top_up(edition, now, pool, prior_urls=(), prior_leads=(), min_items=MIN_ITEM
         if u in used_urls or u in prior_urls:
             return False
         blob = f"{c['title']} {c['desc']}"
-        return not (any(similar(blob, t) >= 0.5 for t in used_text) or any(similar(blob, t) >= prior_sim for t in prior_leads))
+        # Oct 15, 2026: "Pakistan school collapse kills almost 30..." (CBS) and "Pakistan school roof
+        # collapse kills at least 34..." (Guardian) both ran -- the long summaries diluted the
+        # overlap. Headlines are compared to headlines as well.
+        return not (any(similar(blob, t) >= 0.5 or same_story(c["title"], t) for t in used_text)
+                    or any(similar(blob, t) >= prior_sim or same_story(c["title"], t, 0.6) for t in prior_leads))
 
     def add(sec, c, group=None):
         item = {
@@ -832,6 +861,17 @@ def top_up(edition, now, pool, prior_urls=(), prior_leads=(), min_items=MIN_ITEM
                 break
             if ok(c):
                 add(sec, c, sports_group(c))
+        # every one of Eli's three teams that has fresh news gets a story (Favorites capped at 5)
+        covered = {team_of(i) for i in sec.get("items", [])}
+        for team in ("uk", "nyg", "usc"):
+            if team in covered or sum(1 for i in sec.get("items", []) if i.get("group") == "Favorites") >= 5:
+                continue
+            for c in favs:
+                h = c.get("team") or TEAM_OF_SOURCE.get(c.get("source") or "")
+                if fav_team(_txt(c), c.get("sport"), title=c["title"], hint=h) == team and ok(c):
+                    add(sec, c, "Favorites")
+                    covered.add(team)
+                    break
         order_sports(sec)
     if any(s.get("items") for s in secs):
         edition["sections"] = [s for s in secs if s.get("items")] + [s for s in secs if not s.get("items")]
@@ -885,7 +925,12 @@ def run(edition, date, repo, passphrase, decrypt, fetch, dry=False):
     groups_short = sum(i.get("group") == "Favorites" for i in sp["items"]) < 2 or \
         sum(i.get("group") == "General" for i in sp["items"]) < 2
     added, pool_n, feeds_ok = {}, 0, 0
-    if thin or groups_short:
+    teams_due = False
+    last = parse_dt(edition.get("teamchk"))
+    if len({team_of(i) for i in sp["items"]} - {None}) < 3 and (not last or now - last > datetime.timedelta(hours=2)):
+        teams_due = True
+        edition["teamchk"] = now.isoformat(timespec="seconds")
+    if thin or groups_short or teams_due:
         pool, feeds_ok = build_pool(fetch)
         pool_n = len(pool)
         urls, leads = prior_stories(repo, decrypt, passphrase, date)

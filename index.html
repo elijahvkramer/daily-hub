@@ -300,6 +300,9 @@
   .np-col-story .cs-t{font-family:Georgia,serif;font-size:16.5px;font-weight:900;line-height:1.24;color:var(--ink)}
   .np-col-story .cs-b{font-size:13.5px;line-height:1.62;color:var(--ink);margin-top:5px}
   .np-group-h{column-span:all;font-size:10.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dark);border-top:1px solid var(--hairline);padding-top:10px;margin:2px 0 10px}
+  .np-group-top{display:flex;align-items:baseline;gap:8px;margin:22px 0 12px}
+  .np-group-top:first-of-type{margin-top:8px}
+  .np-group-top .np-count{font-weight:700;letter-spacing:0;opacity:.6}
   @media(max-width:640px){.np-secflow{column-count:1}}
   .np-detail{font-size:13.5px;line-height:1.68;color:var(--ink);margin-top:10px;padding-top:10px;border-top:1px dashed var(--hairline)}
   .np-more{display:inline-block;margin-top:9px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-dark);cursor:pointer;user-select:none}
@@ -4642,11 +4645,33 @@ function newsByline(item, d){
   bits.push(esc(d.dateline || niceDate(d.date)));
   return bits.join(" · ");
 }
-function nwCard(item, si, ii, d, big){
+/* Sports groups (Oct 15, 2026): the data says Favorites / General; the page says what they mean. */
+function grpLabel(g){ return g === "Favorites" ? "My Teams" : g === "General" ? "General Sports" : (g || ""); }
+/* inside the Sports page the block heading already says the group, so a card names its team/sport */
+const SPORT_NAME = {nfl:"NFL", cfb:"College Football", mcbb:"College Basketball", nba:"NBA", golf:"PGA Tour", ufc:"UFC", tennis:"Tennis"};
+function sportKicker(it){
+  const t = `${it.lead||""} ${it.body||""}`;
+  if(it.group === "Favorites"){
+    if(it.team === "uk" || (!it.team && /\b(kentucky|wildcats|mark pope)\b/i.test(t))) return "Kentucky Basketball";
+    if(it.team === "nyg" || (!it.team && /\bgiants\b/i.test(t))) return "New York Giants";
+    if(it.team === "usc" || (!it.team && /\b(usc|trojans)\b/i.test(t))) return "USC Football";
+    return "My Teams";
+  }
+  if(SPORT_NAME[it.sport]) return SPORT_NAME[it.sport];
+  if(/\bnfl\b|quarterback|super bowl/i.test(t)) return "NFL";
+  if(/\bnba\b/i.test(t)) return "NBA";
+  if(/\bufc\b/i.test(t)) return "UFC";
+  if(/\b(pga|golf)\b/i.test(t)) return "PGA Tour";
+  if(/\b(atp|tennis|wimbledon|open)\b/i.test(t) && /tennis|atp|wimbledon/i.test(t)) return "Tennis";
+  if(/football|\bqb\b|bowl/i.test(t)) return "College Football";
+  if(/basketball|hoops/i.test(t)) return "College Basketball";
+  return "General Sports";
+}
+function nwCard(item, si, ii, d, big, inSports){
   return `<article class="nw-card${big?" big":""}${item.img?"":" noimg"}" data-open="${si}:${ii}">
     ${newsPhoto(item, "nw-card-ph")}
     <div class="nw-card-b">
-      <div class="nw-card-k">${esc(item.group ? item.group : secShort((d.sections||[])[si] && (d.sections||[])[si].title))}</div>
+      <div class="nw-card-k">${esc(item.group ? (inSports ? sportKicker(item) : grpLabel(item.group)) : secShort((d.sections||[])[si] && (d.sections||[])[si].title))}</div>
       <h3 class="nw-card-t">${esc(headline(item.lead))}</h3>
       <p class="nw-card-d">${esc(item.body||"")}</p>
       <div class="nw-card-m">${newsByline(item, d)}</div>
@@ -4671,7 +4696,7 @@ function showNewsView(view){
     const cards = sections.map((sec, si) => si === 0 ? null : nwCard(sec.items[0], si, 0, d, false)).filter(Boolean).join("");
     // everything else as a compact list
     let more = "";
-    sections.forEach((sec, si) => sec.items.forEach((it, ii) => { if(ii === 0) return; more += `<div class="nw-row" data-open="${si}:${ii}">${it.img ? newsPhoto(it, "nw-row-ph") : ""}<div><div class="nw-row-k">${esc(it.group || secShort(sec.title))}</div><div class="nw-row-t">${esc(headline(it.lead))}</div></div></div>`; }));
+    sections.forEach((sec, si) => sec.items.forEach((it, ii) => { if(ii === 0) return; more += `<div class="nw-row" data-open="${si}:${ii}">${it.img ? newsPhoto(it, "nw-row-ph") : ""}<div><div class="nw-row-k">${esc(it.group ? grpLabel(it.group) : secShort(sec.title))}</div><div class="nw-row-t">${esc(headline(it.lead))}</div></div></div>`; }));
     body.innerHTML = `<section class="nw-hero" data-open="0:0">
         ${newsPhoto(leadItem, "nw-hero-ph")}
         <div class="nw-hero-b">
@@ -4708,7 +4733,7 @@ function showNewsView(view){
     const next = (sec.items||[])[ii+1] ? {si, ii: ii+1, it: sec.items[ii+1]} : (sections[si+1] && sections[si+1].items[0] ? {si: si+1, ii: 0, it: sections[si+1].items[0]} : null);
     body.innerHTML = `<button class="np-back" id="npBack">← ${esc(secShort(sec.title))}</button>
       <article class="nw-article">
-        <div class="nw-card-k">${esc(it.group ? it.group + " · " + secShort(sec.title) : sec.title)}</div>
+        <div class="nw-card-k">${esc(it.group ? grpLabel(it.group) + " · " + sportKicker(it) : sec.title)}</div>
         <h1 class="nw-art-t">${esc(headline(it.lead))}</h1>
         ${it.body ? `<p class="nw-art-dek">${esc(it.body)}</p>` : ""}
         <div class="nw-art-by">${newsByline(it, d)}${it.url ? ` · <a href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Read at the source ↗</a>` : ""}</div>
@@ -4732,14 +4757,25 @@ function showNewsView(view){
   const items = sec.items || [];
   let h = `<button class="np-back" id="npBack">← Front Page</button>
     <div class="np-sec-title">${esc(sec.title)}<span class="np-count">${items.length} ${items.length===1?"story":"stories"}</span></div>`;
-  if(items.length) h += nwCard(items[0], si, 0, d, true);
-  if(items.length > 1){
-    let prevGroup = items[0].group || null, grid = "";
-    items.slice(1).forEach((it, k) => {
-      if(it.group && it.group !== prevGroup){ grid += `</div><div class="np-group-h">${esc(it.group)}</div><div class="nw-grid">`; prevGroup = it.group; }
-      grid += nwCard(it, si, k+1, d, false);
+  /* Sports: two labeled blocks, My Teams (Kentucky men's basketball, Giants, USC football) then
+     General Sports -- always in that order and always labeled, whatever order the edition lists
+     them in. (Before Oct 15 the first story was drawn above any heading and a header only
+     appeared when the group changed, so the split was invisible.) Indices stay the originals so
+     every card still opens its own article. */
+  const grouped = /sport/i.test(sec.title || "") && items.some(it => it.group);
+  if(grouped){
+    const idx = items.map((it, ii) => ({it, ii}));
+    const blocks = [["Favorites", idx.filter(x => x.it.group === "Favorites")],
+                    ["General", idx.filter(x => x.it.group !== "Favorites")]];
+    blocks.forEach(([g, list]) => {
+      if(!list.length) return;
+      h += `<div class="np-group-h np-group-top">${esc(grpLabel(g))}<span class="np-count">${list.length}</span></div>`;
+      h += nwCard(list[0].it, si, list[0].ii, d, true, true);
+      if(list.length > 1) h += `<div class="nw-grid" style="margin-top:14px">${list.slice(1).map(x => nwCard(x.it, si, x.ii, d, false, true)).join("")}</div>`;
     });
-    h += `<div class="nw-grid" style="margin-top:14px">${grid}</div>`;
+  } else {
+    if(items.length) h += nwCard(items[0], si, 0, d, true);
+    if(items.length > 1) h += `<div class="nw-grid" style="margin-top:14px">${items.slice(1).map((it, k) => nwCard(it, si, k+1, d, false)).join("")}</div>`;
   }
   body.innerHTML = h;
   $("#npBack").addEventListener("click", () => { showNewsView("front"); setNavActive("front"); window.scrollTo({top:0, behavior:"smooth"}); });

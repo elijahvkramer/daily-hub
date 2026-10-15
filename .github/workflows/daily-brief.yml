@@ -34,6 +34,10 @@ on:
         description: "Set by Hub Heartbeat; leave false to force a redo"
         required: false
         default: "false"
+      news_date:
+        description: "Redo ONLY the news edition for this past date (YYYY-MM-DD). Blank = today's full brief."
+        required: false
+        default: ""
 
 jobs:
   publish:
@@ -66,20 +70,36 @@ jobs:
       - name: Decide whether this tick should publish
         id: guard
         if: github.event_name != 'workflow_dispatch' || inputs.auto == 'true'
+        env:
+          CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
         run: |
           HOUR=$(TZ="America/Chicago" date +%-H)
           TODAY=$(date -u +%F)
           git fetch -q --depth=1 origin main
           git show origin/main:data/manifest.json > /tmp/manifest.json
+          # Oct 15, 2026: "published" now means the BRIEF (the model) wrote today's edition. From
+          # Oct 13-15 the model step was refused every morning (see allowed_bots below), the news
+          # floor built an all-wire-feed edition instead, and this guard then called the day done --
+          # so the model never got another try. An edition the floor built alone (auto_edition)
+          # no longer counts; the model gets up to 3 attempts a day (data/brief-attempts.json).
+          pip install --quiet cryptography >/dev/null 2>&1 || true
+          git show origin/main:data/brief-attempts.json > /tmp/attempts.json 2>/dev/null || echo '{}' > /tmp/attempts.json
+          printf '%s' "$CAL_PASSPHRASE" > /tmp/gp.txt
+          STATE=$(TODAY="$TODAY" python3 scripts/brief_state.py /tmp/manifest.json /tmp/attempts.json /tmp/gp.txt)
+          rm -f /tmp/gp.txt
+          KIND=${STATE% *}; TRIES=${STATE#* }
           if [ "$HOUR" -lt 4 ] || [ "$HOUR" -gt 17 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "It is ${HOUR}:xx Central -- outside the 4am-5pm publish window. Skipping."
-          elif TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/manifest.json')).get('news',[]) else 1)"; then
+          elif [ "$KIND" = "model" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "$TODAY is already published. Skipping."
+            echo "$TODAY is already published by the brief. Skipping."
+          elif [ "${TRIES:-0}" -ge 3 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::$TODAY: the brief already failed $TRIES times today -- leaving the wire-feed edition up."
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "$TODAY not published yet and it is ${HOUR}:xx Central -- publishing now."
+            echo "$TODAY edition is '$KIND' (brief attempts so far: ${TRIES:-0}) -- running the brief now."
           fi
 
       - name: Install Python deps
@@ -87,17 +107,25 @@ jobs:
         run: pip install --quiet cryptography
 
       - uses: anthropics/claude-code-action@v1
+        id: brief
         if: steps.guard.outputs.skip != 'true'
         continue-on-error: true
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "Follow the instructions in .github/claude-daily-brief-prompt.md exactly, end to end."
+          # Oct 15, 2026: Hub Heartbeat dispatches this workflow (and Calendar Refresh, whose
+          # completion triggers it), so the run's actor is this repo's own github-actions[bot].
+          # The action refuses bot-initiated runs unless the bot is listed -- "Workflow initiated
+          # by non-human actor" -- and with continue-on-error that refusal was silent: no brief
+          # Oct 13-15, only wire fillers. Only this repository's own Actions bot is allowed.
+          allowed_bots: "github-actions[bot]"
           claude_args: |
             --model claude-sonnet-5
             --allowedTools "Bash,Read,Write,Edit,WebSearch,WebFetch"
             --max-turns 150
         env:
           CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
+          NEWS_ONLY_DATE: ${{ inputs.news_date }}
 
       # THE NEWS FLOOR (Oct 12, 2026). The model published a two-story edition ("a quiet weekend")
       # and this job went green, because nothing after the model ever counted the stories. This
@@ -114,11 +142,14 @@ jobs:
           printf '%s' "$CAL_PASSPHRASE" > "$RUNNER_TEMP/p.txt"
           git config user.email "elijahvkramer@gmail.com"
           git config user.name "Daily Hub Bot"
-          TODAY=$(date -u +%F)
+          TODAY="${{ inputs.news_date }}"; [ -n "$TODAY" ] || TODAY=$(date -u +%F)
           for attempt in 1 2 3 4; do
             git fetch -q origin main
             git reset -q --hard origin/main
             python3 scripts/enforce_news.py "$RUNNER_TEMP/p.txt" . --date="$TODAY"
+            if [ -z "${{ inputs.news_date }}" ]; then
+              TODAY="$TODAY" python3 scripts/brief_state.py --record "$RUNNER_TEMP/p.txt" "${{ steps.brief.outcome }}"
+            fi
             git add -A data
             if git diff --cached --quiet; then echo "edition already meets the floor"; break; fi
             git commit -qm "news floor: $TODAY"
@@ -138,7 +169,7 @@ jobs:
         env:
           CAL_PASSPHRASE: ${{ secrets.CAL_PASSPHRASE }}
         run: |
-          TODAY=$(date -u +%F)
+          TODAY="${{ inputs.news_date }}"; [ -n "$TODAY" ] || TODAY=$(date -u +%F)
           git fetch -q --depth=1 origin main
           git show origin/main:data/manifest.json > /tmp/verify.json
           if ! TODAY="$TODAY" python3 -c "import json,os,sys; sys.exit(0 if os.environ['TODAY'] in json.load(open('/tmp/verify.json')).get('news',[]) else 1)"; then
@@ -154,8 +185,11 @@ jobs:
           import json, sys
           sys.path.insert(0, "scripts")
           import news_guard
-          counts = news_guard.section_counts(json.load(open(sys.argv[1])))
-          print("section counts:", counts)
+          ed = json.load(open(sys.argv[1]))
+          counts = news_guard.section_counts(ed)
+          print("section counts:", counts, "sports groups:", news_guard.sports_counts(ed))
+          if ed.get("auto_edition"):
+              print("::warning::the brief did not write this edition -- it is wire-feed fillers only. The next tick retries the brief.")
           thin = [t for t, n in counts.items() if n < news_guard.MIN_ITEMS]
           if thin:
               print("::error::news floor not met (fewer than %d stories) in: %s" % (news_guard.MIN_ITEMS, ", ".join(thin)))

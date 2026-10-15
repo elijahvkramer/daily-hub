@@ -55,7 +55,12 @@ def sec_index(title):
     return None
 
 
-# feed url -> (outlet name, buckets it may fill). Buckets: world, us, tech, science, sports.
+# feed url -> (outlet name, buckets it may fill). Buckets: world, us, tech, science, odd.
+#
+# Oct 15, 2026 audit: Fox / CBS main / NPR top-stories used to be tagged {"us","world"}, so any
+# US domestic story they carried (a check-fraud explainer, a midterm poll, a medicine-cabinet
+# list) was eligible for Major International Headlines. A feed now gets "world" only when it is
+# genuinely a world desk. BBC Business was dropped (it fed company news into International).
 FEEDS = {
     "https://feeds.bbci.co.uk/news/world/rss.xml": ("BBC News", {"world"}),
     "https://feeds.bbci.co.uk/news/technology/rss.xml": ("BBC News", {"tech"}),
@@ -65,51 +70,220 @@ FEEDS = {
     "https://www.theguardian.com/us-news/rss": ("The Guardian", {"us"}),
     "https://www.theguardian.com/technology/rss": ("The Guardian", {"tech"}),
     "https://www.theguardian.com/science/rss": ("The Guardian", {"science"}),
+    "https://www.theguardian.com/environment/rss": ("The Guardian", {"science"}),
     "https://www.aljazeera.com/xml/rss/all.xml": ("Al Jazeera", {"world"}),
-    "https://moxie.foxnews.com/google-publisher/latest.xml": ("Fox News", {"us", "world"}),
-    "https://www.cbsnews.com/latest/rss/main": ("CBS News", {"us", "world"}),
+    "https://moxie.foxnews.com/google-publisher/latest.xml": ("Fox News", {"us"}),
+    "https://www.cbsnews.com/latest/rss/main": ("CBS News", {"us"}),
     "https://www.cbsnews.com/latest/rss/politics": ("CBS News", {"us"}),
     "https://www.cbsnews.com/latest/rss/world": ("CBS News", {"world"}),
     "https://www.cbsnews.com/latest/rss/science": ("CBS News", {"science"}),
     "https://www.cbsnews.com/latest/rss/technology": ("CBS News", {"tech"}),
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910": ("CNBC", {"tech"}),
-    "https://feeds.arstechnica.com/arstechnica/index": ("Ars Technica", {"tech", "science"}),
+    "https://feeds.arstechnica.com/arstechnica/index": ("Ars Technica", {"tech"}),
     "https://www.theverge.com/rss/index.xml": ("The Verge", {"tech"}),
-    "https://sports.yahoo.com/rss/": ("Yahoo Sports", {"sports"}),
-    "https://www.cbssports.com/rss/headlines/": ("CBS Sports", {"sports"}),
-    "https://www.cbssports.com/rss/headlines/college-basketball/": ("CBS Sports", {"sports"}),
-    "https://www.cbssports.com/rss/headlines/nfl/": ("CBS Sports", {"sports"}),
-    "https://www.cbssports.com/rss/headlines/college-football/": ("CBS Sports", {"sports"}),
-    "https://www.espn.com/espn/rss/news": ("ESPN", {"sports"}),
-    "https://www.espn.com/espn/rss/ncb/news": ("ESPN", {"sports"}),
-    "https://www.espn.com/espn/rss/nfl/news": ("ESPN", {"sports"}),
-    # Oct 12, 2026: a deeper pool so a thin edition can always be filled -- Random in particular
-    # had only four science feeds behind it.
-    "https://www.espn.com/espn/rss/ncf/news": ("ESPN", {"sports"}),
-    "https://www.espn.com/espn/rss/nba/news": ("ESPN", {"sports"}),
-    "https://www.espn.com/espn/rss/golf/news": ("ESPN", {"sports"}),
-    "https://kentuckysportsradio.com/feed/": ("Kentucky Sports Radio", {"sports"}),
-    "https://feeds.npr.org/1001/rss.xml": ("NPR", {"us", "world"}),
+    "https://techcrunch.com/feed/": ("TechCrunch", {"tech"}),
+    "https://feeds.npr.org/1001/rss.xml": ("NPR", {"us"}),
     "https://feeds.npr.org/1014/rss.xml": ("NPR", {"us"}),
     "https://feeds.npr.org/1004/rss.xml": ("NPR", {"world"}),
     "https://feeds.npr.org/1019/rss.xml": ("NPR", {"tech"}),
     "https://feeds.npr.org/1007/rss.xml": ("NPR", {"science"}),
     "https://rss.upi.com/news/odd_news.rss": ("UPI", {"odd"}),
     "https://rss.upi.com/news/science_news.rss": ("UPI", {"science"}),
-    "https://www.theguardian.com/environment/rss": ("The Guardian", {"science"}),
-    "https://feeds.bbci.co.uk/news/business/rss.xml": ("BBC News", {"world"}),
-    "https://techcrunch.com/feed/": ("TechCrunch", {"tech"}),
 }
 
-MILITARY_WORDS = re.compile(
-    r"\b(military|troops?|pentagon|army|navy|air force|marines?|war|strikes?|missiles?|drones?|"
-    r"ceasefire|hamas|hezbollah|houthis?|ukraine|russia|iran|israel|gaza|nato|defen[sc]e|"
-    r"warship|airstrike|combat|taiwan|north korea|sanctions?|veterans?|hegseth)\b", re.I)
-POLITICS_WORDS = re.compile(
-    r"\b(congress|senate|senators?|house|white house|trump|president|election|supreme court|"
-    r"bill|governor|democrats?|republicans?|tariffs?|shutdown|policy|federal|justice department|"
-    r"campaign|vote|voters|court|attorney general|biden|vance|speaker)\b", re.I)
-FAVORITES = re.compile(r"\b(kentucky|wildcats|calipari|mark pope|giants|usc|trojans|lincoln riley)\b", re.I)
+# Sports come only from single-sport feeds now. The multi-sport ones (Yahoo Sports, CBS Sports
+# top headlines, ESPN top news) are where PSG soccer, WNBA and MLB stories came from.
+# url -> (outlet, sport it covers or None to detect from the text, team it may cover or None)
+SPORT_FEEDS = {
+    "https://www.cbssports.com/rss/headlines/nfl/": ("CBS Sports", "nfl", None),
+    "https://www.cbssports.com/rss/headlines/college-football/": ("CBS Sports", "cfb", None),
+    "https://www.cbssports.com/rss/headlines/college-basketball/": ("CBS Sports", "mcbb", None),
+    "https://www.espn.com/espn/rss/nfl/news": ("ESPN", "nfl", None),
+    "https://www.espn.com/espn/rss/ncf/news": ("ESPN", "cfb", None),
+    "https://www.espn.com/espn/rss/ncb/news": ("ESPN", "mcbb", None),
+    "https://www.espn.com/espn/rss/nba/news": ("ESPN", "nba", None),
+    "https://www.espn.com/espn/rss/golf/news": ("ESPN", "golf", None),
+    # favorite-team beat feeds (verified live Oct 15, 2026). KSR / A Sea of Blue cover every
+    # Kentucky sport, so their items only count as Favorites with a men's-basketball signal.
+    "https://kentuckysportsradio.com/feed/": ("Kentucky Sports Radio", None, "uk"),
+    "https://www.aseaofblue.com/rss/index.xml": ("A Sea of Blue", None, "uk"),
+    "https://www.bigblueview.com/rss/index.xml": ("Big Blue View", "nfl", "nyg"),
+    "https://www.latimes.com/sports/usc/rss2.0.xml": ("Los Angeles Times", None, "usc"),
+}
+ESPN_API = "https://site.api.espn.com/apis/site/v2/sports/"
+ESPN_LEAGUES = {      # ESPN's own news API: exact sport, real photos, publish timestamps
+    "football/nfl/news": "nfl", "football/college-football/news": "cfb",
+    "basketball/mens-college-basketball/news": "mcbb", "basketball/nba/news": "nba",
+    "golf/pga/news": "golf", "mma/ufc/news": "ufc", "tennis/atp/news": "tennis",
+}
+ESPN_TEAMS = {        # team endpoints; league-wide stories tag every team, so those are filtered
+    "football/nfl/news?team=19": ("nfl", "nyg"),
+    "football/college-football/news?team=30": ("cfb", "usc"),
+    "basketball/mens-college-basketball/news?team=96": ("mcbb", "uk"),
+}
+GNEWS_TEAMS = {       # last resort for Favorites: Google News search, last 2 days
+    "uk": ('"Kentucky" Wildcats men\'s basketball', "mcbb"),
+    "nyg": ('"New York Giants"', "nfl"),
+    "usc": ('"USC" Trojans football', "cfb"),
+}
+TEAM_NAMES = {"uk": "Kentucky basketball", "nyg": "Giants", "usc": "USC football"}
+
+_T = lambda p: re.compile(p, re.I)
+MILITARY_WORDS = _T(
+    r"\b(military|troops?|soldiers?|pentagon|hegseth|army|navy|naval|air force|marines?|missiles?|drones?|"
+    r"air ?strikes?|ceasefire|cease-fire|hamas|hezbollah|houthis?|ukrain\w*|russian? (attack|strike|forces|invasion)|"
+    r"gaza|israel\w* (army|forces|strike|military)|iran\w* (strike|attack|nuclear|missile)|nato|defen[sc]e secretary|"
+    r"warships?|combat|invasion|shelling|artillery|nuclear (weapons?|test)|sanctions?|veterans?|"
+    r"north korea\w*|taiwan strait|(?<!trade )(?<!price )(?<!culture )(?<!bidding )\bwar\b|weapons?|insurgents?|militants?|"
+    r"rebels?|coup|hostages?|frigate|submarine|fighter jets?)\b")
+POLITICS_WORDS = _T(
+    r"\b(congress\w*|senate|senators?|white house|trump|biden|vance|harris|election\w*|midterms?|ballots?|"
+    r"voters?|polls?|polling|supreme court|governors?|gop|democrats?|democratic|republicans?|tariffs?|shutdown|"
+    r"lawmakers|legislat\w+|impeach\w*|attorney general|justice department|doj|fbi|campaign\w*|"
+    r"house (speaker|republicans|democrats|vote|passes|committee)|speaker johnson|cabinet|executive order|"
+    r"newsom|rubio|desantis|filibuster|primar(y|ies)|administration|federal (judge|court|agency|workers)|"
+    r"medicaid|medicare|social security|immigration|ice agents?|deport\w*|white house)\b")
+TECH_WORDS = _T(
+    r"(\bAI\b|artificial intelligence|openai|anthropic|chatgpt|claude|gemini|nvidia|\bchips?\b|semiconductor|"
+    r"\bapple\b|google|microsoft|\bmeta\b|amazon|tesla|spacex|software|\bapps?\b|iphone|android|cyber\w*|"
+    r"\bhack\w*|robot\w*|start-?ups?|data cent(er|re)s?|smartphones?|quantum|tsmc|asml|crypto\w*|bitcoin|"
+    r"\btech\b|technology|internet|social media|tiktok|youtube|x\.com|musk|zuckerberg|altman|deepfakes?|"
+    r"algorithm|computing|silicon|satellites?|ev\b|electric vehicles?|streaming)", )
+COMBAT = _T(r"\b(troops?|soldiers?|missiles?|air ?strikes?|war|killed|ceasefire|invasion|shelling|warships?|"
+             r"combat|attacks?|bombing|hostages?)\b")
+US_DOMESTIC = _T(r"\b(midterms?|congress|senate|governor|state legislature|u\.?s\.? voters|american voters|"
+                 r"white house|supreme court|democrats?|republicans?|gop)\b")
+HARD_NEWS = _T(r"\b(killed|kills|dead|deaths?|dies|president|prime minister|minister|government|parliament|"
+               r"election|protests?|earthquake|floods?|storm|hurricane|typhoon|wildfire|summit|talks|court|"
+               r"crisis|attack|collapse\w*|economy|pope|king|queen|arrested|charged|rescue|evacuat\w+|"
+               r"record|first|discover\w*|scientists?|study|researchers?|launch\w*|unveil\w*|ban\w*)\b")
+
+# Not news stories at all: newsletters, columnist banners, live blogs, service journalism,
+# shopping and betting. (Oct 15, 2026: "Morning news brief" -- NPR's newsletter -- ran as the
+# lead military story and as the edition headline; "MORNING GLORY:" / "LIZ PEEK:" columns ran.)
+JUNK_TITLE = _T(
+    r"^(the\s+)?(morning|evening|weekend|daily|midday|nightly)\s+(news\s+)?(brief|briefing|edition|digest|"
+    r"roundup|report|rundown|wrap)\b|"
+    r"^[A-Z][A-Z'’.&-]+(\s+[A-Z][A-Z'’.&-]+)+:\s|"                  # ALL-CAPS COLUMNIST: headline
+    r"^(watch|video|listen|opinion|analysis|review|letters?|explainer|quiz)\b\s*[:|\-–—]|"
+    r"\b(podcast|newsletter|as it happened|crossword|wordle|connections hint|"
+    r"horoscopes?|tickets?|best prices|promo codes?|deals? (of|on)|coupons?|odds,? lines|betting|best bets?|"
+    r"picks? against the spread|week \d+ picks|expert picks|picks and predictions|props?\b|fantasy football|recipes?|photos? of the (day|week)|in pictures|"
+    r"week in pictures|what to watch|how to watch|tv channel|live stream)\b|"
+    r"\b(how to|here'?s how|what to know|things to know|what you need to know|essential items|should you)\b")
+JUNK_URL = _T(r"/(opinion|opinions|commentisfree|podcasts?|videos?|gallery|galleries|"
+              r"pictures|newsletters?|sponsored|shopping|deals|coupons|betting|tickets|picks|fantasy)(/|-|$)")
+OFF_SPORT = _T(r"\b(soccer|premier league|la liga|serie a|bundesliga|champions league|mls|fifa|uefa|psg|"
+               r"barcelona|real madrid|man(chester)? (united|city)|arsenal|liverpool|chelsea|wnba|women'?s|wbb|"
+               r"lady|mlb|baseball|world series|alcs|nlcs|al wild card|nl wild card|nhl|hockey|stanley cup|"
+               r"f1|formula 1|formula one|nascar|indycar|volleyball|softball|lacrosse|cricket|rugby|wrestling|"
+               r"boxing|lpga|liv golf|wta|olympic\w*)\b")
+PREP = _T(r"\b(high school|prep (star|school|football|basketball)|recruiting class rankings?|aau)\b")
+SPORT_TEXT = {
+    "nfl": _T(r"\b(nfl|quarterbacks?|qb|touchdowns?|super bowl|wide receivers?|running backs?|linebackers?|"
+              r"patriots|cowboys|eagles|chiefs|49ers|packers|steelers|ravens|bills|jets|dolphins|bengals|browns|"
+              r"broncos|raiders|chargers|seahawks|rams|cardinals|falcons|panthers|saints|buccaneers|bears|lions|"
+              r"vikings|commanders|texans|colts|jaguars|titans)\b"),
+    "cfb": _T(r"\b(college football|cfp|playoff committee|heisman|bowl game|sec football|big ten football|"
+              r"ap top 25|coaches poll)\b"),
+    "mcbb": _T(r"\b(college basketball|men'?s basketball|march madness|ncaa tournament|final four|"
+               r"big blue madness|hoops|rupp arena|sec media days)\b"),
+    "nba": _T(r"\b(nba|lakers|celtics|knicks|warriors|bucks|nuggets|thunder|76ers|sixers|heat|cavaliers|"
+              r"mavericks|suns|clippers|timberwolves|grizzlies|pelicans|kings|spurs|rockets|hawks|hornets|"
+              r"pistons|pacers|magic|nets|raptors|bulls|wizards|jazz|blazers)\b"),
+    "golf": _T(r"\b(pga|pga tour|masters|ryder cup|u\.?s\.? open golf|scheffler|mcilroy|birdie|bogey)\b"),
+    "ufc": _T(r"\b(ufc|octagon|mma)\b"),
+    "tennis": _T(r"\b(atp|wimbledon|us open tennis|australian open|french open|roland garros|djokovic|"
+                 r"alcaraz|sinner)\b"),
+}
+BASKETBALL = _T(r"\b(basketball|hoops|mark pope|pope|rupp|big blue madness|guard|forward|center|point guard|"
+                r"wing|sec media days|nba draft|ncaa tournament|exhibition)\b")
+FOOTBALL = _T(r"\b(football|quarterback|qb|touchdown|will stein|mark stoops|gridiron|kroger field|"
+              r"wide receiver|running back|linebacker|defensive coordinator|offensive coordinator|"
+              r"bowl|depth chart|kickoff)\b")
+TEAM_RX = {
+    "uk": _T(r"\b(kentucky|wildcats|big blue nation|bbn|mark pope)\b"),
+    "nyg": _T(r"\b((new york|ny|n\.y\.)\s+giants|giants|brian daboll|daboll|jaxson dart|metlife)\b"),
+    "usc": _T(r"\b(usc|trojans|lincoln riley|coliseum)\b"),
+}
+NOT_TEAM = {
+    "uk": _T(r"\b(arizona wildcats|villanova|kansas state|k-state|northwestern|new hampshire|weber state|"
+             r"bethune|wbb|women'?s|lady)\b"),
+    "nyg": _T(r"\b(san francisco giants|sf giants|giants (pitcher|outfielder|infielder|manager)|baseball|mlb|"
+              r"oracle park|yomiuri|kentucky|wildcats)\b"),
+    "usc": _T(r"\b(gamecocks|south carolina|usc upstate|usc aiken|usc beaufort|women'?s|basketball)\b"),
+}
+# kept for older callers/tests: any of the three favorite teams mentioned by name
+FAVORITES = _T(r"\b(kentucky|wildcats|mark pope|giants|usc|trojans|lincoln riley)\b")
+
+
+def sport_of(text, hint=None):
+    """Which of Eli's sports a story is about, or None (an off-list sport, or unknown)."""
+    if OFF_SPORT.search(text or ""):
+        return None
+    if hint:
+        return hint
+    for sp, rx in SPORT_TEXT.items():
+        if rx.search(text or ""):
+            return sp
+    if FOOTBALL.search(text or "") or re.search(r"\b(availability report|injury report|bowl eligib\w+)\b", text or "", re.I):
+        return "cfb"                 # college beat feeds (KSR, A Sea of Blue, LA Times USC)
+    if BASKETBALL.search(text or ""):
+        return "mcbb"
+    return None
+
+
+def fav_team(text, sport=None, lenient=False, title=None, hint=None):
+    """'uk' | 'nyg' | 'usc' when the story is about one of Eli's three teams, else None.
+
+    Favorites are exactly: Kentucky MEN'S BASKETBALL, the New York Giants (NFL), USC FOOTBALL.
+    Kentucky football, Kentucky women's basketball, the SF Giants, USC basketball and every other
+    "Wildcats" are not. For feed stories (strict) the team must be named in the HEADLINE -- on
+    Oct 13 a Belichick/Patriots story became a "Giants" favorite because its summary mentioned a
+    Giants Super Bowl -- unless the story came from that team's own beat feed (`hint`). The brief's
+    own items (`lenient`) may name the team anywhere and need no sport word, as long as nothing
+    points to a different sport. Sport is read from the headline first, then the summary."""
+    t = text or ""
+    head = title if title is not None else t
+    if OFF_SPORT.search(t) and not lenient:
+        return None
+    if re.search(r"\b(women'?s|wbb|lady|volleyball|softball|baseball|soccer)\b", t, re.I):
+        return None
+
+    def named(team):
+        if NOT_TEAM[team].search(t):
+            return False
+        if hint == team:                    # the team's own beat feed: every story is about the team
+            return True
+        return bool(TEAM_RX[team].search(t if (lenient or title is None) else head))
+
+    def says(rx):
+        return "head" if rx.search(head) else ("body" if rx.search(t) else None)
+
+    if named("uk"):
+        bb, fb = says(BASKETBALL), says(FOOTBALL)
+        if sport == "mcbb" or bb == "head" or (bb and fb != "head" and not (fb and not bb)) \
+                or (bb == "body" and fb == "body" and hint == "uk") \
+                or (lenient and not fb and sport in (None, "mcbb")):
+            if not (fb == "head" and bb != "head"):
+                return "uk"
+    if named("nyg"):
+        if sport == "nfl" or hint == "nyg" or re.search(r"\b(new york|ny)\s+giants\b", t, re.I) \
+                or SPORT_TEXT["nfl"].search(t) or (lenient and sport in (None, "nfl")):
+            return "nyg"
+    if named("usc"):
+        if sport == "cfb" or FOOTBALL.search(t) or (lenient and sport in (None, "cfb")):
+            return "usc"
+    return None
+
+
+TEAM_OF_SOURCE = {"Kentucky Sports Radio": "uk", "A Sea of Blue": "uk", "Big Blue View": "nyg"}
+
+
+def is_junk(title, url=""):
+    t = (title or "").strip()
+    return bool(JUNK_TITLE.search(t) or JUNK_URL.search(urllib.parse.urlparse(url or "").path)
+                or len(re.findall(r"[A-Za-z0-9]+", t)) < 3)
 
 
 # ---------------------------------------------------------------- dates
@@ -197,7 +371,24 @@ def edition_now(edition_date):
     return min(now, d + datetime.timedelta(days=1)) if d else now
 
 
-def check_item(item, now, fetch, budget):
+def window_days(edition_date):
+    """Eli's edition window: Monday covers Fri-Sun (3 days), every other day the past day."""
+    d = parse_dt(edition_date)
+    return 3 if d and d.weekday() == 0 else 1
+
+
+def edition_cutoff(edition_date, now=None):
+    """Oldest publication time an edition may carry: midnight UTC at the start of its window.
+    (Oct 15, 2026: this was a flat 4 days for the brief and 60-96 HOURS for feed fillers, which let
+    two-day-old stories into weekday editions -- Eli's rule is the past 24h, Monday the past 72h.)"""
+    d = parse_dt(edition_date)
+    if not d:
+        return (now or datetime.datetime.now(datetime.timezone.utc)) - datetime.timedelta(days=STALE_DAYS)
+    start = datetime.datetime(d.year, d.month, d.day, tzinfo=datetime.timezone.utc)
+    return start - datetime.timedelta(days=window_days(edition_date))
+
+
+def check_item(item, now, fetch, budget, cutoff=None):
     """-> (verdict, datetime|None). verdict in 'fresh' | 'stale' | 'unknown'.
 
     Oct 12, 2026 rewrite. The old order trusted the date the brief WROTE (`published`) before
@@ -210,7 +401,7 @@ def check_item(item, now, fetch, budget):
       4. still nothing -> 'unknown'; drop_stale() treats unverifiable stories as not publishable
     The verdict is cached (`pubchk` + `pubsrc`) so each page is read once; a cached date whose
     source was only the brief's own claim is re-verified."""
-    cutoff = now - datetime.timedelta(days=STALE_DAYS)
+    cutoff = cutoff or (now - datetime.timedelta(days=STALE_DAYS))
     d, src = None, None
     if item.get("pubsrc") in ("feed", "page", "url") and parse_dt(item.get("pubchk")):
         d, src = parse_dt(item["pubchk"]), item["pubsrc"]
@@ -241,14 +432,14 @@ def check_item(item, now, fetch, budget):
     return "unknown", None
 
 
-def drop_stale(edition, now, fetch, budget=None):
+def drop_stale(edition, now, fetch, budget=None, cutoff=None):
     """Remove items whose article is older than the window. Returns list of dropped leads."""
     budget = budget if budget is not None else {"page": 60}
     dropped = []
     for sec in edition.get("sections", []):
         keep = []
         for it in sec.get("items", []):
-            verdict, d = check_item(it, now, fetch, budget)
+            verdict, d = check_item(it, now, fetch, budget, cutoff)
             if verdict == "stale":
                 dropped.append(f"{(it.get('lead') or '')[:70]} [{d.date() if d else '?'}] {it.get('url') or ''}")
             elif verdict == "unknown" and (not it.get("url") or it.get("unverified_runs", 0) >= 1):
@@ -288,8 +479,10 @@ def _clean(text, limit=None):
     return (t[:limit].rsplit(" ", 1)[0] + "…") if limit and len(t) > limit else t
 
 
-def parse_feed(xml_bytes, outlet, buckets):
-    """RSS 2.0 / Atom -> list of dicts with a verified timestamp. Items without one are skipped."""
+def parse_feed(xml_bytes, outlet, buckets, sport=None, team=None):
+    """RSS 2.0 / Atom -> list of candidate dicts with a verified timestamp (undated items skipped).
+    `sport` / `team` come from SPORT_FEEDS; a feed's own <category> tags are kept in `cats`
+    because KSR and A Sea of Blue only say which Kentucky sport a story is about there."""
     out = []
     try:
         root = ET.fromstring(xml_bytes)
@@ -308,6 +501,8 @@ def parse_feed(xml_bytes, outlet, buckets):
             continue
         desc = _clean(it.findtext("description") or it.findtext(ATOM_NS + "summary")
                       or it.findtext("{http://purl.org/rss/1.0/modules/content/}encoded"), 260)
+        cats = " ".join(filter(None, [(c.text or c.get("term") or "") for c in
+                                      it.findall("category") + it.findall(ATOM_NS + "category")]))
         img = None
         for tag in (MEDIA_NS + "content", MEDIA_NS + "thumbnail"):
             for el in it.findall(tag):
@@ -324,30 +519,139 @@ def parse_feed(xml_bytes, outlet, buckets):
                 if (el.get("type") or "").startswith("image") and el.get("url"):
                     img = el.get("url")
                     break
+        if not img:     # Atom feeds (SB Nation) inline the lead photo in the summary/content HTML
+            raw = html.unescape(it.findtext(ATOM_NS + "content") or it.findtext(ATOM_NS + "summary") or "")
+            m = re.search(r'<img[^>]+src="([^"]+)"', raw)
+            if m and not re.search(r"logo|favicon|sprite|placeholder|\.svg|1x1|pixel", m.group(1), re.I):
+                img = m.group(1)
         title = re.sub(r"\s+[|\-–—]\s+[^|\-–—]{2,30}$", "", title)    # "headline - Outlet"
         out.append({"title": title, "desc": desc if desc and similar(desc, title) < 0.9 else "",
-                    "url": link, "when": when, "img": img, "source": outlet, "buckets": buckets})
+                    "cats": cats, "url": link, "when": when, "img": img, "source": outlet,
+                    "buckets": set(buckets), "sport": sport, "team": team})
     return out
 
 
+def parse_espn(body, sport, team=None):
+    """ESPN's news API -> candidates. Team endpoints tag league-wide stories (power rankings,
+    uniforms, betting lines) with all 32 teams; those are dropped unless the team is named."""
+    out = []
+    try:
+        j = json.loads(body)
+    except Exception:  # noqa: BLE001
+        return out
+    for a in j.get("articles", []) or []:
+        if (a.get("type") or "") not in ("Story", "HeadlineNews", "Recap", "Preview", "Blog"):
+            continue
+        title = _clean(a.get("headline"))
+        url = ((a.get("links") or {}).get("web") or {}).get("href") or ""
+        when = parse_dt(a.get("published") or a.get("lastModified"))
+        if not (title and url and when):
+            continue
+        desc = _clean(a.get("description"), 260)
+        teams = [c.get("description") or "" for c in a.get("categories") or [] if c.get("type") == "team"]
+        if team and (len(teams) > 3 or not TEAM_RX[team].search(f"{title} {desc}")):
+            team = None                        # a league-wide piece, or the opponent's story
+        imgs = [i for i in a.get("images") or [] if i.get("url") and (i.get("width") or 999) >= 300]
+        out.append({"title": title, "desc": desc if similar(desc, title) < 0.9 else "", "cats": " ".join(teams[:3]),
+                    "url": url, "when": when, "img": imgs[0]["url"] if imgs else None, "source": "ESPN",
+                    "buckets": {"sports"}, "sport": sport, "team": team})
+    return out
+
+
+def parse_gnews(body, sport, team):
+    """Google News search RSS (favorites fallback). Links are Google redirects that open the
+    publisher in a browser; the outlet is the title's trailing ' - Outlet'."""
+    out = []
+    for c in parse_feed(body, "Google News", {"sports"}, sport, team):
+        m = re.search(r"\s+-\s+([^-]{2,40})$", c["title"])
+        if m:
+            c["source"], c["title"] = m.group(1).strip(), c["title"][:m.start()].strip()
+        c["gnews"] = True
+        out.append(c)
+    return out
+
+
+def _txt(c):
+    return f"{c.get('title', '')} {c.get('desc', '')} {c.get('cats', '')}"
+
+
+def place(cand):
+    """The ONE section a feed story belongs in, or None. Decided on the HEADLINE first -- the old
+    classifier matched keywords anywhere in the summary, and checked sections in a fixed order
+    (Oct 15, 2026: a Booker/GOP-primary story landed in Military; a WNBA trash-talk feature in
+    Politics; a medicine-cabinet checklist in Major International Headlines)."""
+    title, url, b = cand.get("title", ""), cand.get("url", ""), cand.get("buckets") or set()
+    if is_junk(title, url):
+        return None
+    if "sports" in b:
+        return 5 if sports_group(cand) else None
+    mil = {m.group(0).lower() for m in MILITARY_WORDS.finditer(title)}
+    combat = COMBAT.search(title)
+    if mil and not re.search(r"\b(nfl|nba|game|season|coach)\b", title, re.I) \
+            and not ("tech" in b and not combat and TECH_WORDS.search(title)):
+        return 0
+    if "us" in b and POLITICS_WORDS.search(title):
+        return 1
+    if "tech" in b or (b & {"us", "world", "science"} and len(TECH_WORDS.findall(title)) >= 2):
+        return 2
+    if "world" in b and not US_DOMESTIC.search(title):
+        return 3
+    if b & {"science", "odd"} and not POLITICS_WORDS.search(title) and not TECH_WORDS.search(title):
+        return 4
+    return None
+
+
 def classify(cand, section_title):
-    """Does this fresh feed story belong in this section?"""
-    t = section_title.lower()
-    text = f"{cand['title']} {cand['desc']}"
-    b = cand["buckets"]
-    if "military" in t:
-        return bool(MILITARY_WORDS.search(text)) and bool(b & {"world", "us"})
-    if "politic" in t:
-        return "us" in b and bool(POLITICS_WORDS.search(text)) and not MILITARY_WORDS.search(cand["title"])
-    if "tech" in t:
-        return "tech" in b
-    if "international" in t:
-        return "world" in b and not re.search(r"\b(trump|congress|senate|white house)\b", cand["title"], re.I)
-    if "random" in t:
-        return bool(b & {"science", "odd"})
-    if "sport" in t:
-        return "sports" in b and not re.search(r"\bhigh school\b|\bprep\b|\brecruiting class rankings?\b", text, re.I)
-    return False
+    """Does this fresh feed story belong in this section? (kept for callers/tests)"""
+    i = sec_index(section_title)
+    return i is not None and place(cand) == i
+
+
+def sports_group(cand):
+    """'Favorites' (Kentucky men's basketball, NY Giants, USC football), 'General' (NFL, men's
+    college basketball, college football, PGA, UFC, men's Grand Slam tennis, NBA), or None."""
+    text = _txt(cand)
+    sport = cand.get("sport") or sport_of(text)
+    hint = cand.get("team") or TEAM_OF_SOURCE.get(cand.get("source") or "")
+    if fav_team(text, sport, title=cand.get("title", ""), hint=hint):
+        return "Favorites"
+    if OFF_SPORT.search(text) or PREP.search(text):
+        return None
+    sport = sport_of(text, cand.get("sport"))
+    return "General" if sport else None
+
+
+def item_group(item):
+    """Group for an item already in the edition. The brief's own items are judged leniently
+    (no sport word needed), feed fillers strictly. None = not one of Eli's sports at all."""
+    text = f"{item.get('lead', '')} {item.get('body', '')}"
+    if item.get("auto"):
+        return sports_group({"title": item.get("lead", ""), "desc": item.get("body", ""),
+                             "cats": item.get("cats", ""), "sport": item.get("sport"),
+                             "team": item.get("team"), "source": item.get("source")})
+    if fav_team(text, item.get("sport"), lenient=True):
+        return "Favorites"
+    if OFF_SPORT.search(text):
+        return None
+    return "General"
+
+
+def rank(cand, si):
+    """Higher is better: a real hard-news headline with its own photo, then recency."""
+    title = cand.get("title", "")
+    sc = 0.0
+    sc += 1.5 * len(HARD_NEWS.findall(title))
+    if si == 0:
+        sc += len(MILITARY_WORDS.findall(title))
+    elif si == 1:
+        sc += len(POLITICS_WORDS.findall(title))
+    elif si == 2:
+        sc += len(TECH_WORDS.findall(title))
+    sc += 1.0 if cand.get("img") else 0.0
+    sc -= 2.0 if cand.get("gnews") else 0.0           # no photo, no article text: last resort
+    if re.search(r"\?$", title):
+        sc -= 1.0                                     # question headlines are usually features
+    return sc
 
 
 def _slug(s):
@@ -374,11 +678,84 @@ def prior_stories(repo, decrypt, passphrase, date, n=3):
     return urls, leads
 
 
+def order_sports(sec):
+    """Favorites first, then General -- stable, so the brief's own order survives inside a group."""
+    items = sec.get("items", [])
+    sec["items"] = [i for i in items if i.get("group") == "Favorites"] + \
+                   [i for i in items if i.get("group") != "Favorites"]
+
+
+def normalize(edition):
+    """Repair what is already in the edition (every run, so a bad edition heals itself):
+      * feed fillers that are junk or in the wrong section are moved or removed
+      * every Sports item gets the right group; off-list sports come out; Favorites lead
+    The brief's own non-sports items are never moved. Returns a list of change notes."""
+    notes = []
+    secs = edition.setdefault("sections", [])
+    by_i = {}
+    for s in secs:
+        i = sec_index(s.get("title"))
+        if i is not None:
+            by_i.setdefault(i, s)
+    for s in list(secs):
+        si = sec_index(s.get("title"))
+        keep = []
+        for it in s.get("items", []):
+            if si == 5:
+                g = item_group(it)
+                if g is None:
+                    notes.append(f"removed off-list sport: {it.get('lead', '')[:60]}")
+                    continue
+                if it.get("group") != g:
+                    notes.append(f"regrouped {it.get('group')}->{g}: {it.get('lead', '')[:60]}")
+                    it["group"] = g
+                keep.append(it)
+                continue
+            if not it.get("auto"):
+                keep.append(it)
+                continue
+            if it.get("buckets") is None:
+                dest = _legacy_place(it, si)
+            else:
+                dest = place({"title": it.get("lead", ""), "desc": it.get("body", ""), "url": it.get("url", ""),
+                              "buckets": set(it.get("buckets") or [])})
+            if dest is None:
+                notes.append(f"removed filler: {it.get('lead', '')[:60]}")
+            elif dest != si and dest in by_i:
+                by_i[dest].setdefault("items", []).append(it)
+                notes.append(f"moved to {SECTION_ORDER[dest]}: {it.get('lead', '')[:60]}")
+            else:
+                keep.append(it)
+        s["items"] = keep
+    for s in secs:
+        if sec_index(s.get("title")) == 5:
+            order_sports(s)
+    return notes
+
+
+def _legacy_place(it, si):
+    """Fillers published before Oct 15 never recorded which feed they came from, so their section
+    can't be re-derived. Conservative repair: drop non-stories, move only the unmistakable."""
+    title = it.get("lead", "")
+    if is_junk(title, it.get("url")):
+        return None
+    tech = bool(TECH_WORDS.search(title))
+    if MILITARY_WORDS.search(title) and not (si == 2 and tech and not COMBAT.search(title)):
+        return 0
+    if POLITICS_WORDS.search(title) and si in (0, 3, 4) and not MILITARY_WORDS.search(title):
+        return 1
+    if si == 1 and not POLITICS_WORDS.search(title):
+        return 2 if len(TECH_WORDS.findall(title)) >= 1 else None
+    return si
+
+
 def top_up(edition, now, pool, prior_urls=(), prior_leads=(), min_items=MIN_ITEMS,
-           fresh_hours=FRESH_HOURS, prior_sim=0.6):
-    """Fill thin sections from `pool` (parse_feed output). Returns {section title: n_added}."""
-    cutoff = now - datetime.timedelta(hours=fresh_hours)
-    fresh = sorted((c for c in pool if c["when"] >= cutoff), key=lambda c: c["when"], reverse=True)
+           fresh_hours=FRESH_HOURS, prior_sim=0.6, cutoff=None, min_fav=2, min_gen=2):
+    """Fill thin sections from `pool`. Returns {section title: n_added}.
+    Each candidate can only go to the one section place() picks; within a section the best-ranked
+    candidates go first. Sports must end with >= min_fav Favorites AND >= min_gen General."""
+    cutoff = cutoff or (now - datetime.timedelta(hours=fresh_hours))
+    fresh = [c for c in pool if cutoff <= c["when"] <= now + datetime.timedelta(hours=2)]
     secs = edition.setdefault("sections", [])
     present = {sec_index(s.get("title")) for s in secs}
     for i, title in enumerate(SECTION_ORDER):       # a section the brief skipped entirely comes back
@@ -388,85 +765,135 @@ def top_up(edition, now, pool, prior_urls=(), prior_leads=(), min_items=MIN_ITEM
 
     used_urls = {it.get("url", "").split("?")[0] for s in secs for it in s.get("items", []) if it.get("url")}
     used_text = [f"{it.get('lead', '')} {it.get('body', '')}" for s in secs for it in s.get("items", [])]
+    by_sec = {}
+    for c in fresh:
+        si = place(c)
+        if si is not None:
+            by_sec.setdefault(si, []).append(c)
     added = {}
+
+    def ok(c):
+        u = c["url"].split("?")[0]
+        if u in used_urls or u in prior_urls:
+            return False
+        blob = f"{c['title']} {c['desc']}"
+        return not (any(similar(blob, t) >= 0.5 for t in used_text) or any(similar(blob, t) >= prior_sim for t in prior_leads))
+
+    def add(sec, c, group=None):
+        item = {
+            "lead": c["title"],
+            "body": c["desc"] or f"{c['source']} is reporting this story as it develops.",
+            "url": c["url"], "source": c["source"],
+            "published": c["when"].isoformat(timespec="seconds"),
+            "pubchk": c["when"].isoformat(timespec="seconds"), "pubsrc": "feed",
+            "storyKey": _slug(c["title"]), "auto": True,            # wire-feed top-up, not the brief
+            "buckets": sorted(c.get("buckets") or []),
+        }
+        if c.get("img"):
+            item["img"] = c["img"]
+            item["imgCaption"] = c["source"]
+        if c.get("cats"):
+            item["cats"] = c["cats"][:200]
+        if c.get("sport"):
+            item["sport"] = c["sport"]
+        if c.get("team"):
+            item["team"] = c["team"]
+        if group:
+            item["group"] = group
+        if c.get("gnews"):
+            item["dchk"] = 1                      # a Google redirect has no article text to pull
+        sec.setdefault("items", []).append(item)
+        used_urls.add(c["url"].split("?")[0])
+        used_text.append(f"{c['title']} {c['desc']}")
+        added[sec.get("title")] = added.get(sec.get("title"), 0) + 1
+
     for sec in secs:
-        items = sec.setdefault("items", [])
-        title = sec.get("title") or ""
-        is_sports = "sport" in title.lower()
-        if is_sports:
-            # favorites first: if a favorite-team story is in the pool it goes in before anything else
-            fresh_for = sorted(fresh, key=lambda c: (not FAVORITES.search(f"{c['title']} {c['desc']}"), -c["when"].timestamp()))
-        else:
-            fresh_for = fresh
-        for cand in fresh_for:
-            if len(items) >= min_items:
+        si = sec_index(sec.get("title"))
+        cands = sorted(by_sec.get(si, []), key=lambda c: (-rank(c, si), -c["when"].timestamp()))
+        if si != 5:
+            for c in cands:
+                if len(sec.get("items", [])) >= min_items:
+                    break
+                if ok(c):
+                    add(sec, c)
+            continue
+        # Sports: Favorites quota, General quota, then the floor, Favorites preferred.
+        favs = [c for c in cands if sports_group(c) == "Favorites"]
+        gens = [c for c in cands if sports_group(c) == "General"]
+        n = lambda g: sum(1 for i in sec.get("items", []) if i.get("group") == g)
+        for pool_g, g, need in ((favs, "Favorites", min_fav), (gens, "General", min_gen)):
+            for c in pool_g:
+                if n(g) >= need:
+                    break
+                if ok(c):
+                    add(sec, c, g)
+        for c in favs + gens:
+            if len(sec.get("items", [])) >= min_items:
                 break
-            u = cand["url"].split("?")[0]
-            if u in used_urls or u in prior_urls or not classify(cand, title):
-                continue
-            blob = f"{cand['title']} {cand['desc']}"
-            if any(similar(blob, t) >= 0.5 for t in used_text) or any(similar(blob, t) >= prior_sim for t in prior_leads):
-                continue
-            item = {
-                "lead": cand["title"],
-                "body": cand["desc"] or f"{cand['source']} is reporting this story as it develops.",
-                "url": cand["url"],
-                "source": cand["source"],
-                "published": cand["when"].isoformat(timespec="seconds"),
-                "pubchk": cand["when"].isoformat(timespec="seconds"),
-                "pubsrc": "feed",
-                "storyKey": _slug(cand["title"]),
-                "auto": True,                       # wire-feed top-up, not written by the brief
-            }
-            if cand["img"]:
-                item["img"] = cand["img"]
-                item["imgCaption"] = cand["source"]
-            if is_sports:
-                item["group"] = "Favorites" if FAVORITES.search(blob) else "General"
-            items.append(item)
-            used_urls.add(u)
-            used_text.append(blob)
-            added[title] = added.get(title, 0) + 1
+            if ok(c):
+                add(sec, c, sports_group(c))
+        order_sports(sec)
     if any(s.get("items") for s in secs):
         edition["sections"] = [s for s in secs if s.get("items")] + [s for s in secs if not s.get("items")]
     return added
 
 
-def build_pool(fetch, feeds=None):
+def build_pool(fetch, feeds=None, sports=True):
+    """Every candidate story from every source. Returns (pool, number of sources that answered)."""
     pool, ok = [], 0
-    for url, (outlet, buckets) in (feeds or FEEDS).items():
+
+    def pull(url, parse):
+        nonlocal ok
         try:
             status, _, body, _ = fetch(url, 12, 900_000)
             if status != 200:
-                continue
-            got = parse_feed(body, outlet, buckets)
+                return
+            got = parse(body)
             if got:
                 ok += 1
                 pool.extend(got)
         except Exception:  # noqa: BLE001
-            continue
+            return
+
+    for url, (outlet, buckets) in (feeds or FEEDS).items():
+        pull(url, lambda b, o=outlet, k=buckets: parse_feed(b, o, k))
+    if feeds is None and sports:
+        for url, (outlet, sport, team) in SPORT_FEEDS.items():
+            pull(url, lambda b, o=outlet, s=sport, t=team: parse_feed(b, o, {"sports"}, s, t))
+        for path, sport in ESPN_LEAGUES.items():
+            pull(ESPN_API + path + ("&" if "?" in path else "?") + "limit=25", lambda b, s=sport: parse_espn(b, s))
+        for path, (sport, team) in ESPN_TEAMS.items():
+            pull(ESPN_API + path + "&limit=25", lambda b, s=sport, t=team: parse_espn(b, s, t))
+        for team, (q, sport) in GNEWS_TEAMS.items():
+            if sum(1 for c in pool if "sports" in c["buckets"]
+                   and fav_team(_txt(c), c.get("sport"), title=c["title"]) == team) < 2:
+                url = ("https://news.google.com/rss/search?q=" + urllib.parse.quote(q + " when:2d")
+                       + "&hl=en-US&gl=US&ceid=US:en")
+                pull(url, lambda b, s=sport, t=team: parse_gnews(b, s, t))
     return pool, ok
 
 
 def run(edition, date, repo, passphrase, decrypt, fetch, dry=False):
     """Guard + top-up on an in-memory edition. Returns (changed, report dict)."""
     now = edition_now(date)
+    cutoff = edition_cutoff(date, now)
     before = json.dumps(edition, sort_keys=True)
-    dropped = drop_stale(edition, now, fetch)
-    thin = [s.get("title") for s in edition.get("sections", []) if len(s.get("items", [])) < MIN_ITEMS]
-    present = {sec_index(s.get("title")) for s in edition.get("sections", []) if s.get("items")}
-    missing = [t for i, t in enumerate(SECTION_ORDER) if i not in present]
+    dropped = drop_stale(edition, now, fetch, cutoff=cutoff)
+    fixes = normalize(edition)
+    thin = thin_sections(edition)
+    sp = next((s for s in edition.get("sections", []) if sec_index(s.get("title")) == 5), {"items": []})
+    groups_short = sum(i.get("group") == "Favorites" for i in sp["items"]) < 2 or \
+        sum(i.get("group") == "General" for i in sp["items"]) < 2
     added, pool_n, feeds_ok = {}, 0, 0
-    if thin or missing:
+    if thin or groups_short:
         pool, feeds_ok = build_pool(fetch)
         pool_n = len(pool)
         urls, leads = prior_stories(repo, decrypt, passphrase, date)
-        added = top_up(edition, now, pool, urls, leads)
+        added = top_up(edition, now, pool, urls, leads, cutoff=cutoff)
     changed = json.dumps(edition, sort_keys=True) != before
     counts = {s.get("title"): len(s.get("items", [])) for s in edition.get("sections", [])}
-    return changed, {"dropped_stale": dropped, "added": added, "section_counts": counts,
-                     "feeds_ok": feeds_ok, "pool": pool_n, "thin_before": thin, "missing_before": missing}
-
+    return changed, {"dropped_stale": dropped, "added": added, "section_counts": counts, "fixes": fixes,
+                     "feeds_ok": feeds_ok, "pool": pool_n, "thin_before": thin, "missing_before": thin}
 
 # ---------------------------------------------------------------- enforcement (Oct 12, 2026)
 #
@@ -528,33 +955,66 @@ def _short(lead, n=6):
     return " ".join(w[:n]) + ("…" if len(w) > n else "")
 
 
-def refresh_framing(edition, thin_before):
-    """Glance chips and subtitle written when a section was empty must not survive its repair."""
+def _teaser(lead, n=7):
+    """A glance chip from a headline: cut at a natural break, never mid-phrase with an ellipsis
+    when a clean break exists."""
+    t = re.sub(r"[.!?]+$", "", re.sub(r"\s+", " ", (lead or "").strip()))
+    for sep in (": ", " — ", " – ", "; ", ", ", " as ", " after ", " amid ", " while "):
+        head = t.split(sep)[0]
+        if 3 <= len(head.split()) <= n and len(head) < len(t):
+            return head
+    w = t.split()
+    if len(w) <= n + 1:
+        return t
+    w = w[:n]
+    while w and w[-1].lower() in STOPWORDS | {"as", "after", "amid", "with", "to", "of"}:
+        w.pop()
+    return " ".join(w)
+
+
+def _clean_lead(lead):
+    return re.sub(r"\s+", " ", re.sub(r"[.!]+$", "", (lead or "").strip()))
+
+
+def refresh_framing(edition, thin_before, force=False):
+    """Headline / subtitle / glance chips must describe stories the edition actually carries.
+
+    Oct 15, 2026: when this rewrote a headline it glued the first six words of two different
+    sections' stories together with ellipses -- which is how "Morning news brief" (an NPR
+    newsletter) became the front page headline. The hero card on the site IS sections[0].items[0],
+    so a rebuilt headline is now that story's full headline, and the subtitle is its own summary."""
     changed = False
-    secs = {sec_index(s.get("title")): s for s in edition.get("sections", [])}
+    secs_list = [s for s in edition.get("sections", []) if s.get("items")]
+    secs = {sec_index(s.get("title")): s for s in secs_list}
     for g in edition.get("glance", []) or []:
         sec = secs.get(sec_index(g.get("label")))
-        if not sec or not sec.get("items"):
+        if not sec:
             continue
         orphan = max((similar(g.get("teaser", ""), f"{i.get('lead','')} {i.get('body','')}") for i in sec["items"]), default=0) < 0.34
-        if orphan or QUIET_WORDS.search(g.get("teaser", "")) or sec.get("title") in thin_before and any(i.get("auto") for i in sec["items"]):
+        if force or orphan or not g.get("teaser") or QUIET_WORDS.search(g.get("teaser", "")) or "…" in g.get("teaser", "") \
+                or (sec.get("title") in thin_before and any(i.get("auto") for i in sec["items"])):
             first = next((i for i in sec["items"] if not i.get("auto")), sec["items"][0])
-            nt = _short(first.get("lead"))
+            nt = _teaser(first.get("lead"))
             if nt and nt != g.get("teaser"):
                 g["teaser"] = nt
                 changed = True
-    # a headline about a story that has since been removed (e.g. dropped as stale) must go too
-    leads = [f"{i.get('lead','')} {i.get('body','')}" for s in edition.get("sections", []) for i in s.get("items", [])]
-    for line in (edition.get("headline") or "").split("\n"):
-        if line.strip() and leads and max(similar(line, t) for t in leads) < 0.34:
-            tops = [s["items"][0] for s in edition.get("sections", []) if s.get("items")]
-            if tops:
-                edition["headline"] = "\n".join(_short(t.get("lead"), 9) for t in tops[:2])
-                changed = True
-            break
+    if not secs_list:
+        return changed
+    hero = secs_list[0]["items"][0]
+    leads = [f"{i.get('lead','')} {i.get('body','')}" for s in secs_list for i in s.get("items", [])]
+    lines = [x for x in (edition.get("headline") or "").split("\n") if x.strip()]
+    stale = (not lines or any(max(similar(x, t) for t in leads) < 0.34 for x in lines)
+             or "…" in (edition.get("headline") or "") or similar(lines[0], f"{hero.get('lead','')} {hero.get('body','')}") < 0.2)
+    if force or stale:
+        nh = _clean_lead(hero.get("lead"))
+        if nh and nh != edition.get("headline"):
+            edition["headline"] = nh
+            body = (hero.get("body") or "").strip()
+            edition["subtitle"] = "" if re.search(r"is reporting this story as it develops", body) else body
+            changed = True
     if QUIET_WORDS.search(edition.get("subtitle", "") or ""):
-        tops = [s["items"][0].get("lead", "") for s in edition.get("sections", []) if s.get("items")][:3]
-        edition["subtitle"] = " ".join(re.sub(r"\s+", " ", t).strip().rstrip(".") + "." for t in tops if t)
+        body = (hero.get("body") or "").strip()
+        edition["subtitle"] = "" if re.search(r"is reporting this story as it develops", body) else body
         changed = True
     return changed
 
@@ -586,16 +1046,16 @@ def enforce(edition, date, repo, passphrase, decrypt, fetch, detail_budget=14):
     before = json.dumps(edition, sort_keys=True)
     thin_before = thin_sections(edition)
     now = edition_now(date)
-    for s in edition.get("sections", []):     # earlier fillers that today's rules would not pick
-        if "sport" in (s.get("title") or "").lower():
-            s["items"] = [i for i in s.get("items", []) if not (i.get("auto") and re.search(r"\bhigh school\b", i.get("lead", ""), re.I))]
+    cutoff = edition_cutoff(date, now)
     _, rep = run(edition, date, repo, passphrase, decrypt, fetch)
     widened = {}
     if thin_sections(edition):
+        # Still short: loosen ONLY the near-repeat filter (never a repeated URL) -- never the date
+        # window. Eli's rule is that no story is older than its edition (Oct 8, 2026).
         pool, ok = build_pool(fetch)
         rep["feeds_ok"], rep["pool"] = max(rep.get("feeds_ok", 0), ok), max(rep.get("pool", 0), len(pool))
         urls, leads = prior_stories(repo, decrypt, passphrase, date)
-        widened = top_up(edition, now, pool, urls, leads, fresh_hours=FRESH_HOURS_WIDE, prior_sim=0.85)
+        widened = top_up(edition, now, pool, urls, leads, prior_sim=0.85, cutoff=cutoff)
     # feed fillers get their own article's text so the article page is not a stub
     details = 0
     for s in edition.get("sections", []):
@@ -610,15 +1070,23 @@ def enforce(edition, date, repo, passphrase, decrypt, fetch, detail_budget=14):
             if d:
                 it["detail"] = d
                 details += 1
-    refresh_framing(edition, thin_before)
     if edition.get("auto_edition"):
-        lead = next((s["items"][0] for s in edition.get("sections", []) if s.get("items")), None)
-        if lead and edition.get("headline") == "Today's briefing":
-            edition["headline"] = _short(lead.get("lead"), 12)
+        # an all-filler edition: best-ranked story leads each section (the brief's order otherwise)
+        for s in edition.get("sections", []):
+            si = sec_index(s.get("title"))
+            if si is not None and si != 5 and all(i.get("auto") for i in s.get("items", [])):
+                s["items"].sort(key=lambda i: -rank({"title": i.get("lead", ""), "img": i.get("img")}, si))
         edition["sources"] = ", ".join(sorted({i.get("source") for s in edition["sections"] for i in s.get("items", []) if i.get("source")}))
+    refresh_framing(edition, thin_before, force=bool(edition.get("auto_edition")))
     rep.update({"widened": widened, "details_added": details, "still_thin": thin_sections(edition),
-                "section_counts": section_counts(edition), "thin_before": thin_before})
+                "section_counts": section_counts(edition), "thin_before": thin_before,
+                "sports_groups": sports_counts(edition)})
     return json.dumps(edition, sort_keys=True) != before, rep
+
+
+def sports_counts(edition):
+    sp = next((s for s in edition.get("sections", []) if sec_index(s.get("title")) == 5), {"items": []})
+    return {g: sum(1 for i in sp.get("items", []) if i.get("group") == g) for g in ("Favorites", "General")}
 
 
 def check_plain(edition, date, min_items=MIN_ITEMS, fetch=None):
@@ -632,7 +1100,7 @@ def check_plain(edition, date, min_items=MIN_ITEMS, fetch=None):
         for s in edition.get("sections", []):
             for it in s.get("items", []):
                 probe = {k: it.get(k) for k in ("url", "published")}
-                verdict, d = check_item(probe, now, fetch, budget)
+                verdict, d = check_item(probe, now, fetch, budget, edition_cutoff(date, now))
                 lead = (it.get("lead") or "")[:70]
                 if verdict == "stale":
                     probs.append(f"ARTICLE IS OLD -- the page itself says {d.date()} (you wrote {it.get('published')}): {lead}  <{it.get('url')}>  Replace this story.")
@@ -642,9 +1110,11 @@ def check_plain(edition, date, min_items=MIN_ITEMS, fetch=None):
         if n < min_items:
             probs.append(f"section '{t}' has {n} stories -- needs at least {min_items}. Search again with different outlets.")
     now = edition_now(date)
-    cutoff = now - datetime.timedelta(days=STALE_DAYS)
+    cutoff = edition_cutoff(date, now)
     for s in edition.get("sections", []):
         for it in s.get("items", []):
+            if is_junk(it.get("lead"), it.get("url")):
+                probs.append(f"not a news story (newsletter / column / how-to / live blog): {(it.get('lead') or '')[:70]}")
             d = parse_dt(it.get("published"))
             if not d:
                 probs.append(f"no `published` date on: {(it.get('lead') or '')[:70]}")
@@ -655,4 +1125,25 @@ def check_plain(edition, date, min_items=MIN_ITEMS, fetch=None):
     for g in edition.get("glance", []) or []:
         if QUIET_WORDS.search(g.get("teaser", "")):
             probs.append(f"glance chip '{g.get('teaser')}' calls a section quiet -- every section must carry real stories")
+    # Sports (Oct 15, 2026): two groups, both present, each story in the right one.
+    sp = next((x for x in edition.get("sections", []) if sec_index(x.get("title")) == 5), {"items": []})
+    for it in sp.get("items", []):
+        lead = (it.get("lead") or "")[:70]
+        want = item_group(it)
+        if it.get("group") not in ("Favorites", "General"):
+            probs.append(f"Sports story has no group (Favorites or General): {lead}")
+        elif want is None:
+            probs.append(f"not one of Eli's sports (NFL, men's college basketball, college football, PGA, UFC, men's Grand Slam tennis, NBA): {lead}")
+        elif it.get("group") != want:
+            probs.append(f"Sports story is in '{it.get('group')}' but belongs in '{want}' (Favorites = ONLY Kentucky men's basketball, NY Giants, USC football): {lead}")
+    for g in ("Favorites", "General"):
+        n = sum(1 for i in sp.get("items", []) if i.get("group") == g)
+        if n < 2:
+            probs.append(f"Sports has {n} '{g}' stories -- must carry 2 or more.")
+    secs = [x for x in edition.get("sections", []) if x.get("items")]
+    if secs:
+        leads = [f"{i.get('lead','')} {i.get('body','')}" for x in secs for i in x["items"]]
+        for line in (edition.get("headline") or "").split("\n"):
+            if line.strip() and max(similar(line, t) for t in leads) < 0.25:
+                probs.append(f"headline line is not about any story in the edition: {line[:70]}")
     return probs

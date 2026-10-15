@@ -543,7 +543,8 @@ def _write_status(repo, date, items, missing, filled, got, videos, guard):
               "topped_up": sum(guard.get("added", {}).values()),
               "guard_feeds_ok": guard.get("feeds_ok", 0),
               "still_thin": guard.get("still_thin", []),
-              "details_added": guard.get("details_added", 0)}
+              "details_added": guard.get("details_added", 0),
+              "sports_groups": guard.get("sports_groups"), "repairs": len(guard.get("fixes") or [])}
     try:
         with open(os.path.join(repo, "data", "news.status.json"), "w") as f:
             json.dump({"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), **status}, f, indent=1)

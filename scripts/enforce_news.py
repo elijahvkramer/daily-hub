@@ -60,7 +60,7 @@ def main():
         fetch = None if "--offline" in flags else (lambda u, t=12, mb=900_000: enrich_news.get(u, timeout=t, max_bytes=mb))
         probs = news_guard.check_plain(ed, ed.get("date") or date, fetch=fetch)
         counts = news_guard.section_counts(ed)
-        print("section counts:", counts)
+        print("section counts:", counts, "| sports groups:", news_guard.sports_counts(ed))
         if probs:
             print(f"NOT READY -- {len(probs)} problem(s). Fix every one, then run this check again:")
             for p in probs:
@@ -87,6 +87,8 @@ def main():
     changed, rep = news_guard.enforce(edition, date, repo, passphrase, decrypt_json, fetch)
     for line in rep.get("dropped_stale", []):
         print("  - dropped stale:", line)
+    for line in rep.get("fixes", []) or []:
+        print("  - repaired:", line)
     print(f"news {date}: counts {rep['section_counts']}; added {rep.get('added')}; widened {rep.get('widened')}; "
           f"details +{rep.get('details_added')}; feeds ok {rep.get('feeds_ok')}; still thin {rep['still_thin']}")
 
@@ -101,7 +103,8 @@ def main():
         st = json.load(open(st_path)) if os.path.exists(st_path) else {}
         st.update({"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                    "date": date, "section_counts": rep["section_counts"], "still_thin": rep["still_thin"],
-                   "enforced_by": "enforce_news.py"})
+                   "sports_groups": rep.get("sports_groups"), "fixes": len(rep.get("fixes") or []),
+                   "auto_edition": bool(edition.get("auto_edition")), "enforced_by": "enforce_news.py"})
         json.dump(st, open(st_path, "w"), indent=1)
     except Exception:  # noqa: BLE001
         pass

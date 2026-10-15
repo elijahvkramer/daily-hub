@@ -162,22 +162,27 @@ class Enforce(unittest.TestCase):
             return [(f"{words[i % len(words)]} {junk()}", f"https://{prefix}/{i}", "", recent, None) for i in range(n)]
         mil = ["Ukraine drone strike", "Pentagon troops deploy", "Israel ceasefire", "Navy warship missile"]
         pol = ["Senate passes bill", "White House policy", "Supreme Court vote", "Governor election"]
+        world = ["Japan prime minister resigns", "Earthquake kills dozens in Peru", "Pope meets king", "Floods hit Kenya"]
         feeds = {}
         for url, (outlet, b) in g.FEEDS.items():
-            if b & {"world", "us"}:
+            if "world" in b:
+                feeds[url] = rss(items(outlet.replace(" ", "") + "W", mil + world))
+            elif "us" in b:
                 feeds[url] = rss(items(outlet.replace(" ", "") + "w", mil + pol))
             elif "tech" in b:
                 feeds[url] = rss(items(outlet.replace(" ", "") + "t", ["AI model", "chip launch"]))
             elif b & {"science", "odd"}:
                 feeds[url] = rss(items(outlet.replace(" ", "") + "s", ["comet", "record-breaking pumpkin"]))
-            else:
-                feeds[url] = rss(items(outlet.replace(" ", "") + "x", ["NFL", "Kentucky Wildcats", "UFC"]))
+        for url, (outlet, sport, team) in g.SPORT_FEEDS.items():
+            feeds[url] = rss(items(outlet.replace(" ", "") + "x" + str(sport), ["NFL Week 6 recap", "Kentucky Wildcats basketball practice", "Giants quarterback Jaxson Dart"]))
         paras = ["Officials confirmed on Saturday that the measure passed after a long night of negotiation between both parties in the chamber.",
                  "Analysts said the outcome would reshape spending priorities for the coming fiscal year and could shift several state budgets as well.",
                  "Critics warned that implementation details remain unclear, and several advocacy groups said they would challenge parts of it in court.",
                  "The next step is a review by the committee, which is expected to publish its findings before the end of the month according to aides."]
         page = ("<html><body>" + "".join(f"<p>{x}</p>" for x in paras) + "</body></html>").encode()
         def fetch(u, t=12, mb=0):
+            if u.startswith(g.ESPN_API) or "news.google.com" in u:
+                return 404, "", b"", None
             if u in feeds:
                 return 200, "", feeds[u], None
             return 200, "", page, None
@@ -204,6 +209,112 @@ class Enforce(unittest.TestCase):
         probs = g.check_plain(ed, "2026-10-12")
         self.assertEqual(sum("needs at least" in p for p in probs), 6)
         self.assertTrue(any("quiet" in p for p in probs))
+
+
+class Oct15Audit(unittest.TestCase):
+    """Real headlines from the Oct 13-15, 2026 wire-feed editions that Eli flagged."""
+    def c(self, title, buckets, desc="", url="https://x.example/2026/10/15/story", **kw):
+        return {"title": title, "desc": desc, "url": url, "buckets": set(buckets), **kw}
+
+    def test_junk_never_becomes_a_story(self):
+        for t in ["Morning news brief", "MORNING GLORY: The polls got Michigan badly wrong. Now Democrats may face a bigger reckoning",
+                  "LIZ PEEK: Two troubled Senate races could spoil Democrats' blue-wave fantasy",
+                  "Scammers are stealing checks from the mail. Here’s how to protect yours",
+                  "Essential items to stock in your medicine cabinet for cold and flu season"]:
+            self.assertIsNone(g.place(self.c(t, {"us"})), t)
+        self.assertIsNone(g.place(self.c("The irony of OpenAI crying foul over spying", {"world"},
+                                          url="https://www.aljazeera.com/opinions/2026/10/15/the-irony")))
+
+    def test_each_section_gets_the_right_story(self):
+        cases = [
+            ("Booker ‘wowed’ by GOP challenger’s blunt message to Trump", {"us"}, 1),
+            ("Bueckers broadsides to Lady Magic’s spice: the greatest trash talkers in WNBA history", {"us"}, None),
+            ("Pakistan school collapse kills almost 30 students and a teacher", {"world"}, 3),
+            ("Pope diagnosed with lung cancer but had successful surgery, Vatican says", {"world"}, 3),
+            ("Houthis launch new attack on Saudi capital as Trump mulls strikes", {"us"}, 0),
+            ("Russian attacks on Ukraine leave 600,000 without power", {"world"}, 0),
+            ("Musk says US government may be behind slowdown of Ukraine drone speeds", {"science"}, 0),
+            ("Anthropic urges court in Washington, D.C. to rehear appeal of Pentagon blacklisting", {"tech"}, 2),
+            ("Nvidia, AMD, Micron fall as AI stock sell-off deepens", {"tech"}, 2),
+            ("Key US voters say economy is getting worse ahead of midterms, exclusive poll finds", {"us"}, 1),
+            ("Polls are a snapshot, and other helpful things to remember during the midterm elections", {"world"}, None),
+            ("Little tern colony has worst breeding season", {"science"}, 4),
+        ]
+        for t, b, want in cases:
+            self.assertEqual(g.place(self.c(t, b)), want, t)
+
+    def test_sports_groups(self):
+        S = {"sports"}
+        fav = [("Mark Pope pens letter to Kentucky students ahead of basketball season", None, "Kentucky Sports Radio"),
+               ("KSR’s top takeaways from Tuesday at SEC Basketball Media Days", None, "Kentucky Sports Radio"),
+               ("Bring on the blitz! Changing the identity of the Giants' defense", "nfl", "ESPN"),
+               ("NY Giants news: Abdul Carter misses practice (calf)", "nfl", "Big Blue View"),
+               ("Midseason report card for USC football receivers after seven games", None, "Trojans Wire")]
+        gen = [("Will Stein Show Recap: Kentucky’s offense can get better", None, "Kentucky Sports Radio",
+                "Kentucky football coach Will Stein on the offense"),
+               ("Bill Belichick noticeably absent from Patriots' celebration of 2001 Super Bowl team", "nfl", "CBS Sports",
+                "Belichick recently attended the Giants' Super Bowl reunion"),
+               ("Kentucky is a finalist for QB Josiah Boyd, a top 100 recruit in 2028", None, "Kentucky Sports Radio", ""),
+               ("Scheffler leads by two after second round at the PGA Tour stop", "golf", "ESPN", "")]
+        off = [("PSG’s Achraf Hakimi sends message to Barcelona ahead of highly anticipated clash", None, "Yahoo Sports",
+                "The European giants meet on Tuesday"),
+               ("Ajša Sivka officially cleared by NCAA to play for Kentucky WBB", None, "Kentucky Sports Radio", ""),
+               ("Giants pitcher Logan Webb named NL Pitcher of the Month", None, "ESPN", "San Francisco Giants ace")]
+        for t, sp, src in fav:
+            self.assertEqual(g.sports_group(self.c(t, S, sport=sp, source=src)), "Favorites", t)
+        for t, sp, src, d in gen:
+            self.assertEqual(g.sports_group(self.c(t, S, d, sport=sp, source=src)), "General", t)
+        for t, sp, src, d in off:
+            self.assertIsNone(g.sports_group(self.c(t, S, d, sport=sp, source=src)), t)
+
+    def test_sports_quota_two_and_two_favorites_first(self):
+        now = NOW
+        w = now - datetime.timedelta(hours=3)
+        mk = lambda t, sp, src: {"title": t, "desc": "", "url": "https://s/" + t[:12].replace(" ", ""), "when": w,
+                                 "img": None, "source": src, "buckets": {"sports"}, "sport": sp, "team": None, "cats": ""}
+        pool = [mk("NFL Week 6 picks: every game", "nfl", "ESPN"),
+                mk("Chiefs edge Bills in overtime thriller", "nfl", "ESPN"),
+                mk("Lakers sign veteran guard to one-year deal", "nba", "ESPN"),
+                mk("Giants activate Malik Nabers from injured reserve", "nfl", "ESPN"),
+                mk("Kentucky basketball lands five-star guard commitment", "mcbb", "ESPN"),
+                mk("USC football's Lincoln Riley addresses quarterback battle", "cfb", "ESPN")]
+        ed = {"sections": [{"title": "Sports", "items": [
+            {"lead": "Kentucky basketball opens practice", "body": "Mark Pope", "group": "Favorites", "url": "https://k/1"},
+            {"lead": "Giants beat Saints", "body": "NFL", "group": "Favorites", "url": "https://k/2"},
+            {"lead": "Giants coordinator speaks", "body": "NFL", "group": "Favorites", "url": "https://k/3"},
+            {"lead": "USC football rallies past Penn State", "body": "Trojans", "group": "Favorites", "url": "https://k/4"}]}]}
+        g.top_up(ed, now, pool)
+        sp = next(s for s in ed["sections"] if s["title"] == "Sports")["items"]
+        groups = [i["group"] for i in sp]
+        self.assertGreaterEqual(groups.count("General"), 2)     # 4 favorites alone is not enough
+        self.assertEqual(groups, sorted(groups, key=lambda x: x != "Favorites"))
+        self.assertNotIn("NFL Week 6 picks: every game", [i["lead"] for i in sp])   # betting/picks junk
+
+    def test_framing_uses_the_hero_story_whole(self):
+        ed = {"headline": "Morning news brief\nCivil rights advocates plan to send…", "auto_edition": True,
+              "glance": [{"label": "US Military & Foreign Conflict", "teaser": "Morning news brief"}],
+              "sections": [{"title": "US Military & Foreign Conflict", "items": [
+                  {"lead": "Russian attacks on Ukraine leave 600,000 without power", "body": "Kyiv says the grid was hit.", "auto": True}]}]}
+        g.refresh_framing(ed, [], force=True)
+        self.assertEqual(ed["headline"], "Russian attacks on Ukraine leave 600,000 without power")
+        self.assertEqual(ed["subtitle"], "Kyiv says the grid was hit.")
+        self.assertNotIn("…", ed["glance"][0]["teaser"])
+        self.assertNotIn("Morning", ed["glance"][0]["teaser"])
+
+    def test_edition_window(self):
+        self.assertEqual(g.window_days("2026-10-19"), 3)        # Monday
+        self.assertEqual(g.window_days("2026-10-15"), 1)
+        self.assertEqual(g.edition_cutoff("2026-10-15").isoformat(), "2026-10-14T00:00:00+00:00")
+        self.assertEqual(g.edition_cutoff("2026-10-19").isoformat(), "2026-10-16T00:00:00+00:00")
+
+    def test_check_plain_flags_sports_mistakes(self):
+        ed = {"headline": "x", "sections": [{"title": "Sports", "items": [
+            {"lead": "Will Stein: Kentucky football offense can improve", "group": "Favorites", "url": "https://a/1", "published": "2026-10-15"},
+            {"lead": "PSG beats Barcelona in Champions League", "group": "General", "url": "https://a/2", "published": "2026-10-15"}]}]}
+        probs = g.check_plain(ed, "2026-10-15")
+        self.assertTrue(any("belongs in 'General'" in p for p in probs), probs)
+        self.assertTrue(any("not one of Eli's sports" in p for p in probs), probs)
+        self.assertTrue(any("'Favorites' stories" in p for p in probs), probs)
 
 
 if __name__ == "__main__":

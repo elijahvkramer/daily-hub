@@ -10,6 +10,8 @@ You are running unattended, once daily in the early morning Central (triggered b
 
 ## Step 0: figure out what day it is
 
+**News-only redo mode.** If the environment variable `NEWS_ONLY_DATE` is set (e.g. `2026-10-13`), this run rebuilds ONLY that past date's news edition: treat that date as "today" everywhere in Step 2 (its weekday sets the window, which ENDS at the end of that date — nothing published after it), write it to `data/news/$NEWS_ONLY_DATE.json.enc`, run the readiness check with `--date=$NEWS_ONLY_DATE`, compare against the 3 editions BEFORE that date, and SKIP Steps 1 and 3 entirely (no market file, no calendar/Brain Food changes, no word bank). Then do Step 4 (manifest + commit + push) and stop. Check with `echo "$NEWS_ONLY_DATE"` first.
+
 Run `date -u +%A` and `date -u +%F`. Because this fires at 9am US Central, the UTC date/weekday always matches Eli's local date/weekday at that hour — no conversion needed.
 
 - Monday: news briefing covers the last 72 hours (Fri-Sun).
@@ -96,6 +98,8 @@ Every article you rely on must carry a visible publication date inside the windo
 
 **Depth floor.** Every section must carry at least 4 items — never one, never zero (Tech sat empty for days in early October because the rules above ate every candidate). If fewer than 4 qualify, in this order: (a) look one more time with a different query and different outlets (trade press, regional papers, beat writers, wire services); (b) for a genuinely new development on a story that already ran, report the development as its own item; (c) use the full window, including the evening before. Do not pad with undated or out-of-window items. The guard tops up anything still short from fresh wire feeds, but those fillers have no `detail` page — yours should always be better.
 
+**Section placement is by the event, not by keywords** (Oct 13-15, 2026 editions put a Senate-race story under Military and a WNBA feature under Politics). US Military & Foreign Conflict = armed forces, wars, strikes, defense policy. Politics & Policy = US government, elections, courts, legislation. Tech & AI = technology companies, products, AI, cyber. Major International Headlines = significant events outside the US. Never publish a newsletter digest ("Morning news brief"), an opinion column, a live-blog index, a how-to/service piece, or a quiz as a story — the readiness check rejects them.
+
 Topics, in this order (each its own section; if a topic looks quiet, search again with different outlets — there is no such thing as a quiet section, and an empty or one-story section is never acceptable; never pad with stale stories):
 
 1. US Military & Foreign Conflict
@@ -103,10 +107,12 @@ Topics, in this order (each its own section; if a topic looks quiet, search agai
 3. Tech & AI
 4. Major International Headlines (2-3 significant non-US stories)
 5. Random — 3-4 stories that fit none of the above and that a curious person would repeat at dinner: science, space, nature, a strange court case, a record broken, a piece of history that surfaced, food, travel, an obituary of someone remarkable. Global. Must still be dated inside the window. Each with a real photo (`img`) — this section lives or dies on the picture.
-6. Sports — ONE section, two groups via a "group" field on each item:
-   - Favorites (min 2 items/day): Kentucky Wildcats Men's Basketball, New York Giants (NFL), USC Trojans Football — one targeted search per team; broaden to recruiting/roster/beat-writer notes before giving up on hitting the floor. Recruiting and transfer items MUST pass the current-status check above — a player's commitment status changes fast and a stale "deciding between" item is worse than no item.
-   - General (min 2 items/day): NFL, Men's College Basketball, College Football, PGA, UFC, Men's Grand Slam Tennis, NBA — 1-2 searches covers this whole set.
+6. Sports — ONE section, two groups via a `group` field on EVERY item (`"Favorites"` or `"General"` — no other value, never missing):
+   - **Favorites (min 2 items/day) are EXACTLY three teams and nothing else:** Kentucky Wildcats **men's basketball**, the **New York Giants** (NFL), **USC Trojans football**. One targeted search per team; broaden to recruiting/roster/beat-writer notes (Kentucky Sports Radio, A Sea of Blue, Big Blue View, Trojans Wire, LA Times USC) before giving up on hitting the floor. Recruiting and transfer items MUST pass the current-status check above — a player's commitment status changes fast and a stale "deciding between" item is worse than no item. Name the team in the lead sentence.
+     NOT Favorites (Oct 13-15, 2026 these were all mislabeled): Kentucky FOOTBALL, Kentucky women's basketball or any other UK sport, a former Wildcat now in the NBA, the San Francisco Giants, USC basketball, any other "Wildcats" or "Trojans", and league-wide stories that merely mention one of the teams (power rankings, a rival's story that names the Giants as an opponent). Those are General if their sport is on the list below, otherwise left out.
+   - **General (min 2 items/day) — only these sports:** NFL, men's college basketball, college football, PGA Tour golf, UFC, men's Grand Slam tennis, NBA — 1-2 searches covers this whole set. Never soccer, WNBA or any women's league, MLB, NHL, F1/NASCAR, high school, betting/odds, fantasy or ticket pieces.
    - Favorites items first, then General. A story fitting either goes to Favorites, never duplicated in both.
+   - The readiness check enforces all of this: it flags a wrong group, an off-list sport, and fewer than 2 in either group.
 
 4-6 items per section, **minimum 4** (Sports typically runs 4-7 total, that's fine).
 

@@ -633,7 +633,7 @@ def item_group(item):
                              "team": item.get("team"), "source": item.get("source")})
     if fav_team(text, item.get("sport"), lenient=True):
         return "Favorites"
-    if OFF_SPORT.search(text):
+    if OFF_SPORT.search(item.get("lead", "")):      # the brief's story: judged on its headline
         return None
     return "General"
 

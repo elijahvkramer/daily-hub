@@ -323,6 +323,14 @@ class Oct15Audit(unittest.TestCase):
         teams = {g.team_of(i) for i in ed["sections"][0]["items"]}
         self.assertTrue({"uk", "nyg", "usc"} <= teams, teams)
 
+    def test_brief_items_judged_on_headline(self):
+        it = {"lead": "Pereira retains UFC light heavyweight title", "body": "On the same card a women's strawweight bout...", "group": "General"}
+        self.assertEqual(g.item_group(it), "General")
+        it2 = {"lead": "Giants beat the Saints 24-17", "body": "New York's defense...", "group": "General"}
+        self.assertEqual(g.item_group(it2), "Favorites")
+        it3 = {"lead": "Kentucky football falls to Texas", "body": "Will Stein's team...", "group": "Favorites"}
+        self.assertEqual(g.item_group(it3), "General")
+
     def test_edition_window(self):
         self.assertEqual(g.window_days("2026-10-19"), 3)        # Monday
         self.assertEqual(g.window_days("2026-10-15"), 1)

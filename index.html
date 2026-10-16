@@ -10775,7 +10775,7 @@ async function insTakeLocal(p, st, ctx, token, tw, setSub, setSrc){
   let news = { own:[], context:[] };
   try{ news = await withDeadline(insFetchNews(p), 7000, news); }catch(e){}
   if(token !== P.insToken) return true;
-  const today = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 36*3600e3);
+  const today = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 26*3600e3);   // since about yesterday's close
   let more = "";
   if(today.length) today.slice(0, 2).forEach(x => { more += `- ${x.outlet}, ${nrAgo(x.t)}: “${x.title}”\n`; });
   else if(!fund) more += `- No ${p.ticker}-specific story in the last day — consistent with it trading on the broader move.\n`;
@@ -10866,6 +10866,12 @@ async function insGenerate(ticker){
   /* Only this holding's history (and SPY's, for the versus-the-market read) -- not every holding's. Before Oct
      2026 this awaited loadHistory(), which on a cold day sat on 45s+ of dead-proxy timeouts before a word. */
   if(!P.histReady) loadHistory();
+  /* a click right after the page opens can land before the first live prices: then every holding still shows the
+     snapshot's 0% day change and the card would ask "why is it flat?". Wait for that first fetch (capped). */
+  if(P.fetching && P._fetchPromise) await withDeadline(P._fetchPromise, 4000, null);
+  else if(!P.liveSrc || P.liveSrc === "cache") await withDeadline(pFetchLive(), 4000, null);
+  if(token !== P.insToken) return;
+  pCompute();
   const p0 = pViewMerged().find(x => x.ticker === ticker);
   await withDeadline(Promise.all([pHistFor((p0 && p0.fetchSymbol) || ticker), pHistFor("SPY")]), 7000, null);
   if(token !== P.insToken) return;

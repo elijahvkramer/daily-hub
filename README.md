@@ -42,4 +42,17 @@ GitHub Actions (`.github/workflows/`):
   `.github/claude-daily-brief-prompt.md`: market brief, news (each story with its source
   article and that article's photo via `scripts/og_image.py`), Brain Food, Word of the Day.
 
-Tests: `node scripts/test_crossword.js` (dictionary hygiene + generator shape).
+Tests (run all before publishing anything that touches prices, charts or the Portfolio):
+
+    node scripts/test_portfolio_data.js   # proxy-free data layer, dates, AI Insight wiring
+    node scripts/test_chart_axis.js       # chart time axes
+    python3 scripts/test_history.py       # server history: daily-only, no weekend/phantom bars
+    python3 scripts/test_quotes.py        # server quotes: fund NAV dates, crypto, intraday refresh
+    node scripts/test_crossword.js        # dictionary hygiene + generator shape
+
+Health files written on every server run (plaintext, no symbols): `data/quotes.status.json`,
+`data/history.status.json` (`invalid` must be 0; `pointsPerYear.min` near 250 means fully daily).
+
+**Price data never goes through public CORS proxies first** (Oct 2026: all four were dead at once and took
+the whole Portfolio down). Order everywhere: server snapshot → CNBC direct (CORS-open) → proxy as a capped
+last resort.

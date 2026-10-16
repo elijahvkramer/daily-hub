@@ -20,6 +20,7 @@ import concurrent.futures
 import datetime
 import json
 import os
+import re
 import sys
 import time
 from zoneinfo import ZoneInfo
@@ -114,18 +115,58 @@ def fetch_stooq(syms, session):
     return out
 
 
+def _num(v):
+    """CNBC prints numbers as strings, sometimes with commas, a trailing % (yields) or a $."""
+    if v is None:
+        return None
+    t = str(v).replace(",", "").replace("%", "").replace("$", "").strip()
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+
+# CNBC names crypto differently from Yahoo (checked live, Oct 2026).
+CNBC_ALIAS = {"BTC-USD": "BTC.CM=", "ETH-USD": "ETH.CM="}
+
+
+def cnbc_symbol(sym):
+    return CNBC_ALIAS.get(sym, sym)
+
+
+def parse_cnbc_time(raw, fallback=None):
+    """CNBC's `last_time` -> epoch seconds.
+
+    Oct 2026 bug: every CNBC quote was stamped with the time of the run, so a mutual fund whose NAV was
+    still yesterday's (BPTRX: last_time "2026-10-15" on the 16th) looked like a fresh quote and the site
+    counted yesterday's NAV move as today's day change. A date-only stamp is that day's 4pm New York close;
+    a full ISO stamp ("2026-10-16T16:00:00.000-0400") is used as is."""
+    t = str(raw or "").strip()
+    if not t:
+        return fallback
+    try:
+        if len(t) == 10:
+            d = datetime.datetime.strptime(t, "%Y-%m-%d")
+            return int(datetime.datetime(d.year, d.month, d.day, 16, 0, tzinfo=ZoneInfo("America/New_York")).timestamp())
+        t = re.sub(r"\.\d+", "", t)                          # drop milliseconds
+        t = re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", t)       # -0400 -> -04:00
+        return int(datetime.datetime.fromisoformat(t).timestamp())
+    except Exception:  # noqa: BLE001
+        return fallback
+
+
 def fetch_cnbc(syms, session):
     """Third source: CNBC's public quote endpoint. Yahoo blocks datacenter IPs and Stooq has
     also come back empty from the runner, so this is the one that has to carry it. Shape is
-    parsed defensively -- any field that isn't there is simply skipped."""
+    parsed defensively -- any field that isn't there is simply skipped. Crypto is included
+    (BTC-USD -> BTC.CM=); before Oct 2026 it was skipped and BTC sat on a stale price."""
     out = {}
     if not syms:
         return out
-    tickers = [s for s in syms if "-" not in s]
-    if not tickers:
-        return out
+    by_cnbc = {cnbc_symbol(s).upper(): s for s in syms}
     url = ("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol"
-           "?symbols=" + "%7C".join(tickers) +
+           "?symbols=" + "%7C".join(requests.utils.quote(c, safe="") for c in by_cnbc) +
            "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1")
     try:
         r = session.get(url, timeout=15)
@@ -137,17 +178,19 @@ def fetch_cnbc(syms, session):
     quotes = (((payload or {}).get("FormattedQuoteResult") or {}).get("FormattedQuote")) or []
     if isinstance(quotes, dict):
         quotes = [quotes]
+    now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     for q in quotes:
         try:
-            sym = (q.get("symbol") or q.get("issue_id") or "").upper()
-            last = q.get("last") or q.get("lastPrice")
-            prev = q.get("previous_day_closing") or q.get("previousDayClosing") or last
-            if not sym or last is None:
+            key = (q.get("symbol") or q.get("issue_id") or "").upper()
+            sym = by_cnbc.get(key)
+            price = _num(q.get("last") or q.get("lastPrice"))
+            if not sym or price is None:
                 continue
-            price = float(str(last).replace(",", ""))
-            prevf = float(str(prev).replace(",", ""))
-            ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-            out[sym] = {"price": price, "prev": prevf, "time": ts, "src": "cnbc"}
+            prevf = _num(q.get("previous_day_closing") or q.get("previousDayClosing"))
+            if prevf is None:
+                chg = _num(q.get("change"))
+                prevf = price - chg if chg is not None else price
+            out[sym] = {"price": price, "prev": prevf, "time": parse_cnbc_time(q.get("last_time"), now), "src": "cnbc"}
         except Exception:  # noqa: BLE001
             continue
     return out
@@ -166,17 +209,6 @@ BOARD_CNBC = {
     "^IRX": ["US3M"], "2YY=F": ["US2Y"], "^TNX": ["US10Y"], "^TYX": ["US30Y"],
     "BTC-USD": ["BTC.CM="], "ETH-USD": ["ETH.CM="],
 }
-
-
-def _num(v):
-    """CNBC prints numbers as strings, sometimes with commas, a trailing % (yields) or a $."""
-    if v is None:
-        return None
-    t = str(v).replace(",", "").replace("%", "").replace("$", "").strip()
-    try:
-        return float(t)
-    except ValueError:
-        return None
 
 
 def fetch_board(session):
@@ -210,7 +242,8 @@ def fetch_board(session):
                 chg = _num(q.get("change"))
                 prev = (last - chg) if chg is not None else last
             by_cnbc[key] = {"price": last, "prev": prev,
-                            "time": int(datetime.datetime.now(datetime.timezone.utc).timestamp()), "src": "cnbc"}
+                            "time": parse_cnbc_time(q.get("last_time"), int(datetime.datetime.now(datetime.timezone.utc).timestamp())),
+                            "src": "cnbc"}
         except Exception:  # noqa: BLE001
             continue
     out = {}
@@ -291,8 +324,15 @@ def attach_series(quotes, syms, session):
     now = time.time()
 
     def fresh(q):
+        """Oct 2026 bug: this used to call any series with a bar in the last 6 hours "fresh", so the first
+        run after the open (bars to ~10am) froze the Today chart at 10am for the rest of the session. A
+        series is only complete once it reaches its session's close (or the newest bar is from a session
+        that has already ended); until then it is refetched every run."""
         ser = (q or {}).get("series")
-        return bool(ser and ser.get("t") and ser["t"][-1] > now - 6 * 3600)
+        if not (ser and ser.get("t")):
+            return False
+        last, end = ser["t"][-1], ser.get("end") or 0
+        return bool(end and last >= end - 600 and now - last < 20 * 3600)
 
     todo = [s for s in syms if "-" not in s and not fresh(quotes.get(s))]
     got = 0
@@ -371,19 +411,24 @@ def main():
             quotes[s] = q
             fresh += 1
         time.sleep(0.25)  # be polite; 12 symbols is well under any limit
-    source = "yahoo"
-    if not fresh:
-        # Yahoo refused every call (it rate-limits datacenter IPs on and off)
-        for name, fn in (("stooq", fetch_stooq), ("cnbc", fetch_cnbc)):
-            got = fn(syms, session)
-            for s, q in got.items():
-                if "series" not in q and (previous.get(s) or {}).get("series"):
-                    q["series"] = previous[s]["series"]     # keep the last good bars until new ones land
-                quotes[s] = q
-                fresh += 1
-            if fresh:
-                source = name
-                break
+    source = "yahoo" if fresh else None
+    # Yahoo refuses datacenter IPs on and off, and when it answers it can still skip a symbol. Every symbol it
+    # did not refresh goes to the fallbacks -- before Oct 2026 they only ran when Yahoo answered NOTHING, so a
+    # partial Yahoo answer left the rest (BTC included) on whatever the last run had.
+    done = {s for s in syms if quotes.get(s) is not previous.get(s)}
+    for name, fn in (("stooq", fetch_stooq), ("cnbc", fetch_cnbc)):
+        missing = [s for s in syms if s not in done]
+        if not missing:
+            break
+        got = fn(missing, session)
+        for s, q in got.items():
+            if "series" not in q and (previous.get(s) or {}).get("series"):
+                q["series"] = previous[s]["series"]     # keep the last good bars until new ones land
+            quotes[s] = q
+            done.add(s)
+            fresh += 1
+        if got and not source:
+            source = name
 
     if not fresh:
         print("Yahoo and Stooq returned nothing for any symbol; leaving the previous quotes file untouched")

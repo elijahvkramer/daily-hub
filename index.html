@@ -1695,6 +1695,11 @@
   .ins-take-src a:hover{color:var(--ink);border-color:var(--gold)}
   .ins-key-btn{margin-left:auto;appearance:none;font:inherit;font-size:11.5px;font-weight:800;color:var(--gold-dark,var(--gold));background:none;border:1px dashed color-mix(in srgb,var(--gold) 55%,transparent);border-radius:999px;padding:4px 10px;cursor:pointer}
   .ins-key-btn:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  .ins-key-btn.warn{color:#fff;background:var(--down);border:1px solid var(--down)}
+  .ins-key-warn{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 0 12px;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.45;
+    background:color-mix(in srgb,var(--down) 9%,transparent);border:1px solid color-mix(in srgb,var(--down) 30%,transparent)}
+  .ins-key-warn[hidden]{display:none}
+  .ins-key-warn .ins-key-btn{margin-left:0}
   @media (prefers-reduced-motion:reduce){.ins-think i,.ins-take-b.typing > :last-child::after{animation:none}}
   .ins-why{margin-bottom:16px}
   .ins-why-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
@@ -8691,7 +8696,7 @@ const P = { pos:[], live:{}, acct:"all", sortKey:"marketValue", sortDir:-1, sear
    (or hung for 8-16s). Now the last prices this device saw paint instantly, the server-side
    snapshot (published by the Calendar Refresh workflow) lands a moment later, and the live
    proxies only ever make things fresher. */
-const QCACHE_KEY = "dh-quotes-v1";
+const QCACHE_KEY = "dh-quotes-v2";   // v2 (Oct 2026): v1 caches held fund quotes stamped with the wrong day
 function pLoadQuoteCache(){
   if(P.liveAt) return;
   try{
@@ -8720,8 +8725,11 @@ function pApplyQuotes(map, src, at){
   for(const [sym, q] of Object.entries(map || {})){
     if(!q || typeof q.price !== "number") continue;
     const cur = P.live[sym];
-    if(cur && cur.time && q.time && q.time < cur.time) continue;
-    P.live[sym] = {price:q.price, prev:(q.prev ?? q.price), time:q.time};
+    /* A live quote is authoritative over a snapshot/cache one even if its stamp is OLDER: before Oct 2026 the
+       server stamped CNBC quotes with the run time, so a fund still on yesterday's NAV carried a too-new stamp
+       that would otherwise block the correctly-dated live quote. */
+    if(cur && cur.time && q.time && q.time < cur.time && !(src === "live" && cur.src !== "live")) continue;
+    P.live[sym] = {price:q.price, prev:(q.prev ?? q.price), time:q.time, src};
     if(q.series && q.series.t && q.series.c){ P.intraday = P.intraday || {}; P.intraday[sym] = q.series; }
     n++;
   }
@@ -8780,6 +8788,195 @@ function pFetchTimeout(url, ms, opts){
   return fetch(url, {...opts, signal: ctrl.signal}).finally(() => clearTimeout(timer));
 }
 
+/* ===========================================================================
+   Proxy-free market data (Oct 2026 portfolio audit).
+   Eli: "AI Insight doesn't work" and "clicking on stocks to load price doesn't work". Measured live on
+   Oct 16 2026, every free CORS proxy the page relied on was dead at once: cors-get-proxy failed instantly,
+   allorigins and codetabs hung past 12s, corsproxy.io answered 403 (wants a paid key). Every live price,
+   intraday chart, daily history, ALL-range chart and AI Insight headline went through them.
+   CNBC's quote, chart and search endpoints answer the browser DIRECTLY (they send CORS headers; verified
+   live the same day), so they are now the first source for all of it -- no proxy in the way. The server
+   snapshots (data/quotes.json.enc, data/history*.json.enc) stay as the instant first paint.
+   =========================================================================== */
+const CNBC_ALIAS = { "BTC-USD":"BTC.CM=", "ETH-USD":"ETH.CM=", "^GSPC":".SPX", "^IXIC":".IXIC", "^DJI":".DJI",
+  "GC=F":"@GC.1", "BZ=F":"@LCO.1", "^IRX":"US3M", "2YY=F":"US2Y", "^TNX":"US10Y", "^TYX":"US30Y" };
+const cnbcSym = s => CNBC_ALIAS[s] || s;
+const isCryptoSym = s => /-USD$/.test(String(s || ""));
+const cnbcNum = v => { if(v == null) return null; const n = parseFloat(String(v).replace(/[,%$]/g, "")); return isFinite(n) ? n : null; };
+/* New York wall-clock time -> epoch seconds (DST-correct, independent of this device's time zone). */
+function nyEpoch(y, mo, d, h, mi, s){
+  const guess = Date.UTC(y, mo - 1, d, h || 0, mi || 0, s || 0);
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone:"America/New_York", hourCycle:"h23",
+    year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit"})
+    .formatToParts(new Date(guess)).map(x => [x.type, x.value]));
+  const asNY = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  return Math.round((guess + (guess - asNY)) / 1000);
+}
+/* CNBC's last_time: "2026-10-16T16:00:00.783-0400", or date-only "2026-10-15" for a mutual fund still on
+   yesterday's NAV. Date-only means that day's 4pm close in New York -- NOT midnight UTC, which is the evening
+   before in New York and would make quoteIsToday() count yesterday's NAV move as today's. */
+function cnbcTime(raw){
+  const t = String(raw || "").trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return nyEpoch(+m[1], +m[2], +m[3], 16, 0, 0);
+  const ms = Date.parse(t.replace(/\.\d+/, "").replace(/([+-]\d{2})(\d{2})$/, "$1:$2"));
+  return isNaN(ms) ? null : Math.round(ms / 1000);
+}
+/* "YYYYMMDDhhmmss" in New York time (CNBC chart bars) -> epoch seconds. */
+function cnbcBarTime(s){
+  const m = String(s || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/);
+  return m ? nyEpoch(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6]) : null;
+}
+/* Live quotes for many symbols in ONE request. Returns {sym:{price, prev, time}}. */
+async function cnbcQuotes(syms, ms){
+  syms = [...new Set(syms || [])].filter(Boolean);
+  if(!syms.length) return {};
+  const back = {}; syms.forEach(s => { back[cnbcSym(s).toUpperCase()] = s; });
+  const url = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" +
+    Object.keys(back).map(encodeURIComponent).join("%7C") +
+    "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1";
+  const r = await pFetchTimeout(url, ms || 7000, {cache:"no-store"});
+  if(!r.ok) throw new Error("cnbc quote " + r.status);
+  const j = await r.json();
+  let rows = j && j.FormattedQuoteResult && j.FormattedQuoteResult.FormattedQuote || [];
+  if(!Array.isArray(rows)) rows = [rows];
+  const out = {}, now = Math.round(Date.now()/1000);
+  rows.forEach(q => {
+    const sym = back[String(q.symbol || "").toUpperCase()];
+    const price = cnbcNum(q.last); if(!sym || price == null) return;
+    let prev = cnbcNum(q.previous_day_closing);
+    if(prev == null){ const ch = cnbcNum(q.change); prev = ch != null ? price - ch : price; }
+    out[sym] = { price, prev, time: cnbcTime(q.last_time) || now };
+  });
+  return out;
+}
+/* Raw chart bars: [[epochSec, close], ...] ascending. CNBC's range names are not what they say (measured
+   Oct 16 2026): "1D" = ~2 sessions of 1-minute bars, "6M" = ~3 YEARS of daily bars, "1Y" = ~2 years daily,
+   "10Y"/"5Y" = weekly bars stamped on the Sunday that starts the week, "ALL" = quarterly. */
+async function cnbcBars(sym, rng, ms){
+  const r = await pFetchTimeout(`https://ts-api.cnbc.com/harmony/app/charts/${rng}.json?symbol=${encodeURIComponent(cnbcSym(sym))}`, ms || 9000, {cache:"no-store"});
+  if(!r.ok) throw new Error("cnbc chart " + r.status);
+  const j = await r.json();
+  const bars = (j && j.barData && j.barData.priceBars) || [];
+  const out = [];
+  bars.forEach(b => { const t = cnbcBarTime(b.tradeTime), c = cnbcNum(b.close); if(t != null && c != null) out.push([t, c]); });
+  return out.sort((a,b) => a[0] - b[0]);
+}
+/* Today's (latest) regular session as the intraday series the charts use: {t, c, start, end}, bucketed. */
+async function cnbcIntraday(sym, bucketMin){
+  const bars = await cnbcBars(sym, "1D", 8000);
+  if(bars.length < 5) return null;
+  const step = (bucketMin || 5) * 60, buckets = new Map();
+  bars.forEach(([t,c]) => buckets.set(Math.floor(t/step)*step, c));
+  const last = bars[bars.length-1][0];
+  const d = new Date(last*1000).toLocaleDateString("en-CA", {timeZone:"America/New_York"}).split("-").map(Number);
+  const crypto = isCryptoSym(sym);
+  const start = crypto ? nyEpoch(d[0], d[1], d[2], 0, 0, 0) : nyEpoch(d[0], d[1], d[2], 9, 30, 0);
+  const end = crypto ? start + 86400 : nyEpoch(d[0], d[1], d[2], 16, 0, 0);
+  const keep = [...buckets.keys()].filter(t => t >= start && t <= end).sort((a,b) => a-b);
+  if(keep.length < 3) return null;
+  return { t: keep, c: keep.map(t => buckets.get(t)), start, end };
+}
+/* Daily closes, one point per trading day, stamped like every other daily series on the page (noon UTC of the
+   New York date, so its UTC date IS the trading date). ~3 years from CNBC's "6M" range. */
+async function cnbcDaily(sym){
+  const bars = await cnbcBars(sym, "6M", 12000);
+  const byDay = new Map();
+  bars.forEach(([t,c]) => byDay.set(new Date(t*1000).toLocaleDateString("en-CA", {timeZone:"America/New_York"}), c));
+  const days = [...byDay.keys()].sort().filter(d => isCryptoSym(sym) || !isWeekendDay(d));
+  return days.length > 20 ? { t: days.map(dayEpoch), c: days.map(d => byDay.get(d)) } : null;
+}
+const isMutualFund = s => /^[A-Z]{4}X$/.test(String(s || ""));   // US fund tickers: five letters ending in X
+const isWeekendDay = d => { const w = new Date(d + "T12:00:00Z").getUTCDay(); return w === 0 || w === 6; };
+/* Clean a daily series before anything draws or measures it. Server history built before Oct 16 2026 carried a
+   phantom Sunday bar every week (CNBC weekly bars merged between its daily ones) -- 260 of them per stock,
+   which bent every chart, the 30-day sparklines, the moving averages and the risk score's volatility.
+   Keeps one point per date; where the series is daily, drops weekend dates (crypto excepted); an older,
+   coarser stretch (weekly/quarterly) is left as is. Returns a NEW {t,c}. */
+function pCleanHist(sym, h){
+  if(!h || !h.t || !h.c) return h;
+  const crypto = isCryptoSym(sym);
+  const byDay = new Map();
+  h.t.forEach((ts,i) => { if(h.c[i] != null) byDay.set(new Date(ts*1000).toISOString().slice(0,10), [ts, h.c[i]]); });
+  let days = [...byDay.keys()].sort();
+  if(!crypto){
+    /* where does it become daily? the first run of 5 consecutive gaps of <= 4 days */
+    let dailyFrom = days.length;
+    for(let i = 0; i + 5 < days.length; i++){
+      let ok = true;
+      for(let k = i; k < i + 5; k++) if((Date.parse(days[k+1]) - Date.parse(days[k]))/864e5 > 4){ ok = false; break; }
+      if(ok){ dailyFrom = i; break; }
+    }
+    const from = days[dailyFrom] || "9999";
+    days = days.filter(d => d < from || !isWeekendDay(d));
+    /* the older, coarse stretch: CNBC labels a weekly bar with the Sunday that STARTS the week but gives it the
+       week's last close, so re-date it to that Friday (a Saturday label goes back to Friday) */
+    const moved = new Map();
+    days.forEach(d => {
+      if(d >= from || !isWeekendDay(d)){ moved.set(d, byDay.get(d)); return; }
+      const w = new Date(d + "T12:00:00Z").getUTCDay();
+      const nd = new Date(Date.parse(d + "T12:00:00Z") + (w === 0 ? 5 : -1)*864e5).toISOString().slice(0,10);
+      if(nd < from && !moved.has(nd)) moved.set(nd, [dayEpoch(nd), byDay.get(d)[1]]);
+    });
+    days = [...moved.keys()].sort();
+    return { t: days.map(d => moved.get(d)[0]), c: days.map(d => moved.get(d)[1]) };
+  }
+  return { t: days.map(d => byDay.get(d)[0]), c: days.map(d => byDay.get(d)[1]) };
+}
+/* Combine a long server series with a fresher CNBC one: CNBC wins on any date both have, server fills before. */
+function pMergeHist(a, b){
+  if(!a || !a.t || !a.t.length) return b || a;
+  if(!b || !b.t || !b.t.length) return a;
+  const m = new Map();
+  a.t.forEach((ts,i) => m.set(new Date(ts*1000).toISOString().slice(0,10), [ts, a.c[i]]));
+  b.t.forEach((ts,i) => m.set(new Date(ts*1000).toISOString().slice(0,10), [ts, b.c[i]]));
+  const days = [...m.keys()].sort();
+  return { t: days.map(d => m.get(d)[0]), c: days.map(d => m.get(d)[1]) };
+}
+/* Headlines for a ticker/company/theme straight from CNBC's own site search (CORS-open; verified Oct 2026).
+   Replaces Yahoo search + GDELT through the dead proxies, which made the no-key "quick read" wait 2+ minutes
+   on timeouts before writing a word. */
+async function cnbcNews(q, count, ms){
+  const url = "https://api.queryly.com/cnbc/json.aspx?queryly_key=31a35d40a9a64ab3&query=" + encodeURIComponent(q) +
+    "&endindex=0&batchsize=" + (count || 10) + "&callback=&showfaceted=false&timezoneoffset=300&sort=date";
+  const r = await pFetchTimeout(url, ms || 6000, {cache:"no-store"});
+  if(!r.ok) throw new Error("cnbc search " + r.status);
+  const j = await r.json();
+  return ((j && j.results) || []).map(x => ({
+    title: String(x["cn:title"] || "").trim(), url: x.url || x["cn:liveURL"] || "", outlet: "CNBC",
+    section: x.section || "", summary: String(x.summary || x.description || "").trim(),
+    t: x.datePublished ? new Date(String(x.datePublished).replace(/([+-]\d{2})(\d{2})$/, "$1:$2")) : null,
+    img: x["cn:promoImage"] || ""
+  })).filter(x => x.title && x.url && x.t && !isNaN(x.t));
+}
+
+/* Upcoming earnings and ex-dividend dates for the holdings, from the same CNBC quote feed (its EventData block).
+   Replaces a hand-typed list that had drifted: it carried tickers no longer held (AMZN, PYPL) and dates that fell
+   on Saturdays (NFLX "Oct 17" -- CNBC has Oct 20). Returns [{date:"YYYY-MM-DD", ticker, label}]. */
+async function cnbcEvents(pairs){
+  if(!pairs.length) return [];
+  const back = {}; pairs.forEach(([sym, tk]) => { back[cnbcSym(sym).toUpperCase()] = tk; });
+  const url = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" +
+    Object.keys(back).map(encodeURIComponent).join("%7C") + "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1";
+  const r = await pFetchTimeout(url, 8000, {cache:"no-store"});
+  if(!r.ok) throw new Error("cnbc events " + r.status);
+  const j = await r.json();
+  let rows = j && j.FormattedQuoteResult && j.FormattedQuoteResult.FormattedQuote || [];
+  if(!Array.isArray(rows)) rows = [rows];
+  const iso = mdY => { const m = String(mdY || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[1]}-${m[2]}` : null; };
+  const out = [];
+  rows.forEach(q => {
+    const tk = back[String(q.symbol || "").toUpperCase()]; if(!tk) return;
+    let ev = q.EventData; if(typeof ev === "string"){ try{ ev = JSON.parse(ev); }catch(e){ ev = null; } }
+    if(!ev) return;
+    const e = iso(ev.next_earnings_date);
+    if(e) out.push({ date:e, ticker:tk, label: "Earnings" + (ev.announce_time === "A" ? ", after close" : ev.announce_time === "B" ? ", before open" : "") });
+    const x = iso(ev.div_ex_date);
+    if(x) out.push({ date:x, ticker:tk, label: "Ex-dividend" + (cnbcNum(ev.div_amount) ? ` · $${cnbcNum(ev.div_amount).toFixed(2)}/share` : "") });
+  });
+  return out;
+}
+
 async function pQuote(sym){
   // query1.finance.yahoo.com now hard-blocks direct browser requests (503, always) --
   // going through a CORS proxy first (instead of eating that guaranteed failure on
@@ -8811,6 +9008,29 @@ async function pQuote(sym){
    (a price chart call + an intraday chart call for each holding). pQuote
    (above) stays as a per-symbol fallback for any ticker this doesn't return. */
 async function pSparkAll(syms, range, interval){
+  if(!syms.length) return {};
+  /* Today's prices + session series: straight from CNBC (one quote request + one chart request per symbol, in
+     parallel), no proxy. The old proxy race below only runs for whatever CNBC didn't return, or for a
+     multi-day range. */
+  if(!range || range === "1d"){
+    const bucket = /^(\d+)m$/.test(interval || "") ? +interval.slice(0, -1) : 5;
+    const out = {};
+    try{
+      const [qs, series] = await Promise.all([
+        cnbcQuotes(syms).catch(() => ({})),
+        Promise.all(syms.map(s => cnbcIntraday(s, bucket).catch(() => null)))
+      ]);
+      syms.forEach((s, i) => { if(qs[s]) out[s] = {...qs[s], series: series[i] || null}; });
+    }catch(e){}
+    const rest = syms.filter(s => !out[s]);
+    if(!rest.length) return out;
+    syms = rest;
+    const viaProxy = await withDeadline(pSparkAllProxy(syms, range, interval), 6000, {});
+    return Object.assign(viaProxy, out);
+  }
+  return pSparkAllProxy(syms, range, interval);
+}
+async function pSparkAllProxy(syms, range, interval){
   if(!syms.length) return {};
   // see the cache-buster note in pQuote() above -- same fix, same reason.
   const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=${range || "1d"}&interval=${interval || "5m"}&_ts=${Date.now()}`;
@@ -9052,17 +9272,43 @@ function logoImg(ticker){
   return `<img class="logo-img" src="${primary}" data-fallback="${fallback}" alt="" loading="lazy" onerror="logoFallback(this)">`;
 }
 
-/* Portfolio calendar -- earnings dates, ex-dividend dates, and any other
-   date worth tracking against your holdings. Hand-maintained (no free,
-   reliable earnings-calendar API is wired up yet) -- add, edit or remove
-   rows as you learn new dates. `account` is optional, just for chip color. */
-const PORTFOLIO_EVENTS = [
-  { date:"2026-10-17", ticker:"NFLX", label:"Earnings, after close" },
-  { date:"2026-10-22", ticker:"TSLA", label:"Earnings, after close" },
-  { date:"2026-10-24", ticker:"AMZN", label:"Earnings, before open" },
-  { date:"2026-10-30", ticker:"AAPL", label:"Earnings, after close" },
-  { date:"2026-11-03", ticker:"PYPL", label:"Ex-dividend date" }
-];
+/* Portfolio calendar. Earnings and ex-dividend dates now come live from CNBC (cnbcEvents) for every holding;
+   this list is only for anything extra worth tracking by hand (a fund distribution, a conference). An entry
+   for a ticker that is no longer held is ignored. */
+const PORTFOLIO_EVENTS = [];
+function pCalEvents(){
+  const held = new Set(HOLDINGS.positions.map(p => p.ticker));
+  const seen = new Set();
+  return PORTFOLIO_EVENTS.filter(e => held.has(e.ticker)).concat(P.events || []).filter(e => {
+    const k = e.date + e.ticker + e.label.slice(0, 8); if(seen.has(k)) return false; seen.add(k); return true; });
+}
+function pCalHTML(){
+  const MON3 = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const today = etToday();
+  const up = pCalEvents().filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 5);
+  if(!up.length) return P.eventsLoaded ? `<p class="pb-empty">No earnings or ex-dividend dates coming up for your holdings.</p>` : `<div class="spinner" style="margin:18px auto"></div>`;
+  return up.map(e => { const d = new Date(e.date + "T12:00:00Z");
+    return `<div class="pb-cal-item${e.ticker==="BTC"?" crypto":""}">
+      <div class="cal-date"><span>${d.getUTCDate()}</span><b>${MON3[d.getUTCMonth()]}</b></div>
+      <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`; }).join("");
+}
+async function pLoadEvents(){
+  if(P.eventsLoaded || P.eventsLoading) return;
+  P.eventsLoading = true;
+  const key = "dh-events-v1";
+  try{ const c = JSON.parse(localStorage.getItem(key) || "null"); if(c && c.day === etToday()){ P.events = c.events; P.eventsLoaded = true; } }catch(e){}
+  if(!P.eventsLoaded){
+    try{
+      const pairs = []; const seen = new Set();
+      HOLDINGS.positions.forEach(p => { if(p.type === "cash" || seen.has(p.ticker)) return; seen.add(p.ticker); pairs.push([p.fetchSymbol || p.ticker, p.ticker]); });
+      P.events = await cnbcEvents(pairs);
+      try{ localStorage.setItem(key, JSON.stringify({day:etToday(), events:P.events})); }catch(e){}
+    }catch(e){ P.events = P.events || []; }
+    P.eventsLoaded = true;
+  }
+  P.eventsLoading = false;
+  const el = $("#pbCalList"); if(el) el.innerHTML = pCalHTML();
+}
 
 function renderPortfolio(){
   pCompute();
@@ -9072,7 +9318,7 @@ function renderPortfolio(){
   /* hero */
   $("#heroTitle").textContent = usd(t.value);
   $("#heroSub").textContent = `${usdS(t.day)} today (${pctS(t.dayPct)}) · ${usdS(t.gain)} all-time (${pctS(t.gainPct)} on cost) · ${acctLabel}`;
-  $("#heroDateline").textContent = `Live prices via Yahoo Finance (unofficial) · Fidelity snapshot ${HOLDINGS.meta.snapshotLabel} · educational, not investment advice`;
+  $("#heroDateline").textContent = `Live prices via CNBC (unofficial) · Fidelity snapshot ${HOLDINGS.meta.snapshotLabel} · educational, not investment advice`;
 
   const panel = $("#panel-portfolio");
   let h = "";
@@ -9114,27 +9360,17 @@ function renderPortfolio(){
   </section>`;
 
   /* side stack: portfolio value history over the calendar */
-  const MON3 = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  const calToday = new Date(); calToday.setHours(0,0,0,0);
-  const calUpcoming = PORTFOLIO_EVENTS.map(e => ({...e, d:new Date(e.date+"T00:00:00")}))
-    .filter(e => e.d >= calToday).sort((a,b) => a.d-b.d).slice(0,4);
-
   h += `<div class="pb-side">
     <section class="pcard pb-hist">
       <header class="pc-head"><div><h4>Portfolio Value</h4><p>History</p></div></header>
       <div class="seg pb-ranges" id="histSeg">${["Today","1W","1M","3M","6M","YTD","1Y","5Y","ALL"].map(r => `<button data-r="${r}" class="${(P.histRange||"Today")===r?"on":""}">${r}</button>`).join("")}</div>
       <div class="pb-histhead" id="histHead"></div>
       <div id="histBody" style="position:relative"></div>
-      <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (Yahoo daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
+      <p class="pc-cap">Computed in your browser from today's share quantities held constant across the window (daily closes) — trades or contributions made during the period aren't reflected. Positions without daily price data are held at their snapshot price.</p>
     </section>
     <section class="pcard pb-cal">
-      <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; events</p></div></header>
-      <div class="pb-cal-list">`
-        + (calUpcoming.length ? calUpcoming.map(e => `<div class="pb-cal-item${e.account==="crypto"?" crypto":""}">
-            <div class="cal-date"><span>${e.d.getDate()}</span><b>${MON3[e.d.getMonth()]}</b></div>
-            <div class="cal-label"><b>${esc(e.ticker)}</b><span>${esc(e.label)}</span></div></div>`).join("")
-          : `<p class="pb-empty">No upcoming events on record.</p>`)
-      + `</div>
+      <header class="pc-head"><div><h4>Calendar</h4><p>Earnings &amp; ex-dividend dates</p></div></header>
+      <div class="pb-cal-list" id="pbCalList">${pCalHTML()}</div>
     </section>
   </div>`;
 
@@ -9167,7 +9403,13 @@ function renderPortfolio(){
   h += `</div>`;
   h += `<p class="sources">Holdings driven by exact share quantities from the Fidelity export (${HOLDINGS.meta.snapshotLabel}). Values = shares × price. Educational use only — not investment advice.</p>`;
 
+  /* Keep the AI Insight card that is on screen across this rebuild. Every price refresh (on open, then every
+     5 minutes in market hours, and on account switches) re-runs renderPortfolio(); before Oct 2026 that rebuilt
+     the card and re-fired the read from scratch, so a take that was mid-stream was killed and restarted --
+     and if refreshes kept landing it never finished at all. */
+  const keepAI = document.getElementById("hnews");
   panel.innerHTML = h;
+  if(keepAI && keepAI.dataset.built === "1"){ const fresh = document.getElementById("hnews"); if(fresh) fresh.replaceWith(keepAI); }
 
   /* wire toolbar */
   panel.querySelectorAll("#histSeg button").forEach(b => b.addEventListener("click", () => {
@@ -9206,6 +9448,7 @@ function renderPortfolio(){
   pHead(); pTable();
   renderHistory();
   renderInsightCard();
+  pLoadEvents();
 
   pAutoFetch();
 }
@@ -9243,65 +9486,25 @@ async function fetchHistSym(sym, range){
   const urls = NR_PROXY_URLS(target);   // same three-proxy race the newsroom uses -- allorigins goes down for stretches and corsproxy.io now wants a paid key, so two was really one
   for(const u of urls){
     try{
-      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
+      const r = await pFetchTimeout(u, 8000, {cache:"no-store"}); if(!r.ok) continue;   // was a bare fetch: a hung proxy held it open forever
       const j = await r.json(); const res = j?.chart?.result?.[0];
       if(res?.timestamp && res?.indicators?.quote?.[0]?.close) return {t:res.timestamp, c:res.indicators.quote[0].close};
     }catch(e){}
   }
   return null;
 }
-/* Every holding’s 5y daily history, via the same Yahoo v7 "spark" endpoint
-   pSparkAll uses for intraday. Batched in small chunks (not all-at-once, not
-   one-request-per-symbol) because both extremes break the free CORS proxies:
-   12 parallel per-symbol requests 503/hang the shared proxy (the original Aug
-   2026 bug), while one big all-symbol request times out relaying a large 5y
-   payload. Crypto (dash tickers, e.g. BTC-USD) is excluded from the batch --
-   Yahoo’s 5y/1d data for round-the-clock crypto is large enough to hang this
-   endpoint regardless of chunk size -- and left for the per-symbol fallback,
-   which is capped so one bad symbol can’t stall the chart. */
-async function pSparkBatch(syms){
-  if(!syms.length) return {};
-  const target = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(","))}&range=5y&interval=1d&_ts=${Date.now()}`;
-  const urls = NR_PROXY_URLS(target);   // same three-proxy race the newsroom uses -- allorigins goes down for stretches and corsproxy.io now wants a paid key, so two was really one
-  const attempts = urls.map(u => (async () => {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    try{
-      const r = await fetch(u, {cache:"no-store", signal: ctrl.signal}); if(!r.ok) throw new Error("bad status");
-      const j = await r.json(); const results = j?.spark?.result;
-      const out = {};
-      if(Array.isArray(results)){
-        for(const x of results){
-          const resp = x.response?.[0];
-          if(x.symbol && resp?.timestamp && resp?.indicators?.quote?.[0]?.close)
-            out[x.symbol] = {t:resp.timestamp, c:resp.indicators.quote[0].close};
-        }
-      }
-      if(!Object.keys(out).length) throw new Error("no data");
-      return out;
-    } finally { clearTimeout(timer); }
-  })());
-  try{ return await Promise.any(attempts); }catch(e){ return {}; }
-}
-async function pSparkHist(syms){
-  if(!syms.length) return {};
-  const equities = syms.filter(s => !s.includes("-"));
-  const CHUNK = 4;
-  const out = {};
-  for(let i=0; i<equities.length; i+=CHUNK){
-    Object.assign(out, await pSparkBatch(equities.slice(i, i+CHUNK)));
-  }
-  return out;
-}
-/* Daily-close history is cached per (ET) day: 12 symbols × 5 years is ~15k points and took
-   up to a minute of proxy round-trips to assemble, and it was thrown away on every reload.
-   Now the chart paints instantly on any visit after the first one each day. */
-const HCACHE_KEY = "dh-hist-v1";
+/* Daily-close history is cached per (ET) day, so the chart paints instantly on any visit after the first.
+   v2 (Oct 2026): v1 caches were built from the server file that carried a phantom Sunday bar every week. */
+const HCACHE_KEY = "dh-hist-v2";
+try{ localStorage.removeItem("dh-hist-v1"); }catch(e){}
 const etToday = () => new Date().toLocaleDateString("en-CA", {timeZone:"America/New_York"});
 function pHistCacheLoad(){
   try{
     const c = JSON.parse(localStorage.getItem(HCACHE_KEY) || "null");
-    if(c && c.day === etToday() && c.data && Object.keys(c.data).length) return c.data;
+    if(c && c.day === etToday() && c.data && Object.keys(c.data).length){
+      const out = {}; for(const [k,h] of Object.entries(c.data)) out[k] = pCleanHist(k, h);
+      return out;
+    }
   }catch(e){}
   return null;
 }
@@ -9312,61 +9515,113 @@ function pHistCacheSave(data){
     localStorage.setItem(HCACHE_KEY, JSON.stringify({day:etToday(), data:slim}));
   }catch(e){ try{ localStorage.removeItem(HCACHE_KEY); }catch(_){} }
 }
+/* Run `fn` over `items` with at most `n` in flight. */
+async function pPool(items, n, fn){
+  const q = items.slice(), workers = [];
+  for(let i = 0; i < Math.min(n, q.length); i++) workers.push((async () => { while(q.length){ const x = q.shift(); try{ await fn(x); }catch(e){} } })());
+  await Promise.all(workers);
+}
+/* One symbol's daily closes, fastest reliable source first:
+     1. the server file (data/history.json.enc, built on GitHub's servers, same CDN as the page) -- cleaned;
+     2. CNBC's daily bars straight from the browser, when the server copy is missing, short or stale;
+     3. the old Yahoo-through-a-proxy fetch, capped hard, only if both of those came back empty.
+   Before Oct 2026 the order was the reverse: 45s+ of dead-proxy timeouts before the server file was even read. */
+async function pHistOne(sym){
+  const bh = await withDeadline(boardHistory(), 6000, null);
+  const srv = bh && bh.series && bh.series[sym] && bh.series[sym].t && bh.series[sym].t.length > 30 ? pCleanHist(sym, bh.series[sym]) : null;
+  const lastT = srv ? srv.t[srv.t.length-1] : 0;
+  const stale = !srv || srv.t.length < 250 || (Date.now()/1000 - lastT) > 5*86400;
+  let h = srv;
+  if(stale){ const cn = await cnbcDaily(sym).catch(() => null); h = pMergeHist(srv, cn); }
+  if(!h || !h.t || h.t.length < 30){ const px = await withDeadline(fetchHistSym(sym), 8000, null); if(px) h = pMergeHist(h, px); }
+  return h && h.t && h.t.length ? pCleanHist(sym, h) : null;
+}
 async function loadHistory(){
-  if(P.histReady || P.histLoading) return;
+  if(P.histReady) return;
+  if(P.histLoading) return P._histP;
   P.histLoading = true;
-  P.histData = {};
-  const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
-  const cached = pHistCacheLoad();
-  if(cached && syms.every(x => cached[x])){
-    P.histData = cached; P.histStamp = Date.now();
+  P._histP = (async () => {
+    const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
+    const cached = pHistCacheLoad();
+    if(cached && syms.every(x => cached[x])) P.histData = cached;
+    else {
+      const data = {};
+      await pPool(syms, 4, async s => {
+        const h = await pHistOne(s);
+        if(h) data[s] = h; else if(cached && cached[s]) data[s] = cached[s];
+      });
+      P.histData = data;
+      if(Object.keys(data).length) pHistCacheSave(data);
+    }
+    P.histStamp = Date.now();
     P.histLoading = false; P.histReady = true;
     if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc({risk:true}); }
-    return;
-  }
-  P.histData = await pSparkHist(syms);
-  // Per-symbol fallback only for whatever the batched calls didn’t return (crypto,
-  // plus any equity chunk that still failed). Sequential, not Promise.all -- the
-  // free proxy tolerates one request at a time far better than a burst, and this
-  // is the same lesson that motivated chunking the batch above. fetchHistSym()
-  // itself has no timeout (it’s also used by the single-stock detail modal, where
-  // that’s fine) -- but a hung request here for one symbol (crypto especially)
-  // must not stall the whole chart forever, so each fallback attempt is capped.
-  // Server-side history (data/history.json.enc, built on GitHub's servers) before the slow per-symbol proxy
-  // retries: a holding whose proxy fetch failed (BAI, Oct 2026) otherwise shows no chart and no AI Insight numbers.
-  try{
-    const bh = await withDeadline(boardHistory(), 8000, null);
-    if(bh && bh.series) for(const s of syms) if(!P.histData[s] && bh.series[s] && bh.series[s].c && bh.series[s].c.length > 30) P.histData[s] = {t:bh.series[s].t, c:bh.series[s].c};
-  }catch(e){}
-  const missing = syms.filter(s => !P.histData[s]);
-  for(const s of missing){
-    const h = await Promise.race([fetchHistSym(s), new Promise(res => setTimeout(() => res(null), 15000))]);
-    if(h) P.histData[s] = h;
-  }
-  // anything still missing: reuse yesterday's cached series for it rather than flat-lining
-  if(cached) for(const s of syms) if(!P.histData[s] && cached[s]) P.histData[s] = cached[s];
-  P.histStamp = Date.now();
-  if(Object.keys(P.histData).length) pHistCacheSave(P.histData);
-  P.histLoading = false; P.histReady = true;
-  if(S.tab === "portfolio"){ renderHistory(); pRepaintTiles(); drawAlloc({risk:true}); }
+  })();
+  return P._histP;
+}
+/* One symbol's history, whatever the portfolio page has already loaded, else fetched on its own -- what the
+   stock detail window and AI Insight use, so neither waits on every other holding's history first. */
+async function pHistFor(sym){
+  if(P.histData && P.histData[sym]) return P.histData[sym];
+  if(P.stockHist[sym]) return P.stockHist[sym];
+  if(!P._oneHist) P._oneHist = {};
+  if(!P._oneHist[sym]) P._oneHist[sym] = pHistOne(sym).then(h => { if(h) P.stockHist[sym] = h; return h; }).finally(() => { delete P._oneHist[sym]; });
+  return P._oneHist[sym];
 }
 
-/* ALL range for the portfolio chart: each holding's complete daily history (Yahoo range=max), fetched one
-   symbol at a time -- the free CORS proxies tolerate that far better than a burst (see pSparkHist above) --
-   only when ALL is first chosen, and kept in memory (not localStorage: ~30 years x a dozen symbols is large). */
+/* CNBC's coarse ranges (weekly "10Y", quarterly "ALL") are labelled with the START of each period but carry
+   its LAST close: re-date each bar to the last weekday before the next one, and drop the open-ended last bar. */
+function pPeriodEnds(bars){
+  const out = [];
+  for(let i = 0; i + 1 < bars.length; i++){
+    let d = new Date(bars[i+1][0]*1000 - 864e5);
+    let ds = d.toLocaleDateString("en-CA", {timeZone:"America/New_York"});
+    while(isWeekendDay(ds)){ d = new Date(d.getTime() - 864e5); ds = d.toLocaleDateString("en-CA", {timeZone:"America/New_York"}); }
+    out.push([dayEpoch(ds), bars[i][1]]);
+  }
+  return out;
+}
+/* Longest history straight from CNBC: quarterly, then weekly, then this page's daily data -- each coarser
+   layer only BEFORE everything finer, so resolutions never interleave. */
+async function cnbcLongHist(sym, daily){
+  const [all, wk] = await Promise.all([cnbcBars(sym, "ALL", 15000).catch(() => []), cnbcBars(sym, "10Y", 15000).catch(() => [])]);
+  let pts = daily && daily.t && daily.t.length ? daily.t.map((t,i) => [t, daily.c[i]]) : [];
+  for(const layer of [pPeriodEnds(wk), pPeriodEnds(all)]){
+    const floor = pts.length ? pts[0][0] : Infinity;
+    pts = layer.filter(([t]) => t < floor - 2*86400).concat(pts);
+  }
+  return pts.length > 30 ? { t: pts.map(p => p[0]), c: pts.map(p => p[1]) } : null;
+}
+/* Keep a long series' points only before the daily one starts, then the daily one. */
+function pStitch(long, daily){
+  if(!daily || !daily.t || !daily.t.length) return long;
+  if(!long || !long.t || !long.t.length) return daily;
+  const first = daily.t[0] - 2*86400, t = [], c = [];
+  long.t.forEach((ts,i) => { if(ts < first && long.c[i] != null){ t.push(ts); c.push(long.c[i]); } });
+  return { t: t.concat(daily.t), c: c.concat(daily.c) };
+}
+/* ALL: the server's all-time file (data/history_all.json.enc) first; CNBC's long ranges for anything it lacks.
+   Before Oct 2026 this fetched Yahoo range=max through the proxies one symbol at a time with a 20s cap each --
+   with the proxies dead that was ~4 minutes of spinner ending in "unavailable". */
+async function pHistAllFor(sym){
+  const daily = await pHistFor(sym);
+  const all = await withDeadline(boardHistoryAll(), 15000, null);
+  const srv = all && all.series && all.series[sym] && all.series[sym].t && all.series[sym].t.length > 30 ? pCleanHist(sym, all.series[sym]) : null;
+  if(srv && (!daily || srv.t[0] < daily.t[0] - 400*86400)) return pStitch(srv, daily);
+  const cn = await cnbcLongHist(sym, daily).catch(() => null);
+  return cn || pStitch(srv, daily) || daily;
+}
 async function loadHistoryAll(){
   if(P.histAllReady || P.histAllLoading) return;
   P.histAllLoading = true; P.histAllData = P.histAllData || {};
+  if(!P.histReady) await loadHistory();
   const syms = [...new Set(HOLDINGS.positions.filter(p => p.type !== "cash").map(p => p.fetchSymbol || p.ticker))];
   let done = 0;
-  for(const s of syms){
-    if(!P.histAllData[s]){
-      const h = await Promise.race([fetchHistSym(s, "max"), new Promise(res => setTimeout(() => res(null), 20000))]);
-      if(h && h.t && h.t.length) P.histAllData[s] = h;
-    }
+  await pPool(syms, 4, async s => {
+    if(!P.histAllData[s]){ const h = await pHistAllFor(s); if(h && h.t && h.t.length) P.histAllData[s] = h; }
     done++;
-    const el = $("#histAllProg"); if(el) el.textContent = `Loading full price history\u2026 ${done} of ${syms.length}`;
-  }
+    const el = $("#histAllProg"); if(el) el.textContent = `Loading full price history… ${done} of ${syms.length}`;
+  });
   P.histAllLoading = false;
   if(Object.keys(P.histAllData).length){ P.histAllStamp = Date.now(); P.histAllReady = true; }
   if(S.tab === "portfolio" && P.histRange === "ALL") renderHistory();
@@ -9939,7 +10194,7 @@ async function openStockModal(ticker){
         <span>Your avg cost: <b>${usd(pos.avgCost)}</b> · ${pos.shares.toLocaleString("en-US",{maximumFractionDigits:8})} shares</span>
         <span class="${pcls(pos.gainPct)}">${pctS(pos.gainPct)} (${usdS(pos.gainDollar)}) since purchase</span>
       </div>` : `<div class="sm-costrow"><span style="color:var(--muted)">No cost basis on record for ${esc(pos.ticker)}.</span></div>`}
-    <div class="chart-cap">Yahoo Finance daily closes (unofficial) · dashed line marks your average cost per share · educational, not investment advice.</div>
+    <div class="chart-cap">Daily closes from the site's server snapshot and CNBC (unofficial) · dashed line marks your average cost per share · educational, not investment advice.</div>
   </div>`;
   document.body.appendChild(overlay);
 
@@ -9953,13 +10208,21 @@ async function openStockModal(ticker){
     renderStockChart(pos);
   }));
 
-  if(!P.stockHist[sym] && P.histData && P.histData[sym]) P.stockHist[sym] = P.histData[sym];   // already loaded for the portfolio chart
-  if(!P.stockHist[sym] && !P.stockLoading[sym]){
-    P.stockLoading[sym] = true;
-    try{ P.stockHist[sym] = await Promise.race([fetchHistSym(sym), new Promise(res => setTimeout(() => res(null), 15000))]); }
-    finally{ P.stockLoading[sym] = false; }
+  /* This holding's own history only (server file -> CNBC -> capped proxy), never "every holding first".
+     Before Oct 2026 a click with no cached history waited up to 15s on dead proxies, then said "unavailable". */
+  if(!P.stockHist[sym]){
+    SM.loading = true;
+    const h = await withDeadline(pHistFor(sym), 14000, null);
+    if(h) P.stockHist[sym] = h;
+    if(SM) SM.loading = false;
   }
   if(SM && SM.ticker === ticker) renderStockChart(pos);
+  /* Today's session bars for this one symbol if the page doesn't have them yet (funds have none -- NAV only) */
+  if(!(P.intraday && P.intraday[sym] && intraIsToday()) && !isMutualFund(sym)){
+    const ser = await cnbcIntraday(sym).catch(() => null);
+    if(ser){ P.intraday = P.intraday || {}; P.intraday[sym] = ser; if(!P.intraMeta && !isCryptoSym(sym)) P.intraMeta = {start:ser.start, end:ser.end}; }
+    if(SM && SM.ticker === ticker && SM.range === "Today") renderStockChart(pos);
+  }
 }
 function renderStockChart(pos){
   const body = $("#smBody"); if(!body || !SM) return;
@@ -9967,12 +10230,19 @@ function renderStockChart(pos){
   const head = $("#smHead");
 
   if(range === "Today"){
-    const ser = P.intraday && P.intraday[sym] ? { pts: P.intraday[sym].t.map((ts,i) => ({ts, v:P.intraday[sym].c[i]})).filter(p => p.v != null), start: P.intraMeta?.start, end: P.intraMeta?.end } : null;
-    if(!ser || ser.pts.length < 2 || ser.start == null){ body.innerHTML = `<div class="empty">Today's intraday data isn't available for ${esc(pos.ticker)} right now.</div>`; if(head) head.textContent = ""; return; }
-    const first = ser.pts[0].v, last = ser.pts[ser.pts.length-1].v, delta = last - first, dPct = first ? delta/first*100 : 0;
-    if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; Today's session`;
+    const raw = P.intraday && P.intraday[sym];
+    const ser = raw ? { pts: raw.t.map((ts,i) => ({ts, v:raw.c[i]})).filter(p => p.v != null),
+                        start: raw.start ?? P.intraMeta?.start, end: raw.end ?? P.intraMeta?.end } : null;
+    if(!ser || ser.pts.length < 2 || ser.start == null){
+      const why = isMutualFund(sym) ? `${esc(pos.ticker)} is a mutual fund — it prices once a day after the close, so there is no intraday chart.` : `Today's intraday data isn't available for ${esc(pos.ticker)} right now.`;
+      body.innerHTML = `<div class="empty">${why}</div>`; if(head) head.textContent = ""; return; }
+    /* measured from YESTERDAY'S CLOSE, like the header, the tiles and Fidelity -- before Oct 2026 this measured
+       from the 9:30 open, so the window could say +0.43% in its header and -0.58% on its chart at once */
+    const last = ser.pts[ser.pts.length-1].v, base = (pos.prev > 0 ? pos.prev : ser.pts[0].v);
+    const delta = last - base, dPct = base ? delta/base*100 : 0;
+    if(head) head.innerHTML = `<span class="hist-delta ${pcls(delta)}">${usdS(delta)} (${pctS(dPct)})</span>&nbsp; per share since yesterday's close`;
     drawSmChart(body, ser.pts.map(p => ({x:p.ts, v:p.v})), {
-      timeAxis:true, start:ser.start, end:ser.end,
+      timeAxis:true, start:ser.start, end:ser.end, base,
       refLine: pos.hasCost ? pos.avgCost : null, refLabel: pos.hasCost ? `Your cost ${usd(pos.avgCost)}` : "",
       fmtX0: () => "Open", fmtX1: () => "Close",
       fmtTip: p => `${esc(new Date(p.x*1000).toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"}))} ET · <span class="tv">${usd(p.v)}</span>`
@@ -9980,7 +10250,7 @@ function renderStockChart(pos){
     return;
   }
 
-  let hist = P.stockHist[sym];
+  let hist = P.stockHist[sym] || (P.histData && P.histData[sym]);
   if(range === "ALL"){
     /* the full history (Yahoo range=max) is fetched the first time ALL is chosen for a holding */
     P.stockAll = P.stockAll || {}; P.stockAllLoading = P.stockAllLoading || {};
@@ -9991,7 +10261,7 @@ function renderStockChart(pos){
       body.innerHTML = `<div class="spinner" style="margin:46px auto"></div>`; if(head) head.textContent = "";
       if(!P.stockAllLoading[sym]){
         P.stockAllLoading[sym] = true;
-        Promise.race([fetchHistSym(sym, "max"), new Promise(res => setTimeout(() => res(null), 20000))]).then(h => {
+        withDeadline(pHistAllFor(sym), 20000, null).then(h => {
           P.stockAllLoading[sym] = false;
           P.stockAll[sym] = (h && h.t && h.t.length) ? h : false;
           if(SM && SM.sym === sym && SM.range === "ALL") renderStockChart(pos);
@@ -10000,18 +10270,23 @@ function renderStockChart(pos){
       return;
     }
   }
-  if(!hist || !hist.t || !hist.t.length){ body.innerHTML = `<div class="empty">Price history is unavailable right now — try Refresh.</div>`; if(head) head.textContent = ""; return; }
-  const dstr = ts => new Date(ts*1000).toLocaleDateString("en-CA");
+  if(!hist || !hist.t || !hist.t.length){
+    body.innerHTML = SM.loading ? `<div class="spinner" style="margin:46px auto"></div>` : `<div class="empty">Price history is unavailable right now — try Refresh.</div>`;
+    if(head) head.textContent = ""; return; }
+  /* The trading date of a daily bar is its UTC date (bars are stamped between 00:00 and 13:30 New York time).
+     Before Oct 2026 this used the DEVICE's zone: in Central time a bar stamped 00:00 ET is 11pm the day before,
+     so every point in this window sat one day early (and today's live point was appended a day late). */
+  const dstr = ts => new Date(ts*1000).toISOString().slice(0,10);
   let pts = hist.t.map((ts,i) => ({d: dstr(ts), v: hist.c[i]})).filter(p => p.v != null);
   let cutoff;
   if(range === "ALL") cutoff = "0000-00-00";
-  else if(range === "YTD"){ const jan1 = new Date(); jan1.setMonth(0,1,1); jan1.setHours(0,0,0,0); cutoff = jan1.toLocaleDateString("en-CA"); }
-  else { const days = HIST_RANGES[range] || HIST_RANGES["1M"]; cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA"); }
+  else if(range === "YTD") cutoff = etToday().slice(0,4) + "-01-01";
+  else { const days = HIST_RANGES[range] || HIST_RANGES["1M"]; cutoff = new Date(Date.now() - days*864e5).toLocaleDateString("en-CA", {timeZone:"America/New_York"}); }
   let view = pts.filter(p => p.d >= cutoff);
   if(view.length < 2) view = pts.slice(-2);
   if(view.length < 2){ body.innerHTML = `<div class="empty">Not enough price history for that range yet.</div>`; if(head) head.textContent = ""; return; }
   // splice in today's live price if it's newer than the last daily close on record
-  const today = new Date().toLocaleDateString("en-CA");
+  const today = etToday();
   if(pos.price != null && view[view.length-1].d < today) view.push({d: today, v: pos.price});
 
   const first = view[0].v, last = view[view.length-1].v, delta = last - first, dPct = first ? delta/first*100 : 0;
@@ -10054,6 +10329,15 @@ function placeChartTip(tip, container, px, py, W, H, html){
    Every point's x position follows its date/time, never its index, so mixed data density can't bend the axis. */
 function drawSmChart(body, pts, opts){
   const W=760, H=230, PL=58, PR=14, PT=12, PB=28;
+  /* Your-cost line: only stretch the scale to include it when it sits near the prices. Before Oct 2026 a cost of
+     $182 against a $343 price pulled the axis down to $182, and a 0.6% intraday move became a flat line. When it
+     is far off the chart, it is named in a corner label instead of being drawn. */
+  if(opts.refLine != null){
+    const pv = pts.map(p=>p.v), lo = Math.min(...pv), hi = Math.max(...pv), sp = (hi - lo) || hi*0.01;
+    if(opts.refLine < lo - sp*0.6 || opts.refLine > hi + sp*0.6){
+      opts = {...opts, refOff: opts.refLine < lo ? "below" : "above", refOffLabel: opts.refLabel}; opts.refLine = null;
+    }
+  }
   const vals = pts.map(p=>p.v).concat(opts.refLine!=null ? [opts.refLine] : []);
   let min=Math.min(...vals), max=Math.max(...vals);
   const pad=(max-min)*0.06||max*0.01; min-=pad; max+=pad;
@@ -10066,7 +10350,7 @@ function drawSmChart(body, pts, opts){
       ? PL + (W-PL-PR) * (pts.length===1 ? 0 : (p.x-dx0)/dspan)
       : PL + (W-PL-PR) * (pts.length===1 ? 0 : i/(pts.length-1));
   const Y = v => PT + (H-PT-PB) * (1 - (v-min)/((max-min)||1));
-  const delta = pts[pts.length-1].v - pts[0].v;
+  const delta = pts[pts.length-1].v - (opts.base != null ? opts.base : pts[0].v);
   const col = delta >= 0 ? "var(--up)" : "var(--down)";
   let line="", area=`M ${X(pts[0],0).toFixed(1)} ${H-PB}`;
   pts.forEach((p,i) => { const x=X(p,i).toFixed(1), y=Y(p.v).toFixed(1); line += `${i?"L":"M"} ${x} ${y} `; area += ` L ${x} ${y}`; });
@@ -10077,6 +10361,7 @@ function drawSmChart(body, pts, opts){
   const refSvg = opts.refLine!=null
     ? `<line x1="${PL}" x2="${W-PR}" y1="${Y(opts.refLine).toFixed(1)}" y2="${Y(opts.refLine).toFixed(1)}" stroke="var(--topbar-muted)" stroke-width="1.5" stroke-dasharray="5,4"/>
        <text x="${W-PR}" y="${Math.max(PT+9, Y(opts.refLine)-6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="inherit" font-weight="700">${esc(opts.refLabel||"")}</text>`
+    : opts.refOff ? `<text x="${W-PR}" y="${opts.refOff === "below" ? H-PB-6 : PT+10}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="inherit" font-weight="700">${esc(opts.refOffLabel||"")} ${opts.refOff === "below" ? "\u2193" : "\u2191"} off chart</text>`
     : "";
   let axis;
   if(mode === "date"){
@@ -10136,7 +10421,7 @@ function drawSmChart(body, pts, opts){
    basis and weights, plus anything the published briefs said about that ticker.
    --------------------------------------------------------------------------- */
 function insSeries(sym){
-  const h = P.histData && P.histData[sym];
+  const h = (P.histData && P.histData[sym]) || (P.stockHist && P.stockHist[sym]);
   const c = h && h.c ? h.c.filter(v => v != null) : [];
   if(c.length < 30) return null;
   const last = c[c.length-1];
@@ -10208,26 +10493,29 @@ const SECTOR_PROXY = {
 };
 const insNorm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
-async function insYahooNews(q, count){
-  const target = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(q) +
-    "&lang=en-US&region=US&quotesCount=0&newsCount=" + (count || 12) +
-    "&enableFuzzyQuery=false&newsQueryId=news_cie_vespa&enableCb=false&enableNavLinks=false&_ts=" + Date.now();
-  let j = null;
-  try{ j = await nrFetchJSON(target, 9000); }catch(e){ return []; }
-  const arr = (j && Array.isArray(j.news)) ? j.news : [];
-  return arr.map(n => {
-    const res = ((n.thumbnail || {}).resolutions || []).slice().sort((a,b) => (a.width||0) - (b.width||0));
-    return { title: String(n.title || "").trim(), url: n.link || "",
-             outlet: n.publisher || "", t: n.providerPublishTime ? new Date(n.providerPublishTime*1000) : null,
-             img: (res.find(r => (r.width||0) >= 140) || res[0] || {}).url || "" };
-  }).filter(x => x.title && x.url);
-}
-async function insGdeltNews(q){
-  let arts = [];
-  try{ arts = await nrArticles(q, "3d"); }catch(e){ arts = []; }
-  return arts.map(a => ({ title: nrCleanTitle(a.title), url: a.url || "", outlet: nrOutlet(a),
-                          t: nrDate(a.seendate), img: a.socialimage || "" }))
-             .filter(x => x.title && x.url && !NR_JUNK.test(x.title));
+/* Headlines for one holding, straight from CNBC's site search (no proxy; answers in well under a second).
+   CNBC search is full-text, so a story is only "about" the holding if its title or summary names the ticker or
+   the company; everything else counts as background for the holding's theme. */
+async function insFetchNews(p){
+  const name = String(p.name || "").replace(/\b(inc|corp|corporation|company|co|plc|ltd|holdings|class [a-c]|the|fund|retail shares|etf|trust)\b\.?/gi, "").replace(/\s+/g, " ").trim();
+  const nameKey = insNorm(name).split(" ").filter(w => w.length > 2).slice(0, 2).join(" ");
+  const tick = new RegExp("\\b" + String(p.ticker).replace(/[^A-Za-z0-9]/g, "") + "\\b", "i");
+  const mentions = it => tick.test(it.title + " " + it.summary) || (nameKey && insNorm(it.title + " " + it.summary).includes(nameKey));
+  const [byTicker, byName] = await Promise.all([
+    cnbcNews(p.ticker, 15).catch(() => []),
+    name.length > 3 ? cnbcNews(name, 15).catch(() => []) : Promise.resolve([])
+  ]);
+  const own = insDedupe(byTicker.concat(byName).filter(mentions));
+  let context = [];
+  if(own.length < 4){
+    const qs = SECTOR_PROXY[sectorOf(p)] || [];
+    for(const q of qs){
+      context = context.concat(await cnbcNews(q, 8).catch(() => []));
+      if(context.length >= 6) break;
+    }
+    context = insDedupe(context).filter(c => !own.some(o => insNorm(o.title) === insNorm(c.title)));
+  }
+  return { own: own.slice(0, 8), context: context.slice(0, 4) };
 }
 function insDedupe(items){
   const seen = new Set(), out = [];
@@ -10237,24 +10525,6 @@ function insDedupe(items){
     seen.add(k); out.push(it);
   }
   return out.sort((a,b) => (b.t ? b.t.getTime() : 0) - (a.t ? a.t.getTime() : 0));
-}
-/* Ticker news first; top it up from the holding's theme only if the ticker itself came back thin. */
-async function insFetchNews(p){
-  const name = String(p.name || "").replace(/\b(inc|corp|corporation|company|co|plc|ltd|holdings|class [a-c])\b\.?/gi, "").trim();
-  let own = await insYahooNews(p.ticker, 12);
-  if(own.length < 4 && name.length > 3) own = own.concat(await insYahooNews(name, 10));
-  own = insDedupe(own);
-  let context = [];
-  if(own.length < 5){
-    const qs = SECTOR_PROXY[sectorOf(p)] || [];
-    for(const q of qs){
-      context = context.concat(await insYahooNews(q, 8));
-      if(context.length >= 6) break;
-    }
-    if(!context.length && !own.length) context = await insGdeltNews(name || p.ticker);
-    context = insDedupe(context).filter(c => !own.some(o => insNorm(o.title) === insNorm(c.title)));
-  }
-  return { own: own.slice(0, 8), context: context.slice(0, 4) };
 }
 
 /* ---- the small visuals that replaced the wall of sentences ---- */
@@ -10412,7 +10682,7 @@ function insBuild(p, st, spy){
   const sector = sectorOf(p);
   if(sector !== "Other") T("flat", `<b>Sector.</b> Sits in your ${esc(sector)} sleeve on the allocation donut.`);
 
-  const ev = PORTFOLIO_EVENTS.filter(e => e.ticker === p.ticker && new Date(e.date + "T00:00:00") >= new Date(new Date().setHours(0,0,0,0)))
+  const ev = pCalEvents().filter(e => e.ticker === p.ticker && e.date >= etToday())
     .sort((a,b) => a.date.localeCompare(b.date)).slice(0,2);
   ev.forEach(e => T("note", `<b>On the calendar.</b> ${esc(shortDate(e.date))} — ${esc(e.label)}.`));
 
@@ -10434,15 +10704,26 @@ function renderInsightCard(){
   const list = pViewMerged().filter(p => p.type !== "cash");
   const chips = list.map(p => `<button class="ins-chip${P.insTicker===p.ticker?" on":""}" data-ins="${esc(p.ticker)}">
       <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>${esc(p.ticker)}</button>`).join("");
+  const wireChips = () => el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => {
+    if(P.insTicker === b.dataset.ins) insClear(); else insGenerate(b.dataset.ins);   // click the lit chip again = hide the read
+  }));
+  if(el.dataset.built === "1" && el.querySelector("#insPick")){
+    /* a repaint: refresh the chips only; the read underneath stays exactly as it is */
+    el.querySelector("#insPick").innerHTML = chips || `<span class="ins-empty">No holdings in this view.</span>`;
+    wireChips();
+    if(P.insTicker && !list.some(p => p.ticker === P.insTicker)) insClear();
+    return;
+  }
+  el.dataset.built = "1";
   el.innerHTML = `<div class="ai-head">
       <span class="ai-head-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg>AI Insight</span>
       <span class="ai-head-r">Written live when you click</span>
     </div>
+    <div class="ins-key-warn" id="insKeyWarn" hidden></div>
     <div class="ins-pick" id="insPick">${chips || `<span class="ins-empty">No holdings in this view.</span>`}</div>
     <div id="insBody">${P.insCleared ? "" : `<p class="ins-empty">Pick any holding above and get a fresh take on what's going on with it — the latest news, in plain English, written on the spot — with the price picture underneath.</p>`}</div>`;
-  el.querySelectorAll("[data-ins]").forEach(b => b.addEventListener("click", () => {
-    if(P.insTicker === b.dataset.ins) insClear(); else insGenerate(b.dataset.ins);   // click the lit chip again = hide the read
-  }));
+  wireChips();
+  insKeyWarn();
   if(P.insTicker && list.some(p => p.ticker === P.insTicker)) insGenerate(P.insTicker);
 }
 /* Un-pick: drop the selection, cancel any read still being written, and blank everything beneath the chips. */
@@ -10479,6 +10760,26 @@ function insStoryHTML(it, dim){
 const INS_KEY_LS = "dh-anthropic-key";
 const INS_MODEL = "claude-haiku-5-5";
 function insApiKey(){ try{ return localStorage.getItem(INS_KEY_LS) || ""; }catch(e){ return ""; } }
+/* Oct 2026: the saved key had been revoked, so every click sent it, got a 401, and fell back to a "quick read"
+   that itself hung on dead proxies -- the card looked broken with no clue why. A rejected key is now remembered
+   (by a short fingerprint, never the key itself), not re-sent on every click, and the card says so in plain
+   words with a button to replace it. */
+const INS_BAD_LS = "dh-anthropic-key-bad";
+const insKeyFp = k => k ? k.length + ":" + k.slice(-6) : "";
+function insKeyBad(){ try{ const k = insApiKey(); return !!k && localStorage.getItem(INS_BAD_LS) === insKeyFp(k); }catch(e){ return false; } }
+function insKeyUsable(){ return !!insApiKey() && !insKeyBad(); }
+function insKeyWarn(){
+  const w = $("#insKeyWarn"); if(!w) return;
+  const k = insApiKey();
+  if(k && insKeyBad()){
+    w.hidden = false;
+    w.innerHTML = `<b>Claude isn't connected.</b> Anthropic rejected the API key saved in this browser (it was revoked, rotated or mistyped), so you're getting the quick read instead of Claude's live take. <button type="button" class="ins-key-btn warn" id="insKeyFix">Replace Claude key</button>`;
+  } else if(!k){
+    w.hidden = false;
+    w.innerHTML = `<b>Claude is off in this browser.</b> Add an Anthropic API key to get the live, searched take; until then you get the quick read. <button type="button" class="ins-key-btn" id="insKeyFix">Turn on Claude</button>`;
+  } else { w.hidden = true; w.innerHTML = ""; }
+  const b = $("#insKeyFix"); if(b) b.addEventListener("click", insKeyPrompt);
+}
 function insMd(txt){
   // tiny, safe markdown: escape, then **bold**, bullets and paragraphs
   const lines = esc(txt).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").split(/\n+/).map(l => l.trim()).filter(Boolean);
@@ -10571,24 +10872,36 @@ async function insTakeClaude(p, st, spy, token, tw, setSub, setSrc){
   tw.finish();
   return true;
 }
-/* No key: a quick read composed in the browser from live headlines + the price picture. */
+/* No (working) key: a quick read composed in the browser. The price picture is written immediately; the news
+   lines follow the moment CNBC's search answers (well under a second). Before Oct 2026 nothing was written
+   until four sequential dead-proxy lookups had timed out -- often 2+ minutes of an empty card. */
 async function insTakeLocal(p, st, spy, token, tw, setSub, setSrc){
-  let news = { own:[], context:[] };
-  try{ news = await insFetchNews(p); }catch(e){}
-  if(token !== P.insToken) return;
   const up = p.dayPct >= 0, mv = Math.abs(p.dayPct || 0);
   const typical = st && st.dayVol ? mv / st.dayVol : null;
   const size = typical == null ? "" : typical < .6 ? "a quiet session" : typical < 1.4 ? "an ordinary-sized move" : typical < 2.5 ? "a big move for it" : "an outlier move";
-  const fresh = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 3*864e5);
-  const tags = {}; fresh.forEach(x => { const t = insNewsTag(x.title).label; tags[t] = (tags[t] || 0) + 1; });
-  const themes = Object.entries(tags).sort((a,b) => b[1]-a[1]).map(([k]) => k.toLowerCase()).filter(k => k !== "coverage").slice(0, 2);
-  let out = `**${p.ticker} is ${up ? "up" : "down"} ${mv.toFixed(2)}% today${size ? " — " + size : ""}.**\n`;
-  if(fresh.length) out += `- The conversation around it over the last few days is mostly ${themes.length ? themes.join(" and ") : "general coverage"}${fresh.length > 1 ? `, across ${fresh.length} stories` : ""}.\n`;
-  else out += `- Nothing company-specific broke in the last few days, so this looks like it's trading with ${sectorOf(p) === "Other" ? "the market" : "its " + sectorOf(p).toLowerCase() + " theme"}.\n`;
-  if(st && spy != null && st.r63 != null){ const gap = st.r63 - spy; out += `- Over three months it has ${gap >= 0 ? "beaten" : "lagged"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points.\n`; }
-  if(st) out += `- It sits ${st.rangePos.toFixed(0)}% of the way up its 52-week range, ${st.ma200 != null && st.last >= st.ma200 ? "above" : "below"} its 200-day average.\n`;
-  tw.push(out); tw.finish();
-  setSrc(news.own.slice(0, 4).map(x => [x.url, (x.outlet ? x.outlet + ": " : "") + x.title]));
+  const navPending = isMutualFund(p.fetchSymbol || p.ticker) && !(p.dayPct);
+  let head = navPending
+    ? `**${p.ticker} hasn't repriced yet today — mutual funds strike one price after the close, so today's move shows up this evening.**\n`
+    : `**${p.ticker} is ${up ? "up" : "down"} ${mv.toFixed(2)}% today${size ? " — " + size : ""}.**\n`;
+  if(st && spy != null && st.r63 != null){ const gap = st.r63 - spy; head += `- Over three months it has ${gap >= 0 ? "beaten" : "lagged"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points.\n`; }
+  if(st) head += `- It sits ${st.rangePos.toFixed(0)}% of the way up its 52-week range, ${st.ma200 != null && st.last >= st.ma200 ? "above" : "below"} its 200-day average.\n`;
+  tw.push(head);
+  setSub("checking the latest headlines…");
+  let news = { own:[], context:[] };
+  try{ news = await withDeadline(insFetchNews(p), 8000, news); }catch(e){}
+  if(token !== P.insToken) return true;
+  const fresh = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 4*864e5);
+  let more = "";
+  if(fresh.length){
+    const tags = {}; fresh.forEach(x => { const t = insNewsTag(x.title).label; tags[t] = (tags[t] || 0) + 1; });
+    const themes = Object.entries(tags).sort((a,b) => b[1]-a[1]).map(([k]) => k.toLowerCase()).filter(k => k !== "coverage").slice(0, 2);
+    more += `- In the news over the last few days: mostly ${themes.length ? themes.join(" and ") : "general coverage"}, across ${fresh.length} stor${fresh.length === 1 ? "y" : "ies"}. Latest: “${fresh[0].title}”.\n`;
+  } else {
+    more += `- Nothing company-specific broke in the last few days, so this looks like it's trading with ${sectorOf(p) === "Other" ? "the market" : "its " + sectorOf(p).toLowerCase() + " theme"}.\n`;
+    if(news.context[0]) more += `- Backdrop for the theme: “${news.context[0].title}”.\n`;
+  }
+  tw.push(more); tw.finish();
+  setSrc(news.own.concat(news.context).slice(0, 4).map(x => [x.url, (x.outlet ? x.outlet + ": " : "") + x.title]));
   return true;
 }
 async function insTake(p, st, spy, token){
@@ -10597,14 +10910,14 @@ async function insTake(p, st, spy, token){
   const setSrc = list => { if(!srcEl || !document.contains(srcEl)) return;
     srcEl.innerHTML = list.length ? `<span>Sources</span>` + list.map(([u, t]) => { let host = ""; try{ host = new URL(u).hostname.replace(/^www\./, ""); }catch(e){}
       return `<a href="${esc(u)}" target="_blank" rel="noopener" title="${esc(t)}">${esc(host || t)}</a>`; }).join("") : ""; };
-  const keyBtn = `<button class="ins-key-btn" id="insKeyBtn" type="button">${insApiKey() ? "Claude key ✓" : "Turn on Claude"}</button>`;
+  const keyBtn = `<button class="ins-key-btn${insKeyBad() ? " warn" : ""}" id="insKeyBtn" type="button">${insKeyBad() ? "Replace Claude key" : insApiKey() ? "Claude key ✓" : "Turn on Claude"}</button>`;
   const cacheKey = "dh-take:" + p.ticker;
   let cached = null; try{ cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null"); }catch(e){}
   const tw = insTypewriter(body);
   const capture = tw.push; let all = "";
   tw.push = t => { all += t; capture(t); };
   const wire = () => { const b = $("#insKeyBtn"); if(b) b.addEventListener("click", insKeyPrompt); };
-  if(cached && !P.insForce && Date.now() - cached.at < 20*60e3 && cached.ai === !!insApiKey()){
+  if(cached && !P.insForce && Date.now() - cached.at < 20*60e3 && cached.ai === insKeyUsable()){
     body.innerHTML = ""; tw.push(cached.text); tw.finish(); setSrc(cached.src || []);
     setSub(`${cached.ai ? "Claude" : "Quick read"} · ${new Date(cached.at).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}`);
     srcEl.insertAdjacentHTML("beforeend", keyBtn); wire(); return;
@@ -10612,7 +10925,7 @@ async function insTake(p, st, spy, token){
   P.insForce = false;
   let srcList = [];
   const setSrc2 = l => { srcList = l; setSrc(l); };
-  let ai = !!insApiKey(), ok = false;
+  let ai = insKeyUsable(), ok = false;
   try{
     body.innerHTML = `<span class="ins-think"><i></i><i></i><i></i></span>`;
     let first = true; const push0 = tw.push; tw.push = t => { if(first){ body.innerHTML = ""; first = false; } push0(t); };
@@ -10621,27 +10934,38 @@ async function insTake(p, st, spy, token){
     if(token !== P.insToken) return;
     if(ai){
       const bad = e.status === 401 || e.status === 403;
-      setSub(bad ? "Claude key was rejected — showing a quick read" : "Claude didn't answer — showing a quick read");
+      if(bad){ try{ localStorage.setItem(INS_BAD_LS, insKeyFp(insApiKey())); }catch(_){} insKeyWarn(); }
+      const why = bad ? "Claude key rejected — quick read below" :
+        e.status === 429 ? "Claude is rate-limited right now — quick read below" :
+        e.status === 529 || e.status >= 500 ? "Claude is overloaded right now — quick read below" :
+        "Claude error: " + String(e.message || e).slice(0, 80) + " — quick read below";
+      console.warn("Daily Hub AI Insight:", e.status || "", e.message || e);
       ai = false; body.innerHTML = "";
       try{ ok = await insTakeLocal(p, st, spy, token, tw, () => {}, setSrc2); }catch(e2){}
+      if(token === P.insToken){ setSub(why); P._insWhy = why; }
     }
   }
   if(token !== P.insToken) return;
   if(ok){
-    setSub(`${ai ? "Claude · just now" : "Quick read · add a Claude key for the full take"}`);
+    setSub(ai ? "Claude · just now" : (P._insWhy || (insKeyBad() ? "Quick read · Claude key rejected" : "Quick read · add a Claude key for the full take")));
+    P._insWhy = "";
     try{ sessionStorage.setItem(cacheKey, JSON.stringify({ at:Date.now(), text:all, src:srcList, ai })); }catch(e){}
   } else if(!all){ body.innerHTML = `<p class="ins-empty">Couldn't pull anything just now. Hit Redo in a minute.</p>`; }
-  if(srcEl) srcEl.insertAdjacentHTML("beforeend", keyBtn); wire();
+  /* built now, not at the start: a key that was just rejected must not still read "Claude key ✓" */
+  const keyBtnNow = `<button class="ins-key-btn${insKeyBad() ? " warn" : ""}" id="insKeyBtn" type="button">${insKeyBad() ? "Replace Claude key" : insApiKey() ? "Claude key ✓" : "Turn on Claude"}</button>`;
+  if(srcEl) srcEl.insertAdjacentHTML("beforeend", keyBtnNow); wire();
 }
 function insKeyPrompt(){
   const cur = insApiKey();
-  const v = prompt(cur ? "Your Anthropic API key is saved in this browser only.\nPaste a new one to replace it, or clear the box to remove it:" :
+  const v = prompt(cur && insKeyBad() ? "Anthropic rejected the saved key (revoked, rotated or mistyped).\nPaste a new key from console.anthropic.com → API keys:" :
+    cur ? "Your Anthropic API key is saved in this browser only.\nPaste a new one to replace it, or clear the box to remove it:" :
     "Paste an Anthropic API key (console.anthropic.com → API keys).\nIt's stored only in this browser, never on GitHub, and used just for these stock takes.", cur ? "••••" + cur.slice(-4) : "");
   if(v === null) return;
   try{
-    if(!v.trim()) localStorage.removeItem(INS_KEY_LS);
-    else if(!v.startsWith("••••")) localStorage.setItem(INS_KEY_LS, v.trim());
+    if(!v.trim()){ localStorage.removeItem(INS_KEY_LS); localStorage.removeItem(INS_BAD_LS); }
+    else if(!v.startsWith("••••")){ localStorage.setItem(INS_KEY_LS, v.trim()); localStorage.removeItem(INS_BAD_LS); }
   }catch(e){}
+  insKeyWarn();
   if(P.insTicker){ P.insForce = true; insGenerate(P.insTicker); }
 }
 
@@ -10652,7 +10976,11 @@ async function insGenerate(ticker){
   body.innerHTML = `<div class="spinner" style="margin:26px auto"></div>`;
   const token = P.insToken = (P.insToken || 0) + 1;
 
-  if(!P.histReady) await loadHistory();
+  /* Only this holding's history (and SPY's, for the versus-the-market read) -- not every holding's. Before Oct
+     2026 this awaited loadHistory(), which on a cold day sat on 45s+ of dead-proxy timeouts before a word. */
+  if(!P.histReady) loadHistory();
+  const p0 = pViewMerged().find(x => x.ticker === ticker);
+  await withDeadline(Promise.all([pHistFor((p0 && p0.fetchSymbol) || ticker), pHistFor("SPY")]), 7000, null);
   if(token !== P.insToken) return;
 
   const t = pTotals(pView());
@@ -11366,13 +11694,13 @@ async function pFetchLive(){
     const server = pFetchServerQuotes().then(sv => {
       if(sv && pApplyQuotes(sv.quotes, "server", sv.at)) pRepaintLive(true);
     });
-    // 2. live proxies, raced against each other with a hard timeout (see pSparkAll)
+    // 2. live quotes + today's session bars, straight from CNBC (see pSparkAll); proxies only as a last resort
     const spark = await pSparkAll(syms);
     const n = pApplyQuotes(spark, "live", Date.now());
     const missing = syms.filter(x => !spark[x]);
     // only chase stragglers one by one if the proxies are answering at all -- when both are
     // down this used to add a second full 8-second timeout for every single symbol
-    if(missing.length && n) await Promise.all(missing.map(async x => { const q = await pQuote(x); if(q) pApplyQuotes({[x]:q}, "live", Date.now()); }));
+    if(missing.length && n) await withDeadline(Promise.all(missing.map(async x => { const q = await pQuote(x); if(q) pApplyQuotes({[x]:q}, "live", Date.now()); })), 6000, null);
     await server;
   })();
   try{ await P._fetchPromise; }

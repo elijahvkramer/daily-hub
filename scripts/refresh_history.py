@@ -46,7 +46,8 @@ from dh_crypto import decrypt_json, encrypt_json, read_passphrase  # noqa: E402
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
 REBUILD_HOURS = 6
-FORMAT_VERSION = 5        # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
+FORMAT_VERSION = 6        # v6 = no weekend/phantom bars: CNBC's weekly bars were merged BETWEEN its daily ones (Oct 2026)
+                          # v1 = daily for 400 days then weekly; v2 = every observation, no thinning;
                           # v4 = BTC/ETH from Bitstamp (v2 had CoinGecko's 365 days and no crypto in the All file; v3's source never answered)
                           # v5 = also every holding (CNBC), so the Portfolio/AI Insight still have history when the browser's proxy fetch fails
 MAX_DAYS = 1830           # ~5 years
@@ -236,20 +237,178 @@ def cnbc_bars(session, rng, sym):
     return sorted(out)
 
 
+NY = ZoneInfo("America/New_York")
+# CNBC's chart ranges, as measured live on Oct 16 2026 (they are not what their names say):
+#   "6M" -> ~3 years of DAILY bars, "1Y" -> ~2 years daily,
+#   "10Y"/"5Y" -> WEEKLY bars stamped on the Sunday that STARTS the week (close = that week's last close),
+#   "ALL" -> QUARTERLY bars stamped on the first day of the quarter.
+# The Oct 2026 bug: the old code merged "5Y" and "1Y" by timestamp. A weekly bar sits on a Sunday and a
+# daily bar on a weekday, so they never collided -- every week of the last year got an extra phantom
+# Sunday point carrying a different week's close, and everything older than a year was weekly only.
+CNBC_DAILY_RANGES = ("6M", "1Y")
+CNBC_COARSE_RANGES = ("10Y", "5Y")          # finest coarse range first
+CNBC_ALL_RANGES = ("ALL",)
+
+
+def et_date(t):
+    return datetime.datetime.fromtimestamp(t, NY).date()
+
+
+def et_midnight(d):
+    """The stamp every daily source in this file uses: 00:00 New York on the trading date (04:00/05:00 UTC)."""
+    return int(datetime.datetime(d.year, d.month, d.day, tzinfo=NY).timestamp())
+
+
+def last_weekday_on_or_before(d):
+    while d.weekday() >= 5:
+        d -= datetime.timedelta(days=1)
+    return d
+
+
+def period_end_stamps(points, horizon=None):
+    """Coarse bars are labelled with the START of their period but carry the period's LAST close.
+    Re-stamp each to the last weekday before the next bar's label (the last bar: before `horizon`)."""
+    out = []
+    for i, (t, c) in enumerate(points):
+        nxt = points[i + 1][0] if i + 1 < len(points) else horizon
+        if nxt is None:
+            continue                          # an open-ended last bar is a partial period; daily data covers it
+        end = last_weekday_on_or_before(et_date(nxt) - datetime.timedelta(days=1))
+        if end < et_date(t):
+            continue
+        out.append((et_midnight(end), c))
+    return out
+
+
+def trading_days_only(points, crypto=False):
+    """One point per New York calendar date (last wins), weekends dropped unless the asset trades 24/7."""
+    by_day = {}
+    for t, c in points:
+        if c is None:
+            continue
+        d = et_date(t)
+        if not crypto and d.weekday() >= 5:
+            continue
+        by_day[d] = c
+    return [(et_midnight(d), c) for d, c in sorted(by_day.items())]
+
+
+def stitch(daily, coarse_layers):
+    """Daily bars where any exist; each coarser layer only fills the stretch BEFORE everything finer.
+    No two resolutions ever interleave."""
+    merged = list(daily)
+    floor = daily[0][0] if daily else float("inf")
+    for layer in coarse_layers:
+        older = [(t, c) for t, c in layer if t < floor - 2 * DAY]
+        if older:
+            merged = older + merged
+            floor = older[0][0]
+    return merged
+
+
+DAY = 86400
+
+
 def cnbc_history(session, sym, cands, max_days=MAX_DAYS):
-    """Coarsest range first, finest last, so wherever ranges overlap the finer (daily) bars win.
-    max_days=None (the All file) starts from CNBC's ALL range."""
-    ranges = ("ALL", "5Y", "1Y") if max_days is None else ("5Y", "1Y")
+    """Daily bars from CNBC's daily ranges; for anything older than those reach, the weekly (then, for the
+    All file, quarterly) bars re-dated to the real end of their period. max_days=None = the All file."""
+    crypto = sym in ("BTC-USD", "ETH-USD") or any(c.endswith(".CM=") for c in cands)
     for c in cands:
-        merged = {}
-        for rng in ranges:
+        def fetch(rng):
             try:
-                for t, v in cnbc_bars(session, rng, c):
-                    merged[t] = v
+                return cnbc_bars(session, rng, c)
             except Exception as e:  # noqa: BLE001
                 print(f"  . cnbc {c} {rng}: {str(e)[:100]}", file=sys.stderr)
+                return []
+        daily = []
+        for rng in CNBC_DAILY_RANGES:
+            daily += fetch(rng)
+        daily = trading_days_only(daily, crypto)
+        layers = []
+        for rng in CNBC_COARSE_RANGES + (CNBC_ALL_RANGES if max_days is None else ()):
+            raw = fetch(rng)
+            if raw:
+                horizon = daily[0][0] if daily else None
+                layers.append(trading_days_only(period_end_stamps(raw, horizon), crypto))
+        merged = stitch(daily, layers)
         if len(merged) > 20:
-            return prepare(sorted(merged.items()), max_days)
+            return prepare(merged, max_days)
+    return None
+
+
+# Nasdaq's historical endpoint gives true DAILY closes for ~10 years (stocks, ETFs and mutual funds), which
+# is what a "5Y" chart needs to stay one resolution end to end. It refuses browsers (no CORS) but often
+# answers servers; when it doesn't, cnbc_history() carries the series. Response shape checked Oct 2026:
+# {"data": {"tradesTable": {"rows": [{"date": "10/15/2026", "close": "$279.84", ...}, ...]}}}
+NASDAQ_HIST = ("https://api.nasdaq.com/api/quote/{sym}/historical?assetclass={cls}"
+               "&fromdate={start}&todate={end}&limit=9999")
+NASDAQ_CLASSES = ("stocks", "etf", "mutualfunds")
+
+
+def nasdaq_history(session, sym, max_days=MAX_DAYS):
+    if not sym or "-" in sym or "^" in sym or "=" in sym:
+        return None
+    end = datetime.date.today()
+    start = end - datetime.timedelta(days=(max_days or 3650) + 5)
+    for cls in NASDAQ_CLASSES:
+        try:
+            r = session.get(NASDAQ_HIST.format(sym=requests.utils.quote(sym, safe=""), cls=cls, start=start, end=end),
+                            timeout=20, headers={"Accept": "application/json, text/plain, */*",
+                                                 "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"})
+            if r.status_code != 200:
+                continue
+            rows = ((((r.json() or {}).get("data") or {}).get("tradesTable") or {}).get("rows")) or []
+            pts = []
+            for row in rows:
+                try:
+                    d = datetime.datetime.strptime(row["date"], "%m/%d/%Y").date()
+                    pts.append((et_midnight(d), float(str(row["close"]).replace("$", "").replace(",", ""))))
+                except Exception:  # noqa: BLE001
+                    continue
+            pts = trading_days_only(pts)
+            # demand real daily density, or this source isn't the one to trust
+            if len(pts) > 200 and len(pts) >= 0.85 * 252 * min(5, (max_days or 3650) / 365):
+                return pts
+        except Exception as e:  # noqa: BLE001
+            print(f"  . nasdaq {sym} {cls}: {str(e)[:100]}", file=sys.stderr)
+    return None
+
+
+def holding_history(session, sym, cands, max_days=MAX_DAYS):
+    """Nasdaq daily first (one resolution for the whole window); CNBC otherwise. For the All file the Nasdaq
+    daily run is extended backwards with CNBC's coarse bars. Returns (series, source)."""
+    nd = nasdaq_history(session, sym, max_days)
+    if nd:
+        if max_days is None:
+            older = cnbc_history(session, sym, cands, None)
+            if older:
+                older_pts = [(t, c) for t, c in zip(older["t"], older["c"]) if t < nd[0][0] - 2 * DAY]
+                return prepare(older_pts + nd, None), "nasdaq+cnbc"
+        return prepare(nd, max_days), "nasdaq"
+    ser = cnbc_history(session, sym, cands, max_days)
+    return ser, ("cnbc" if ser else None)
+
+
+CRYPTO_SYMS = {"BTC-USD", "ETH-USD"}
+DAILY_SERIES_EXEMPT = {"MORT30", "MORT15"}      # a weekly survey: weekly IS its native resolution
+
+
+def validate_series(sym, ser):
+    """The last line of defence before anything is published: reject a series with weekend bars (unless it
+    trades 24/7), two points on one date, or points out of order. Returns a reason string, or None if OK."""
+    t = ser.get("t") or []
+    c = ser.get("c") or []
+    if len(t) != len(c):
+        return "t/c length mismatch"
+    if any(b <= a for a, b in zip(t, t[1:])):
+        return "timestamps not strictly increasing"
+    days = [et_date(x) for x in t]
+    if len(set(days)) != len(days):
+        return "two points on one date"
+    if sym not in CRYPTO_SYMS and sym not in DAILY_SERIES_EXEMPT:
+        wk = sum(1 for d in days if d.weekday() >= 5)
+        if wk:
+            return f"{wk} weekend bars"
     return None
 
 
@@ -282,9 +441,16 @@ def build_series(session, previous_series, max_days, include_crypto=True, extra_
     fresh = []
 
     def put(sym, ser, how):
-        if ser and len(ser.get("t", [])) > 5:
-            series[sym] = ser
-            fresh.append(f"{sym}:{how}")
+        if not (ser and len(ser.get("t", [])) > 5):
+            return
+        bad = validate_series(sym, ser)
+        if bad:
+            print(f"  ! {sym} via {how} rejected: {bad}", file=sys.stderr)
+            if sym in series and validate_series(sym, series[sym]):
+                del series[sym]                  # a carried-over series that is itself invalid goes too
+            return
+        series[sym] = ser
+        fresh.append(f"{sym}:{how}")
 
     for sym, ser in treasury_history(session, max_days).items():
         put(sym, ser, "treasury")
@@ -310,12 +476,13 @@ def build_series(session, previous_series, max_days, include_crypto=True, extra_
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
         all_cnbc = dict(extra_cnbc or {})
         all_cnbc.update(CNBC_SYMS)
-        futs = {ex.submit(cnbc_history, session, sym, c, max_days): sym for sym, c in all_cnbc.items()}
+        futs = {ex.submit(holding_history, session, sym, c, max_days): sym for sym, c in all_cnbc.items()}
         for f in concurrent.futures.as_completed(futs):
             try:
-                put(futs[f], f.result(), "cnbc")
+                ser, how = f.result()
+                put(futs[f], ser, how or "cnbc")
             except Exception as e:  # noqa: BLE001
-                print(f"  ! cnbc {futs[f]}: {str(e)[:120]}", file=sys.stderr)
+                print(f"  ! history {futs[f]}: {str(e)[:120]}", file=sys.stderr)
 
     if include_crypto and max_days is not None:
         gsym, gid = GOLD_FALLBACK
@@ -325,6 +492,31 @@ def build_series(session, previous_series, max_days, include_crypto=True, extra_
             except Exception as e:  # noqa: BLE001
                 print(f"  ! coingecko {gid}: {str(e)[:120]}", file=sys.stderr)
     return series, fresh
+
+
+def write_status(repo, name, series, fresh):
+    """Plaintext, symbol-free health of what was just published, so a bad build is visible from the repo
+    alone (Oct 2026: the weekly phantom bars went unnoticed for weeks because nothing reported density)."""
+    try:
+        sources = {}
+        for f in fresh:
+            how = f.rsplit(":", 1)[-1]
+            sources[how] = sources.get(how, 0) + 1
+        per_year = []
+        for sym, ser in series.items():
+            t = ser.get("t") or []
+            if len(t) > 1 and sym not in DAILY_SERIES_EXEMPT:
+                yrs = max(0.25, (t[-1] - t[0]) / (365.25 * DAY))
+                per_year.append(round(len(t) / yrs))
+        status = {"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                  "v": FORMAT_VERSION, "series": len(series), "sources": sources,
+                  "invalid": sum(1 for k, v in series.items() if validate_series(k, v)),
+                  "pointsPerYear": {"min": min(per_year) if per_year else 0,
+                                    "median": sorted(per_year)[len(per_year) // 2] if per_year else 0}}
+        with open(os.path.join(repo, "data", name), "w") as f:
+            json.dump(status, f, indent=1)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def write_payload(path, series, passphrase):
@@ -364,6 +556,7 @@ def main():
             print("no history source answered; leaving the previous file untouched")
         else:
             write_payload(out_path, series, passphrase)
+            write_status(repo, "history.status.json", series, fresh)
             print(f"wrote {out_path}: {len(series)} series ({', '.join(fresh)})")
 
     # ---- the All file (best effort; never blocks the main one) ----
@@ -377,6 +570,7 @@ def main():
             series, fresh = build_series(session, carry, None, extra_cnbc=holdings_cnbc_syms(repo, passphrase))
             if fresh:
                 write_payload(all_path, series, passphrase)
+                write_status(repo, "history_all.status.json", series, fresh)
                 print(f"wrote {all_path}: {len(series)} series ({', '.join(fresh)})")
             else:
                 print("no all-time source answered; leaving the previous file untouched")

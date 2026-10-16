@@ -139,19 +139,104 @@ class CryptoTests(unittest.TestCase):
 
 
 class CnbcTests(unittest.TestCase):
-    def test_finer_range_wins_where_ranges_overlap(self):
-        now = int(time.time())
-        coarse = [(now - i * 7 * DAY, 1.0) for i in range(300)]
-        fine = [(now - i * DAY, 2.0) for i in range(300)]
+    """Fed with the shapes CNBC really returns (measured live, Oct 16 2026): "6M" ~3y of daily bars, "1Y" ~2y
+    daily, "10Y"/"5Y" weekly bars stamped on the SUNDAY that starts the week, "ALL" quarterly bars stamped on
+    the quarter's first day. The old test put weekly and daily bars on identical timestamps, so it passed while
+    production shipped a phantom Sunday point every week."""
+    NY = rh.NY
 
-        def bars(session, rng, sym):
-            return sorted({"ALL": coarse, "5Y": coarse, "1Y": fine}[rng])
+    def stamp(self, d):
+        return int(datetime.datetime(d.year, d.month, d.day, tzinfo=self.NY).timestamp())
 
+    def fake(self):
+        today = datetime.date.today()
+        weekdays = lambda days: [today - datetime.timedelta(days=i) for i in range(days, 0, -1)
+                                 if (today - datetime.timedelta(days=i)).weekday() < 5]
+        close = lambda d: 100 + d.toordinal() % 97          # deterministic "price" per date
+        daily3 = [(self.stamp(d), close(d)) for d in weekdays(3 * 365)]
+        daily2 = [(self.stamp(d), close(d)) for d in weekdays(2 * 365)]
+        sunday = today - datetime.timedelta(days=(today.weekday() + 1) % 7)
+        weekly = []
+        for k in range(520, -1, -1):
+            sun = sunday - datetime.timedelta(weeks=k)
+            fri = sun + datetime.timedelta(days=5)
+            weekly.append((self.stamp(sun), close(min(fri, today))))
+        quarterly = []
+        for y in range(1993, today.year + 1):
+            for m in (1, 4, 7, 10):
+                q = datetime.date(y, m, 1)
+                if q <= today:
+                    quarterly.append((self.stamp(q), 50.0))
+        data = {"6M": daily3, "1Y": daily2, "10Y": weekly, "5Y": weekly, "ALL": quarterly}
+        return lambda session, rng, sym: sorted(data.get(rng, [])), close
+
+    def check(self, out):
+        self.assertIsNone(rh.validate_series("X", out))
+        days = [rh.et_date(t) for t in out["t"]]
+        self.assertFalse([d for d in days if d.weekday() >= 5], "no weekend bars, ever")
+        return days
+
+    def test_main_file_is_daily_where_daily_exists_and_never_interleaves(self):
+        bars, close = self.fake()
         with mock.patch.object(rh, "cnbc_bars", bars):
-            out = rh.cnbc_history(None, "X", [".X"], None)
-        self.assertEqual(out["c"][-1], 2.0)
-        recent = [c for t, c in zip(out["t"], out["c"]) if now - t < 250 * DAY]
-        self.assertTrue(all(c == 2.0 for c in recent[-200:]))
+            out = rh.cnbc_history(None, "SPY", ["SPY"], rh.MAX_DAYS)
+        days = self.check(out)
+        gaps = [(b - a).days for a, b in zip(days, days[1:])]
+        cut = next(i for i, g in enumerate(gaps) if g <= 3)            # first daily step
+        self.assertTrue(all(g <= 4 for g in gaps[cut:]), "once daily, always daily: no weekly point between days")
+        self.assertTrue(all(g == 7 for g in gaps[:cut - 1]), "older stretch is one point per week")
+        self.assertGreater(len(days) - cut, 700, "about three years of daily bars")
+        # each re-stamped weekly point carries ITS week's Friday close
+        for t, c in list(zip(out["t"], out["c"]))[:cut]:
+            d = rh.et_date(t)
+            self.assertEqual(d.weekday(), 4)
+            self.assertEqual(c, close(d))
+
+    def test_all_file_reaches_back_with_quarterly_then_weekly_then_daily(self):
+        bars, _ = self.fake()
+        with mock.patch.object(rh, "cnbc_bars", bars):
+            out = rh.cnbc_history(None, "SPY", ["SPY"], None)
+        days = self.check(out)
+        self.assertLess(days[0].year, 1994)
+        self.assertEqual(days, sorted(set(days)))
+
+    def test_validator_rejects_weekend_and_duplicate_bars(self):
+        sat = datetime.date(2026, 10, 10)
+        self.assertIn("weekend", rh.validate_series("SPY", {"t": [self.stamp(sat)], "c": [1.0]}))
+        mon = self.stamp(datetime.date(2026, 10, 12))
+        self.assertIn("one date", rh.validate_series("SPY", {"t": [mon, mon + 3600], "c": [1.0, 2.0]}))
+        self.assertIsNone(rh.validate_series("BTC-USD", {"t": [self.stamp(sat)], "c": [1.0]}))
+
+    def test_build_series_refuses_to_publish_an_invalid_series(self):
+        sat = self.stamp(datetime.date(2026, 10, 10))
+        bad = {"t": [sat + i * DAY for i in range(10)], "c": [1.0] * 10}
+        with mock.patch.object(rh, "treasury_history", return_value={}), \
+             mock.patch.object(rh, "mortgage_history", return_value={}), \
+             mock.patch.object(rh, "holding_history", return_value=(bad, "cnbc")):
+            series, fresh = rh.build_series(None, {"SPY": bad}, rh.MAX_DAYS, include_crypto=False, extra_cnbc={"SPY": ["SPY"]})
+        self.assertNotIn("SPY", series, "an invalid carried-over series is dropped, not kept")
+        self.assertNotIn("SPY:cnbc", fresh)
+
+    def test_nasdaq_daily_wins_and_is_trading_days_only(self):
+        today = datetime.date.today()
+        rows = [{"date": (today - datetime.timedelta(days=i)).strftime("%m/%d/%Y"), "close": f"${100 + i % 7}.00"}
+                for i in range(1, 1830)]
+        resp = mock.Mock(status_code=200)
+        resp.json.return_value = {"data": {"tradesTable": {"rows": rows}}}
+        session = mock.Mock()
+        session.get.return_value = resp
+        ser, how = rh.holding_history(session, "AAPL", ["AAPL"], rh.MAX_DAYS)
+        self.assertEqual(how, "nasdaq")
+        self.check(ser)
+        self.assertGreater(len(ser["t"]), 1200)
+
+    def test_nasdaq_sparse_answer_is_not_trusted(self):
+        rows = [{"date": "10/15/2026", "close": "$1.00"}]
+        resp = mock.Mock(status_code=200)
+        resp.json.return_value = {"data": {"tradesTable": {"rows": rows}}}
+        session = mock.Mock()
+        session.get.return_value = resp
+        self.assertIsNone(rh.nasdaq_history(session, "AAPL", rh.MAX_DAYS))
 
 
 class MainTests(unittest.TestCase):

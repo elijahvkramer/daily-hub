@@ -1,0 +1,17 @@
+{
+ "updated": "2026-10-16T20:31:58+00:00",
+ "v": 6,
+ "series": 25,
+ "sources": {
+  "treasury": 4,
+  "pmms": 2,
+  "bitstamp": 2,
+  "nasdaq+cnbc": 11,
+  "cnbc": 6
+ },
+ "invalid": 0,
+ "pointsPerYear": {
+  "min": 32,
+  "median": 116
+ }
+}

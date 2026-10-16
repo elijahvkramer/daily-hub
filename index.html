@@ -10560,8 +10560,9 @@ function insStrip(p, st, ctx){
   const cls = v => v == null ? "" : v >= 0 ? "pos" : "neg";
   if(ctx.mkt != null){
     const gap = (p.dayPct || 0) - ctx.mkt;
+    const fundNoPrice = isMutualFund(p.fetchSymbol || p.ticker) && !p.dayPct;
     cells.push(`<div class="ins-s"><u>Market today</u><b class="${cls(ctx.mkt)}">${pc(ctx.mkt)}</b>
-      <small>S&amp;P 500 · ${p.ticker} ${gap >= 0 ? "ahead" : "behind"} by ${Math.abs(gap).toFixed(2)} pts</small></div>`);
+      <small>S&amp;P 500${fundNoPrice ? " · fund prices after the close" : ` · ${p.ticker} ${gap >= 0 ? "ahead" : "behind"} by ${Math.abs(gap).toFixed(2)} pts`}</small></div>`);
   }
   if(ctx.sec && ctx.sec.pct != null)
     cells.push(`<div class="ins-s"><u>Its sector</u><b class="${cls(ctx.sec.pct)}">${pc(ctx.sec.pct)}</b><small>${esc(ctx.sec.sym)} · ${esc(ctx.sec.label)}</small></div>`);
@@ -10645,6 +10646,9 @@ function insKeyWarn(){
   } else if(!k){
     w.hidden = false;
     w.innerHTML = `<b>Claude is off in this browser.</b> Add an Anthropic API key to get the live, searched take; until then you get the quick read. <button type="button" class="ins-key-btn" id="insKeyFix">Turn on Claude</button>`;
+  } else if(P.insNoCredit && Date.now() - P.insNoCredit < 30*60e3){
+    w.hidden = false;
+    w.innerHTML = `<b>Claude is connected but out of credits.</b> Your key works, but the Anthropic account has no balance, so you're getting the quick read. Add credits at <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noopener">console.anthropic.com → Billing</a>, then hit Redo.`;
   } else { w.hidden = true; w.innerHTML = ""; }
   const b = $("#insKeyFix"); if(b) b.addEventListener("click", insKeyPrompt);
 }
@@ -10747,14 +10751,24 @@ async function insTakeLocal(p, st, ctx, token, tw, setSub, setSrc){
   const dir = (mv || 0) >= 0 ? "up" : "down";
   const ref = ctx.sec && ctx.sec.pct != null ? ctx.sec.pct : ctx.mkt;
   let head;
-  if(fund) head = `**${p.ticker} is a mutual fund, so today's price isn't out until after the close; its last NAV was ${mv == null ? "flat" : (mv >= 0 ? "up " : "down ") + Math.abs(mv).toFixed(2) + "%"}${ctx.mkt != null ? `, and the S&P is ${pctS(ctx.mkt)} so far today` : ""}.**`;
+  if(fund){
+    /* explain the last NAV move by what the market did that same session (SPY's last two closes) */
+    const spyS = insSeries("SPY"); const spyLast = spyS ? insLastNav({}, spyS) : null;
+    head = mv == null ? `**${p.ticker} is a mutual fund; its price for today posts after the close.**`
+      : spyLast == null ? `**${p.ticker} is a mutual fund (one price a day, after the close); its last price was ${pctS(mv)}.**`
+      : `**${p.ticker} prices once a day after the close; its last ${mv >= 0 ? "gain" : "drop"} of ${Math.abs(mv).toFixed(2)}% came on a day the S&P was ${pctS(spyLast)}, so it was ${Math.sign(spyLast) === Math.sign(mv) && Math.abs(spyLast) >= Math.abs(mv)*0.5 ? "mostly the market" : "mostly its own holdings"}.**`;
+  }
   else if(ref == null) head = `**${p.ticker} is ${dir} ${Math.abs(mv).toFixed(2)}% today.**`;
   else {
-    const same = Math.sign(ref) === Math.sign(mv) && Math.abs(ref) >= Math.abs(mv) * 0.5;
+    /* how much of the move the sector (or market) explains: same direction, and how big relative to the stock's */
+    const share = mv ? ref / mv : 0;
     const where = ctx.sec && ctx.sec.pct != null ? `${ctx.sec.label} (${ctx.sec.sym}) is ${pctS(ctx.sec.pct)}` : `the S&P is ${pctS(ctx.mkt)}`;
-    head = same
-      ? `**Mostly the market: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P is ${pctS(ctx.mkt)}` : ""}, so ${p.ticker}'s ${Math.abs(mv).toFixed(2)}% ${dir === "up" ? "gain" : "drop"} is largely moving with them.**`
-      : `**Mostly ${p.ticker} itself: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P ${pctS(ctx.mkt)}` : ""}, so most of its ${Math.abs(mv).toFixed(2)}% ${dir === "up" ? "gain" : "drop"} is company-specific.**`;
+    const word = dir === "up" ? "gain" : "drop";
+    head = share >= 0.75
+      ? `**Mostly the market: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P ${pctS(ctx.mkt)}` : ""}, so ${p.ticker}'s ${Math.abs(mv).toFixed(2)}% ${word} is largely moving with them.**`
+      : share >= 0.35
+      ? `**Partly the market, partly ${p.ticker}: ${where}, but ${p.ticker}'s ${Math.abs(mv).toFixed(2)}% ${word} is about ${(1/share).toFixed(1)}× that, so roughly half of it is company-specific.**`
+      : `**Mostly ${p.ticker} itself: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P ${pctS(ctx.mkt)}` : ""}, so most of its ${Math.abs(mv).toFixed(2)}% ${word} is company-specific.**`;
   }
   tw.push(head + "\n");
   setSub("checking today's headlines…");
@@ -10804,7 +10818,10 @@ async function insTake(p, st, ctx, token){
     if(ai){
       const bad = e.status === 401 || e.status === 403;
       if(bad){ try{ localStorage.setItem(INS_BAD_LS, insKeyFp(insApiKey())); }catch(_){} insKeyWarn(); }
+      const noCredit = /credit balance/i.test(String(e.message || ""));
+      if(noCredit){ P.insNoCredit = Date.now(); insKeyWarn(); }
       const why = bad ? "Claude key rejected — quick read below" :
+        noCredit ? "Claude account is out of credits — quick read below" :
         e.status === 429 ? "Claude is rate-limited right now — quick read below" :
         e.status === 529 || e.status >= 500 ? "Claude is overloaded right now — quick read below" :
         "Claude error: " + String(e.message || e).slice(0, 80) + " — quick read below";
@@ -10816,6 +10833,7 @@ async function insTake(p, st, ctx, token){
   }
   if(token !== P.insToken) return;
   if(ok){
+    if(ai && P.insNoCredit){ P.insNoCredit = 0; insKeyWarn(); }
     setSub(ai ? "Claude · just now" : (P._insWhy || (insKeyBad() ? "Quick read · Claude key rejected" : "Quick read · add a Claude key for the full take")));
     P._insWhy = "";
     try{ sessionStorage.setItem(cacheKey, JSON.stringify({ at:Date.now(), text:all, src:srcList, ai })); }catch(e){}

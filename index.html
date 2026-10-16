@@ -1700,6 +1700,15 @@
     background:color-mix(in srgb,var(--down) 9%,transparent);border:1px solid color-mix(in srgb,var(--down) 30%,transparent)}
   .ins-key-warn[hidden]{display:none}
   .ins-key-warn .ins-key-btn{margin-left:0}
+  /* the one strip under the answer (Oct 2026): market, sector, move size, 52-week range */
+  .ins-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px}
+  .ins-s{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--hairline);border-radius:12px;background:var(--card);min-width:0}
+  .ins-s u{text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .ins-s b{font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+  .ins-s b.pos{color:var(--up)} .ins-s b.neg{color:var(--down)}
+  .ins-s small{font-size:11px;line-height:1.35;color:var(--muted)}
+  .ins-s-bar{position:relative;height:4px;margin:5px 0 3px;border-radius:99px;background:linear-gradient(90deg,var(--down),#E0A100,var(--up));opacity:.85}
+  .ins-s-bar i{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--card);border:2px solid var(--ink)}
   @media (prefers-reduced-motion:reduce){.ins-think i,.ins-take-b.typing > :last-child::after{animation:none}}
   .ins-why{margin-bottom:16px}
   .ins-why-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
@@ -10436,20 +10445,6 @@ function insSeries(sym){
   return { last, ma50: ma(50), ma200: ma(200), r21: ret(21), r63: ret(63), r252: ret(252),
            hi, lo, rangePos: hi > lo ? (last-lo)/(hi-lo)*100 : 50, dayVol: sd*100, days: c.length, closes: c };
 }
-/* Anything the last few published market briefs said about this ticker. */
-async function insBriefNotes(ticker){
-  const dates = (S.manifest?.market || []).slice(0, 4);
-  const out = [];
-  for(const d of dates){
-    try{
-      const day = await fetchDay("market", d);
-      (day.holdingsNews || []).forEach(n => { if(n.ticker === ticker) out.push({date: d, lead: n.lead, body: n.body}); });
-      if(out.length >= 2) break;
-    }catch(e){}
-  }
-  return out.slice(0, 2);
-}
-
 /* ---------------------------------------------------------------------------
    Why it is moving. Eli, Sep 2026: "the whole idea with the AI insight is that I want an
    explanation for the current trend of the price ... I want the current news snapshot on the
@@ -10527,176 +10522,60 @@ function insDedupe(items){
   return out.sort((a,b) => (b.t ? b.t.getTime() : 0) - (a.t ? a.t.getTime() : 0));
 }
 
-/* ---- the small visuals that replaced the wall of sentences ---- */
-
-/* 90 trading days of closes as a filled area, with the 52-week band behind it. */
-function insSpark(st, up){
-  if(!st || !st.closes || st.closes.length < 20) return "";
-  const vals = st.closes.slice(-90);
-  const W = 560, H = 96, PAD = 6;
-  const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
-  const X = i => (i/(vals.length-1)*W);
-  const Y = v => (H - PAD - (v-min)/span*(H - PAD*2));
-  const line = vals.map((v,i) => `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
-  const col = up ? "var(--up)" : "var(--down)";
-  return `<svg class="ins-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-    <defs><linearGradient id="insGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${col}" stop-opacity=".30"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/>
-    </linearGradient></defs>
-    <path d="${line} L ${W} ${H} L 0 ${H} Z" fill="url(#insGrad)"/>
-    <path d="${line}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-  </svg>`;
+/* ---- the question, and the three numbers that answer "is it the stock or the market?" ----
+   Eli, Oct 16 2026: "I don't need the full written read ... only completely necessary things. When I click a stock
+   I want a very brief summary as if I asked: why is Apple up 0.43%? why is Intel down 5.79%?" So the card is now
+   that question, the answer, and one strip: the market today, the stock's own sector today, how unusual the move is,
+   and where it sits in its 52-week range. The spark chart, trend/position cards and the full written read are gone. */
+const SECTOR_ETF = { "Technology":["XLK","tech"], "Communication Services":["XLC","communication stocks"],
+  "Consumer Discretionary":["XLY","consumer stocks"], "Automotive":["XLY","consumer stocks"], "Financials":["XLF","financials"],
+  "Healthcare":["XLV","healthcare"], "Energy":["XLE","energy"], "Industrials":["XLI","industrials"], "Consumer Staples":["XLP","staples"],
+  "Utilities":["XLU","utilities"], "Real Estate":["XLRE","real estate"], "Materials":["XLB","materials"], "Growth Funds":["QQQ","the Nasdaq-100"] };
+/* Today's % move for any symbol, using the same "a quote not from today has not moved today" rule as the book. */
+const insDayPct = q => (q && q.prev > 0 && quoteIsToday(q.time)) ? (q.price - q.prev)/q.prev*100 : (q ? 0 : null);
+async function insContext(p){
+  const sec = SECTOR_ETF[sectorOf(p)] || null;
+  const want = ["SPY"].concat(sec && sec[0] !== p.ticker ? [sec[0]] : []);
+  let q = {}; want.forEach(x => { if(P.live[x]) q[x] = P.live[x]; });
+  const missing = want.filter(x => !q[x]);
+  if(missing.length){ try{ Object.assign(q, await withDeadline(cnbcQuotes(missing, 5000), 5000, {})); }catch(e){} }
+  return { mkt: insDayPct(q.SPY), sec: sec && q[sec[0]] ? { sym: sec[0], label: sec[1], pct: insDayPct(q[sec[0]]) } : null };
 }
-/* Headlines per day over the last week — the shape of the coverage next to the shape of the price. */
-function insPulse(items){
-  const days = [];
-  for(let i = 6; i >= 0; i--){
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
-    days.push({ d, n: 0 });
+/* The fund case: a mutual fund strikes one price after the close, so intraday its "today" is yesterday's NAV. */
+function insLastNav(p, st){
+  if(!st || !st.closes || st.closes.length < 2) return null;
+  const c = st.closes; return (c[c.length-1]/c[c.length-2] - 1)*100;
+}
+function insQuestion(p, st){
+  const fund = isMutualFund(p.fetchSymbol || p.ticker) && !p.dayPct;
+  if(fund){ const nav = insLastNav(p, st); return nav == null ? `What's moving ${p.ticker}?`
+    : `Why did ${p.ticker} ${nav >= 0 ? "rise" : "fall"} ${Math.abs(nav).toFixed(2)}% on its last price?`; }
+  const mv = Math.abs(p.dayPct || 0);
+  if(mv < 0.05) return `Why is ${p.ticker} flat today?`;
+  return `Why is ${p.ticker} ${p.dayPct >= 0 ? "up" : "down"} ${mv.toFixed(2)}% today?`;
+}
+function insStrip(p, st, ctx){
+  const cells = [];
+  const pc = v => v == null ? "—" : pctS(v);
+  const cls = v => v == null ? "" : v >= 0 ? "pos" : "neg";
+  if(ctx.mkt != null){
+    const gap = (p.dayPct || 0) - ctx.mkt;
+    cells.push(`<div class="ins-s"><u>Market today</u><b class="${cls(ctx.mkt)}">${pc(ctx.mkt)}</b>
+      <small>S&amp;P 500 · ${p.ticker} ${gap >= 0 ? "ahead" : "behind"} by ${Math.abs(gap).toFixed(2)} pts</small></div>`);
   }
-  items.forEach(it => {
-    if(!it.t) return;
-    const k = new Date(it.t); k.setHours(0,0,0,0);
-    const slot = days.find(x => x.d.getTime() === k.getTime());
-    if(slot) slot.n++;
-  });
-  const max = Math.max(1, ...days.map(d => d.n));
-  const dow = ["S","M","T","W","T","F","S"];
-  return `<div class="ins-pulse"><div class="ins-pulse-bars">${days.map(d =>
-      `<span class="ins-pb" title="${d.n} stor${d.n===1?"y":"ies"} on ${shortDate(d.d.toLocaleDateString("en-CA"))}">
-        <i style="height:${Math.max(6, d.n/max*100)}%;opacity:${d.n?1:.25}"></i><u>${dow[d.d.getDay()]}</u></span>`).join("")}</div>
-    <div class="ins-pulse-l">Coverage<span>7 days</span></div></div>`;
-}
-function insMeter(label, pct, valTxt, sub, col){
-  const p = Math.max(0, Math.min(100, pct));
-  return `<div class="ins-m"><div class="ins-m-t">${label}<b>${valTxt}</b></div>
-    <div class="ins-m-bar"><i style="width:${p.toFixed(1)}%;background:${col}"></i></div>
-    <small>${sub}</small></div>`;
-}
-/* The strip of visuals that replaced the sentences: range, trend, versus the market, move size,
-   and what the position is worth to you. */
-function insVisuals(p, st, spy){
-  const up = p.dayPct >= 0;
-  const cards = [];
-
+  if(ctx.sec && ctx.sec.pct != null)
+    cells.push(`<div class="ins-s"><u>Its sector</u><b class="${cls(ctx.sec.pct)}">${pc(ctx.sec.pct)}</b><small>${esc(ctx.sec.sym)} · ${esc(ctx.sec.label)}</small></div>`);
+  if(st && st.dayVol && p.dayPct){
+    const ratio = Math.abs(p.dayPct)/st.dayVol;
+    const word = ratio < .6 ? "quiet" : ratio < 1.4 ? "normal-sized" : ratio < 2.5 ? "big" : "unusual";
+    cells.push(`<div class="ins-s"><u>Move size</u><b>${ratio.toFixed(1)}×</b><small>a typical day (±${st.dayVol.toFixed(1)}%) · ${word}</small></div>`);
+  }
   if(st){
     const pos = Math.max(0, Math.min(100, st.rangePos));
-    cards.push(`<div class="ins-v ins-v-range">
-      <div class="ins-v-h">52-week range<b>${st.rangePos.toFixed(0)}% up</b></div>
-      <div class="ins-range"><span class="ins-range-fill" style="width:${pos.toFixed(1)}%"></span>
-        <span class="ins-range-dot" style="left:${pos.toFixed(1)}%"></span></div>
-      <div class="ins-range-e"><span>${usd(st.lo)}</span><span>${usd(st.hi)}</span></div>
-      <small>${((st.hi/st.last - 1)*100).toFixed(1)}% below the high · ${((st.last/st.lo - 1)*100).toFixed(1)}% above the low</small>
-    </div>`);
-
-    const a50 = st.ma50 != null && st.last >= st.ma50, a200 = st.ma200 != null && st.last >= st.ma200;
-    const verdict = a50 && a200 ? ["Uptrend", "var(--up)"] : (!a50 && !a200 ? ["Downtrend", "var(--down)"] : ["Mixed", "#E0A100"]);
-    const dot = (on, lab, ma) => `<span class="ins-dot ${on?"on":"off"}"><i></i>${lab}<b>${ma != null ? usd(ma) : "—"}</b></span>`;
-    cards.push(`<div class="ins-v">
-      <div class="ins-v-h">Trend<b style="color:${verdict[1]}">${verdict[0]}</b></div>
-      <div class="ins-dots">${dot(a50, "50-day", st.ma50)}${dot(a200, "200-day", st.ma200)}</div>
-      <div class="ins-rets">${[["1M",st.r21],["3M",st.r63],["1Y",st.r252]].map(([l,v]) =>
-        `<span><u>${l}</u><b class="${v == null ? "" : (v >= 0 ? "pos" : "neg")}">${v == null ? "—" : pctS(v)}</b></span>`).join("")}</div>
-    </div>`);
-
-    if(spy != null && st.r63 != null){
-      const gap = st.r63 - spy, mag = Math.min(50, Math.abs(gap)*2.2);
-      cards.push(`<div class="ins-v">
-        <div class="ins-v-h">Versus the S&amp;P<b class="${gap>=0?"pos":"neg"}">${gap>=0?"+":"−"}${Math.abs(gap).toFixed(1)} pts</b></div>
-        <div class="ins-div"><span class="ins-div-mid"></span>
-          <i class="${gap>=0?"pos":"neg"}" style="${gap>=0?`left:50%;width:${mag}%`:`right:50%;width:${mag}%`}"></i></div>
-        <small>3 months: ${pctS(st.r63)} against ${pctS(spy)} for the index</small>
-      </div>`);
-    }
-
-    if(st.dayVol){
-      const ratio = Math.abs(p.dayPct)/(st.dayVol || 1);
-      const col = ratio >= 2 ? "var(--down)" : ratio >= 1 ? "#E0A100" : "var(--up)";
-      cards.push(`<div class="ins-v">${insMeter("Move size", Math.min(100, ratio*40),
-        ratio.toFixed(1) + "×", `A typical day is ±${st.dayVol.toFixed(2)}% (about ${usd(p.marketValue*st.dayVol/100, 0)} on this position). Today is ${ratio < .6 ? "quiet" : ratio < 1.4 ? "ordinary" : ratio < 2.5 ? "a big day" : "an outlier"}.`, col)}</div>`);
-    }
-  } else {
-    cards.push(`<div class="ins-v"><div class="ins-v-h">Trend<b>—</b></div>
-      <small>Daily price history isn't available from the quote feed for ${esc(p.ticker)}, so the moving-average and range read is skipped for this one.</small></div>`);
+    cells.push(`<div class="ins-s"><u>52-week range</u><b>${pos.toFixed(0)}% up</b>
+      <span class="ins-s-bar"><i style="left:${pos.toFixed(1)}%"></i></span><small>${usd(st.lo,0)} – ${usd(st.hi,0)}</small></div>`);
   }
-
-  const gainCol = p.hasCost ? (p.gainDollar >= 0 ? "var(--up)" : "var(--down)") : "var(--muted)";
-  cards.push(`<div class="ins-v">
-    <div class="ins-v-h">Your position<b style="color:${gainCol}">${p.hasCost ? pctS(p.gainPct) : "—"}</b></div>
-    <div class="ins-pos">
-      <div><u>Value</u><b>${usd(p.marketValue,0)}</b></div>
-      <div><u>Cost</u><b>${p.hasCost ? usd(p.costBasis,0) : "—"}</b></div>
-      <div><u>Gain</u><b class="${p.hasCost ? (p.gainDollar>=0?"pos":"neg") : ""}">${p.hasCost ? usdS(p.gainDollar) : "—"}</b></div>
-      <div><u>Weight</u><b>${p.weight != null ? p.weight.toFixed(1) + "%" : "—"}</b></div>
-    </div>
-    <small>${esc(sectorOf(p))} sleeve${p.weight != null ? ` · ${p.weight.toFixed(1)}% of the current view` : ""}</small>
-  </div>`);
-
-  return `<div class="ins-vis">${cards.join("")}</div>`;
-}
-
-function insBuild(p, st, spy){
-  const rows = [], tone = { up:"var(--up)", down:"var(--down)", flat:"var(--muted)", note:"var(--gold)" };
-  const T = (t, txt) => rows.push({ c: tone[t] || tone.flat, txt });
-  const dirWord = p.dayPct >= 0 ? "up" : "down";
-
-  T(p.dayPct >= 0 ? "up" : "down",
-    `<b>Today.</b> ${esc(p.ticker)} is at ${usd(p.price)}, ${dirWord} ${Math.abs(p.dayPct).toFixed(2)}% on the session — ${usdS(p.dayDollar)} across the ${p.shares.toLocaleString("en-US",{maximumFractionDigits:4})} share${p.shares===1?"":"s"} you hold.`);
-
-  const posBits = [`Worth ${usd(p.marketValue,0)}`];
-  if(p.hasCost) posBits.push(`against a ${usd(p.costBasis,0)} cost basis — ${usdS(p.gainDollar)}, or ${pctS(p.gainPct)}, since you bought`);
-  T(p.hasCost ? (p.gainDollar >= 0 ? "up" : "down") : "flat",
-    `<b>Your position.</b> ${posBits.join(" ")}.` + (p.weight != null ? ` That is ${p.weight.toFixed(1)}% of the current view.` : ""));
-
-  if(st){
-    const above50 = st.ma50 != null && st.last >= st.ma50, above200 = st.ma200 != null && st.last >= st.ma200;
-    let trend;
-    if(above50 && above200) trend = "above both its 50- and 200-day averages — an uptrend that is intact on both the short and long clock";
-    else if(!above50 && !above200) trend = "below both its 50- and 200-day averages — the trend is broken on both clocks";
-    else if(above50) trend = "back above its 50-day average but still under the 200-day — a bounce inside a longer downtrend";
-    else trend = "under its 50-day average but still above the 200-day — a pullback inside a longer uptrend";
-    T(above50 && above200 ? "up" : (!above50 && !above200 ? "down" : "flat"),
-      `<b>Trend.</b> ${usd(st.last)} is ${trend}.` +
-      (st.r21 != null ? ` One month ${pctS(st.r21)}` : "") +
-      (st.r63 != null ? `, three months ${pctS(st.r63)}` : "") +
-      (st.r252 != null ? `, twelve months ${pctS(st.r252)}` : "") + ".");
-
-    T(st.rangePos >= 85 ? "note" : (st.rangePos <= 15 ? "down" : "flat"),
-      `<b>52-week range.</b> ${usd(st.lo)} to ${usd(st.hi)}; today sits ${st.rangePos.toFixed(0)}% of the way up that range, ` +
-      `${((st.hi/st.last - 1)*100).toFixed(1)}% below the high and ${((st.last/st.lo - 1)*100).toFixed(1)}% above the low.`);
-
-    if(spy != null && st.r63 != null){
-      const gap = st.r63 - spy;
-      T(gap >= 0 ? "up" : "down",
-        `<b>Versus the market.</b> Over three months it has ${gap >= 0 ? "beaten" : "trailed"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points (${pctS(st.r63)} against ${pctS(spy)}).`);
-    }
-    if(st.dayVol){
-      const dollar = p.marketValue * st.dayVol/100;
-      T(st.dayVol >= 2.5 ? "note" : "flat",
-        `<b>How much it moves.</b> A typical day for ${esc(p.ticker)} over the past year is ±${st.dayVol.toFixed(2)}% — about ${usd(dollar,0)} on a position this size. Today's move is ${(Math.abs(p.dayPct)/(st.dayVol||1)).toFixed(1)}× that.`);
-    }
-  } else {
-    T("flat", `<b>Trend.</b> Daily price history for ${esc(p.ticker)} isn't available from the quote feed, so the moving-average and range read is skipped for this one.`);
-  }
-
-  const sector = sectorOf(p);
-  if(sector !== "Other") T("flat", `<b>Sector.</b> Sits in your ${esc(sector)} sleeve on the allocation donut.`);
-
-  const ev = pCalEvents().filter(e => e.ticker === p.ticker && e.date >= etToday())
-    .sort((a,b) => a.date.localeCompare(b.date)).slice(0,2);
-  ev.forEach(e => T("note", `<b>On the calendar.</b> ${esc(shortDate(e.date))} — ${esc(e.label)}.`));
-
-  let verdict;
-  if(st){
-    const strong = (st.ma50 != null && st.last >= st.ma50) && (st.ma200 != null && st.last >= st.ma200);
-    const weak = (st.ma50 != null && st.last < st.ma50) && (st.ma200 != null && st.last < st.ma200);
-    verdict = strong ? `Trend intact, ${st.rangePos.toFixed(0)}% up its 52-week range, ${pctS(p.dayPct)} today.`
-            : weak   ? `Trend broken on both clocks, ${st.rangePos.toFixed(0)}% up its 52-week range, ${pctS(p.dayPct)} today.`
-                     : `Mixed trend — one moving average holding, one not, ${pctS(p.dayPct)} today.`;
-  } else {
-    verdict = `${pctS(p.dayPct)} today, ${usd(p.marketValue,0)} on the book.`;
-  }
-  return { rows, verdict };
+  return cells.length ? `<div class="ins-strip">${cells.join("")}</div>` : "";
 }
 
 function renderInsightCard(){
@@ -10732,17 +10611,6 @@ function insClear(){
   P.insToken = (P.insToken || 0) + 1;
   document.querySelectorAll("#insPick .ins-chip").forEach(c => c.classList.remove("on"));
   const body = $("#insBody"); if(body) body.innerHTML = "";
-}
-
-function insStoryHTML(it, dim){
-  const tag = insNewsTag(it.title);
-  const img = it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" onerror="this.closest('.ins-story')?.classList.add('nophoto');this.remove()">` : "";
-  return `<a class="ins-story${img?"":" nophoto"}${dim?" ctx":""}" href="${esc(it.url)}" target="_blank" rel="noopener">
-    <span class="ins-story-img">${img}</span>
-    <span class="ins-story-b">
-      <span class="ins-story-m"><i class="ins-tag ${tag.cls}">${tag.label}</i>${esc(it.outlet || "")}${it.t ? ` · ${esc(nrAgo(it.t))}` : ""}</span>
-      <span class="ins-story-t">${esc(it.title)}</span>
-    </span></a>`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -10813,28 +10681,27 @@ function insTypewriter(el){
   tw.finish = () => { tw.done = true; if(!tw.raf) tw.raf = requestAnimationFrame(tick); };
   return tw;
 }
-function insTakeFacts(p, st, spy){
-  const f = [`Ticker: ${p.ticker}${p.name ? " (" + p.name + ")" : ""}`, `Sector/theme: ${sectorOf(p)}`,
-    `Last price: ${p.price != null ? "$" + (+p.price).toFixed(2) : "n/a"}, today ${p.dayPct != null ? (p.dayPct >= 0 ? "+" : "") + p.dayPct.toFixed(2) + "%" : "n/a"}`];
-  if(st){
-    if(st.r21 != null) f.push(`1-month ${st.r21.toFixed(1)}%, 3-month ${st.r63 != null ? st.r63.toFixed(1) + "%" : "n/a"}, 1-year ${st.r252 != null ? st.r252.toFixed(1) + "%" : "n/a"}`);
-    f.push(`52-week range $${st.lo.toFixed(2)}–$${st.hi.toFixed(2)} (now ${st.rangePos.toFixed(0)}% of the way up)`);
-    if(st.ma50 != null && st.ma200 != null) f.push(`50-day avg $${st.ma50.toFixed(2)}, 200-day avg $${st.ma200.toFixed(2)}`);
-  }
-  if(spy != null) f.push(`S&P 500 3-month: ${spy.toFixed(1)}%`);
+function insTakeFacts(p, st, ctx){
+  const f = [`Ticker: ${p.ticker}${p.name ? " (" + p.name + ")" : ""}, ${sectorOf(p)}`,
+    `Price now $${(+p.price).toFixed(2)}, today ${p.dayPct >= 0 ? "+" : ""}${(p.dayPct || 0).toFixed(2)}% (from yesterday's close $${(+p.prev).toFixed(2)})`];
+  if(ctx.mkt != null) f.push(`S&P 500 (SPY) today: ${ctx.mkt >= 0 ? "+" : ""}${ctx.mkt.toFixed(2)}%`);
+  if(ctx.sec && ctx.sec.pct != null) f.push(`Sector ETF ${ctx.sec.sym} today: ${ctx.sec.pct >= 0 ? "+" : ""}${ctx.sec.pct.toFixed(2)}%`);
+  if(st && st.dayVol) f.push(`A typical day for it is about ±${st.dayVol.toFixed(2)}%`);
+  if(isMutualFund(p.fetchSymbol || p.ticker) && !p.dayPct){ const nav = insLastNav(p, st); if(nav != null) f.push(`Mutual fund: today's NAV isn't out yet; its last NAV move was ${nav >= 0 ? "+" : ""}${nav.toFixed(2)}%`); }
+  f.push(`Time now: ${new Date().toLocaleString("en-US", {timeZone:"America/New_York", weekday:"short", hour:"numeric", minute:"2-digit"})} ET`);
   return f.join("\n");
 }
-async function insTakeClaude(p, st, spy, token, tw, setSub, setSrc){
+async function insTakeClaude(p, st, ctx, token, tw, setSub, setSrc){
   const key = insApiKey();
   const today = new Date().toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric", year:"numeric", timeZone:"America/New_York"});
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST",
     headers:{ "content-type":"application/json", "x-api-key":key, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
     body: JSON.stringify({
-      model: INS_MODEL, max_tokens: 700, stream: true,
-      tools: [{ type:"web_search_20250305", name:"web_search", max_uses:3 }],
-      system: `You are a sharp equity analyst briefing a financial advisor. Today is ${today}. Search the web for the most recent news on the holding, then explain in your own words — never paste or list headlines — why it moved recently and why the price sits where it does. Format: one bold bottom-line sentence, then 2–4 short "- " bullets naming the concrete drivers (earnings, guidance, analyst moves, macro, sector flows, fund flows for ETFs/mutual funds), each with when it happened. 90–150 words. If nothing company-specific broke, say it is trading with its sector/the market and say what drove that. No preamble, no disclaimers, no links in the text.`,
-      messages: [{ role:"user", content:`What's going on with ${p.ticker}? Here are the numbers I can see:\n${insTakeFacts(p, st, spy)}` }]
+      model: INS_MODEL, max_tokens: 450, stream: true,
+      tools: [{ type:"web_search_20250305", name:"web_search", max_uses:2 }],
+      system: `You answer one question for a financial advisor about a stock or fund he holds: why it moved today. Today is ${today}. Search the web for TODAY's news on it (and on its sector/the market if nothing company-specific broke), then answer in your own words. Format, strictly: one bold sentence that directly answers the question, saying whether the move is mostly the company or mostly the market/sector (use the S&P and sector numbers provided); then at most 2 short "- " bullets with the concrete driver(s) and when they hit. 40–80 words total. If nothing specific explains it, say plainly it is moving with the market/sector and name what is moving those today. No preamble, no disclaimers, no links, never list headlines.`,
+      messages: [{ role:"user", content:`${insQuestion(p, st)}\n\nWhat I can see:\n${insTakeFacts(p, st, ctx)}` }]
     })
   });
   if(!res.ok){
@@ -10872,52 +10739,54 @@ async function insTakeClaude(p, st, spy, token, tw, setSub, setSrc){
   tw.finish();
   return true;
 }
-/* No (working) key: a quick read composed in the browser. The price picture is written immediately; the news
-   lines follow the moment CNBC's search answers (well under a second). Before Oct 2026 nothing was written
-   until four sequential dead-proxy lookups had timed out -- often 2+ minutes of an empty card. */
-async function insTakeLocal(p, st, spy, token, tw, setSub, setSrc){
-  const up = p.dayPct >= 0, mv = Math.abs(p.dayPct || 0);
-  const typical = st && st.dayVol ? mv / st.dayVol : null;
-  const size = typical == null ? "" : typical < .6 ? "a quiet session" : typical < 1.4 ? "an ordinary-sized move" : typical < 2.5 ? "a big move for it" : "an outlier move";
-  const navPending = isMutualFund(p.fetchSymbol || p.ticker) && !(p.dayPct);
-  let head = navPending
-    ? `**${p.ticker} hasn't repriced yet today — mutual funds strike one price after the close, so today's move shows up this evening.**\n`
-    : `**${p.ticker} is ${up ? "up" : "down"} ${mv.toFixed(2)}% today${size ? " — " + size : ""}.**\n`;
-  if(st && spy != null && st.r63 != null){ const gap = st.r63 - spy; head += `- Over three months it has ${gap >= 0 ? "beaten" : "lagged"} the S&P 500 by ${Math.abs(gap).toFixed(1)} points.\n`; }
-  if(st) head += `- It sits ${st.rangePos.toFixed(0)}% of the way up its 52-week range, ${st.ma200 != null && st.last >= st.ma200 ? "above" : "below"} its 200-day average.\n`;
-  tw.push(head);
-  setSub("checking the latest headlines…");
+/* No (working) key: the same question answered in the browser. The market/sector comparison is instant; today's
+   CNBC headlines that name the holding follow a moment later. */
+async function insTakeLocal(p, st, ctx, token, tw, setSub, setSrc){
+  const fund = isMutualFund(p.fetchSymbol || p.ticker) && !p.dayPct;
+  const mv = fund ? insLastNav(p, st) : (p.dayPct || 0);
+  const dir = (mv || 0) >= 0 ? "up" : "down";
+  const ref = ctx.sec && ctx.sec.pct != null ? ctx.sec.pct : ctx.mkt;
+  let head;
+  if(fund) head = `**${p.ticker} is a mutual fund, so today's price isn't out until after the close; its last NAV was ${mv == null ? "flat" : (mv >= 0 ? "up " : "down ") + Math.abs(mv).toFixed(2) + "%"}${ctx.mkt != null ? `, and the S&P is ${pctS(ctx.mkt)} so far today` : ""}.**`;
+  else if(ref == null) head = `**${p.ticker} is ${dir} ${Math.abs(mv).toFixed(2)}% today.**`;
+  else {
+    const same = Math.sign(ref) === Math.sign(mv) && Math.abs(ref) >= Math.abs(mv) * 0.5;
+    const where = ctx.sec && ctx.sec.pct != null ? `${ctx.sec.label} (${ctx.sec.sym}) is ${pctS(ctx.sec.pct)}` : `the S&P is ${pctS(ctx.mkt)}`;
+    head = same
+      ? `**Mostly the market: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P is ${pctS(ctx.mkt)}` : ""}, so ${p.ticker}'s ${Math.abs(mv).toFixed(2)}% ${dir === "up" ? "gain" : "drop"} is largely moving with them.**`
+      : `**Mostly ${p.ticker} itself: ${where}${ctx.sec && ctx.mkt != null ? ` and the S&P ${pctS(ctx.mkt)}` : ""}, so most of its ${Math.abs(mv).toFixed(2)}% ${dir === "up" ? "gain" : "drop"} is company-specific.**`;
+  }
+  tw.push(head + "\n");
+  setSub("checking today's headlines…");
   let news = { own:[], context:[] };
-  try{ news = await withDeadline(insFetchNews(p), 8000, news); }catch(e){}
+  try{ news = await withDeadline(insFetchNews(p), 7000, news); }catch(e){}
   if(token !== P.insToken) return true;
-  const fresh = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 4*864e5);
+  const today = news.own.filter(x => x.t && Date.now() - x.t.getTime() < 36*3600e3);
   let more = "";
-  if(fresh.length){
-    const tags = {}; fresh.forEach(x => { const t = insNewsTag(x.title).label; tags[t] = (tags[t] || 0) + 1; });
-    const themes = Object.entries(tags).sort((a,b) => b[1]-a[1]).map(([k]) => k.toLowerCase()).filter(k => k !== "coverage").slice(0, 2);
-    more += `- In the news over the last few days: mostly ${themes.length ? themes.join(" and ") : "general coverage"}, across ${fresh.length} stor${fresh.length === 1 ? "y" : "ies"}. Latest: “${fresh[0].title}”.\n`;
-  } else {
-    more += `- Nothing company-specific broke in the last few days, so this looks like it's trading with ${sectorOf(p) === "Other" ? "the market" : "its " + sectorOf(p).toLowerCase() + " theme"}.\n`;
-    if(news.context[0]) more += `- Backdrop for the theme: “${news.context[0].title}”.\n`;
+  if(today.length) today.slice(0, 2).forEach(x => { more += `- ${x.outlet}, ${nrAgo(x.t)}: “${x.title}”\n`; });
+  else if(!fund) more += `- No ${p.ticker}-specific story in the last day — consistent with it trading on the broader move.\n`;
+  if(st && st.dayVol && p.dayPct && !fund){
+    const r = Math.abs(p.dayPct)/st.dayVol;
+    if(r >= 1.4) more += `- That's ${r.toFixed(1)}× its typical daily move, so something beyond normal noise is at work.\n`;
   }
   tw.push(more); tw.finish();
-  setSrc(news.own.concat(news.context).slice(0, 4).map(x => [x.url, (x.outlet ? x.outlet + ": " : "") + x.title]));
+  setSrc(today.slice(0, 3).map(x => [x.url, (x.outlet ? x.outlet + ": " : "") + x.title]));
   return true;
 }
-async function insTake(p, st, spy, token){
+async function insTake(p, st, ctx, token){
   const body = $("#insTakeB"), subEl = $("#insTakeS"), srcEl = $("#insTakeSrc"); if(!body) return;
   const setSub = t => { if(subEl && document.contains(subEl)) subEl.textContent = t; };
   const setSrc = list => { if(!srcEl || !document.contains(srcEl)) return;
     srcEl.innerHTML = list.length ? `<span>Sources</span>` + list.map(([u, t]) => { let host = ""; try{ host = new URL(u).hostname.replace(/^www\./, ""); }catch(e){}
       return `<a href="${esc(u)}" target="_blank" rel="noopener" title="${esc(t)}">${esc(host || t)}</a>`; }).join("") : ""; };
   const keyBtn = `<button class="ins-key-btn${insKeyBad() ? " warn" : ""}" id="insKeyBtn" type="button">${insKeyBad() ? "Replace Claude key" : insApiKey() ? "Claude key ✓" : "Turn on Claude"}</button>`;
-  const cacheKey = "dh-take:" + p.ticker;
+  const cacheKey = "dh-take:" + p.ticker + ":" + (p.dayPct || 0).toFixed(1);   // a different move is a different question
   let cached = null; try{ cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null"); }catch(e){}
   const tw = insTypewriter(body);
   const capture = tw.push; let all = "";
   tw.push = t => { all += t; capture(t); };
   const wire = () => { const b = $("#insKeyBtn"); if(b) b.addEventListener("click", insKeyPrompt); };
-  if(cached && !P.insForce && Date.now() - cached.at < 20*60e3 && cached.ai === insKeyUsable()){
+  if(cached && !P.insForce && Date.now() - cached.at < 10*60e3 && cached.ai === insKeyUsable()){
     body.innerHTML = ""; tw.push(cached.text); tw.finish(); setSrc(cached.src || []);
     setSub(`${cached.ai ? "Claude" : "Quick read"} · ${new Date(cached.at).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}`);
     srcEl.insertAdjacentHTML("beforeend", keyBtn); wire(); return;
@@ -10929,7 +10798,7 @@ async function insTake(p, st, spy, token){
   try{
     body.innerHTML = `<span class="ins-think"><i></i><i></i><i></i></span>`;
     let first = true; const push0 = tw.push; tw.push = t => { if(first){ body.innerHTML = ""; first = false; } push0(t); };
-    ok = ai ? await insTakeClaude(p, st, spy, token, tw, setSub, setSrc2) : await insTakeLocal(p, st, spy, token, tw, setSub, setSrc2);
+    ok = ai ? await insTakeClaude(p, st, ctx, token, tw, setSub, setSrc2) : await insTakeLocal(p, st, ctx, token, tw, setSub, setSrc2);
   }catch(e){
     if(token !== P.insToken) return;
     if(ai){
@@ -10941,7 +10810,7 @@ async function insTake(p, st, spy, token){
         "Claude error: " + String(e.message || e).slice(0, 80) + " — quick read below";
       console.warn("Daily Hub AI Insight:", e.status || "", e.message || e);
       ai = false; body.innerHTML = "";
-      try{ ok = await insTakeLocal(p, st, spy, token, tw, () => {}, setSrc2); }catch(e2){}
+      try{ ok = await insTakeLocal(p, st, ctx, token, tw, () => {}, setSrc2); }catch(e2){}
       if(token === P.insToken){ setSub(why); P._insWhy = why; }
     }
   }
@@ -10998,45 +10867,28 @@ async function insGenerate(ticker){
     }catch(e){}
     if(token !== P.insToken) return;
   }
-  const spyS = insSeries("SPY");
-  const built = insBuild(p, st, spyS ? spyS.r63 : null);
+  const ctx = await insContext(p);
+  if(token !== P.insToken) return;
   const up = p.dayPct >= 0;
 
-  /* Paint everything that needs no network first, then drop the headlines in when they land —
-     the price picture should never sit behind a news request. */
   body.innerHTML = `<div class="ins-head">
       <span class="mk" style="background:${pcolor(p.ticker)}">${esc(String(p.ticker).slice(0,3))}${logoImg(p.ticker)}</span>
       <span class="ins-head-t"><b>${esc(p.ticker)}${p.name ? " · " + esc(p.name) : ""}</b><span>${esc(sectorOf(p))} · ${usd(p.marketValue,0)} held</span></span>
       <span class="ins-head-px"><b class="${up?"pos":"neg"}">${usd(p.price)}</b><span class="${up?"pos":"neg"}">${esc(pctS(p.dayPct))} · ${esc(usdS(p.dayDollar))}</span></span>
       <button class="ins-regen" id="insRegen">⟳ Redo</button>
     </div>
-    <div class="ins-hero">${insSpark(st, up)}<div class="ins-hero-cap"><span>Last 90 trading days</span><b>${esc(built.verdict)}</b></div></div>
     <div class="ins-take" id="insTake">
       <div class="ins-take-h"><span class="ins-take-ic"><svg viewBox="0 0 24 24"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/></svg></span>
-        <b>What's going on with ${esc(p.ticker)}</b><span class="ins-take-s" id="insTakeS">searching the latest news…</span></div>
+        <b>${esc(insQuestion(p, st))}</b><span class="ins-take-s" id="insTakeS">searching today's news…</span></div>
       <div class="ins-take-b" id="insTakeB"><span class="ins-think"><i></i><i></i><i></i></span></div>
       <div class="ins-take-src" id="insTakeSrc"></div>
     </div>
-    ${insVisuals(p, st, spyS ? spyS.r63 : null)}
-    <details class="ins-more"><summary>Full written read — every number behind the picture</summary>
-      <div class="ins-more-b" id="insMoreB">
-        ${built.rows.map(r => `<div class="ins-row"><i style="background:${r.c}"></i><div>${r.txt}</div></div>`).join("")}
-      </div></details>
-    <p class="ins-foot">The take is searched and written live when you click; the price read is written in your browser at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} from the live quote, five years of daily closes and your own cost basis. News next to a move is not proof it caused it. Educational only — not investment advice.</p>`;
+    ${insStrip(p, st, ctx)}
+    <p class="ins-foot">Written live when you click · news next to a move isn't proof it caused it · educational only, not investment advice.</p>`;
 
   const rb = $("#insRegen");
   if(rb) rb.addEventListener("click", () => { P.insForce = true; insGenerate(ticker); });
-
-  /* the take: Claude searches and writes it live, streamed word by word */
-  insTake(p, st, spyS ? spyS.r63 : null, token);
-
-  /* anything the published briefs already said, folded into the written read */
-  let notes = [];
-  try{ notes = await insBriefNotes(ticker); }catch(e){}
-  if(token !== P.insToken || !notes.length) return;
-  const mb = $("#insMoreB");
-  if(mb) notes.forEach(n => mb.insertAdjacentHTML("beforeend",
-    `<div class="ins-row"><i style="background:var(--gold)"></i><div><b>From your ${esc(shortDate(n.date))} brief.</b> ${esc(n.lead)} ${esc(n.body)}</div></div>`));
+  insTake(p, st, ctx, token);
 }
 
 /* ---------------------------------------------------------------------------

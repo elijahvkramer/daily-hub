@@ -191,6 +191,18 @@ const nyClock = ts => new Date(ts*1000).toLocaleTimeString("en-US", {timeZone:"A
     assert.ok(!/fetchHistSym\(s, "max"\)/.test(html), "ALL no longer walks the proxies one symbol at a time");
   });
 
+  await test("AI Insight asks and answers 'why did it move today' -- no full written read, no extra cards", () => {
+    const qsrc = [grabLine("const isMutualFund"), grabFunction("insLastNav"), grabFunction("insQuestion"), "this.q = insQuestion;"].join("\n");
+    const c2 = { Math }; vm.createContext(c2); vm.runInContext(qsrc, c2);
+    assert.strictEqual(c2.q({ticker:"AAPL", dayPct:0.4321}, null), "Why is AAPL up 0.43% today?");
+    assert.strictEqual(c2.q({ticker:"INTC", dayPct:-5.79}, null), "Why is INTC down 5.79% today?");
+    assert.strictEqual(c2.q({ticker:"BPTRX", dayPct:0}, {closes:[100, 101]}), "Why did BPTRX rise 1.00% on its last price?");
+    const gen = grabFunction("insGenerate");
+    assert.ok(/insQuestion\(p, st\)/.test(gen), "the card's heading is the question");
+    assert.ok(!/ins-more|Full written read|insVisuals|ins-hero/.test(gen), "removed sections stay removed");
+    assert.ok(/why it moved today/.test(grabFunction("insTakeClaude")), "Claude is asked the why-today question");
+  });
+
   console.log(results.join("\n"));
   console.log(failed ? `\n${failed} FAILED` : `\n${results.length} tests passed`);
   process.exit(failed ? 1 : 0);

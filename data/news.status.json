@@ -1,32 +1,32 @@
 {
- "updated": "2026-10-16T09:28:59+00:00",
- "date": "2026-10-15",
- "items": 29,
- "had_photos": 29,
+ "updated": "2026-10-16T09:44:23+00:00",
+ "date": "2026-10-16",
+ "items": 26,
+ "had_photos": 26,
  "filled_this_run": 0,
  "from_feed": 0,
  "from_article": 0,
  "from_wikipedia": 0,
  "feed_pool": 0,
  "videos": 0,
- "with_video": 2,
+ "with_video": 0,
  "still_missing": 0,
  "section_counts": {
   "US Military & Foreign Conflict": 4,
   "Politics & Policy": 4,
-  "Tech & AI": 5,
+  "Tech & AI": 4,
   "Major International Headlines": 4,
   "Random": 4,
-  "Sports": 8
+  "Sports": 6
  },
  "dropped_stale": 0,
- "topped_up": 0,
- "guard_feeds_ok": 0,
+ "topped_up": 1,
+ "guard_feeds_ok": 43,
  "still_thin": [],
- "details_added": 0,
+ "details_added": 1,
  "sports_groups": {
-  "Favorites": 4,
-  "General": 4
+  "Favorites": 3,
+  "General": 3
  },
  "repairs": 0
 }

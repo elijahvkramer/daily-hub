@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-17T09:22:10+00:00",
- "date": "2026-10-16",
+ "updated": "2026-10-17T09:28:06+00:00",
+ "date": "2026-10-17",
  "items": 26,
  "had_photos": 26,
  "filled_this_run": 0,
@@ -17,7 +17,7 @@
   "Tech & AI": 4,
   "Major International Headlines": 4,
   "Random": 4,
-  "Sports": 6
+  "Sports": 5
  },
  "dropped_stale": 0,
  "topped_up": 0,
@@ -26,7 +26,10 @@
  "details_added": 0,
  "sports_groups": {
   "Favorites": 3,
-  "General": 3
+  "General": 2
  },
- "repairs": 0
+ "repairs": 0,
+ "fixes": 0,
+ "auto_edition": false,
+ "enforced_by": "enforce_news.py"
 }

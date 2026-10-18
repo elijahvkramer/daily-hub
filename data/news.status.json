@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-18T09:23:18+00:00",
- "date": "2026-10-17",
+ "updated": "2026-10-18T09:38:59+00:00",
+ "date": "2026-10-18",
  "items": 25,
  "had_photos": 24,
  "filled_this_run": 0,
@@ -28,5 +28,8 @@
   "Favorites": 3,
   "General": 2
  },
- "repairs": 0
+ "repairs": 0,
+ "fixes": 0,
+ "auto_edition": false,
+ "enforced_by": "enforce_news.py"
 }

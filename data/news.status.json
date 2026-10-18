@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-18T09:40:19+00:00",
+ "updated": "2026-10-18T09:53:00+00:00",
  "date": "2026-10-18",
  "items": 25,
- "had_photos": 18,
- "filled_this_run": 7,
+ "had_photos": 25,
+ "filled_this_run": 0,
  "from_feed": 0,
- "from_article": 7,
+ "from_article": 0,
  "from_wikipedia": 0,
  "feed_pool": 0,
  "videos": 0,
@@ -23,7 +23,7 @@
  "topped_up": 0,
  "guard_feeds_ok": 0,
  "still_thin": [],
- "details_added": 1,
+ "details_added": 0,
  "sports_groups": {
   "Favorites": 3,
   "General": 2

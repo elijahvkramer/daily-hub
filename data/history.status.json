@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18T20:40:43+00:00",
+ "updated": "2026-10-19T02:41:38+00:00",
  "v": 6,
  "series": 25,
  "sources": {
@@ -11,7 +11,7 @@
  },
  "invalid": 0,
  "pointsPerYear": {
-  "min": 172,
+  "min": 171,
   "median": 251
  }
 }

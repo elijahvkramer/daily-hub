@@ -1,13 +1,13 @@
 {
- "updated": "2026-10-20T09:28:55+00:00",
+ "updated": "2026-10-20T09:32:37+00:00",
  "date": "2026-10-20",
  "items": 26,
- "had_photos": 26,
- "filled_this_run": 0,
+ "had_photos": 24,
+ "filled_this_run": 2,
  "from_feed": 0,
  "from_article": 0,
- "from_wikipedia": 0,
- "feed_pool": 0,
+ "from_wikipedia": 2,
+ "feed_pool": 139,
  "videos": 0,
  "with_video": 0,
  "still_missing": 0,
@@ -28,8 +28,5 @@
   "Favorites": 2,
   "General": 3
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

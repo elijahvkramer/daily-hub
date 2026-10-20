@@ -300,4 +300,66 @@ test("field.restore wins over pending edits queued before it (reviewer repro)", 
   assert.deepStrictEqual(srv.docs.todos.now.hidden, ["cal:x"]);
 });
 
+
+/* ---------- scripture memory (friends/main -> bible) ---------- */
+const VERSE = { id: "jhn-3-16", ref: "John 3:16", book: "jhn", c1: 3, v1: 16, c2: 3, v2: 16, text: "For God so loved the world", verses: [{ c: 3, v: 16, t: "For God so loved the world" }], tr: "ESV", addedAt: 1 };
+
+test("bible: same verse added on two devices is one entry; friends untouched", () => {
+  const srv = new Server({ friends: { people: [{ id: "p1", name: "A" }] } });
+  const a = new Device(srv), b = new Device(srv);
+  a.do("friends", { t: "bible.add", verse: VERSE });
+  b.do("friends", { t: "bible.add", verse: { ...VERSE, addedAt: 2 } });
+  a.flush("friends"); b.flush("friends");
+  assert.deepStrictEqual(Object.keys(srv.docs.friends.bible.verses), ["jhn-3-16"]);
+  assert.strictEqual(srv.docs.friends.bible.verses["jhn-3-16"].addedAt, 1);
+  assert.strictEqual(srv.docs.friends.people.length, 1);
+});
+
+test("bible: a replayed review counts once (lost ack)", () => {
+  const srv = new Server({ friends: { people: [], bible: { verses: { [VERSE.id]: VERSE } } } });
+  const op = { t: "bible.review", id: VERSE.id, rid: "r1", q: 4, at: 1000, day: "2026-10-20", xp: 12, mode: "type", acc: 96 };
+  srv.commit("friends", [op]); srv.commit("friends", [op]);
+  const v = srv.docs.friends.bible.verses[VERSE.id];
+  assert.strictEqual(v.srs.n, 1); assert.strictEqual(v.srs.reps, 1);
+  assert.deepStrictEqual(srv.docs.friends.bible.days["2026-10-20"], { xp: 12, n: 1 });
+  assert.strictEqual(v.srs.best.type, 96);
+});
+
+test("bible: reviews from two devices both land; schedule grows then lapses", () => {
+  const srv = new Server({ friends: { people: [], bible: { verses: { [VERSE.id]: VERSE } } } });
+  const a = new Device(srv), b = new Device(srv);
+  a.do("friends", { t: "bible.review", id: VERSE.id, rid: "a1", q: 5, at: 0, day: "2026-10-20", xp: 10 });
+  b.do("friends", { t: "bible.review", id: VERSE.id, rid: "b1", q: 4, at: 5 * 86400000, day: "2026-10-25", xp: 8 });
+  a.flush("friends"); b.flush("friends");
+  let s = srv.docs.friends.bible.verses[VERSE.id].srs;
+  assert.strictEqual(s.n, 2); assert.strictEqual(s.reps, 2); assert.strictEqual(s.ivl, 3);
+  srv.commit("friends", [{ t: "bible.review", id: VERSE.id, rid: "c1", q: 1, at: 9 * 86400000 }]);
+  s = srv.docs.friends.bible.verses[VERSE.id].srs;
+  assert.strictEqual(s.reps, 0); assert.strictEqual(s.lapses, 1); assert.ok(s.due - 9 * 86400000 <= 15 * 60000);
+  assert.ok(s.ef >= 1.3);
+});
+
+test("bible: practising early doesn't stretch the interval, a slip still counts", () => {
+  let s = S.bibleSchedule({}, 4, 0);                       // first review: 1 day
+  s = S.bibleSchedule(s, 5, s.due);                        // on time: grows
+  const ivl = s.ivl, due = s.due;
+  const e = S.bibleSchedule(s, 5, due - 2 * 86400000);     // two days early
+  assert.strictEqual(e.ivl, ivl); assert.strictEqual(e.due, due); assert.strictEqual(e.n, s.n + 1);
+  const f = S.bibleSchedule(s, 1, due - 2 * 86400000);     // early but forgot
+  assert.strictEqual(f.reps, 0); assert.strictEqual(f.lapses, 1);
+});
+
+test("bible: schedule intervals expand and cap; remove + patch", () => {
+  let s = {}; let at = 0;
+  for(let i = 0; i < 12; i++){ s = S.bibleSchedule(s, 5, at); at = s.due; }
+  assert.ok(s.ivl <= 365 && s.ivl > 60);
+  const d = S.project("friends", { people: [], bible: { verses: { [VERSE.id]: VERSE } } }, [
+    { t: "bible.patch", id: VERSE.id, set: { note: "memorize by Sunday", srs: "no" } },
+    { t: "bible.review", id: "missing", rid: "x", q: 4 }]);
+  assert.strictEqual(d.bible.verses[VERSE.id].note, "memorize by Sunday");
+  assert.strictEqual(d.bible.verses[VERSE.id].srs, undefined);
+  const e = S.project("friends", d, [{ t: "bible.remove", id: VERSE.id }]);
+  assert.deepStrictEqual(e.bible.verses, {});
+});
+
 console.log(`\n${n} sync tests passed`);

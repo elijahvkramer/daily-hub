@@ -2128,6 +2128,7 @@
     html.glass .tab-ic[data-ic="folio"]{--ic:calc(var(--h) + 196)}
     html.glass .tab-ic[data-ic="wx"]{--ic:calc(var(--h) + 42)}
     html.glass .tab-ic[data-ic="friends"]{--ic:calc(var(--h) + 264)}
+    html.glass .tab-ic[data-ic="verses"]{--ic:calc(var(--h) + 228)}
     html.glass .tab-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     html.glass .tab-sub{font-size:14px;font-weight:700;color:var(--ink)}
     html.glass .tab-sub-v{display:block;font-size:10.5px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em}
@@ -3914,6 +3915,463 @@ html.sky :is(.ag-nowpill){text-transform:none;letter-spacing:-.003em;font-size:1
 html.sky :is(.todo-card .ti-divider){text-transform:none;letter-spacing:-.003em;font-size:11.5px}
 html.sky :is(.ti-note-label){text-transform:none;letter-spacing:-.003em;font-size:11px}
 </style>
+<!-- VERSES:CSS -->
+<style id="vs-css">
+/* ================= Verses — scripture memory ================= */
+:root{
+  --vs-acc:var(--accent,var(--gold));--vs-acc-d:var(--accent-dark,var(--gold-dark));--vs-acc-s:var(--accent-soft,var(--gold-soft));
+  --vs-serif:'Newsreader','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --vs-amber:#C7820A;--vs-good:var(--up,#12855C);--vs-bad:var(--down,#D2453C);--vs-violet:#7C5CE0;--vs-teal:#0E9488;
+  --vs-r:var(--r-card,22px);--vs-solid:var(--modal-solid,var(--card,#fff));
+}
+html[data-mode="dark"],:root[data-theme="night"]{--vs-amber:#F2B640;--vs-violet:#A894FF;--vs-teal:#3FD1C2}
+html.vs-locked,html.vs-locked body{overflow:hidden}
+#panel-verses .vs{display:flex;flex-direction:column;gap:18px;padding-bottom:30px}
+.vs-ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vs-ic.big{width:44px;height:44px;stroke-width:1.5}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.vs-dash,.vs-add,.vs-lib,.vs-hero-card,.vs-modes,.vs-note{background:var(--card);border:1px solid var(--glass-edge,var(--hairline));border-radius:var(--vs-r);box-shadow:var(--shadow);
+  -webkit-backdrop-filter:var(--glass-blur,none);backdrop-filter:var(--glass-blur,none)}
+
+/* ---------- buttons ---------- */
+.vs-btn{appearance:none;font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;
+  border:1px solid var(--hairline);background:transparent;color:var(--ink);transition:transform .15s cubic-bezier(.3,1.4,.5,1),background .18s,box-shadow .18s,border-color .18s,opacity .18s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.vs-btn:hover{border-color:var(--vs-acc);color:var(--vs-acc-d)}
+.vs-btn:active{transform:scale(.96)}
+.vs-btn:disabled{opacity:.4;cursor:default;transform:none}
+.vs-btn.primary{background:var(--vs-acc);border-color:transparent;color:#fff;box-shadow:0 8px 22px -10px color-mix(in srgb,var(--vs-acc) 80%,transparent)}
+html[data-mode="dark"] .vs-btn.primary{color:#06121f}
+.vs-btn.primary:hover{color:#fff;filter:brightness(1.06);box-shadow:0 12px 28px -10px color-mix(in srgb,var(--vs-acc) 85%,transparent)}
+html[data-mode="dark"] .vs-btn.primary:hover{color:#06121f}
+.vs-btn.ghost{background:color-mix(in srgb,var(--card) 70%,transparent)}
+.vs-btn.lg{padding:13px 22px;font-size:15px}
+.vs-count{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.24);font-size:13px}
+.vs-icon-btn{appearance:none;border:1px solid var(--hairline);background:color-mix(in srgb,var(--card) 70%,transparent);color:var(--ink);width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;transition:all .18s;flex:none}
+.vs-icon-btn:hover,.vs-icon-btn.on{border-color:var(--vs-acc);color:var(--vs-acc-d);background:color-mix(in srgb,var(--vs-acc) 9%,transparent)}
+.vs-mini-btn{appearance:none;font:inherit;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 12px 6px 9px;border-radius:999px;border:1px solid transparent;
+  background:color-mix(in srgb,var(--vs-acc) 11%,transparent);color:var(--vs-acc-d);cursor:pointer;transition:all .18s}
+.vs-mini-btn .vs-ic{width:14px;height:14px}
+.vs-mini-btn:hover{background:var(--vs-acc);color:#fff}
+.vs-pill-btn{appearance:none;font:inherit;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--hairline);background:color-mix(in srgb,var(--card) 80%,transparent);color:var(--ink);transition:all .18s}
+.vs-pill-btn:hover{border-color:var(--vs-acc)}
+.vs-pill-btn.on{background:color-mix(in srgb,var(--vs-acc) 12%,transparent);border-color:color-mix(in srgb,var(--vs-acc) 50%,transparent);color:var(--vs-acc-d)}
+.vs-seg{display:inline-flex;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent);gap:2px;flex-wrap:wrap}
+.vs-seg button{appearance:none;font:inherit;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;transition:all .18s}
+.vs-seg button span{font-size:11px;font-weight:800;opacity:.65;font-variant-numeric:tabular-nums}
+.vs-seg button.on{background:var(--vs-solid);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 12px -6px rgba(0,0,0,.2)}
+.vs-seg.sm button{font-size:12.5px;padding:6px 12px}
+.vs-seg.center{display:flex;width:max-content;margin:0 auto 18px}
+.vs-select select{appearance:none;font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--card) 70%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border:1px solid var(--hairline);border-radius:12px;padding:9px 32px 9px 12px;cursor:pointer}
+.vs-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;margin-top:6px}
+.vs-pill.t-new{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+.vs-pill.t-learn{background:color-mix(in srgb,var(--vs-amber) 15%,transparent);color:var(--vs-amber)}
+.vs-pill.t-fam{background:color-mix(in srgb,var(--vs-acc) 14%,transparent);color:var(--vs-acc-d)}
+.vs-pill.t-mem{background:color-mix(in srgb,var(--vs-good) 15%,transparent);color:var(--vs-good)}
+.vs-badge{font-size:10px;font-weight:900;letter-spacing:.12em;padding:3px 7px;border-radius:6px;border:1px solid var(--hairline);color:var(--muted)}
+.vs-ref{font-family:var(--disp,var(--dh-font));font-weight:600;font-size:17px;letter-spacing:-.015em;color:var(--ink);line-height:1.2}
+.vs-ref.xl{font-size:clamp(26px,3vw,36px);font-weight:500;letter-spacing:-.03em;margin:0}
+.vs-scripture{font-family:var(--vs-serif);color:var(--ink);font-optical-sizing:auto;text-wrap:pretty}
+.vs-scripture sup{font-family:var(--dh-font);font-size:.5em;font-weight:800;color:var(--vs-acc-d);margin-right:.25em;vertical-align:.7em;letter-spacing:0}
+.vs-ring .trk{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent)}
+.vs-ring .bar{fill:none;stroke:var(--vs-acc);stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
+.vs-ring.res .bar{animation:vsRing 1.1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes vsRing{from{stroke-dashoffset:var(--c)}}
+
+/* ---------- dashboard ---------- */
+.vs-dash{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.35fr) auto minmax(0,1fr);gap:28px;align-items:center;padding:26px 28px}
+.vs-dash::before{content:"";position:absolute;inset:-50% -10% auto auto;width:60%;height:170%;pointer-events:none;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--vs-acc) 14%,transparent),transparent);opacity:.9}
+.vs-dash > *{position:relative}
+.vs-kicker{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--vs-acc-d)}
+.vs-kicker .vs-ic{width:15px;height:15px}
+.vs-dash-h{font-family:var(--disp,var(--dh-font));font-size:clamp(24px,2.5vw,32px);font-weight:500;letter-spacing:-.03em;line-height:1.12;margin:8px 0 6px;color:var(--ink)}
+.vs-dash-p{color:var(--muted);font-size:14.5px;line-height:1.55;max-width:46ch}
+.vs-dash-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.vs-dash-side{display:flex;align-items:center;gap:22px}
+.vs-goal{position:relative;width:112px;height:112px;flex:none}
+.vs-goal-in{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.vs-goal-in b{font-family:var(--disp,var(--dh-font));font-size:28px;font-weight:500;letter-spacing:-.03em;line-height:1;color:var(--ink)}
+.vs-goal-in span{font-size:11px;font-weight:700;color:var(--muted);margin-top:3px}
+.vs-stats{display:flex;flex-direction:column;gap:14px}
+.vs-stat{display:flex;align-items:center;gap:11px}
+.vs-stat .vs-ic{width:34px;height:34px;padding:8px;border-radius:11px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted);box-sizing:border-box}
+.vs-stat.lit .vs-ic{background:color-mix(in srgb,#F08A24 16%,transparent);color:#E8751A}
+.vs-stat b{display:block;font-family:var(--disp,var(--dh-font));font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1;color:var(--ink)}
+.vs-stat b em{font-style:normal;font-size:14px;color:var(--muted);font-weight:500}
+.vs-stat span{font-size:12px;color:var(--muted);font-weight:600}
+.vs-mini-h{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.vs-heat{display:flex;gap:3px;justify-content:flex-start}
+.vs-heat-col{display:flex;flex-direction:column;gap:3px}
+.vs-heat i{width:11px;height:11px;border-radius:3px;background:color-mix(in srgb,var(--ink) 7%,transparent);display:block}
+.vs-heat i.l1{background:color-mix(in srgb,var(--vs-acc) 30%,transparent)}
+.vs-heat i.l2{background:color-mix(in srgb,var(--vs-acc) 52%,transparent)}
+.vs-heat i.l3{background:color-mix(in srgb,var(--vs-acc) 76%,transparent)}
+.vs-heat i.l4{background:var(--vs-acc)}
+.vs-heat i.fut{opacity:.25}
+.vs-heat i.now{outline:1.5px solid var(--vs-acc-d);outline-offset:1px}
+
+/* ---------- add ---------- */
+.vs-add{padding:22px 24px 20px}
+.vs-add-h,.vs-lib-bar,.vs-modes-h{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.vs-add-h h3,.vs-lib-bar h3,.vs-modes-h h3{font-family:var(--disp,var(--dh-font));font-size:19px;font-weight:600;letter-spacing:-.02em;margin:0;color:var(--ink)}
+.vs-search{display:flex;align-items:center;gap:10px;margin-top:14px;padding:4px 6px 4px 16px;border-radius:16px;border:1.5px solid var(--hairline);background:color-mix(in srgb,var(--card) 80%,transparent);transition:border-color .18s,box-shadow .18s;cursor:text}
+.vs-search:focus-within{border-color:var(--vs-acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--vs-acc) 14%,transparent)}
+.vs-search > .vs-ic{color:var(--muted)}
+.vs-search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font:inherit;font-size:16.5px;font-weight:600;color:var(--ink);padding:12px 0}
+.vs-search input::placeholder{color:var(--muted);font-weight:500;opacity:.8}
+.vs-parse em{display:inline-flex;align-items:center;gap:6px;font-style:normal;font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:999px;white-space:nowrap}
+.vs-parse em .vs-ic{width:14px;height:14px}
+.vs-parse em.ok{background:color-mix(in srgb,var(--vs-good) 12%,transparent);color:var(--vs-good)}
+.vs-parse em.bad{background:color-mix(in srgb,var(--vs-amber) 13%,transparent);color:var(--vs-amber)}
+.vs-preview:empty{display:none}
+.vs-pv{margin-top:14px;padding:20px 22px;border-radius:18px;background:linear-gradient(160deg,color-mix(in srgb,var(--vs-acc) 7%,transparent),transparent 70%);border:1px solid color-mix(in srgb,var(--vs-acc) 22%,var(--hairline));animation:vsUp .35s cubic-bezier(.2,.8,.2,1) both}
+.vs-pv-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.vs-pv-text{font-size:clamp(18px,1.9vw,21px);line-height:1.6;max-height:14.5em;overflow:auto}
+.vs-pv-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+.vs-meta,.vs-f-note{font-size:12.5px;font-weight:600;color:var(--muted)}
+.vs-pv-act{display:flex;gap:8px;flex-wrap:wrap}
+.vs-pv-err p{color:var(--ink);font-weight:600;margin-bottom:12px}
+.vs-pv-err textarea,.vs-note textarea{width:100%;font:inherit;font-family:var(--vs-serif);font-size:17px;line-height:1.5;color:var(--ink);background:color-mix(in srgb,var(--card) 85%,transparent);border:1.5px solid var(--hairline);border-radius:14px;padding:12px 14px;resize:vertical;outline:none;margin-bottom:12px;box-sizing:border-box}
+.vs-pv-err textarea:focus,.vs-note textarea:focus{border-color:var(--vs-acc)}
+.vs-pv-load{display:flex;flex-direction:column;gap:11px}
+.sk{height:15px;border-radius:8px;background:linear-gradient(90deg,color-mix(in srgb,var(--ink) 7%,transparent) 0,color-mix(in srgb,var(--ink) 13%,transparent) 50%,color-mix(in srgb,var(--ink) 7%,transparent) 100%);background-size:200% 100%;animation:vsShim 1.2s linear infinite}
+.sk.w40{width:40%;height:19px}.sk.w70{width:70%}
+@keyframes vsShim{to{background-position:-200% 0}}
+.vs-suggest{margin-top:16px}
+.vs-themes{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px}
+.vs-themes::-webkit-scrollbar{display:none}
+.vs-themes button{appearance:none;font:inherit;border:none;background:none;font-size:13px;font-weight:700;color:var(--muted);padding:6px 10px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.vs-themes button.on{color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.vs-chips{display:flex;flex-wrap:wrap;gap:8px}
+.vs-chip{appearance:none;font:inherit;display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--hairline);background:color-mix(in srgb,var(--card) 75%,transparent);color:var(--ink);transition:all .18s;animation:vsUp .3s both}
+.vs-chip:hover{border-color:var(--vs-acc);color:var(--vs-acc-d);transform:translateY(-1px)}
+.vs-chip.got{color:var(--vs-good);border-color:color-mix(in srgb,var(--vs-good) 35%,transparent)}
+.vs-chip .vs-ic{width:14px;height:14px}
+
+/* ---------- library ---------- */
+.vs-lib{padding:22px 24px}
+.vs-lib-bar{flex-wrap:wrap;margin-bottom:16px}
+.vs-lib-bar h3{margin-right:auto}
+.vs-lib-tools{display:flex;gap:8px;align-items:center}
+.vs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.vs-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:12px;padding:18px 18px 14px;border-radius:18px;cursor:pointer;
+  background:color-mix(in srgb,var(--card) 82%,transparent);border:1px solid var(--hairline);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;animation:vsUp .35s both;outline:none}
+.vs-card:hover,.vs-card:focus-visible{transform:translateY(-3px);border-color:color-mix(in srgb,var(--vs-acc) 45%,var(--hairline));box-shadow:0 18px 36px -22px color-mix(in srgb,var(--vs-acc) 60%,rgba(0,0,0,.4))}
+.vs-card.due::after{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--vs-acc)}
+.vs-card.just-added{animation:vsAdded 1.4s ease both}
+@keyframes vsAdded{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--vs-acc) 50%,transparent)}40%{box-shadow:0 0 0 8px color-mix(in srgb,var(--vs-acc) 0%,transparent)}}
+.vs-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.vs-card-ring{position:relative;width:46px;height:46px;flex:none}
+.vs-card-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:12.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.vs-card-text{font-size:16.5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;transition:filter .25s,opacity .25s}
+.vs-grid.covered .vs-card-text{filter:blur(6px);opacity:.55;user-select:none}
+.vs-grid.covered .vs-card:hover .vs-card-text{filter:none;opacity:1}
+.vs-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+.vs-due{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.vs-due .vs-ic{width:14px;height:14px}
+.vs-due.now{color:var(--vs-acc-d)}
+.vs-empty{padding:30px;text-align:center;color:var(--muted);font-weight:600}
+.vs-legal{font-size:11px;line-height:1.5;color:var(--muted);text-align:center;max-width:720px;margin:4px auto 0;opacity:.85}
+.vs-loading{display:grid;place-items:center;gap:12px;padding:60px 0;color:var(--muted)}
+
+/* ---------- verse detail ---------- */
+.vs-back{appearance:none;font:inherit;align-self:flex-start;display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--glass-edge,var(--hairline));padding:8px 14px 8px 9px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow)}
+.vs-back:hover{color:var(--vs-acc-d)}
+.vs-hero-card{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:30px;padding:30px 32px;position:relative;overflow:hidden}
+.vs-hero-card::before{content:"";position:absolute;inset:auto auto -40% -10%;width:55%;height:120%;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--vs-acc) 10%,transparent),transparent)}
+.vs-hero-card > *{position:relative}
+.vs-hero-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vs-hero-top .vs-pill{margin-top:0}
+.vs-hero-text{font-size:clamp(21px,2.3vw,27px);line-height:1.62;margin:18px 0 22px}
+.vs-hero-text .w{border-radius:5px;transition:background .15s,color .15s;padding:0 1px}
+.vs-hero-text .w.on{background:color-mix(in srgb,var(--vs-acc) 20%,transparent);color:var(--vs-acc-d)}
+.vs-hero-tools{display:flex;gap:6px;flex-wrap:wrap}
+.vs-tool{appearance:none;font:inherit;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:1px solid transparent;padding:8px 12px;border-radius:999px;cursor:pointer;transition:all .18s}
+.vs-tool:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.vs-tool.on{color:var(--vs-acc-d);background:color-mix(in srgb,var(--vs-acc) 11%,transparent)}
+.vs-tool.danger:hover{color:var(--vs-bad);background:color-mix(in srgb,var(--vs-bad) 9%,transparent)}
+.vs-hero-side{display:flex;flex-direction:column;align-items:center;gap:18px;padding-left:28px;border-left:1px solid var(--hairline)}
+.vs-big-ring{position:relative;width:148px;height:148px}
+.vs-big-ring > div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.vs-big-ring b{font-family:var(--disp,var(--dh-font));font-size:40px;font-weight:400;letter-spacing:-.04em;line-height:1;color:var(--ink)}
+.vs-big-ring b small{font-size:18px;color:var(--muted)}
+.vs-big-ring span{font-size:12px;font-weight:700;color:var(--muted)}
+.vs-facts{width:100%;display:grid;gap:10px;margin:0}
+.vs-facts div{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.vs-facts dt{color:var(--muted);font-weight:600}
+.vs-facts dd{margin:0;color:var(--ink);font-weight:700;text-align:right}
+.vs-facts dd em{font-style:normal;color:var(--vs-amber)}
+.vs-modes{padding:22px 24px}
+.vs-modes-h span{font-size:13px;color:var(--muted);font-weight:600}
+.vs-modes-h b{color:var(--vs-acc-d)}
+.vs-mode-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+@media(max-width:1100px){.vs-mode-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.vs-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vs-mode{--tc:var(--vs-acc);appearance:none;font:inherit;text-align:left;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;cursor:pointer;
+  border:1px solid var(--hairline);background:color-mix(in srgb,var(--card) 80%,transparent);color:var(--ink);transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s;animation:vsUp .35s both}
+.vs-mode[data-mode="learn"]{--tc:var(--vs-teal)}.vs-mode[data-mode="type"],.vs-mode[data-mode="speak"]{--tc:var(--vs-violet)}
+.vs-mode:hover:not(:disabled){transform:translateY(-3px);border-color:color-mix(in srgb,var(--tc) 55%,transparent);box-shadow:0 16px 30px -20px color-mix(in srgb,var(--tc) 70%,rgba(0,0,0,.4))}
+.vs-mode.rec{border-color:color-mix(in srgb,var(--tc) 55%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--tc) 13%,transparent)}
+.vs-mode.off{opacity:.5;cursor:not-allowed}
+.vs-mode-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 13%,transparent);color:var(--tc);margin-bottom:4px}
+.vs-mode-ic .vs-ic{width:21px;height:21px}
+.vs-mode-t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px}
+.vs-mode-t i{font-style:normal;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--tc);color:#fff}
+.vs-mode-s{font-size:12.5px;color:var(--muted);line-height:1.4;min-height:2.8em}
+.vs-mode-f{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.vs-dots{display:flex;gap:3px}
+.vs-dots i{width:14px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.vs-dots i.on{background:var(--tc)}
+.vs-best{font-size:11.5px;font-weight:800;color:var(--vs-good)}
+.vs-tier{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vs-note{padding:16px 20px}
+.vs-note label{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.vs-note textarea{margin:0;font-size:16px}
+
+/* ---------- toast + sheet ---------- */
+.vs-toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;pointer-events:none;z-index:1300;display:flex;align-items:center;gap:14px;
+  background:var(--ink);color:var(--paper);padding:11px 12px 11px 18px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 18px 40px -16px rgba(0,0,0,.5);transition:all .3s cubic-bezier(.2,.8,.2,1);max-width:calc(100vw - 32px)}
+.vs-toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.vs-toast button{appearance:none;font:inherit;font-weight:800;border:none;background:color-mix(in srgb,var(--paper) 18%,transparent);color:inherit;padding:6px 13px;border-radius:999px;cursor:pointer}
+.vs-toast span:only-child{padding-right:6px}
+@media(max-width:820px){.vs-toast{bottom:calc(92px + env(safe-area-inset-bottom))}}
+.vs-sheet-wrap{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(8,12,24,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .22s}
+.vs-sheet-wrap.on{opacity:1}
+.vs-sheet{width:min(520px,100%);max-height:88vh;overflow:auto;background:var(--vs-solid);color:var(--ink);border-radius:24px;padding:22px 24px;box-shadow:0 30px 80px -30px rgba(0,0,0,.5);transform:translateY(14px) scale(.98);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.vs-sheet-wrap.on .vs-sheet{transform:none}
+.vs-sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.vs-sheet-h h3{font-family:var(--disp,var(--dh-font));font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0}
+.vs-field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 0;border-top:1px solid var(--hairline)}
+.vs-field.col{flex-direction:column;align-items:stretch}
+.vs-field-l{font-size:14.5px;font-weight:700}
+.vs-field-l em{font-style:normal;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-left:6px}
+.vs-field-l span{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:3px;line-height:1.45}
+.vs-field a{font-size:13px;font-weight:700;color:var(--vs-acc-d)}
+.vs-key{display:flex;gap:8px}
+.vs-field .vs-seg{flex-wrap:nowrap;flex:none}
+.vs-built-ph{font-family:var(--dh-font);font-size:15px;font-weight:600;color:var(--muted);margin-left:10px;vertical-align:.25em}
+.vs-key input{flex:1;min-width:0;font:inherit;font-size:14px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--hairline);background:transparent;color:var(--ink);outline:none}
+.vs-key input:focus{border-color:var(--vs-acc)}
+
+/* ================= stage ================= */
+.vs-stage{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:clamp(0px,3vw,28px);
+  background:color-mix(in srgb,var(--paper,#f5f7fb) 55%,rgba(10,16,32,.25));-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .25s}
+.vs-stage.on{opacity:1}
+.vs-st-card{position:relative;width:min(880px,100%);height:min(900px,100%);display:flex;flex-direction:column;background:var(--vs-solid);color:var(--ink);border-radius:30px;
+  border:1px solid var(--glass-edge,var(--hairline));box-shadow:0 40px 100px -40px rgba(10,20,50,.55);overflow:hidden;transform:translateY(18px) scale(.985);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.vs-stage.on .vs-st-card{transform:none}
+.vs-st-h{display:flex;align-items:center;gap:14px;padding:16px 18px 10px}
+.vs-st-title{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.vs-st-title b{font-family:var(--disp,var(--dh-font));font-size:17px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.vs-st-mode{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--vs-acc-d)}
+.vs-st-mode .vs-ic{width:14px;height:14px}
+.vs-st-meta{min-width:38px;display:flex;justify-content:flex-end;gap:6px}
+.vs-xp,.vs-combo{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px;background:color-mix(in srgb,var(--vs-acc) 11%,transparent);color:var(--vs-acc-d);white-space:nowrap}
+.vs-xp .vs-ic,.vs-combo .vs-ic{width:14px;height:14px}
+.vs-combo{background:color-mix(in srgb,#F08A24 15%,transparent);color:#E8751A;animation:vsPop .4s cubic-bezier(.3,1.6,.5,1)}
+.vs-st-prog{display:flex;align-items:center;gap:12px;padding:0 26px;font-size:12px;font-weight:700;color:var(--muted)}
+.vs-st-prog:empty{display:none}
+.vs-st-bar{flex:1;height:6px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.vs-st-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--vs-acc),color-mix(in srgb,var(--vs-acc) 60%,#A78BFA));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.vs-st-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:26px clamp(20px,5vw,58px) 20px;-webkit-overflow-scrolling:touch}
+.vs-st-body > *{margin-block:auto;width:100%}
+.vs-st-body.in > *{animation:vsUp .4s cubic-bezier(.2,.8,.2,1) both}
+.vs-st-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--hairline);flex-wrap:wrap}
+.vs-st-f .vs-btn.primary:last-child{margin-left:auto}
+.vs-st-text{font-size:clamp(23px,2.7vw,31px);line-height:1.75}
+.vs-st-text .w{display:inline;transition:color .35s,background .35s,opacity .35s,filter .35s;border-radius:6px}
+.vs-tip{text-align:center;color:var(--muted);font-size:13.5px;margin-top:22px;line-height:1.5}
+.vs-learn-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:24px}
+.vs-confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+
+/* learn */
+.vs-learn .w.say{background:color-mix(in srgb,var(--vs-acc) 20%,transparent);color:var(--vs-acc-d)}
+.vs-st-text.phrased .w.fut{opacity:.12;filter:blur(2px)}
+.vs-st-text.phrased .w.past{opacity:.45}
+.vs-st-text.phrased .w.cur{color:var(--ink)}
+
+/* fade */
+.vs-levels{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:22px}
+.vs-levels i{width:30px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--ink) 9%,transparent);transition:background .3s}
+.vs-levels i.on{background:var(--vs-acc)}
+.vs-levels span{font-size:12px;font-weight:700;color:var(--muted);margin-left:8px}
+.vs-st-text .w.hid{color:transparent;background:color-mix(in srgb,var(--ink) 8%,transparent);box-shadow:inset 0 -2.5px 0 color-mix(in srgb,var(--ink) 18%,transparent);cursor:pointer;user-select:none}
+.vs-st-text .w.hid:hover{background:color-mix(in srgb,var(--vs-acc) 12%,transparent)}
+.vs-st-text .w.hid.peek{color:var(--vs-acc-d);background:color-mix(in srgb,var(--vs-acc) 16%,transparent)}
+.vs-st-text .w.hid.peeked:not(.peek){box-shadow:inset 0 -2.5px 0 color-mix(in srgb,var(--vs-amber) 55%,transparent)}
+
+/* first letters */
+.vs-initials{font-family:var(--vs-serif);font-size:clamp(24px,2.8vw,32px);line-height:1.9;text-align:left;color:var(--ink)}
+.vs-initials sup{font-family:var(--dh-font);font-size:.45em;font-weight:800;color:var(--vs-acc-d);vertical-align:.8em;margin-right:.2em}
+.vs-initials .li{cursor:pointer;border-radius:6px;padding:0 1px;transition:background .2s}
+.vs-initials .li b{font-weight:600;color:var(--ink)}
+.vs-initials .li em{display:none;font-style:normal;color:var(--muted)}
+.vs-initials .li:hover{background:color-mix(in srgb,var(--vs-acc) 10%,transparent)}
+.vs-initials .li.open em,.vs-initials.all .li em{display:inline}
+.vs-initials .li.open em{color:var(--vs-amber)}
+.vs-initials.all .li em{color:var(--muted)}
+
+/* builder */
+.vs-built{min-height:5.5em;padding:6px 2px 14px;border-bottom:1px dashed var(--hairline)}
+.vs-built .w.in{color:var(--ink)}
+.vs-built .w.pop{animation:vsPop .38s cubic-bezier(.3,1.6,.5,1)}
+.vs-caret{display:inline-block;width:2px;height:1em;background:var(--vs-acc);vertical-align:-.12em;animation:vsBlink 1s steps(1) infinite;border-radius:1px}
+@keyframes vsBlink{50%{opacity:0}}
+.vs-build-meta{display:flex;align-items:center;gap:12px;margin:16px 0;font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.vs-meter{flex:1;height:5px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.vs-meter i{display:block;height:100%;width:0;background:var(--vs-acc);border-radius:inherit;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.vs-miss{color:var(--vs-amber);min-width:60px;text-align:right}
+.vs-tiles{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.vs-tile{appearance:none;font:inherit;font-family:var(--vs-serif);font-size:19px;font-weight:500;color:var(--ink);padding:10px 16px;border-radius:14px;cursor:pointer;
+  background:var(--vs-solid);border:1px solid var(--hairline);box-shadow:0 2px 0 color-mix(in srgb,var(--ink) 8%,transparent),0 8px 18px -12px rgba(0,0,0,.3);transition:transform .15s cubic-bezier(.3,1.4,.5,1),border-color .15s;animation:vsTileIn .3s cubic-bezier(.2,.8,.2,1) both}
+.vs-tile.chunk{font-size:17px}
+.vs-tile:hover{transform:translateY(-2px);border-color:var(--vs-acc)}
+.vs-tile:active{transform:scale(.95)}
+.vs-tile.no{animation:vsShake .4s;border-color:var(--vs-bad);color:var(--vs-bad)}
+.vs-tile.glow{animation:vsGlow 1.1s ease 2;border-color:var(--vs-acc)}
+@keyframes vsTileIn{from{opacity:0;transform:translateY(8px) scale(.96)}}
+@keyframes vsShake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes vsGlow{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--vs-acc) 25%,transparent)}}
+@keyframes vsPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes vsUp{from{opacity:0;transform:translateY(10px)}}
+
+/* gaps */
+.vs-gap{font:inherit;line-height:1.3;vertical-align:baseline;color:var(--vs-acc-d);width:var(--sw);min-width:2.2em;text-align:center;padding:0 2px;border:none;border-radius:7px 7px 3px 3px;outline:none;
+  background:color-mix(in srgb,var(--vs-acc) 9%,transparent);box-shadow:inset 0 -2.5px 0 color-mix(in srgb,var(--vs-acc) 45%,transparent);transition:background .2s,box-shadow .2s,color .2s}
+.vs-gap:focus{background:color-mix(in srgb,var(--vs-acc) 16%,transparent);box-shadow:inset 0 -2.5px 0 var(--vs-acc)}
+.vs-gap.ok{color:var(--vs-good);background:color-mix(in srgb,var(--vs-good) 10%,transparent);box-shadow:inset 0 -2.5px 0 var(--vs-good)}
+.vs-gap.ok.meh{color:var(--vs-amber);background:color-mix(in srgb,var(--vs-amber) 10%,transparent);box-shadow:inset 0 -2.5px 0 var(--vs-amber)}
+.vs-gap.bad{animation:vsShake .4s;box-shadow:inset 0 -2.5px 0 var(--vs-bad)}
+.vs-gap.miss{color:var(--vs-bad);text-decoration:line-through;background:color-mix(in srgb,var(--vs-bad) 8%,transparent);box-shadow:inset 0 -2.5px 0 var(--vs-bad)}
+.vs-gap.shown{color:var(--vs-bad);background:color-mix(in srgb,var(--vs-bad) 7%,transparent);box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--vs-bad) 55%,transparent)}
+.gapw .fix:not(:empty){margin-left:.25em;color:var(--vs-good);font-style:italic}
+
+/* type + speak slots */
+.vs-slots{max-height:46vh;overflow-y:auto}
+.vs-slots .slot{display:inline-block;width:var(--sw);height:.95em;vertical-align:-.12em;border-bottom:2.5px solid color-mix(in srgb,var(--ink) 16%,transparent);transition:border-color .2s}
+.vs-slots .slot.cur{border-color:var(--vs-acc);animation:vsBlinkB 1.1s ease-in-out infinite}
+.vs-slots .slot.no{animation:vsShake .4s;border-color:var(--vs-bad)}
+@keyframes vsBlinkB{50%{border-color:color-mix(in srgb,var(--vs-acc) 30%,transparent)}}
+.vs-slots .w{animation:vsWordIn .3s cubic-bezier(.2,.8,.2,1) both}
+.vs-slots .w.ok{color:var(--ink)}
+.vs-slots .w.meh{color:var(--vs-amber)}
+.vs-slots .w.bad{color:var(--vs-bad);text-decoration:underline wavy color-mix(in srgb,var(--vs-bad) 50%,transparent);text-underline-offset:5px;text-decoration-thickness:1.5px}
+@keyframes vsWordIn{from{opacity:0;filter:blur(4px)}}
+.vs-type-in-wrap{display:flex;justify-content:center;margin-top:22px}
+.vs-type-in{width:min(420px,100%);font:inherit;font-size:17px;font-weight:600;text-align:center;color:var(--ink);padding:14px 18px;border-radius:16px;border:1.5px solid var(--hairline);background:color-mix(in srgb,var(--card) 80%,transparent);outline:none;transition:border-color .18s,box-shadow .18s}
+.vs-type-in:focus{border-color:var(--vs-acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--vs-acc) 14%,transparent)}
+.vs-type-in.letters{caret-color:transparent}
+.vs-mic{appearance:none;font:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;margin:28px auto 6px;background:none;border:none;cursor:pointer;color:var(--ink);font-size:14px;font-weight:700}
+.vs-mic .vs-ic{width:76px;height:76px;padding:22px;box-sizing:border-box;border-radius:50%;background:var(--vs-acc);color:#fff;stroke-width:1.8;box-shadow:0 14px 34px -14px color-mix(in srgb,var(--vs-acc) 90%,transparent);transition:transform .2s}
+.vs-mic:hover .vs-ic{transform:scale(1.05)}
+.vs-mic.on .vs-ic{background:var(--vs-bad);animation:vsMic 1.5s ease-out infinite}
+@keyframes vsMic{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--vs-bad) 45%,transparent)}100%{box-shadow:0 0 0 26px color-mix(in srgb,var(--vs-bad) 0%,transparent)}}
+.vs-heard{text-align:center;min-height:1.6em;color:var(--muted);font-size:14px;line-height:1.5;max-width:600px;margin:6px auto 0}
+.vs-heard i{opacity:.6}
+.vs-err{text-align:center;color:var(--vs-bad);font-weight:600;font-size:14px;margin-top:10px}
+
+/* self-grade */
+.vs-grades{display:flex;align-items:center;gap:8px;width:100%;flex-wrap:wrap}
+.vs-grades .vs-f-note{margin-right:auto}
+.vs-grade{--gc:var(--vs-acc);appearance:none;font:inherit;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:84px;padding:9px 14px;border-radius:15px;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--gc) 35%,transparent);background:color-mix(in srgb,var(--gc) 9%,transparent);color:var(--gc);transition:transform .15s cubic-bezier(.3,1.4,.5,1),background .18s}
+.vs-grade b{font-size:14.5px}
+.vs-grade span{font-size:11.5px;font-weight:700;opacity:.8}
+.vs-grade kbd{position:absolute;top:4px;right:6px;font:700 9.5px var(--dh-font);opacity:.45}
+.vs-grade:hover:not(:disabled){background:color-mix(in srgb,var(--gc) 18%,transparent);transform:translateY(-2px)}
+.vs-grade:disabled{opacity:.35;cursor:not-allowed}
+.vs-grade.g-again{--gc:var(--vs-bad)}.vs-grade.g-hard{--gc:var(--vs-amber)}.vs-grade.g-easy{--gc:var(--vs-good)}
+@media(hover:none){.vs-grade kbd,.vs-opt kbd{display:none}}
+
+/* results + summary */
+.vs-result,.vs-summary{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:10px}
+.vs-res-ring{position:relative;width:168px;height:168px}
+.vs-res-ring > div{position:absolute;inset:0;display:grid;place-content:center;color:var(--vs-acc-d)}
+.vs-res-ring b{font-family:var(--disp,var(--dh-font));font-size:48px;font-weight:300;letter-spacing:-.05em;line-height:1;color:var(--ink)}
+.vs-res-ring b small{font-size:20px;color:var(--muted)}
+.vs-res-ring span{font-size:12px;font-weight:700;color:var(--muted)}
+.vs-result.great .vs-ring .bar{stroke:var(--vs-good)}
+.vs-result h3,.vs-sum-hero h3{font-family:var(--disp,var(--dh-font));font-size:clamp(26px,3vw,34px);font-weight:500;letter-spacing:-.03em;margin:18px 0 12px}
+.vs-res-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.vs-chip-s{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:8px 13px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.vs-chip-s .vs-ic{width:14px;height:14px;color:var(--muted)}
+.vs-chip-s.xp{background:color-mix(in srgb,var(--vs-acc) 13%,transparent);color:var(--vs-acc-d);animation:vsPop .5s .3s cubic-bezier(.3,1.6,.5,1) both}
+.vs-chip-s.hot{background:color-mix(in srgb,#F08A24 15%,transparent);color:#E8751A}
+.vs-chip-s.hot .vs-ic{color:inherit}
+.vs-sum-hero{color:var(--vs-amber)}
+.vs-sum-hero h3{color:var(--ink);margin-top:10px;margin-bottom:4px}
+.vs-sum-hero p{color:var(--muted);font-weight:600}
+.vs-sum-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:620px;margin:24px 0}
+.vs-sum-stats div{padding:14px 8px;border-radius:16px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.vs-sum-stats b{display:block;font-family:var(--disp,var(--dh-font));font-size:24px;font-weight:500;letter-spacing:-.03em;color:var(--ink)}
+.vs-sum-stats span{font-size:11.5px;font-weight:700;color:var(--muted)}
+.vs-sum-list{width:100%;max-width:620px;display:flex;flex-direction:column;gap:2px;text-align:left}
+.vs-sum-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--hairline);font-size:14px}
+.vs-sum-row > div{display:flex;align-items:center;gap:10px}
+.vs-sum-row .vs-pill{margin:0}
+.vs-sum-row span{color:var(--muted);font-size:12.5px;font-weight:600}
+
+/* quiz */
+.vs-quiz-prompt{text-align:center;margin-bottom:26px}
+.vs-quiz-prompt .vs-st-text{font-size:clamp(21px,2.4vw,27px);line-height:1.6}
+.vs-quiz-ref{font-family:var(--disp,var(--dh-font));font-size:clamp(32px,4vw,46px);font-weight:400;letter-spacing:-.035em}
+.vs-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vs-opts.long{grid-template-columns:1fr}
+.vs-opt{appearance:none;font:inherit;display:flex;align-items:center;gap:12px;text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;border:1.5px solid var(--hairline);background:var(--vs-solid);color:var(--ink);font-size:15px;font-weight:700;transition:all .18s}
+.vs-opts.long .vs-opt{font-family:var(--vs-serif);font-weight:500;font-size:16.5px;line-height:1.45}
+.vs-opt kbd{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:color-mix(in srgb,var(--ink) 7%,transparent);font:800 11.5px var(--dh-font);color:var(--muted)}
+.vs-opt:hover:not(:disabled){border-color:var(--vs-acc);transform:translateY(-2px)}
+.vs-opt.ok{border-color:var(--vs-good);background:color-mix(in srgb,var(--vs-good) 10%,var(--vs-solid));animation:vsPop .35s}
+.vs-opt.bad{border-color:var(--vs-bad);background:color-mix(in srgb,var(--vs-bad) 9%,var(--vs-solid));animation:vsShake .4s}
+.vs-opt:disabled{cursor:default}
+.vs-opt:disabled:not(.ok):not(.bad){opacity:.55}
+
+/* ---------- responsive ---------- */
+@media(max-width:1150px){
+  .vs-dash{grid-template-columns:minmax(0,1fr) auto}
+  .vs-dash-heat{grid-column:1 / -1}
+  .vs-heat{justify-content:space-between}
+  .vs-heat i{width:auto;aspect-ratio:1;flex:1}
+  .vs-heat-col{flex:1;max-width:18px}
+}
+@media(max-width:760px){
+  .vs-dash{grid-template-columns:1fr;padding:22px 20px;gap:22px}
+  .vs-dash-side{justify-content:space-between}
+  .vs-dash-cta .vs-btn{flex:1}
+  .vs-add,.vs-lib,.vs-modes{padding:18px 16px}
+  .vs-search{padding-left:12px;flex-wrap:wrap}
+  .vs-parse{width:100%;padding-bottom:6px}
+  .vs-parse:empty{display:none}
+  .vs-search input{font-size:16px}
+  .vs-grid{grid-template-columns:1fr}
+  .vs-lib-bar .vs-seg{order:3;width:100%;justify-content:space-between}
+  .vs-hero-card{grid-template-columns:1fr;padding:22px 20px;gap:18px}
+  .vs-hero-side{border-left:none;padding-left:0;border-top:1px solid var(--hairline);padding-top:18px;flex-direction:row;align-items:center}
+  .vs-big-ring{width:120px;height:120px;flex:none}
+  .vs-big-ring svg{width:120px;height:120px}
+  .vs-big-ring b{font-size:32px}
+  .vs-mode-grid{gap:10px}
+  .vs-mode{padding:14px}
+  .vs-mode-s{min-height:0}
+  .vs-stage{padding:0}
+  .vs-st-card{height:100%;width:100%;border-radius:0;border:none;padding-top:env(safe-area-inset-top)}
+  .vs-st-body{padding:20px 20px 16px}
+  .vs-st-text{font-size:23px;line-height:1.7}
+  .vs-tile{font-size:17px;padding:9px 13px}
+  .vs-opts{grid-template-columns:1fr}
+  .vs-sum-stats{grid-template-columns:repeat(2,1fr)}
+  .vs-grades{gap:6px}
+  .vs-grades .vs-f-note{width:100%;text-align:center}
+  .vs-grade{flex:1;min-width:0;padding:9px 6px}
+}
+@media(prefers-reduced-motion:reduce){
+  #panel-verses *,.vs-stage *{animation:none!important;transition:none!important}
+}
+</style>
+<!-- /VERSES:CSS -->
 </head>
 <body>
 <div class="skyband" aria-hidden="true"><div class="sb-stars"></div><div class="sb-sun"></div><div class="sb-wisp w1"></div><div class="sb-wisp w2"></div><div class="sb-wisp w3"></div></div>
@@ -3953,6 +4411,7 @@ html.sky :is(.ti-note-label){text-transform:none;letter-spacing:-.003em;font-siz
       <button class="tab tab-sub" data-go="portfolio"><span class="tab-ic" data-ic="folio"><svg viewBox="0 0 24 24"><path d="M3 17.5l5.2-5.6 3.6 3 4-4.8L21 6.5"/><path d="M16.4 6.3H21v4.6"/><path d="M3 20.8h18"/></svg></span><span class="tab-l">Portfolio</span><span class="tab-sub-v" id="navFolio"></span></button>
       <button class="tab tab-sub" data-go="weather"><span class="tab-ic" data-ic="wx"><svg viewBox="0 0 24 24"><circle cx="8.4" cy="8.2" r="3.1"/><path d="M8.4 2.6v1.6M8.4 12.2v1M2.8 8.2h1.6M12.4 8.2h1M4.5 4.3l1.1 1.1M11.2 11l.7.7M12.3 4.3l-1.1 1.1"/><path d="M8 20.4h9.1a3.4 3.4 0 0 0 .3-6.8 4.7 4.7 0 0 0-9-1.1A3.5 3.5 0 0 0 8 20.4z"/></svg></span><span class="tab-l">Weather</span><span class="tab-sub-v" id="navWx"></span></button>
       <button class="tab tab-sub" data-go="friends"><span class="tab-ic" data-ic="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.3"/><path d="M2.8 20.2c0-3.4 2.8-5.7 6.2-5.7s6.2 2.3 6.2 5.7"/><circle cx="17.4" cy="9.3" r="2.5"/><path d="M17 14.7c2.4.2 4.2 2.1 4.2 4.6"/></svg></span><span class="tab-l">Friends</span><span class="tab-sub-v" id="navFriends"></span></button>
+      <button class="tab tab-sub" data-go="verses"><span class="tab-ic" data-ic="verses"><svg viewBox="0 0 24 24"><path d="M12 6.6c-1.7-1.4-4.1-2.1-7.2-2.1v13.2c3.1 0 5.5.7 7.2 2.1 1.7-1.4 4.1-2.1 7.2-2.1V4.5c-3.1 0-5.5.7-7.2 2.1z"/><path d="M12 6.6v13.2"/></svg></span><span class="tab-l">Verses</span><span class="tab-sub-v" id="navVerses"></span></button>
     </div>
     <div class="top-right">
       <span class="netpill" id="netPill"><i></i>Offline</span>
@@ -3981,6 +4440,10 @@ html.sky :is(.ti-note-label){text-transform:none;letter-spacing:-.003em;font-siz
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h8M17 3v8M3 17h8M7 13v8"/></svg>
     Games<span class="tb-dot"></span>
   </button>
+  <button data-tab="verses" role="tab" aria-label="Verses">
+    <svg viewBox="0 0 24 24"><path d="M12 6.6c-1.7-1.4-4.1-2.1-7.2-2.1v13.2c3.1 0 5.5.7 7.2 2.1 1.7-1.4 4.1-2.1 7.2-2.1V4.5c-3.1 0-5.5.7-7.2 2.1z"/><path d="M12 6.6v13.2"/></svg>
+    Verses<span class="tb-dot"></span>
+  </button>
 </nav>
 
 <header class="hero">
@@ -4002,6 +4465,7 @@ html.sky :is(.ti-note-label){text-transform:none;letter-spacing:-.003em;font-siz
   <section class="panel" id="panel-quiz"><div class="spinner"></div></section>
   <section class="panel" id="panel-friends"><div class="spinner"></div></section>
   <section class="panel" id="panel-weather"><div class="spinner"></div></section>
+  <section class="panel" id="panel-verses"><div class="spinner"></div></section>
 </main>
 
 <footer>
@@ -4034,7 +4498,7 @@ const todayCT = () => new Date().toLocaleDateString("en-CA", { timeZone: "Americ
 const esc = t => String(t??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtPct = v => (v>0?"+":v<0?"−":"") + Math.abs(v).toFixed(2) + "%";
 const cls = v => v>0?"up":v<0?"down":"neutral";
-const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Home · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers", friends:"Friends", weather:"Weather · Franklin, TN" };
+const NICE = { market:"Daily Market Brief · Day Close", news:"Daily News Briefing", calendar:"Home · Your Daily Briefing", portfolio:"Portfolio · Fidelity Holdings", quiz:"Games · Quick Launchers", friends:"Friends", weather:"Weather · Franklin, TN", verses:"Scripture Memory" };
 
 function niceDate(d){
   const dt = new Date(d+"T12:00:00");
@@ -4126,7 +4590,7 @@ async function boot(){
     $("#footUpdated").textContent = S.manifest.updated ? "Last update " + new Date(S.manifest.updated).toLocaleString("en-US",{timeZone:"America/Chicago",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " CT" : "";
     let savedTab = localStorage.getItem("dh-tab");
     if(savedTab === "market" || savedTab === "portfolio") savedTab = null;   // no longer top-level tabs
-    if(savedTab && ["news","calendar","quiz"].includes(savedTab)) S.tab = savedTab;
+    if(savedTab && ["news","calendar","quiz","verses"].includes(savedTab)) S.tab = savedTab;
     markTab(S.tab);
     document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+S.tab));
     fillDates(); await show();
@@ -4206,6 +4670,7 @@ document.querySelectorAll(".tab[data-go]").forEach(b =>
     if(b.dataset.go === "portfolio") goPortfolio();
     else if(b.dataset.go === "weather") goWeather();
     else if(b.dataset.go === "friends") switchTab("friends");
+    else if(b.dataset.go === "verses") switchTab("verses");
   }));
 $("#dateSelect").addEventListener("change", async e => { S.date[S.tab] = e.target.value; await show(); });
 
@@ -4245,7 +4710,7 @@ function goFriends(){
 
 function fillDates(){
   const sel = $("#dateSelect"); sel.innerHTML = "";
-  if(S.tab === "portfolio" || S.tab === "quiz" || S.tab === "friends" || S.tab === "weather"){ sel.style.visibility = "hidden"; return; }
+  if(S.tab === "portfolio" || S.tab === "quiz" || S.tab === "friends" || S.tab === "weather" || S.tab === "verses"){ sel.style.visibility = "hidden"; return; }
   (S.manifest[S.tab]||[]).forEach(d => {
     const o = document.createElement("option"); o.value = d; o.textContent = shortDate(d);
     if(d === S.date[S.tab]) o.selected = true; sel.appendChild(o);
@@ -4303,6 +4768,7 @@ async function show(){
   if(kind === "portfolio"){ $("#staleNote").style.display = "none"; renderPortfolio(); return; }
   if(kind === "quiz"){ $("#staleNote").style.display = "none"; renderGamesTab(); return; }
   if(kind === "friends"){ $("#staleNote").style.display = "none"; renderFriendsBody(); return; }
+  if(kind === "verses"){ $("#staleNote").style.display = "none"; if(typeof renderVersesBody === "function") renderVersesBody(); return; }
   if(kind === "weather"){ $("#staleNote").style.display = "none"; if(heroEl) heroEl.style.display = "none"; renderWeatherPanel(); return; }
   if(!date){
     $("#heroTitle").textContent = "Nothing published yet";
@@ -16870,7 +17336,1598 @@ function skyArrive(){
   if(b) b.addEventListener("click", () => { if(typeof PASS !== "undefined" && PASS) mbOpen(); });
 })();
 </script>
-<script src="sync-core.js?v=1"></script>
+<!-- VERSES:JS -->
+<script>
+/* ================= Verses — scripture memory (Oct 2026) =================
+   Eli: "choose any bible verse (ESV), add it to a running list, and be quizzed / tested / learn in
+   different ways — flawless, interactive, fun, easy, and extremely nice looking."
+
+   Data: Firestore friends/main -> bible (the rules only allow todos/main and friends/main), edited
+   only through window.__bibleApi ops (see sync-core.js "scripture memory"), so phone and computer
+   practise side by side without overwriting each other. Text: the official ESV API when a key is
+   saved on this device, otherwise the ESV text from bolls.life (no key needed); every chapter
+   fetched is cached on the device so practice works offline. */
+(function(){
+"use strict";
+const $q = (s, r) => (r || document).querySelector(s);
+const $qa = (s, r) => Array.from((r || document).querySelectorAll(s));
+const h = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api = () => window.__bibleApi;
+const DAY = 86400000;
+const LS_TOKEN = "dh-verses-esv-key", LS_CH = "dh-verses-ch1:", LS_PREFS = "dh-verses-prefs1", LS_LOCAL = "dh-verses-local1";
+const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+const lsDel = k => { try{ localStorage.removeItem(k); }catch(e){} };
+const prefs = Object.assign({ cover:false, typeStyle:"letters", voice:"", sort:"due", filter:"all" }, (() => { try{ return JSON.parse(lsGet(LS_PREFS) || "{}"); }catch(e){ return {}; } })());
+const savePrefs = () => lsSet(LS_PREFS, JSON.stringify(prefs));
+const reduceMotion = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- the 66 books: [code, name, bolls#, chapters, aliases] ---------- */
+const BOOKS = [
+ ["GEN","Genesis",50,"gen ge gn"],["EXO","Exodus",40,"ex exo exod"],["LEV","Leviticus",27,"lev le lv"],["NUM","Numbers",36,"num nu nm nb"],
+ ["DEU","Deuteronomy",34,"deut dt de deu"],["JOS","Joshua",24,"josh jos jsh"],["JDG","Judges",21,"judg jdg jg jdgs"],["RUT","Ruth",4,"ruth rth ru"],
+ ["1SA","1 Samuel",31,"1sam 1sa 1sm 1s"],["2SA","2 Samuel",24,"2sam 2sa 2sm 2s"],["1KI","1 Kings",22,"1kgs 1ki 1kg 1k"],["2KI","2 Kings",25,"2kgs 2ki 2kg 2k"],
+ ["1CH","1 Chronicles",29,"1chr 1ch 1chron"],["2CH","2 Chronicles",36,"2chr 2ch 2chron"],["EZR","Ezra",10,"ezr ezra"],["NEH","Nehemiah",13,"neh ne"],
+ ["EST","Esther",10,"est esth es"],["JOB","Job",42,"job jb"],["PSA","Psalms",150,"ps psa psalm pslm psm pss"],["PRO","Proverbs",31,"prov pro prv pr"],
+ ["ECC","Ecclesiastes",12,"eccl ecc ec qoh"],["SNG","Song of Solomon",8,"song sos sng songofsongs canticles"],["ISA","Isaiah",66,"isa is"],["JER","Jeremiah",52,"jer je jr"],
+ ["LAM","Lamentations",5,"lam la"],["EZK","Ezekiel",48,"ezek eze ezk"],["DAN","Daniel",12,"dan da dn"],["HOS","Hosea",14,"hos ho"],
+ ["JOL","Joel",3,"joel jl"],["AMO","Amos",9,"amos am"],["OBA","Obadiah",1,"obad ob oba"],["JON","Jonah",4,"jonah jnh jon"],
+ ["MIC","Micah",7,"mic mc"],["NAM","Nahum",3,"nah na"],["HAB","Habakkuk",3,"hab hb"],["ZEP","Zephaniah",3,"zeph zep zp"],
+ ["HAG","Haggai",2,"hag hg"],["ZEC","Zechariah",14,"zech zec zc"],["MAL","Malachi",4,"mal ml"],["MAT","Matthew",28,"matt mat mt"],
+ ["MRK","Mark",16,"mark mrk mk mr"],["LUK","Luke",24,"luke luk lk"],["JHN","John",21,"john jhn jn"],["ACT","Acts",28,"acts act ac"],
+ ["ROM","Romans",16,"rom ro rm"],["1CO","1 Corinthians",16,"1cor 1co"],["2CO","2 Corinthians",13,"2cor 2co"],["GAL","Galatians",6,"gal ga"],
+ ["EPH","Ephesians",6,"eph ephes"],["PHP","Philippians",4,"phil php pp"],["COL","Colossians",4,"col co"],["1TH","1 Thessalonians",5,"1thess 1th 1thes"],
+ ["2TH","2 Thessalonians",3,"2thess 2th 2thes"],["1TI","1 Timothy",6,"1tim 1ti 1tm"],["2TI","2 Timothy",4,"2tim 2ti 2tm"],["TIT","Titus",3,"titus tit ti"],
+ ["PHM","Philemon",1,"philem phm phlm pm"],["HEB","Hebrews",13,"heb he"],["JAS","James",5,"jas jm jam"],["1PE","1 Peter",5,"1pet 1pe 1pt 1p"],
+ ["2PE","2 Peter",3,"2pet 2pe 2pt 2p"],["1JN","1 John",5,"1john 1jn 1jo"],["2JN","2 John",1,"2john 2jn 2jo"],["3JN","3 John",1,"3john 3jn 3jo"],
+ ["JUD","Jude",1,"jude jud jd"],["REV","Revelation",22,"rev re rv revelations"]
+].map((b, i) => ({ code:b[0], name:b[1], n:i + 1, chapters:b[2], aliases:b[3].split(" ") }));
+const BOOK = Object.fromEntries(BOOKS.map(b => [b.code, b]));
+const keyOf = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+const ALIAS = new Map();
+BOOKS.forEach(b => { ALIAS.set(keyOf(b.name), b); b.aliases.forEach(a => { if(!ALIAS.has(a)) ALIAS.set(a, b); }); });
+const bookName = b => b.code === "PSA" ? "Psalm" : b.name;
+
+/* "1 jn 4:19", "Rom 8:28-30", "romans 8:38–9:1", "psalm 23", "II Tim 3.16", "Jude 24", "first john 1:9" */
+function parseRef(input){
+  let s = String(input || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
+  if(!s) return { ok:false, err:"" };
+  s = s.replace(/^(iii|3rd|third)\s*(?=[a-z])/, "3").replace(/^(ii|2nd|second)\s*(?=[a-z])/, "2").replace(/^(i|1st|first)\s+(?=[a-z])/, "1");
+  const m = s.match(/^([1-3]?)\s*([a-z][a-z .]*?)\.?\s*(\d+)?(?:\s*[:.]\s*(\d+))?(?:\s*-\s*(\d+)(?:\s*[:.]\s*(\d+))?)?\s*$/);
+  if(!m) return { ok:false, err:"Try a reference like John 3:16 or Romans 8:28–30" };
+  const key = m[1] + keyOf(m[2]);
+  let book = ALIAS.get(key);
+  if(!book && key.replace(/^\d/, "").length >= 2) book = BOOKS.find(b => keyOf(b.name).startsWith(key)) || BOOKS.find(b => b.aliases.some(a => a.startsWith(key)));
+  if(!book) return { ok:false, err:"Couldn't find that book" };
+  if(!m[3]) return { ok:false, err:"Add a chapter and verse", book, partial:true };
+  let a = +m[3], b = m[4] ? +m[4] : null, c = m[5] ? +m[5] : null, d = m[6] ? +m[6] : null;
+  let c1, v1, c2, v2, whole = false;
+  if(book.chapters === 1 && b === null){ c1 = 1; v1 = a; if(c !== null){ c2 = 1; v2 = c; } else { c2 = 1; v2 = a; } }
+  else if(b === null){                                   // "Psalm 23" (or "Psalm 23-24", whole chapters)
+    if(c !== null) return { ok:false, err:"Pick one chapter at a time", book };
+    c1 = c2 = a; v1 = 1; v2 = null; whole = true;
+  }else if(c === null){ c1 = c2 = a; v1 = v2 = b; }
+  else if(d === null){ c1 = c2 = a; v1 = b; v2 = c; }
+  else { c1 = a; v1 = b; c2 = c; v2 = d; }
+  if(c1 < 1 || c1 > book.chapters || c2 > book.chapters) return { ok:false, err:`${bookName(book)} has ${book.chapters} chapter${book.chapters === 1 ? "" : "s"}`, book };
+  if(v1 < 1 || (!whole && (c2 < c1 || (c2 === c1 && v2 < v1)))) return { ok:false, err:"That range runs backwards", book };
+  if(c2 - c1 > 2) return { ok:false, err:"Keep it to a passage of up to 3 chapters", book };
+  return { ok:true, book, c1, v1, c2, v2, whole };
+}
+function refLabel(p){
+  const n = bookName(p.book), one = p.book.chapters === 1;
+  if(p.whole) return `${n} ${p.c1}`;
+  const cv = (c, v) => one ? `${v}` : `${c}:${v}`;
+  if(p.c1 === p.c2 && p.v1 === p.v2) return `${n} ${cv(p.c1, p.v1)}`;
+  if(p.c1 === p.c2) return `${n} ${cv(p.c1, p.v1)}–${p.v2}`;
+  return `${n} ${p.c1}:${p.v1}–${p.c2}:${p.v2}`;
+}
+const verseId = p => [p.book.code.toLowerCase(), p.c1, p.v1].concat(p.c2 !== p.c1 ? [p.c2, p.v2] : p.v2 !== p.v1 ? [p.v2] : []).join("-");
+
+/* ---------- ESV text ---------- */
+function cleanText(t){
+  return String(t || "").replace(/<sup[^>]*>.*?<\/sup>/gi, "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&#8217;|&rsquo;/g, "’").replace(/&#8216;|&lsquo;/g, "‘")
+    .replace(/&#8220;|&ldquo;/g, "“").replace(/&#8221;|&rdquo;/g, "”").replace(/\s+/g, " ").trim();
+}
+async function getJSON(url, opts, ms){
+  const ctl = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = setTimeout(() => ctl && ctl.abort(), ms || 10000);
+  try{
+    const r = await fetch(url, { ...(opts || {}), signal: ctl ? ctl.signal : undefined, cache:"default" });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  }finally{ clearTimeout(timer); }
+}
+async function bollsChapter(book, c){
+  const ck = LS_CH + "ESV:" + book.n + ":" + c;
+  const hit = lsGet(ck);
+  if(hit){ try{ const v = JSON.parse(hit); if(Array.isArray(v) && v.length) return v; }catch(e){} }
+  const data = await getJSON(`https://bolls.life/get-text/ESV/${book.n}/${c}/`, {}, 12000);
+  if(!Array.isArray(data) || !data.length) throw new Error("empty chapter");
+  const out = data.map(x => ({ v: +x.verse, t: cleanText(x.text) })).filter(x => x.v > 0 && x.t).sort((a, b) => a.v - b.v);
+  lsSet(ck, JSON.stringify(out));
+  return out;
+}
+async function esvApiPassage(p, token){
+  const q = encodeURIComponent(refLabel(p).replace("–", "-"));
+  const url = `https://api.esv.org/v3/passage/text/?q=${q}&include-passage-references=false&include-verse-numbers=true&include-first-verse-numbers=true&include-footnotes=false&include-footnote-body=false&include-headings=false&include-short-copyright=false&include-selahs=true&indent-paragraphs=0&indent-poetry=false&indent-declares=0&indent-psalm-doxology=0&line-length=0`;
+  const data = await getJSON(url, { headers:{ Authorization:"Token " + token } }, 12000);
+  const raw = (data.passages || []).join(" ");
+  if(!raw.trim()) throw new Error("no passage");
+  const out = []; let c = p.c1, prev = 0;
+  raw.replace(/\[(\d+)\]\s*([^\[]*)/g, (_, n, t) => { n = +n; if(n < prev) c++; prev = n; const tt = cleanText(t); if(tt) out.push({ c, v:n, t:tt }); return ""; });
+  if(!out.length) throw new Error("unparsed");
+  return out;
+}
+async function fetchPassage(p){
+  const token = (lsGet(LS_TOKEN) || "").trim();
+  if(token){
+    try{ const vs = await esvApiPassage(p, token); return { verses: vs, src:"ESV API" }; }
+    catch(e){ console.warn("Verses: ESV API failed, using the fallback source", e); }
+  }
+  const out = [];
+  for(let c = p.c1; c <= p.c2; c++){
+    const ch = await bollsChapter(p.book, c);
+    const last = ch[ch.length - 1].v;
+    const from = c === p.c1 ? p.v1 : 1, to = p.whole ? last : (c === p.c2 ? p.v2 : last);
+    if(c === p.c1 && from > last) throw new Error(`${bookName(p.book)} ${c} has ${last} verses`);
+    ch.filter(x => x.v >= from && x.v <= to).forEach(x => out.push({ c, v:x.v, t:x.t }));
+  }
+  if(!out.length) throw new Error("No verses in that range");
+  return { verses: out, src:"ESV" };
+}
+const joinText = vs => vs.map(x => x.t).join(" ").replace(/\s+/g, " ").trim();
+
+/* ---------- words ---------- */
+const STOP = new Set("a an and the of to in on for is it as at by be or so that he she they we you i his her their our your my me him them us was were are am has had have do did not no but if then this these those with from into who whom whose which what when where than shall will would should".split(" "));
+function normWord(w){
+  return String(w || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[’‘']/g, "").replace(/[^\p{L}\p{N}]/gu, "");
+}
+/* tokens: { w (as printed), core, lead, trail, key, first, vn (verse number when a verse starts here) } */
+function tokenize(v){
+  const verses = Array.isArray(v.verses) && v.verses.length ? v.verses : [{ c:v.c1, v:v.v1, t:v.text || "" }];
+  const multi = verses.length > 1, toks = [];
+  verses.forEach((vv, vi) => {
+    const parts = String(vv.t || "").replace(/—/g, "— ").replace(/\s+/g, " ").trim().split(" ");
+    let first = true;
+    parts.forEach(p => {
+      if(!p) return;
+      const m = p.match(/^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}]*)$/u);
+      const lead = m ? m[1] : "", core = m ? m[2] : p, trail = m ? m[3] : "";
+      const key = normWord(core);
+      if(!key){                                         // bare punctuation: hang it on the previous word
+        if(toks.length) toks[toks.length - 1].trail += p; return;
+      }
+      toks.push({ w:p, core, lead, trail, key, first:key[0], vn: multi && first ? (vi && verses[vi - 1].c !== vv.c ? `${vv.c}:${vv.v}` : `${vv.v}`) : "", i:toks.length });
+      first = false;
+    });
+  });
+  return toks;
+}
+function lev(a, b){
+  if(a === b) return 0;
+  const m = a.length, n = b.length; if(!m) return n; if(!n) return m;
+  let prev = Array.from({ length:n + 1 }, (_, j) => j);
+  for(let i = 1; i <= m; i++){
+    const cur = [i];
+    for(let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+const close = (typed, key) => typed === key || (key.length >= 5 && lev(typed, key) <= 1) || (key.length >= 9 && lev(typed, key) <= 2);
+/* phrases: break after , ; : . ! ? — and keep each phrase at least 3 words */
+function phrases(toks){
+  const out = []; let cur = [];
+  toks.forEach((t, i) => {
+    cur.push(i);
+    if((/[,;:.!?—)]/.test(t.trail) && cur.length >= 3) || cur.length >= 10){ out.push(cur); cur = []; }
+  });
+  if(cur.length){ if(out.length && cur.length < 3) out[out.length - 1].push(...cur); else out.push(cur); }
+  return out;
+}
+function seeded(seed){ let x = 0; for(const ch of String(seed)) x = (x * 31 + ch.charCodeAt(0)) >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+function shuffle(a, rnd){ rnd = rnd || Math.random; a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ---------- model ---------- */
+const STAGES = {
+  new:       { label:"New",       tone:"new" },
+  learning:  { label:"Learning",  tone:"learn" },
+  familiar:  { label:"Familiar",  tone:"fam" },
+  memorized: { label:"Memorized", tone:"mem" }
+};
+function stageOf(v){
+  const s = v.srs;
+  if(!s || !(s.n > 0)) return "new";
+  if((s.ivl || 0) < 3) return "learning";
+  if((s.ivl || 0) < 21) return "familiar";
+  return "memorized";
+}
+function masteryOf(v){
+  const s = v.srs;
+  if(!s) return 0;
+  if(!(s.n > 0)) return s.seen ? 6 : 0;
+  const ivl = s.ivl || 0;
+  let m = Math.round(100 * Math.log(1 + ivl) / Math.log(1 + 60));
+  if(s.reps === 0) m = Math.max(8, Math.min(m, 18));
+  return Math.max(10, Math.min(100, m));
+}
+const dueAt = v => v.srs && v.srs.due ? v.srs.due : null;
+const isDue = (v, now) => { const d = dueAt(v); return d !== null && d <= (now || Date.now()); };
+function dueLabel(v){
+  const d = dueAt(v), now = Date.now();
+  if(d === null) return stageOf(v) === "new" ? "Ready to learn" : "";
+  const diff = d - now;
+  if(diff <= 0) return "Due now";
+  if(diff < 3600000) return `Due in ${Math.max(1, Math.round(diff / 60000))} min`;
+  const a0 = new Date(now); a0.setHours(0, 0, 0, 0);
+  const b0 = new Date(d); b0.setHours(0, 0, 0, 0);
+  const days = Math.round((b0 - a0) / DAY);
+  if(days <= 0) return "Due later today";
+  if(days === 1) return "Due tomorrow";
+  if(days < 14) return `Due in ${days} days`;
+  if(days < 60) return `Due in ${Math.round(days / 7)} weeks`;
+  return `Due in ${Math.round(days / 30)} months`;
+}
+function ivlLabel(ms){
+  if(ms < 3600000) return `${Math.max(1, Math.round(ms / 60000))}m`;
+  if(ms < DAY * 0.95) return `${Math.round(ms / 3600000)}h`;
+  const d = Math.round(ms / DAY);
+  if(d < 30) return `${d}d`;
+  if(d < 365) return `${Math.round(d / 30)}mo`;
+  return `${Math.round(d / 365)}y`;
+}
+const dayKey = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+function streakOf(days){
+  const d = new Date(); let n = 0;
+  const has = k => days[k] && days[k].n > 0;
+  if(!has(dayKey(d))) d.setDate(d.getDate() - 1);
+  while(has(dayKey(d))){ n++; d.setDate(d.getDate() - 1); }
+  return { n, today: has(dayKey(new Date())) };
+}
+function state(){
+  const a = api();
+  const st = a && a.getState ? a.getState() : null;
+  return st || { verses:{}, days:{}, settings:{} };
+}
+function verses(){ return Object.values(state().verses || {}).filter(v => v && v.id); }
+const verseById = id => (state().verses || {})[id] || null;
+const bookOrder = v => { const b = BOOK[(v.book || "").toUpperCase()]; return (b ? b.n : 99) * 1e6 + (v.c1 || 0) * 1e3 + (v.v1 || 0); };
+
+/* ---------- suggestions ---------- */
+const SUGGEST = [
+  ["Foundations", ["John 3:16","Romans 3:23","Romans 6:23","Romans 5:8","Ephesians 2:8-9","2 Corinthians 5:17","Romans 10:9","John 14:6"]],
+  ["Peace", ["Philippians 4:6-7","Matthew 11:28-30","John 14:27","Isaiah 26:3","1 Peter 5:7","Psalm 46:10","John 16:33"]],
+  ["Strength", ["Isaiah 40:31","Joshua 1:9","Philippians 4:13","2 Corinthians 12:9","Isaiah 41:10","Psalm 46:1","Deuteronomy 31:6"]],
+  ["Wisdom", ["Proverbs 3:5-6","James 1:5","Proverbs 16:3","Psalm 119:105","Colossians 3:23","Micah 6:8","Proverbs 4:23"]],
+  ["Identity", ["Galatians 2:20","Romans 8:1","Ephesians 2:10","1 John 3:1","2 Corinthians 5:21","Romans 8:38-39","1 Peter 2:9"]],
+  ["Purpose", ["Matthew 28:19-20","Romans 12:1-2","Matthew 6:33","Jeremiah 29:11","Romans 8:28","Hebrews 12:1-2","Micah 6:8"]],
+  ["Passages", ["Psalm 23","Matthew 6:9-13","1 Corinthians 13:4-7","Galatians 5:22-23","Psalm 1","Isaiah 53:4-6","Psalm 103:1-5"]]
+];
+
+/* ---------- icons (drawn, no emoji — Eli, Oct 2026) ---------- */
+const IC = {
+  book:'<path d="M12 6.5c-1.6-1.3-4-2-7-2v13c3 0 5.4.7 7 2 1.6-1.3 4-2 7-2v-13c-3 0-5.4.7-7 2z"/><path d="M12 6.5v13"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  play:'<path d="M8 5.5v13l10.5-6.5z"/>',
+  flame:'<path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.3 2.3-5.2 3.6-7.6.5 1.7 1.4 2.7 2.4 3.2-.2-3 1-5.8 3.3-7.4-.3 3 1.3 4.6 2.6 6.3 1 1.3 1.6 2.8 1.6 4.5C19 18.4 16 21 12 21z"/><path d="M12 21c-1.7 0-2.9-1.2-2.9-2.8 0-1.8 1.5-2.7 2.3-4.3.9 1.4 3.5 2.4 3.5 4.4 0 1.5-1.2 2.7-2.9 2.7z"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  back:'<path d="M14.5 5.5L8 12l6.5 6.5"/>',
+  next:'<path d="M9.5 5.5L16 12l-6.5 6.5"/>',
+  speaker:'<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/>',
+  stop:'<rect x="7" y="7" width="10" height="10" rx="2"/>',
+  copy:'<rect x="8.5" y="8.5" width="11" height="11" rx="2.4"/><path d="M15.5 8.5V6.4A1.9 1.9 0 0 0 13.6 4.5H6.4a1.9 1.9 0 0 0-1.9 1.9v7.2a1.9 1.9 0 0 0 1.9 1.9h2.1"/>',
+  trash:'<path d="M4.5 7h15M10 7V5h4v2M6.5 7l.9 12a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12"/>',
+  eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  eyeoff:'<path d="M4 4l16 16"/><path d="M9.9 6A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.7M14.1 17.9a9 9 0 0 1-2.1.6C6 18.5 2.5 12 2.5 12a17.3 17.3 0 0 1 3.6-4.3"/><path d="M10 10.2a2.8 2.8 0 0 0 3.8 3.8"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5a7.5 7.5 0 0 0-2.6 1.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  fade:'<path d="M4 7h16" opacity="1"/><path d="M4 12h11" opacity=".55"/><path d="M4 17h6" opacity=".25"/>',
+  blocks:'<rect x="3.5" y="4.5" width="7" height="6" rx="1.6"/><rect x="13.5" y="4.5" width="7" height="6" rx="1.6"/><rect x="8.5" y="13.5" width="7" height="6" rx="1.6"/>',
+  letters:'<path d="M4 18.5L8.5 6l4.5 12.5M5.6 14.2h5.8"/><path d="M15.5 12.5c.6-.9 1.6-1.4 2.7-1.4 1.6 0 2.8 1 2.8 2.8v4.6M21 15.6c-.9-.4-1.8-.6-2.7-.6-1.6 0-2.8.8-2.8 2s1 1.9 2.2 1.9c1.4 0 2.6-.8 3.3-1.8"/>',
+  gaps:'<path d="M4 7.5h5M13 7.5h7M4 12h3M11.5 12h8.5M4 16.5h9M17 16.5h3"/><path d="M9.5 12h0" />',
+  keyboard:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 9.5h.01M9.3 9.5h.01M12.6 9.5h.01M15.9 9.5h.01M18.2 9.5h.01M6 12.5h.01M9.3 12.5h.01M12.6 12.5h.01M15.9 12.5h.01M18.2 12.5h.01M8 15.3h8"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+  quiz:'<circle cx="12" cy="12" r="9"/><path d="M9.4 9.4a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 4"/><path d="M12 17.6h.01"/>',
+  refresh:'<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.2h-4.2"/>',
+  trophy:'<path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H5a3 3 0 0 0 3 4M16 6.5h3a3 3 0 0 1-3 4M12 13.5v3.5M8.5 20h7M9.5 17h5"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  spark:'<path d="M12 3.5l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  note:'<path d="M5 4.5h10l4 4v11H5z"/><path d="M15 4.5v4h4M8.5 12.5h7M8.5 16h5"/>',
+  hint:'<path d="M9 18.5h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
+  shuffle:'<path d="M3.5 7h3.2c2 0 3.1 1 4.3 3l2 3.5c1.2 2 2.3 3 4.3 3h3.2M17.5 4.5l2.5 2.5-2.5 2.5M3.5 17h3.2c1.1 0 1.9-.3 2.6-.9M14.7 7.9c.7-.6 1.5-.9 2.6-.9M17.5 14.5l2.5 2.5-2.5 2.5"/>'
+};
+const ic = (n, cls) => `<svg class="vs-ic ${cls || ""}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || ""}</svg>`;
+
+const MODES = {
+  learn:   { name:"Learn",         sub:"Read it, hear it, phrase by phrase",     tier:"Learn",    diff:1, icon:"book" },
+  fade:    { name:"Fade away",     sub:"Words vanish as you recite",             tier:"Practice", diff:2, icon:"fade" },
+  build:   { name:"Word builder",  sub:"Tap the words back into order",          tier:"Practice", diff:2, icon:"blocks" },
+  letters: { name:"First letters", sub:"Recite from just the first letters",     tier:"Practice", diff:3, icon:"letters" },
+  gaps:    { name:"Fill the gaps", sub:"Type the missing words",                 tier:"Practice", diff:3, icon:"gaps" },
+  type:    { name:"Type it out",   sub:"From memory, one word at a time",        tier:"Test",     diff:4, icon:"keyboard" },
+  speak:   { name:"Recite aloud",  sub:"Say it — your voice is checked live",    tier:"Test",     diff:5, icon:"mic" }
+};
+const MODE_ORDER = ["learn", "fade", "build", "letters", "gaps", "type", "speak"];
+const SR = () => window.SpeechRecognition || window.webkitSpeechRecognition || null;
+function recommend(v){
+  const st = stageOf(v), best = (v.srs && v.srs.best) || {}, n = (v.srs && v.srs.n) || 0;
+  if(st === "new") return (v.srs && v.srs.seen) ? "build" : "learn";
+  if(st === "learning") return !best.build || best.build < 90 ? "build" : (!best.fade ? "fade" : (n % 2 ? "gaps" : "fade"));
+  if(st === "familiar") return ["letters", "gaps", "type"][n % 3];
+  return SR() && n % 3 === 2 ? "speak" : "type";
+}
+
+/* ---------- view state ---------- */
+const VS = {
+  view:"home", openId:null, theme:0,
+  query:"", parsed:null, preview:null, previewErr:"", loading:false, manual:false, fetchTok:0,
+  settingsOpen:false
+};
+let fontLoaded = false;
+function loadFont(){
+  if(fontLoaded) return; fontLoaded = true;
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap";
+  document.head.appendChild(l);
+}
+
+/* ---------- small pieces ---------- */
+function ring(pct, size, stroke, cls){
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(1, pct / 100)));
+  return `<svg class="vs-ring ${cls || ""}" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="trk" stroke-width="${stroke}"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="bar" stroke-width="${stroke}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" style="--c:${c.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>
+  </svg>`;
+}
+function stagePill(v){ const s = stageOf(v); return `<span class="vs-pill t-${STAGES[s].tone}">${STAGES[s].label}</span>`; }
+function textHTML(v, opts){
+  opts = opts || {};
+  const vs = Array.isArray(v.verses) && v.verses.length ? v.verses : [{ c:v.c1, v:v.v1, t:v.text || "" }];
+  const multi = vs.length > 1;
+  return vs.map((x, i) => (multi ? `<sup>${i && vs[i - 1].c !== x.c ? x.c + ":" : ""}${x.v}</sup>` : "") + h(x.t)).join(" ");
+}
+function toast(msg, action, fn){
+  let t = $q("#vsToast");
+  if(!t){ t = document.createElement("div"); t.id = "vsToast"; t.className = "vs-toast"; document.body.appendChild(t); }
+  t.innerHTML = `<span>${h(msg)}</span>${action ? `<button type="button">${h(action)}</button>` : ""}`;
+  const b = t.querySelector("button"); if(b) b.onclick = () => { t.classList.remove("on"); fn && fn(); };
+  t.classList.remove("on"); void t.offsetWidth; t.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), action ? 6000 : 2600);
+}
+function heatHTML(days){
+  const weeks = 18, today = new Date(); today.setHours(12, 0, 0, 0);
+  // the last column is this week (rows = weekday, Sunday on top)
+  const start = new Date(today); start.setDate(today.getDate() - (weeks - 1) * 7 - today.getDay());
+  const max = Math.max(30, ...Object.values(days || {}).map(d => d && d.xp || 0));
+  let cells = "";
+  for(let w = 0; w < weeks; w++){
+    cells += `<div class="vs-heat-col">`;
+    for(let d = 0; d < 7; d++){
+      const day = new Date(start); day.setDate(start.getDate() + w * 7 + d);
+      const k = dayKey(day), e = days && days[k], fut = day > today;
+      const lvl = !e || !e.n ? 0 : Math.min(4, 1 + Math.floor(3 * (e.xp || 0) / max));
+      cells += `<i class="l${lvl}${fut ? " fut" : ""}${k === dayKey(today) ? " now" : ""}" title="${day.toLocaleDateString("en-US", { month:"short", day:"numeric" })}${e && e.n ? ` · ${e.xp || 0} XP` : ""}"></i>`;
+    }
+    cells += `</div>`;
+  }
+  return `<div class="vs-heat" aria-label="Practice over the last ${weeks} weeks">${cells}</div>`;
+}
+function navUpdate(){
+  const el = document.getElementById("navVerses"); if(!el) return;
+  const now = Date.now(), due = verses().filter(v => isDue(v, now)).length;
+  el.textContent = due ? `${due} due` : (verses().length ? "" : "");
+  el.classList.toggle("hot", due > 0);
+}
+
+/* ---------- home ---------- */
+function homeHTML(){
+  const st = state(), all = verses(), now = Date.now();
+  const due = all.filter(v => isDue(v, now)), fresh = all.filter(v => stageOf(v) === "new" && !dueAt(v));
+  const mem = all.filter(v => stageOf(v) === "memorized").length;
+  const goal = Number(st.settings && st.settings.goal) || 50;
+  const today = (st.days || {})[dayKey(new Date())] || { xp:0, n:0 };
+  const streak = streakOf(st.days || {});
+  const queueN = Math.min(15, due.length + Math.min(3, fresh.length));
+  const pct = Math.min(100, Math.round(100 * (today.xp || 0) / goal));
+  let head, sub;
+  if(!all.length){ head = "Hide it in your heart"; sub = "Add a verse below to begin. Each one gets its own practice plan, from first read to word-perfect."; }
+  else if(due.length){ head = `${due.length} verse${due.length === 1 ? "" : "s"} ready for review`; sub = fresh.length ? `Plus ${fresh.length} new to learn. A few minutes keeps them fresh.` : "A few minutes now keeps them fresh for weeks."; }
+  else if(fresh.length){ head = `${fresh.length} new verse${fresh.length === 1 ? "" : "s"} to learn`; sub = "Start with a quick read-through, then build it back word by word."; }
+  else { head = "All caught up"; const nx = all.map(dueAt).filter(Boolean).sort((a, b) => a - b)[0]; sub = nx ? `Next review ${dueLabel(all.find(v => dueAt(v) === nx)).replace(/^Due /, "")}. Practise anything below in the meantime.` : "Practise anything below whenever you like."; }
+
+  const tSet = SUGGEST[VS.theme] || SUGGEST[0];
+  const have = new Set(all.map(v => v.ref));
+  return `<div class="vs">
+    <section class="vs-dash">
+      <div class="vs-dash-main">
+        <div class="vs-kicker">${ic("spark")}Today's practice</div>
+        <h2 class="vs-dash-h">${h(head)}</h2>
+        <p class="vs-dash-p">${h(sub)}</p>
+        <div class="vs-dash-cta">
+          ${all.length ? `<button class="vs-btn primary lg" data-act="review"${queueN || all.length ? "" : " disabled"}>${ic("play")}<span>${queueN ? `Start review` : "Practise anyway"}</span>${queueN ? `<b class="vs-count">${queueN}</b>` : ""}</button>` : `<button class="vs-btn primary lg" data-act="focus-add">${ic("plus")}<span>Add your first verse</span></button>`}
+          ${all.length >= 2 ? `<button class="vs-btn ghost lg" data-act="quiz">${ic("quiz")}<span>Reference quiz</span></button>` : ""}
+        </div>
+      </div>
+      <div class="vs-dash-side">
+        <div class="vs-goal">
+          ${ring(pct, 112, 10, "goal")}
+          <div class="vs-goal-in"><b>${today.xp || 0}</b><span>of ${goal} XP</span></div>
+        </div>
+        <div class="vs-stats">
+          <div class="vs-stat${streak.n ? " lit" : ""}">${ic("flame")}<div><b>${streak.n}</b><span>day streak${streak.n && !streak.today ? " · practise today" : ""}</span></div></div>
+          <div class="vs-stat">${ic("trophy")}<div><b>${mem}<em>/${all.length}</em></b><span>memorized</span></div></div>
+        </div>
+      </div>
+      <div class="vs-dash-heat">
+        <div class="vs-mini-h">Last 18 weeks</div>
+        ${heatHTML(st.days)}
+      </div>
+    </section>
+
+    <section class="vs-add${VS.preview || VS.loading || VS.previewErr ? " has-preview" : ""}">
+      <div class="vs-add-h"><h3>Add a verse</h3><button class="vs-icon-btn" data-act="settings" aria-label="Verse settings" title="Settings">${ic("gear")}</button></div>
+      <label class="vs-search">
+        ${ic("search")}
+        <input id="vsAddInput" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false"
+          placeholder="Type a reference — Philippians 4:6–7, Ps 23, Rom 8:28" value="${h(VS.query)}" aria-label="Verse reference">
+        <span class="vs-parse" id="vsParse">${parseHint()}</span>
+      </label>
+      <div class="vs-preview" id="vsPreview">${previewHTML()}</div>
+      <div class="vs-suggest">
+        <div class="vs-themes" role="tablist">${SUGGEST.map((s, i) => `<button class="${i === VS.theme ? "on" : ""}" data-act="theme" data-i="${i}" role="tab">${h(s[0])}</button>`).join("")}</div>
+        <div class="vs-chips">${tSet[1].map(r => { const p = parseRef(r), lab = p.ok ? refLabel(p) : r, got = have.has(lab); return `<button class="vs-chip${got ? " got" : ""}" data-act="suggest" data-ref="${h(r)}">${got ? ic("check") : ""}${h(lab)}</button>`; }).join("")}</div>
+      </div>
+    </section>
+
+    ${all.length ? libHTML(all) : ""}
+    <p class="vs-legal">Scripture quotations are from the ESV&reg; Bible (The Holy Bible, English Standard Version&reg;), &copy; 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.</p>
+  </div>`;
+}
+function parseHint(){
+  const p = VS.parsed;
+  if(!VS.query.trim()) return "";
+  if(!p) return "";
+  if(!p.ok) return p.err ? `<em class="bad">${h(p.err)}</em>` : "";
+  const n = p.whole ? "chapter" : (p.c1 === p.c2 ? (p.v2 - p.v1 + 1) : null);
+  return `<em class="ok">${ic("check")}${h(refLabel(p))}${n === "chapter" ? " · whole chapter" : n > 1 ? ` · ${n} verses` : ""}</em>`;
+}
+function previewHTML(){
+  if(VS.loading) return `<div class="vs-pv vs-pv-load"><div class="sk w40"></div><div class="sk"></div><div class="sk"></div><div class="sk w70"></div></div>`;
+  if(VS.previewErr){
+    return `<div class="vs-pv vs-pv-err">
+      <p>${h(VS.previewErr)}</p>
+      ${VS.manual ? `<textarea id="vsManual" rows="4" placeholder="Paste the verse text here"></textarea>
+        <div class="vs-pv-act"><button class="vs-btn primary" data-act="add-manual">${ic("plus")}Add with this text</button><button class="vs-btn ghost" data-act="add-cancel">Cancel</button></div>`
+      : (VS.parsed && VS.parsed.ok ? `<div class="vs-pv-act"><button class="vs-btn ghost" data-act="retry">${ic("refresh")}Try again</button><button class="vs-btn ghost" data-act="manual">Paste the text instead</button></div>` : "")}
+    </div>`;
+  }
+  const pv = VS.preview; if(!pv) return "";
+  const exists = !!verseById(pv.id);
+  const nWords = tokenize(pv).length;
+  return `<div class="vs-pv">
+    <div class="vs-pv-top"><div class="vs-ref">${h(pv.ref)}</div><span class="vs-badge">ESV</span></div>
+    <div class="vs-scripture vs-pv-text">${textHTML(pv)}</div>
+    <div class="vs-pv-foot">
+      <span class="vs-meta">${pv.verses.length} verse${pv.verses.length === 1 ? "" : "s"} · ${nWords} words · about ${Math.max(1, Math.round(nWords / 12))} min to learn</span>
+      <div class="vs-pv-act">
+        ${exists ? `<button class="vs-btn ghost" data-act="open" data-id="${h(pv.id)}">Already in your list — open</button>`
+          : `<button class="vs-btn primary" data-act="add-confirm">${ic("plus")}Add to my verses</button>`}
+        <button class="vs-btn ghost" data-act="add-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+function libHTML(all){
+  const now = Date.now();
+  const counts = { all:all.length, due:all.filter(v => isDue(v, now)).length,
+    learning:all.filter(v => ["new", "learning"].includes(stageOf(v))).length, memorized:all.filter(v => ["familiar", "memorized"].includes(stageOf(v))).length };
+  const f = prefs.filter in counts ? prefs.filter : "all";
+  let list = all.filter(v => f === "all" ? true : f === "due" ? isDue(v, now) : f === "learning" ? ["new", "learning"].includes(stageOf(v)) : ["familiar", "memorized"].includes(stageOf(v)));
+  const sorters = {
+    due: (a, b) => (dueAt(a) ?? now + 1) - (dueAt(b) ?? now + 1) || masteryOf(a) - masteryOf(b),
+    added: (a, b) => (b.addedAt || 0) - (a.addedAt || 0),
+    book: (a, b) => bookOrder(a) - bookOrder(b),
+    mastery: (a, b) => masteryOf(a) - masteryOf(b)
+  };
+  list.sort(sorters[prefs.sort] || sorters.due);
+  const fl = [["all", "All"], ["due", "Due"], ["learning", "Learning"], ["memorized", "Known"]];
+  return `<section class="vs-lib">
+    <div class="vs-lib-bar">
+      <h3>Your verses</h3>
+      <div class="vs-seg" role="tablist">${fl.map(([k, l]) => `<button class="${f === k ? "on" : ""}" data-act="filter" data-f="${k}" role="tab">${l}<span>${counts[k]}</span></button>`).join("")}</div>
+      <div class="vs-lib-tools">
+        <label class="vs-select"><span class="sr">Sort</span><select id="vsSort">
+          ${[["due", "Next due"], ["added", "Recently added"], ["book", "Bible order"], ["mastery", "Least known"]].map(([k, l]) => `<option value="${k}"${prefs.sort === k ? " selected" : ""}>${l}</option>`).join("")}
+        </select></label>
+        <button class="vs-icon-btn${prefs.cover ? " on" : ""}" data-act="cover" title="${prefs.cover ? "Show verse text" : "Cover verse text to test yourself"}" aria-pressed="${prefs.cover}">${ic(prefs.cover ? "eyeoff" : "eye")}</button>
+      </div>
+    </div>
+    ${list.length ? `<div class="vs-grid${prefs.cover ? " covered" : ""}">${list.map(cardHTML).join("")}</div>` : `<div class="vs-empty">Nothing here right now.</div>`}
+  </section>`;
+}
+function cardHTML(v){
+  const m = masteryOf(v), due = isDue(v);
+  return `<article class="vs-card${due ? " due" : ""}" data-act="open" data-id="${h(v.id)}" tabindex="0" role="button" aria-label="${h(v.ref)}">
+    <div class="vs-card-top">
+      <div><div class="vs-ref">${h(v.ref)}</div>${stagePill(v)}</div>
+      <div class="vs-card-ring" title="${m}% mastered">${ring(m, 46, 4.5)}<b>${m}</b></div>
+    </div>
+    <div class="vs-scripture vs-card-text">${textHTML(v)}</div>
+    <div class="vs-card-foot">
+      <span class="vs-due${due ? " now" : ""}">${ic("clock")}${h(dueLabel(v))}</span>
+      <button class="vs-mini-btn" data-act="practice" data-id="${h(v.id)}" data-mode="${recommend(v)}" title="Practise: ${h(MODES[recommend(v)].name)}">${ic("play")}${h(MODES[recommend(v)].name)}</button>
+    </div>
+  </article>`;
+}
+
+/* ---------- verse detail ---------- */
+function detailHTML(v){
+  const m = masteryOf(v), s = v.srs || {}, rec = recommend(v), best = s.best || {};
+  const words = tokenize(v).length, srOK = !!SR();
+  return `<div class="vs vs-detail">
+    <button class="vs-back" data-act="back">${ic("back")}All verses</button>
+    <section class="vs-hero-card">
+      <div class="vs-hero-main">
+        <div class="vs-hero-top"><h2 class="vs-ref xl">${h(v.ref)}</h2><span class="vs-badge">ESV</span>${stagePill(v)}</div>
+        <div class="vs-scripture vs-hero-text" id="vsHeroText">${textHTML(v)}</div>
+        <div class="vs-hero-tools">
+          <button class="vs-tool" data-act="listen" data-id="${h(v.id)}">${ic("speaker")}<span>Listen</span></button>
+          <button class="vs-tool" data-act="copy" data-id="${h(v.id)}">${ic("copy")}<span>Copy</span></button>
+          <button class="vs-tool" data-act="reset" data-id="${h(v.id)}">${ic("refresh")}<span>Reset progress</span></button>
+          <button class="vs-tool danger" data-act="remove" data-id="${h(v.id)}">${ic("trash")}<span>Remove</span></button>
+        </div>
+      </div>
+      <aside class="vs-hero-side">
+        <div class="vs-big-ring">${ring(m, 148, 11)}<div><b>${m}<small>%</small></b><span>mastered</span></div></div>
+        <dl class="vs-facts">
+          <div><dt>Next review</dt><dd>${h(dueLabel(v) || "—")}</dd></div>
+          <div><dt>Reviews</dt><dd>${s.n || 0}${s.lapses ? ` <em>· ${s.lapses} slip${s.lapses === 1 ? "" : "s"}</em>` : ""}</dd></div>
+          <div><dt>Interval</dt><dd>${s.ivl ? `${s.ivl} day${s.ivl === 1 ? "" : "s"}` : "—"}</dd></div>
+          <div><dt>Length</dt><dd>${words} words</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="vs-modes">
+      <div class="vs-modes-h"><h3>Practise</h3><span>Recommended next: <b>${h(MODES[rec].name)}</b></span></div>
+      <div class="vs-mode-grid">
+        ${MODE_ORDER.map(k => {
+          const M = MODES[k], off = k === "speak" && !srOK;
+          return `<button class="vs-mode${k === rec ? " rec" : ""}${off ? " off" : ""}" data-act="practice" data-id="${h(v.id)}" data-mode="${k}"${off ? ` disabled title="Speech recognition isn't available in this browser"` : ""}>
+            <span class="vs-mode-ic">${ic(M.icon)}</span>
+            <span class="vs-mode-t">${h(M.name)}${k === rec ? `<i>Next</i>` : ""}</span>
+            <span class="vs-mode-s">${off ? "Not available in this browser" : h(M.sub)}</span>
+            <span class="vs-mode-f"><span class="vs-dots" aria-label="Difficulty ${M.diff} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= M.diff ? "on" : ""}"></i>`).join("")}</span>${best[k] ? `<span class="vs-best">Best ${best[k]}%</span>` : `<span class="vs-tier">${M.tier}</span>`}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </section>
+
+    <section class="vs-note">
+      <label for="vsNote">${ic("note")}Why this verse</label>
+      <textarea id="vsNote" rows="2" data-id="${h(v.id)}" placeholder="A note to yourself — what it means to you, where you'll use it">${h(v.note || "")}</textarea>
+    </section>
+  </div>`;
+}
+
+/* ---------- render ---------- */
+function setHero(){
+  const t = document.getElementById("heroTitle"), s = document.getElementById("heroSub"), d = document.getElementById("heroDateline");
+  const all = verses(), due = all.filter(v => isDue(v)).length;
+  if(t) t.textContent = VS.view === "verse" && verseById(VS.openId) ? verseById(VS.openId).ref : "Verses";
+  if(s) s.textContent = !api() ? "Connecting…" : !all.length ? "Memorize Scripture, one verse at a time" :
+    `${all.length} verse${all.length === 1 ? "" : "s"} in your list${due ? ` · ${due} ready for review` : ""}`;
+  if(d) d.textContent = "“I have stored up your word in my heart.” — Psalm 119:11";
+}
+function renderVersesBody(){
+  const panel = document.getElementById("panel-verses"); if(!panel) return;
+  loadFont(); bindPanel(panel); setHero(); navUpdate();
+  if(!api() || !api().isReady()){
+    if(!panel.querySelector(".vs")) panel.innerHTML = `<div class="vs"><div class="vs-loading"><div class="spinner"></div><p>Loading your verses…</p></div></div>`;
+    return;
+  }
+  const ae = document.activeElement, aeId = ae && ae.id && panel.contains(ae) ? ae.id : null;
+  const caret = aeId && typeof ae.selectionStart === "number" ? [ae.selectionStart, ae.selectionEnd] : null;
+  const manualVal = $q("#vsManual", panel) ? $q("#vsManual", panel).value : null;
+  const noteVal = $q("#vsNote", panel) && aeId === "vsNote" ? $q("#vsNote", panel).value : null;
+  if(VS.view === "verse"){
+    const v = verseById(VS.openId);
+    if(!v){ VS.view = "home"; panel.innerHTML = homeHTML(); }
+    else panel.innerHTML = detailHTML(v);
+  }else panel.innerHTML = homeHTML();
+  if(manualVal !== null && $q("#vsManual", panel)) $q("#vsManual", panel).value = manualVal;
+  if(noteVal !== null && $q("#vsNote", panel)) $q("#vsNote", panel).value = noteVal;
+  if(aeId){ const el = document.getElementById(aeId); if(el){ el.focus({ preventScroll:true }); if(caret) try{ el.setSelectionRange(caret[0], caret[1]); }catch(e){} } }
+}
+window.renderVersesBody = renderVersesBody;
+function rerenderSoon(){ clearTimeout(rerenderSoon._t); rerenderSoon._t = setTimeout(() => { if(isActive()) renderVersesBody(); }, 30); }
+const isActive = () => { const p = document.getElementById("panel-verses"); return !!(p && p.classList.contains("active")); };
+function refreshPreviewOnly(){
+  const pv = document.getElementById("vsPreview"); if(pv) pv.innerHTML = previewHTML();
+  const ph = document.getElementById("vsParse"); if(ph) ph.innerHTML = parseHint();
+  const add = $q("#panel-verses .vs-add"); if(add) add.classList.toggle("has-preview", !!(VS.preview || VS.loading || VS.previewErr));
+}
+
+/* sync snapshots: repaint unless the practice stage is open (it keeps its own state) */
+window.__onBibleSnapshot = () => {
+  navUpdate();
+  if(isActive()){
+    const ae = document.activeElement;
+    if(ae && ae.id === "vsNote") return;                 // don't yank a note being typed
+    rerenderSoon();
+  }
+};
+setInterval(() => { navUpdate(); if(isActive() && !STAGE.open && !(document.activeElement && /^(vsNote|vsAddInput|vsManual)$/.test(document.activeElement.id))) renderVersesBody(); }, 60000);
+
+/* ---------- add flow ---------- */
+let pvTimer = null;
+function onQuery(val){
+  VS.query = val;
+  VS.parsed = val.trim() ? parseRef(val) : null;
+  clearTimeout(pvTimer);
+  if(VS.parsed && VS.parsed.ok){
+    const tag = verseId(VS.parsed) + (VS.parsed.whole ? "w" : "");
+    if(VS.preview && VS.preview._tag === tag){ refreshPreviewOnly(); return; }
+    pvTimer = setTimeout(() => loadPreview(), 550);
+  }else{ VS.preview = null; VS.previewErr = ""; VS.loading = false; VS.manual = false; }
+  refreshPreviewOnly();
+}
+async function loadPreview(){
+  const p = VS.parsed; if(!p || !p.ok) return;
+  const tok = ++VS.fetchTok;
+  VS.loading = true; VS.previewErr = ""; VS.manual = false; refreshPreviewOnly();
+  try{
+    const { verses: vs } = await fetchPassage(p);
+    if(tok !== VS.fetchTok) return;
+    const real = { ...p };
+    if(p.whole){ real.whole = true; real.v2 = vs[vs.length - 1].v; real.c2 = vs[vs.length - 1].c; }
+    else if(p.c1 !== p.c2 || p.v2 !== p.v1){ const last = vs[vs.length - 1]; real.c2 = last.c; real.v2 = last.v; }
+    if(vs.length > 80) throw new Error("That passage is a bit long — try 80 verses or fewer.");
+    const ref = p.whole ? refLabel(p) : refLabel(real);
+    VS.preview = { id: verseId({ ...real, whole:false }), ref, book: p.book.code.toLowerCase(), c1: real.c1, v1: real.v1, c2: real.c2, v2: real.v2,
+      verses: vs, text: joinText(vs), tr:"ESV", _tag: verseId(p) + (p.whole ? "w" : "") };
+  }catch(e){
+    if(tok !== VS.fetchTok) return;
+    VS.preview = null;
+    VS.previewErr = navigator.onLine === false ? "You're offline, so the ESV text can't be fetched right now." :
+      /verses|long|has \d+/.test(e && e.message || "") ? e.message : "Couldn't load the ESV text for that reference.";
+  }finally{
+    if(tok === VS.fetchTok){ VS.loading = false; refreshPreviewOnly(); }
+  }
+}
+function addPreview(){
+  const pv = VS.preview; if(!pv || !api()) return;
+  const v = { id:pv.id, ref:pv.ref, book:pv.book, c1:pv.c1, v1:pv.v1, c2:pv.c2, v2:pv.v2, verses:pv.verses, text:pv.text, tr:"ESV", addedAt:Date.now() };
+  api().add(v);
+  VS.query = ""; VS.parsed = null; VS.preview = null; VS.previewErr = "";
+  toast(`${v.ref} added`, "Learn it now", () => startPractice(v.id, "learn"));
+  renderVersesBody();
+  const card = document.querySelector(`.vs-card[data-id="${CSS.escape(v.id)}"]`);
+  if(card){ card.classList.add("just-added"); }
+}
+function addManual(){
+  const p = VS.parsed, ta = $q("#vsManual"); if(!p || !p.ok || !ta) return;
+  const text = cleanText(ta.value); if(!text){ ta.focus(); return; }
+  const real = { ...p, whole:false, v2: p.whole ? p.v1 : p.v2 };
+  const v = { id: verseId(real), ref: refLabel(p), book:p.book.code.toLowerCase(), c1:p.c1, v1:p.v1, c2:p.c2, v2:real.v2,
+    verses:[{ c:p.c1, v:p.v1, t:text }], text, tr:"ESV", addedAt:Date.now(), manual:true };
+  api().add(v);
+  VS.query = ""; VS.parsed = null; VS.preview = null; VS.previewErr = ""; VS.manual = false;
+  toast(`${v.ref} added`);
+  renderVersesBody();
+}
+
+/* ---------- settings sheet ---------- */
+function openSettings(){
+  closeSheet();
+  const st = state(), goal = Number(st.settings && st.settings.goal) || 50, key = lsGet(LS_TOKEN) || "";
+  const voices = (window.speechSynthesis && speechSynthesis.getVoices ? speechSynthesis.getVoices() : []).filter(v => /^en/i.test(v.lang));
+  const el = document.createElement("div");
+  el.className = "vs-sheet-wrap"; el.id = "vsSheet";
+  el.innerHTML = `<div class="vs-sheet" role="dialog" aria-modal="true" aria-label="Verse settings">
+    <div class="vs-sheet-h"><h3>Verse settings</h3><button class="vs-icon-btn" data-sh="close" aria-label="Close">${ic("x")}</button></div>
+    <div class="vs-field"><div class="vs-field-l">Daily goal<span>XP you aim to earn each day. Synced across your devices.</span></div>
+      <div class="vs-seg sm">${[30, 50, 100, 150].map(g => `<button class="${g === goal ? "on" : ""}" data-sh="goal" data-v="${g}">${g}</button>`).join("")}</div></div>
+    <div class="vs-field"><div class="vs-field-l">Typing style<span>How "Type it out" checks you by default.</span></div>
+      <div class="vs-seg sm"><button class="${prefs.typeStyle === "letters" ? "on" : ""}" data-sh="type" data-v="letters">First letters</button><button class="${prefs.typeStyle === "words" ? "on" : ""}" data-sh="type" data-v="words">Whole words</button></div></div>
+    ${voices.length ? `<div class="vs-field"><div class="vs-field-l">Reading voice<span>Used by Listen.</span></div>
+      <label class="vs-select"><select data-sh="voice"><option value="">Automatic</option>${voices.map(v => `<option value="${h(v.name)}"${prefs.voice === v.name ? " selected" : ""}>${h(v.name)}</option>`).join("")}</select></label></div>` : ""}
+    <div class="vs-field col"><div class="vs-field-l">Official ESV API key <em>optional</em><span>Text already comes in the ESV. A free key from Crossway makes the official ESV API the source instead. Saved on this device only.</span></div>
+      <div class="vs-key"><input type="password" id="vsKey" placeholder="Paste your ESV API token" value="${h(key)}" autocomplete="off" spellcheck="false"><button class="vs-btn ghost" data-sh="key">Save</button></div>
+      <a href="https://api.esv.org/account/create-application/" target="_blank" rel="noopener">Get a free key at api.esv.org</a></div>
+  </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("on"));
+  el.addEventListener("click", e => {
+    if(e.target === el){ closeSheet(); return; }
+    const b = e.target.closest("[data-sh]"); if(!b) return;
+    const k = b.dataset.sh;
+    if(k === "close") closeSheet();
+    else if(k === "goal"){ api().settings({ goal:+b.dataset.v }); $qa('[data-sh="goal"]', el).forEach(x => x.classList.toggle("on", x === b)); }
+    else if(k === "type"){ prefs.typeStyle = b.dataset.v; savePrefs(); $qa('[data-sh="type"]', el).forEach(x => x.classList.toggle("on", x === b)); }
+    else if(k === "key"){ const v = $q("#vsKey", el).value.trim(); if(v) lsSet(LS_TOKEN, v); else lsDel(LS_TOKEN); toast(v ? "ESV API key saved on this device" : "ESV API key removed"); }
+  });
+  el.addEventListener("change", e => { if(e.target.dataset.sh === "voice"){ prefs.voice = e.target.value; savePrefs(); } });
+}
+function closeSheet(){ const el = document.getElementById("vsSheet"); if(!el) return; el.classList.remove("on"); setTimeout(() => el.remove(), 220); }
+
+/* ---------- panel events (bound once) ---------- */
+function bindPanel(panel){
+  if(panel.dataset.vsBound) return; panel.dataset.vsBound = "1";
+  panel.addEventListener("input", e => {
+    if(e.target.id === "vsAddInput") onQuery(e.target.value);
+  });
+  panel.addEventListener("keydown", e => {
+    if(e.target.id === "vsAddInput" && e.key === "Enter"){ e.preventDefault(); clearTimeout(pvTimer); if(VS.preview && !verseById(VS.preview.id)) addPreview(); else loadPreview(); }
+    if(e.target.id === "vsAddInput" && e.key === "Escape"){ onQuery(""); e.target.value = ""; }
+    if(e.target.classList.contains("vs-card") && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); openVerse(e.target.dataset.id); }
+  });
+  panel.addEventListener("change", e => {
+    if(e.target.id === "vsSort"){ prefs.sort = e.target.value; savePrefs(); renderVersesBody(); }
+  });
+  panel.addEventListener("focusout", e => {
+    if(e.target.id === "vsNote"){ const v = verseById(e.target.dataset.id); const val = e.target.value.trim(); if(v && (v.note || "") !== val) api().patch(v.id, val ? { note:val } : {}, val ? [] : ["note"]); }
+  });
+  panel.addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if(!b || !panel.contains(b)) return;
+    const act = b.dataset.act, id = b.dataset.id;
+    if(act !== "open" || b.tagName === "BUTTON") e.stopPropagation();
+    switch(act){
+      case "review": startSession(); break;
+      case "quiz": startQuiz(); break;
+      case "focus-add": { const i = $q("#vsAddInput"); if(i){ i.focus(); i.scrollIntoView({ behavior:"smooth", block:"center" }); } break; }
+      case "theme": VS.theme = +b.dataset.i; { const s = $q(".vs-suggest", panel); if(s){ const tmp = document.createElement("div"); tmp.innerHTML = homeHTML(); s.replaceWith(tmp.querySelector(".vs-suggest")); } } break;
+      case "suggest": { const r = b.dataset.ref; const i = $q("#vsAddInput"); if(i) i.value = r; onQuery(r); clearTimeout(pvTimer); loadPreview(); break; }
+      case "add-confirm": addPreview(); break;
+      case "add-cancel": VS.query = ""; VS.parsed = null; VS.preview = null; VS.previewErr = ""; VS.manual = false; VS.fetchTok++; VS.loading = false; { const i = $q("#vsAddInput"); if(i) i.value = ""; } refreshPreviewOnly(); break;
+      case "retry": loadPreview(); break;
+      case "manual": VS.manual = true; refreshPreviewOnly(); { const t = $q("#vsManual"); if(t) t.focus(); } break;
+      case "add-manual": addManual(); break;
+      case "filter": prefs.filter = b.dataset.f; savePrefs(); renderVersesBody(); break;
+      case "cover": prefs.cover = !prefs.cover; savePrefs(); renderVersesBody(); break;
+      case "settings": openSettings(); break;
+      case "open": openVerse(id); break;
+      case "back": VS.view = "home"; VS.openId = null; stopSpeech(); renderVersesBody(); window.scrollTo({ top:0, behavior:"smooth" }); break;
+      case "practice": startPractice(id, b.dataset.mode); break;
+      case "listen": { const v = verseById(id); if(v) toggleListen(v, b); break; }
+      case "copy": { const v = verseById(id); if(v){ const txt = `“${v.text}” — ${v.ref} (ESV)`; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Copied"), () => toast("Couldn't copy")); } break; }
+      case "reset": { const v = verseById(id); if(v && confirm(`Reset all progress on ${v.ref}? It goes back to New.`)){ api().reset(id); toast("Progress reset"); } break; }
+      case "remove": {
+        const v = verseById(id); if(!v) break;
+        const copy = JSON.parse(JSON.stringify(v));
+        api().remove(id); VS.view = "home"; VS.openId = null; stopSpeech(); renderVersesBody();
+        toast(`${copy.ref} removed`, "Undo", () => api().restore(copy));
+        break;
+      }
+    }
+  });
+}
+function openVerse(id){
+  if(!verseById(id)) return;
+  VS.view = "verse"; VS.openId = id; stopSpeech();
+  renderVersesBody();
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+/* ---------- read aloud (Listen) ---------- */
+let speakState = null;
+function pickVoice(){
+  if(!window.speechSynthesis) return null;
+  const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+  if(prefs.voice){ const v = vs.find(x => x.name === prefs.voice); if(v) return v; }
+  const pref = ["Ava (Premium)", "Ava (Enhanced)", "Samantha (Enhanced)", "Allison", "Ava", "Samantha", "Google US English", "Microsoft Aria Online (Natural) - English (United States)", "Microsoft Jenny Online (Natural) - English (United States)", "Daniel", "Karen"];
+  for(const p of pref){ const v = vs.find(x => x.name === p || x.name.startsWith(p)); if(v) return v; }
+  return vs.find(v => /en-US/i.test(v.lang)) || vs[0] || null;
+}
+function stopSpeech(){
+  if(window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+  if(speakState){ clearInterval(speakState.timer); speakState.onEnd && speakState.onEnd(); speakState = null; }
+}
+/* speak tokens, calling onWord(i) as each word is read (boundary events, or an even pace as a fallback) */
+function speakTokens(toks, onWord, onEnd, rate){
+  stopSpeech();
+  if(!window.speechSynthesis || typeof SpeechSynthesisUtterance !== "function"){ toast("Read-aloud isn't available in this browser"); onEnd && onEnd(); return false; }
+  const starts = []; let text = "";
+  toks.forEach((t, i) => { if(i) text += " "; starts.push(text.length); text += t.w; });
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice(); if(v){ u.voice = v; u.lang = v.lang; } else u.lang = "en-US";
+  u.rate = rate || 0.9; u.pitch = 1;
+  const st = speakState = { boundary:false, timer:null, onEnd };
+  u.onboundary = e => {
+    if(e.name && e.name !== "word") return;
+    st.boundary = true;
+    let i = starts.findIndex((s, k) => e.charIndex >= s && (k === starts.length - 1 || e.charIndex < starts[k + 1]));
+    if(i >= 0) onWord && onWord(i);
+  };
+  u.onstart = () => {
+    onWord && onWord(0);
+    setTimeout(() => {
+      if(st.boundary || speakState !== st) return;
+      let i = 0; const per = 60000 / (165 * (u.rate || 1));
+      st.timer = setInterval(() => { i++; if(i >= toks.length){ clearInterval(st.timer); return; } onWord && onWord(i); }, per);
+    }, 700);
+  };
+  const done = () => { if(speakState === st){ clearInterval(st.timer); speakState = null; onEnd && onEnd(); } };
+  u.onend = done; u.onerror = done;
+  speechSynthesis.speak(u);
+  return true;
+}
+function toggleListen(v, btn){
+  if(speakState){ stopSpeech(); return; }
+  const host = document.getElementById("vsHeroText"); if(!host) return;
+  const toks = tokenize(v);
+  host.innerHTML = toks.map((t, i) => `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w" data-i="${i}">${h(t.w)}</span>`).join(" ");
+  btn.classList.add("on"); btn.querySelector("span").textContent = "Stop";
+  btn.querySelector("svg").innerHTML = IC.stop;
+  speakTokens(toks, i => { $qa(".w.on", host).forEach(x => x.classList.remove("on")); const w = host.querySelector(`.w[data-i="${i}"]`); if(w) w.classList.add("on"); },
+    () => { btn.classList.remove("on"); const sp = btn.querySelector("span"); if(sp) sp.textContent = "Listen"; const sv = btn.querySelector("svg"); if(sv) sv.innerHTML = IC.speaker; $qa(".w.on", host).forEach(x => x.classList.remove("on")); });
+}
+if(window.speechSynthesis && speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", () => {});
+
+/* ================= the practice stage (full-screen focus mode) ================= */
+const STAGE = { open:false, el:null, run:null, keyFn:null, onClose:null };
+const qFromAcc = (acc, cap) => Math.min(cap || 5, acc >= 98 ? 5 : acc >= 90 ? 4 : acc >= 75 ? 3 : acc >= 50 ? 2 : 1);
+
+function openStage(){
+  closeStage(true);
+  stopSpeech();
+  const tt = document.getElementById("vsToast"); if(tt) tt.classList.remove("on");
+  const el = document.createElement("div");
+  el.className = "vs-stage"; el.id = "vsStage";
+  el.innerHTML = `<div class="vs-st-card" role="dialog" aria-modal="true">
+      <header class="vs-st-h">
+        <button class="vs-icon-btn" data-st="close" aria-label="Close practice">${ic("x")}</button>
+        <div class="vs-st-title" id="vsStTitle"></div>
+        <div class="vs-st-meta" id="vsStMeta"></div>
+      </header>
+      <div class="vs-st-prog" id="vsStProg"></div>
+      <div class="vs-st-body" id="vsStBody"></div>
+      <footer class="vs-st-f" id="vsStFoot"></footer>
+    </div>
+    <canvas class="vs-confetti" id="vsConfetti"></canvas>`;
+  document.body.appendChild(el);
+  document.documentElement.classList.add("vs-locked");
+  STAGE.open = true; STAGE.el = el;
+  requestAnimationFrame(() => el.classList.add("on"));
+  el.addEventListener("click", e => { const b = e.target.closest('[data-st="close"]'); if(b) closeStage(); });
+  STAGE.keyFn = e => {
+    if(e.key === "Escape"){ e.preventDefault(); closeStage(); return; }
+    if((e.key === "Enter" || e.key === " ") && e.target && e.target.tagName === "BUTTON") return;   // the button's own click handles it
+    if(STAGE.run && STAGE.run.key) STAGE.run.key(e);
+  };
+  document.addEventListener("keydown", STAGE.keyFn, true);
+  return el;
+}
+function closeStage(silent){
+  stopSpeech();
+  if(STAGE.run && STAGE.run.destroy) try{ STAGE.run.destroy(); }catch(e){}
+  STAGE.run = null;
+  if(STAGE.keyFn) document.removeEventListener("keydown", STAGE.keyFn, true);
+  STAGE.keyFn = null;
+  const el = STAGE.el; STAGE.el = null;
+  const wasOpen = STAGE.open; STAGE.open = false;
+  document.documentElement.classList.remove("vs-locked");
+  if(el){ el.classList.remove("on"); setTimeout(() => el.remove(), 260); }
+  if(wasOpen && !silent){ const cb = STAGE.onClose; STAGE.onClose = null; cb && cb(); if(isActive()) renderVersesBody(); }
+}
+const stBody = () => document.getElementById("vsStBody");
+const stFoot = () => document.getElementById("vsStFoot");
+function stTitle(v, mode){
+  const t = document.getElementById("vsStTitle"); if(!t) return;
+  const M = MODES[mode] || { name:"Quiz", icon:"quiz" };
+  t.innerHTML = `<span class="vs-st-mode">${ic(M.icon)}${h(M.name)}</span>${v ? `<b>${h(v.ref)}</b>` : ""}`;
+}
+
+/* ---------- word rendering helpers ---------- */
+const slotW = t => Math.max(2.2, Math.min(11, t.core.length * 0.62 + 0.6)).toFixed(2);
+function wordsHTML(toks, cls){
+  return toks.map(t => `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w ${cls ? cls(t) : ""}" data-i="${t.i}">${h(t.w)}</span>`).join(" ");
+}
+
+/* ================= modes ================= */
+const IMPL = {};
+
+/* ---- Learn: read, listen with word highlight, phrase by phrase ---- */
+IMPL.learn = (ctx) => {
+  const { toks } = ctx, ph = phrases(toks);
+  let step = -1, listening = false;
+  const pOf = new Map(); ph.forEach((p, j) => p.forEach(i => pOf.set(i, j)));
+  function paint(){
+    const body = stBody();
+    body.innerHTML = `<div class="vs-learn">
+      <div class="vs-scripture vs-st-text${step >= 0 ? " phrased" : ""}" id="vsLearnText">${toks.map(t => {
+        const j = pOf.get(t.i), st = step < 0 ? "" : j < step ? " past" : j === step ? " cur" : " fut";
+        return `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w${st}" data-i="${t.i}">${h(t.w)}</span>`;
+      }).join(" ")}</div>
+      <div class="vs-learn-tools">
+        <button class="vs-pill-btn${listening ? " on" : ""}" data-l="listen">${ic(listening ? "stop" : "speaker")}${listening ? "Stop" : step >= 0 ? "Listen to this phrase" : "Listen"}</button>
+        <button class="vs-pill-btn${step >= 0 ? " on" : ""}" data-l="phrase">${ic("fade")}${step >= 0 ? `Phrase ${step + 1} of ${ph.length}` : "Phrase by phrase"}</button>
+      </div>
+      ${step >= 0 ? `<p class="vs-tip">Read the bright phrase, look away, and say it. Then add the next one.</p>` : `<p class="vs-tip">Read it slowly two or three times. Notice the shape: where it turns, what repeats.</p>`}
+    </div>`;
+    const foot = stFoot();
+    foot.innerHTML = step >= 0
+      ? `<button class="vs-btn ghost" data-l="prev"${step === 0 ? " disabled" : ""}>${ic("back")}Back</button>
+         ${step < ph.length - 1 ? `<button class="vs-btn primary" data-l="next">Add next phrase${ic("next")}</button>` : `<button class="vs-btn primary" data-l="done">I've read it through${ic("next")}</button>`}`
+      : `<span class="vs-f-note">${toks.length} words · ${ph.length} phrases</span><button class="vs-btn primary" data-l="done">I've read it through${ic("next")}</button>`;
+  }
+  function listen(){
+    if(listening){ stopSpeech(); listening = false; paint(); return; }
+    const idx = step >= 0 ? ph[step] : toks.map(t => t.i);
+    const sub = idx.map(i => toks[i]);
+    listening = true; paint();
+    speakTokens(sub, k => { const host = document.getElementById("vsLearnText"); if(!host) return; $qa(".w.say", host).forEach(x => x.classList.remove("say")); const w = host.querySelector(`.w[data-i="${sub[k] && sub[k].i}"]`); if(w) w.classList.add("say"); },
+      () => { listening = false; if(STAGE.run === run) paint(); });
+  }
+  function onClick(e){
+    const b = e.target.closest("[data-l]"); if(!b) return;
+    const k = b.dataset.l;
+    if(k === "listen") listen();
+    else if(k === "phrase"){ stopSpeech(); listening = false; step = step >= 0 ? -1 : 0; paint(); }
+    else if(k === "next"){ stopSpeech(); listening = false; step = Math.min(ph.length - 1, step + 1); paint(); }
+    else if(k === "prev"){ stopSpeech(); listening = false; step = Math.max(0, step - 1); paint(); }
+    else if(k === "done"){ stopSpeech(); ctx.finish({ q:null, acc:undefined, xp:5 }); }
+  }
+  const run = {
+    start(){ paint(); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ STAGE.el && STAGE.el.removeEventListener("click", onClick); },
+    key(e){
+      if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if(e.key === "ArrowRight" || e.key === " "){ e.preventDefault(); if(step < 0){ step = 0; paint(); } else if(step < ph.length - 1){ step++; paint(); } }
+      else if(e.key === "ArrowLeft" && step > 0){ step--; paint(); }
+      else if(e.key === "Enter"){ e.preventDefault(); ctx.finish({ q:null, acc:undefined, xp:5 }); }
+    }
+  };
+  return run;
+};
+
+/* ---- shared self-grade footer (Fade away, First letters) ---- */
+function gradeFoot(ctx, capQ, onGrade){
+  const v = ctx.v, now = Date.now(), sched = q => api().schedule(v.srs, q, now).due - now;
+  const G = [[1, "Again", "again"], [3, "Hard", "hard"], [4, "Good", "good"], [5, "Easy", "easy"]];
+  stFoot().innerHTML = `<div class="vs-grades"><span class="vs-f-note">How did it go?</span>${G.map(([q, l, c]) =>
+    `<button class="vs-grade g-${c}" data-g="${q}"${q > capQ ? " disabled" : ""}><b>${l}</b><span>${ivlLabel(sched(q))}</span><kbd>${q === 1 ? 1 : q === 3 ? 2 : q === 4 ? 3 : 4}</kbd></button>`).join("")}</div>`;
+  $qa("[data-g]", stFoot()).forEach(b => b.onclick = () => onGrade(+b.dataset.g));
+  return e => {
+    const map = { "1":1, "2":3, "3":4, "4":5 };
+    if(map[e.key] && map[e.key] <= capQ){ e.preventDefault(); onGrade(map[e.key]); }
+  };
+}
+
+/* ---- Fade away: words disappear level by level; tap a blank to peek ---- */
+IMPL.fade = (ctx) => {
+  const { toks, v } = ctx, n = toks.length;
+  const order = shuffle(toks.map(t => t.i), seeded(v.id + ":" + ((v.srs && v.srs.n) || 0) + ":" + Date.now()));
+  let L = 1; const peeks = new Set(); let gradeKey = null;
+  const hiddenSet = () => new Set(order.slice(0, L >= 5 ? n : Math.ceil(n * L / 5)));
+  function paint(){
+    const hid = hiddenSet();
+    stBody().innerHTML = `<div class="vs-fade">
+      <div class="vs-levels" aria-label="Level ${L} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= L ? "on" : ""}"></i>`).join("")}<span>${L >= 5 ? "Every word hidden" : `${Math.round(100 * Math.ceil(n * L / 5) / n)}% hidden`}</span></div>
+      <div class="vs-scripture vs-st-text" id="vsFadeText">${toks.map(t => {
+        const hdn = hid.has(t.i);
+        return `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w${hdn ? " hid" : ""}${peeks.has(t.i) && hdn ? " peeked" : ""}" data-i="${t.i}" style="--sw:${slotW(t)}em">${h(t.w)}</span>`;
+      }).join(" ")}</div>
+      <p class="vs-tip">${L >= 5 ? "Say the whole verse from memory, then grade yourself honestly." : "Say it out loud, filling in the blanks. Tap a blank to peek."}</p>
+    </div>`;
+    if(L >= 5){
+      const cap = peeks.size / n > 0.3 ? 3 : peeks.size / n > 0.1 ? 4 : 5;
+      gradeKey = gradeFoot(ctx, cap, q => done(q));
+    }else{
+      gradeKey = null;
+      stFoot().innerHTML = `<button class="vs-btn ghost" data-f="less"${L <= 1 ? " disabled" : ""}>${ic("back")}Bring words back</button>
+        <button class="vs-btn primary" data-f="more">Fade more${ic("next")}</button>`;
+    }
+  }
+  function done(q){
+    const acc = Math.round(100 * (1 - peeks.size / n));
+    ctx.finish({ q, acc, xp: q === 1 ? 3 : 4 + Math.round(6 * acc / 100) });
+  }
+  function onClick(e){
+    const w = e.target.closest(".vs-st-text .w.hid");
+    if(w){
+      const i = +w.dataset.i; peeks.add(i); w.classList.add("peek", "peeked");
+      clearTimeout(w._t); w._t = setTimeout(() => w.classList.remove("peek"), 1400);
+      if(L >= 5) paintFootOnly();
+      return;
+    }
+    const b = e.target.closest("[data-f]"); if(!b) return;
+    if(b.dataset.f === "more"){ L = Math.min(5, L + 1); paint(); }
+    else if(b.dataset.f === "less"){ L = Math.max(1, L - 1); paint(); }
+  }
+  function paintFootOnly(){ const cap = peeks.size / n > 0.3 ? 3 : peeks.size / n > 0.1 ? 4 : 5; gradeKey = gradeFoot(ctx, cap, q => done(q)); }
+  return {
+    start(){ paint(); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ STAGE.el && STAGE.el.removeEventListener("click", onClick); },
+    key(e){
+      if(gradeKey){ gradeKey(e); return; }
+      if(e.key === "ArrowRight" || e.key === " " || e.key === "Enter"){ e.preventDefault(); L = Math.min(5, L + 1); paint(); }
+      else if(e.key === "ArrowLeft"){ L = Math.max(1, L - 1); paint(); }
+    }
+  };
+};
+
+/* ---- First letters: recite from initials; tap to reveal a word ---- */
+IMPL.letters = (ctx) => {
+  const { toks } = ctx, n = toks.length, shown = new Set();
+  let all = false, gradeKey = null;
+  const cap = () => all ? 3 : shown.size / n > 0.3 ? 3 : shown.size / n > 0.1 ? 4 : 5;
+  function paint(){
+    stBody().innerHTML = `<div class="vs-letters">
+      <div class="vs-initials${all ? " all" : ""}" id="vsInit">${toks.map(t => `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="li${shown.has(t.i) ? " open" : ""}" data-i="${t.i}"><b>${h(t.lead)}${h(t.core[0])}</b><em>${h(t.core.slice(1))}</em>${h(t.trail)}</span>`).join(" ")}</div>
+      <p class="vs-tip">Each letter starts a word. Recite the verse out loud, tapping a letter only if you're stuck.</p>
+      <div class="vs-learn-tools"><button class="vs-pill-btn" data-lt="hold">${ic("eye")}Hold to see it all</button></div>
+    </div>`;
+    gradeKey = gradeFoot(ctx, cap(), q => {
+      const acc = all ? Math.min(70, Math.round(100 * (1 - shown.size / n))) : Math.round(100 * (1 - shown.size / n));
+      ctx.finish({ q, acc, xp: q === 1 ? 3 : 4 + Math.round(6 * acc / 100) });
+    });
+    const hold = $q('[data-lt="hold"]', stBody());
+    const on = e => { e.preventDefault(); all = true; $q("#vsInit").classList.add("all"); }, off = () => { $q("#vsInit") && $q("#vsInit").classList.remove("all"); if(all) paintFoot(); };
+    hold.addEventListener("pointerdown", on); hold.addEventListener("pointerup", off); hold.addEventListener("pointerleave", off); hold.addEventListener("pointercancel", off);
+  }
+  function paintFoot(){ gradeKey = gradeFoot(ctx, cap(), q => { const acc = all ? Math.min(70, Math.round(100 * (1 - shown.size / n))) : Math.round(100 * (1 - shown.size / n)); ctx.finish({ q, acc, xp: q === 1 ? 3 : 4 + Math.round(6 * acc / 100) }); }); }
+  function onClick(e){
+    const li = e.target.closest(".vs-initials .li"); if(!li) return;
+    shown.add(+li.dataset.i); li.classList.add("open"); paintFoot();
+  }
+  return {
+    start(){ paint(); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ STAGE.el && STAGE.el.removeEventListener("click", onClick); },
+    key(e){ gradeKey && gradeKey(e); }
+  };
+};
+
+/* ---- Word builder: tap the tiles back into order ---- */
+IMPL.build = (ctx) => {
+  const { toks } = ctx, n = toks.length;
+  const size = n <= 40 ? 1 : Math.ceil(n / 30);
+  const units = [];
+  for(let i = 0; i < n; i += size){ const g = toks.slice(i, i + size); units.push({ u:units.length, toks:g, text:g.map(t => t.w).join(" "), key:g.map(t => t.key).join(" "), first:g[0].first }); }
+  const U = units.length, WINDOW = U <= 12 ? U : 10;
+  let placed = 0, mistakes = 0, missHere = 0, pool = [], done = false;
+  const remaining = new Set(units.map(u => u.u));
+  function sample(){
+    const rest = [...remaining].sort((a, b) => a - b);
+    if(rest.length <= WINDOW){ pool = keepOrder(rest); return; }
+    const need = rest[0], near = rest.slice(1, 5), far = shuffle(rest.slice(5)).slice(0, WINDOW - 1 - near.length);
+    pool = keepOrder([need, ...near, ...far]);
+  }
+  // keep tiles that are still in play where they were, add new ones at random spots (less jumping around)
+  function keepOrder(ids){
+    const set = new Set(ids), kept = pool.filter(id => set.has(id)), fresh = shuffle(ids.filter(id => !kept.includes(id)));
+    const out = kept.slice(); fresh.forEach(id => out.splice(Math.floor(Math.random() * (out.length + 1)), 0, id));
+    return out;
+  }
+  function paintBoard(){
+    const sofar = units.slice(0, placed).map(u => u.toks).flat();
+    $q("#vsBuilt").innerHTML = placed ? wordsHTML(sofar, t => "in") + (placed < U ? ` <span class="vs-caret"></span>` : "")
+      : `<span class="vs-caret"></span><span class="vs-built-ph">Tap the first ${size > 1 ? "phrase" : "word"}${ctx.v.ref ? ` of ${h(ctx.v.ref)}` : ""}</span>`;
+    $q("#vsTiles").innerHTML = pool.map(id => `<button class="vs-tile${size > 1 ? " chunk" : ""}" data-u="${id}">${h(units[id].text)}</button>`).join("");
+    $q("#vsBuildN").textContent = `${placed} / ${U}`;
+    const bar = $q("#vsBuildBar"); if(bar) bar.style.width = (100 * placed / U) + "%";
+  }
+  function paint(){
+    stBody().innerHTML = `<div class="vs-build">
+      <div class="vs-built vs-scripture vs-st-text" id="vsBuilt"></div>
+      <div class="vs-build-meta"><span id="vsBuildN"></span><div class="vs-meter"><i id="vsBuildBar"></i></div><span class="vs-miss" id="vsMiss">${mistakes ? `${mistakes} miss${mistakes === 1 ? "" : "es"}` : ""}</span></div>
+      <div class="vs-tiles" id="vsTiles"></div>
+      <p class="vs-tip">Tap the ${size > 1 ? "phrases" : "words"} in order. On a keyboard, type the first letter.</p>
+    </div>`;
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-b="hint">${ic("hint")}Hint</button><span class="vs-f-note">${size > 1 ? `${size}-word tiles` : ""}</span>`;
+    paintBoard();
+  }
+  function choose(id, el){
+    if(done) return;
+    const need = units[placed];
+    if(units[id].key === need.key){
+      // a duplicate tile with the same words counts as the right one
+      remaining.delete(id === need.u ? need.u : id); if(id !== need.u){ remaining.add(id); remaining.delete(need.u); }
+      placed++; missHere = 0;
+      if(navigator.vibrate) try{ navigator.vibrate(8); }catch(e){}
+      if(placed >= U){ done = true; sample(); paintBoard(); const acc = Math.max(0, Math.round(100 * (1 - mistakes / U))); setTimeout(() => ctx.finish({ q:qFromAcc(acc, 4), acc, xp:Math.round(10 * acc / 100) + (mistakes ? 0 : 2) }), 450); return; }
+      sample(); paintBoard();
+      const last = $q("#vsBuilt").querySelectorAll(".w.in"); last.forEach((w, k) => { if(k >= last.length - need.toks.length) w.classList.add("pop"); });
+    }else{
+      mistakes++; missHere++;
+      if(el){ el.classList.remove("no"); void el.offsetWidth; el.classList.add("no"); }
+      const m = $q("#vsMiss"); if(m) m.textContent = `${mistakes} miss${mistakes === 1 ? "" : "es"}`;
+      if(missHere >= 2) hint();
+    }
+  }
+  function hint(){ const t = $q(`#vsTiles [data-u="${units[placed].u}"]`) || $qa("#vsTiles .vs-tile").find(b => units[+b.dataset.u].key === units[placed].key); if(t){ t.classList.remove("glow"); void t.offsetWidth; t.classList.add("glow"); } }
+  function onClick(e){
+    const t = e.target.closest(".vs-tile"); if(t){ choose(+t.dataset.u, t); return; }
+    const b = e.target.closest('[data-b="hint"]'); if(b){ mistakes += 0.5; hint(); const m = $q("#vsMiss"); if(m) m.textContent = `${mistakes} miss${mistakes === 1 ? "" : "es"}`; }
+  }
+  return {
+    start(){ sample(); paint(); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ STAGE.el && STAGE.el.removeEventListener("click", onClick); },
+    key(e){
+      if(done || e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
+      const k = e.key.toLowerCase(); if(!/[\p{L}\p{N}]/u.test(k)) return;
+      e.preventDefault();
+      const need = units[placed];
+      const cand = pool.filter(id => units[id].first === k);
+      if(!cand.length) return;
+      const right = cand.find(id => units[id].key === need.key);
+      if(right !== undefined) choose(right, $q(`#vsTiles [data-u="${right}"]`));
+      else choose(cand[0], $q(`#vsTiles [data-u="${cand[0]}"]`));
+    }
+  };
+};
+
+/* ---- Fill the gaps: type the missing words ---- */
+IMPL.gaps = (ctx) => {
+  const { toks, v } = ctx, n = toks.length, st = stageOf(v);
+  const ratio = { new:.25, learning:.35, familiar:.5, memorized:.7 }[st] || .35;
+  let cand = toks.filter(t => t.key.length >= 3 && !STOP.has(t.key)).map(t => t.i);
+  if(cand.length < Math.round(n * ratio)) cand = cand.concat(shuffle(toks.filter(t => !cand.includes(t.i)).map(t => t.i)));
+  const blanks = new Set(shuffle(cand).slice(0, Math.max(1, Math.min(cand.length, Math.round(n * ratio)))));
+  const ok = new Set(), hinted = new Map(), wrong = new Set();
+  let checked = false;
+  function paint(){
+    stBody().innerHTML = `<div class="vs-gaps">
+      <div class="vs-scripture vs-st-text" id="vsGapText">${toks.map(t => {
+        if(!blanks.has(t.i)) return `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w">${h(t.w)}</span>`;
+        return `${t.vn ? `<sup>${t.vn}</sup>` : ""}<span class="w gapw">${h(t.lead)}<input class="vs-gap" data-i="${t.i}" style="--sw:${slotW(t)}em" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" aria-label="Missing word ${t.i + 1}"><span class="fix"></span>${h(t.trail)}</span>`;
+      }).join(" ")}</div>
+      <div class="vs-build-meta"><span id="vsGapN">0 / ${blanks.size}</span><div class="vs-meter"><i id="vsGapBar"></i></div><span></span></div>
+      <p class="vs-tip">Type each missing word. Correct words lock in and jump you to the next blank.</p>
+    </div>`;
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-g="hint">${ic("hint")}Next letter</button><button class="vs-btn primary" data-g="check">Check${ic("check")}</button>`;
+    const first = $q(".vs-gap"); if(first) setTimeout(() => first.focus({ preventScroll:true }), 260);
+  }
+  const inputs = () => $qa(".vs-gap", stBody());
+  function next(from){
+    const all = inputs(), idx = all.indexOf(from);
+    const nx = all.slice(idx + 1).concat(all.slice(0, idx)).find(x => !ok.has(+x.dataset.i));
+    if(nx) nx.focus({ preventScroll:false });
+  }
+  function progress(){
+    $q("#vsGapN").textContent = `${ok.size} / ${blanks.size}`; $q("#vsGapBar").style.width = (100 * ok.size / blanks.size) + "%";
+    if(ok.size === blanks.size && !checked) setTimeout(finish, 380);
+  }
+  function lock(inp){ const i = +inp.dataset.i; ok.add(i); inp.value = toks[i].core; inp.readOnly = true; inp.classList.add("ok"); inp.classList.toggle("meh", hinted.has(i) || wrong.has(i)); progress(); }
+  function onInput(e){
+    const inp = e.target; if(!inp.classList || !inp.classList.contains("vs-gap") || inp.readOnly) return;
+    const i = +inp.dataset.i, t = toks[i], val = normWord(inp.value);
+    inp.classList.remove("bad");
+    if(val && (val === t.key || (val.length >= t.key.length && close(val, t.key)))){ lock(inp); next(inp); }
+  }
+  function onKey(e){
+    const inp = e.target; if(!inp.classList || !inp.classList.contains("vs-gap")) return;
+    if(e.key === "Enter" || (e.key === " " && inp.value.trim())){
+      e.preventDefault();
+      const i = +inp.dataset.i;
+      if(!ok.has(i) && inp.value.trim()){ wrong.add(i); inp.classList.remove("bad"); void inp.offsetWidth; inp.classList.add("bad"); inp.select(); return; }
+      next(inp);
+    }
+  }
+  function hint(){
+    const inp = document.activeElement && document.activeElement.classList.contains("vs-gap") && !document.activeElement.readOnly ? document.activeElement : inputs().find(x => !x.readOnly);
+    if(!inp) return;
+    const i = +inp.dataset.i, t = toks[i], have = hinted.get(i) || 0, nxt = Math.min(t.core.length, Math.max(have + 1, (inp.value.length && t.core.toLowerCase().startsWith(inp.value.toLowerCase())) ? inp.value.length + 1 : have + 1));
+    hinted.set(i, nxt); inp.value = t.core.slice(0, nxt); inp.focus();
+    if(nxt >= t.core.length) lock(inp), next(inp);
+  }
+  function finish(){
+    if(checked) return; checked = true;
+    let score = 0;
+    inputs().forEach(inp => {
+      const i = +inp.dataset.i;
+      if(ok.has(i)) score += (hinted.has(i) || wrong.has(i)) ? 0.5 : 1;
+      else{
+        inp.readOnly = true;
+        if(inp.value.trim()){ inp.classList.add("miss"); inp.parentElement.querySelector(".fix").textContent = toks[i].core; }
+        else { inp.value = toks[i].core; inp.classList.add("shown"); }
+      }
+    });
+    const acc = Math.round(100 * score / blanks.size);
+    const missed = blanks.size - ok.size;
+    const go = () => ctx.finish({ q: qFromAcc(acc, ratio >= .5 ? 5 : 4), acc, xp: Math.round(12 * acc / 100) + (acc === 100 ? 3 : 0) });
+    if(missed){ stFoot().innerHTML = `<span class="vs-f-note">${missed} missed — the right words are shown in place.</span><button class="vs-btn primary" data-g="go">See results${ic("next")}</button>`; $q('[data-g="go"]', stFoot()).onclick = go; }
+    else go();
+  }
+  function onClick(e){ const b = e.target.closest("[data-g]"); if(!b) return; if(b.dataset.g === "hint") hint(); else if(b.dataset.g === "check") finish(); }
+  return {
+    start(){ paint(); STAGE.el.addEventListener("input", onInput); STAGE.el.addEventListener("keydown", onKey); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ if(STAGE.el){ STAGE.el.removeEventListener("input", onInput); STAGE.el.removeEventListener("keydown", onKey); STAGE.el.removeEventListener("click", onClick); } },
+    key(e){ if(checked && e.key === "Enter"){ const b = $q('[data-g="go"]'); if(b){ e.preventDefault(); b.click(); } } }
+  };
+};
+
+/* ---- shared slot board for Type it out and Recite aloud ---- */
+function slotsHTML(toks, status, pos){
+  return toks.map(t => {
+    const s = status[t.i];
+    const inner = s ? `<span class="w ${s}" data-i="${t.i}">${h(t.w)}</span>` : `<span class="slot${t.i === pos ? " cur" : ""}" data-i="${t.i}" style="--sw:${slotW(t)}em"></span>`;
+    return `${t.vn ? `<sup>${t.vn}</sup>` : ""}${inner}`;
+  }).join(" ");
+}
+const accOf = (status, n) => Math.round(100 * status.reduce((a, s) => a + (s === "ok" ? 1 : s === "meh" ? 0.5 : 0), 0) / n);
+
+/* ---- Type it out: first letter of each word, or whole words ---- */
+IMPL.type = (ctx) => {
+  const { toks } = ctx, n = toks.length;
+  let style = prefs.typeStyle === "words" ? "words" : "letters";
+  let pos = 0, status = [], errs = [], finished = false;
+  function reset(){ pos = 0; status = new Array(n).fill(null); errs = new Array(n).fill(0); }
+  reset();
+  function paint(){
+    stBody().innerHTML = `<div class="vs-type">
+      <div class="vs-seg sm center"><button class="${style === "letters" ? "on" : ""}" data-t="letters">First letters</button><button class="${style === "words" ? "on" : ""}" data-t="words">Whole words</button></div>
+      <div class="vs-scripture vs-st-text vs-slots" id="vsSlots">${slotsHTML(toks, status, pos)}</div>
+      <div class="vs-type-in-wrap">
+        <input class="vs-type-in${style === "letters" ? " letters" : ""}" id="vsTypeIn" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next"
+          placeholder="${style === "letters" ? "Type the first letter of each word" : "Type each word, then space"}" aria-label="Type the verse">
+      </div>
+      <div class="vs-build-meta"><span id="vsTypeN">0 / ${n}</span><div class="vs-meter"><i id="vsTypeBar"></i></div><span class="vs-miss" id="vsTypeMiss"></span></div>
+    </div>`;
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-t="hint">${ic("hint")}Show next word</button><button class="vs-btn ghost" data-t="restart">${ic("refresh")}Restart</button>`;
+    const inp = $q("#vsTypeIn"); setTimeout(() => inp && inp.focus({ preventScroll:true }), 260);
+  }
+  function repaintSlots(flashBad){
+    const s = $q("#vsSlots"); if(!s) return;
+    s.innerHTML = slotsHTML(toks, status, pos);
+    $q("#vsTypeN").textContent = `${pos} / ${n}`; $q("#vsTypeBar").style.width = (100 * pos / n) + "%";
+    const bad = status.filter(x => x === "bad").length, meh = status.filter(x => x === "meh").length;
+    $q("#vsTypeMiss").textContent = bad || meh ? `${bad ? bad + " missed" : ""}${bad && meh ? " · " : ""}${meh ? meh + " shaky" : ""}` : "";
+    if(flashBad){ const c = s.querySelector(".slot.cur"); if(c){ c.classList.add("no"); } }
+    const cur = s.querySelector(".slot.cur"); if(cur && cur.scrollIntoView){ const r = cur.getBoundingClientRect(), box = s.getBoundingClientRect(); if(r.bottom > box.bottom || r.top < box.top) cur.scrollIntoView({ block:"nearest", behavior:"smooth" }); }
+    if(pos >= n && !finished){ finished = true; const acc = accOf(status, n); setTimeout(() => ctx.finish({ q:qFromAcc(acc, 5), acc, xp:Math.round(16 * acc / 100) + (acc === 100 ? 4 : 0) }), 500); }
+  }
+  function reveal(kind){ status[pos] = kind; pos++; repaintSlots(); }
+  function letter(c){
+    if(pos >= n) return;
+    const t = toks[pos];
+    if(c === t.first) reveal(errs[pos] ? "meh" : "ok");
+    else { errs[pos]++; if(errs[pos] >= 3) reveal("bad"); else repaintSlots(true); }
+  }
+  function word(raw){
+    if(pos >= n) return;
+    const typed = normWord(raw); if(!typed) return;
+    const t = toks[pos];
+    if(close(typed, t.key)) reveal(errs[pos] ? "meh" : "ok");
+    else { errs[pos]++; if(errs[pos] >= 2) reveal("bad"); else repaintSlots(true); }
+  }
+  function onInput(e){
+    if(e.target.id !== "vsTypeIn" || finished) return;
+    const inp = e.target;
+    if(style === "letters"){
+      const chars = [...normWord(inp.value)]; inp.value = "";
+      chars.forEach(letter);
+    }else{
+      const v = inp.value;
+      if(/\s$/.test(v)){ inp.value = ""; word(v); }
+    }
+  }
+  function onKey(e){
+    if(e.target.id !== "vsTypeIn") return;
+    if(e.key === "Enter"){ e.preventDefault(); if(style === "words" && e.target.value.trim()){ const v = e.target.value; e.target.value = ""; word(v); } }
+  }
+  function onClick(e){
+    const b = e.target.closest("[data-t]"); if(!b) return;
+    const k = b.dataset.t;
+    if(k === "letters" || k === "words"){ if(style !== k){ style = k; prefs.typeStyle = k; savePrefs(); reset(); paint(); } }
+    else if(k === "hint"){ if(pos < n) reveal("bad"); $q("#vsTypeIn") && $q("#vsTypeIn").focus(); }
+    else if(k === "restart"){ reset(); finished = false; paint(); }
+    else if(e.target.closest("#vsSlots")) $q("#vsTypeIn") && $q("#vsTypeIn").focus();
+  }
+  function onBodyClick(e){ if(e.target.closest("#vsSlots")){ const i = $q("#vsTypeIn"); i && i.focus(); } }
+  return {
+    start(){ paint(); STAGE.el.addEventListener("input", onInput); STAGE.el.addEventListener("keydown", onKey); STAGE.el.addEventListener("click", onClick); STAGE.el.addEventListener("click", onBodyClick); },
+    destroy(){ if(STAGE.el){ STAGE.el.removeEventListener("input", onInput); STAGE.el.removeEventListener("keydown", onKey); STAGE.el.removeEventListener("click", onClick); STAGE.el.removeEventListener("click", onBodyClick); } },
+    key(){}
+  };
+};
+
+/* ---- Recite aloud: speech recognition, aligned live ---- */
+const NUMW = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+function spokenWords(text){
+  return String(text || "").split(/\s+/).map(w => { const k = normWord(w); return /^\d+$/.test(k) && +k <= 20 ? NUMW[+k] : k; }).filter(Boolean);
+}
+const soundsLike = (a, b) => a === b || close(a, b) || (a.length >= 3 && b.length >= 3 && a.slice(0, 3) === b.slice(0, 3) && Math.abs(a.length - b.length) <= 2 && lev(a, b) <= 2);
+IMPL.speak = (ctx) => {
+  const { toks } = ctx, n = toks.length, Rec = SR();
+  let rec = null, listening = false, finals = "", interim = "", status = new Array(n).fill(null), pos = 0, finished = false, errMsg = "";
+  function align(){
+    const words = spokenWords(finals + " " + interim);
+    status = new Array(n).fill(null); pos = 0;
+    words.forEach(w => {
+      for(let k = 0; k <= 3 && pos + k < n; k++){
+        if(soundsLike(w, toks[pos + k].key)){
+          for(let j = 0; j < k; j++) status[pos + j] = "bad";
+          status[pos + k] = "ok"; pos += k + 1; return;
+        }
+      }
+    });
+  }
+  function paintBoard(){
+    const s = $q("#vsSlots"); if(s) s.innerHTML = slotsHTML(toks, status, listening ? pos : -1);
+    const tr = $q("#vsHeard"); if(tr) tr.innerHTML = finals || interim ? `${h(finals)} <i>${h(interim)}</i>` : listening ? "<i>Listening… start with the first word</i>" : "";
+    const m = $q("#vsMicBtn"); if(m){ m.classList.toggle("on", listening); m.querySelector("span").textContent = listening ? "Listening — tap when done" : (finals ? "Keep going" : "Tap and start reciting"); }
+    const nn = $q("#vsTypeN"); if(nn){ nn.textContent = `${status.filter(Boolean).length} / ${n}`; $q("#vsTypeBar").style.width = (100 * pos / n) + "%"; }
+    if(pos >= n && listening && !finished) setTimeout(() => { if(!finished) done(); }, 700);
+  }
+  function paint(){
+    stBody().innerHTML = `<div class="vs-speak">
+      <div class="vs-scripture vs-st-text vs-slots" id="vsSlots">${slotsHTML(toks, status, -1)}</div>
+      <button class="vs-mic" id="vsMicBtn" data-s="mic">${ic("mic")}<span>Tap and start reciting</span></button>
+      <div class="vs-heard" id="vsHeard"></div>
+      ${errMsg ? `<p class="vs-err">${h(errMsg)}</p>` : ""}
+      <div class="vs-build-meta"><span id="vsTypeN">0 / ${n}</span><div class="vs-meter"><i id="vsTypeBar"></i></div><span></span></div>
+    </div>`;
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-s="restart">${ic("refresh")}Start over</button><button class="vs-btn primary" data-s="done">I'm done${ic("next")}</button>`;
+  }
+  function start(){
+    if(!Rec){ errMsg = "Speech recognition isn't available in this browser."; paint(); return; }
+    try{
+      rec = new Rec(); rec.lang = "en-US"; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+      rec.onresult = e => {
+        interim = "";
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          const r = e.results[i];
+          if(r.isFinal) finals += " " + r[0].transcript; else interim += " " + r[0].transcript;
+        }
+        align(); paintBoard();
+      };
+      rec.onerror = e => {
+        if(e.error === "not-allowed" || e.error === "service-not-allowed"){ errMsg = "Microphone access is blocked. Allow it for this site, then try again."; listening = false; paint(); paintBoard(); }
+        else if(e.error === "no-speech"){ /* keep going */ }
+      };
+      rec.onend = () => { if(listening && !finished){ try{ rec.start(); }catch(err){ listening = false; paintBoard(); } } };
+      rec.start(); listening = true; errMsg = ""; paintBoard();
+    }catch(e){ errMsg = "Couldn't start the microphone."; listening = false; paint(); }
+  }
+  function stop(){ listening = false; try{ rec && rec.stop(); }catch(e){} paintBoard(); }
+  function done(){
+    if(finished) return; finished = true; stop();
+    interim = ""; align();
+    for(let i = 0; i < n; i++) if(!status[i]) status[i] = "bad";
+    paintBoard();
+    const acc = accOf(status, n);
+    setTimeout(() => ctx.finish({ q:qFromAcc(acc, 5), acc, xp:Math.round(16 * acc / 100) + (acc === 100 ? 4 : 0) }), 650);
+  }
+  function onClick(e){
+    const b = e.target.closest("[data-s]"); if(!b) return;
+    const k = b.dataset.s;
+    if(k === "mic"){ listening ? stop() : start(); }
+    else if(k === "restart"){ stop(); finals = ""; interim = ""; status = new Array(n).fill(null); pos = 0; paint(); }
+    else if(k === "done") done();
+  }
+  return {
+    start(){ paint(); STAGE.el.addEventListener("click", onClick); },
+    destroy(){ listening = false; try{ rec && rec.abort(); }catch(e){} STAGE.el && STAGE.el.removeEventListener("click", onClick); },
+    key(e){ if(e.key === " " && !(e.target && /INPUT|TEXTAREA|BUTTON/.test(e.target.tagName))){ e.preventDefault(); listening ? stop() : start(); } }
+  };
+};
+
+/* ================= running a mode, results, sessions ================= */
+function runMode(v, mode, onResult){
+  const toks = tokenize(v);
+  if(!toks.length){ toast("This verse has no text yet"); return; }
+  if(STAGE.run && STAGE.run.destroy) try{ STAGE.run.destroy(); }catch(e){}
+  stopSpeech();
+  stTitle(v, mode);
+  const body = stBody(); body.classList.remove("in"); void body.offsetWidth; body.classList.add("in");
+  body.scrollTop = 0;
+  let finished = false;
+  const ctx = { v, toks, mode, finish(r){ if(finished) return; finished = true; record(v, mode, r); onResult(r); } };
+  const run = IMPL[mode](ctx);
+  STAGE.run = run; run.start();
+}
+function record(v, mode, r){
+  if(!api()) return;
+  api().review(v.id, { q:r.q, mode, acc:r.acc, xp:r.xp });
+}
+function resultHTML(v, mode, r, extra){
+  const acc = r.acc, now = Date.now();
+  const nextMs = r.q !== null && r.q !== undefined ? api().schedule(v.srs, r.q, now).due - now : null;
+  const great = acc === undefined ? true : acc >= 90;
+  const word = acc === undefined ? "Nice start" : acc === 100 ? "Word perfect" : acc >= 90 ? "Excellent" : acc >= 75 ? "Good work" : acc >= 50 ? "Getting there" : "Keep at it";
+  return `<div class="vs-result${great ? " great" : ""}">
+    <div class="vs-res-ring">${ring(acc === undefined ? 100 : acc, 168, 12, "res")}<div>${acc === undefined ? ic("check", "big") : `<b>${acc}<small>%</small></b><span>accuracy</span>`}</div></div>
+    <h3>${word}</h3>
+    <div class="vs-res-chips">
+      <span class="vs-chip-s xp">+${r.xp || 0} XP</span>
+      ${nextMs !== null ? `<span class="vs-chip-s">${ic("clock")}Next review in ${ivlLabel(nextMs)}</span>` : `<span class="vs-chip-s">${ic("clock")}Review queued for later today</span>`}
+      ${extra || ""}
+    </div>
+  </div>`;
+}
+const harder = mode => { const i = MODE_ORDER.indexOf(mode); for(let k = i + 1; k < MODE_ORDER.length; k++){ const m = MODE_ORDER[k]; if(m === "speak" && !SR()) continue; return m; } return mode; };
+
+/* single verse practice */
+function startPractice(id, mode){
+  const v = verseById(id); if(!v) return;
+  if(!IMPL[mode]) mode = recommend(v);
+  openStage();
+  document.getElementById("vsStMeta").innerHTML = "";
+  document.getElementById("vsStProg").innerHTML = "";
+  const go = m => { const cur = verseById(id) || v; runMode(cur, m, r => showResult(cur, m, r)); };
+  function showResult(cur, m, r){
+    if(STAGE.run && STAGE.run.destroy) try{ STAGE.run.destroy(); }catch(e){}
+    const nx = harder(m);
+    stBody().innerHTML = resultHTML(cur, m, r);
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-r="again">${ic("refresh")}Try again</button>
+      ${nx !== m ? `<button class="vs-btn ghost" data-r="next">${ic(MODES[nx].icon)}${h(MODES[nx].name)}</button>` : ""}
+      <button class="vs-btn primary" data-r="done">Done${ic("check")}</button>`;
+    if((r.acc ?? 100) >= 95 && m !== "learn") confetti();
+    STAGE.run = { key(e){ if(e.key === "Enter"){ e.preventDefault(); closeStage(); } } };
+    stFoot().onclick = e => {
+      const b = e.target.closest("[data-r]"); if(!b) return;
+      stFoot().onclick = null;
+      if(b.dataset.r === "again") go(m); else if(b.dataset.r === "next") go(nx); else closeStage();
+    };
+  }
+  go(mode);
+}
+
+/* daily review: due verses (oldest first) + up to 3 new ones; each in the mode that fits its stage */
+function buildQueue(){
+  const now = Date.now(), all = verses();
+  const due = all.filter(v => isDue(v, now)).sort((a, b) => dueAt(a) - dueAt(b));
+  const fresh = all.filter(v => stageOf(v) === "new" && !dueAt(v)).sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0)).slice(0, 3);
+  let list = due.concat(fresh).slice(0, 15);
+  if(!list.length) list = all.slice().sort((a, b) => masteryOf(a) - masteryOf(b) || (dueAt(a) || 0) - (dueAt(b) || 0)).slice(0, 5);
+  const items = [];
+  list.forEach(v => {
+    if(stageOf(v) === "new" && !(v.srs && v.srs.seen)){ items.push({ id:v.id, mode:"learn" }); items.push({ id:v.id, mode:"build" }); }
+    else items.push({ id:v.id, mode:recommend(v) });
+  });
+  return items;
+}
+function startSession(){
+  const items = buildQueue();
+  if(!items.length){ toast("Add a verse first"); return; }
+  const S2 = { items, i:0, xp:0, combo:0, best:0, accs:[], seen:new Map(), requeued:new Set(), start:Date.now() };
+  openStage();
+  const meta = () => {
+    document.getElementById("vsStMeta").innerHTML = `<span class="vs-xp" id="vsXp">${ic("spark")}<b>${S2.xp}</b> XP</span>${S2.combo >= 2 ? `<span class="vs-combo">${ic("flame")}×${S2.combo}</span>` : ""}`;
+    document.getElementById("vsStProg").innerHTML = `<div class="vs-st-bar"><i style="width:${100 * S2.i / S2.items.length}%"></i></div><span>${Math.min(S2.i + 1, S2.items.length)} of ${S2.items.length}</span>`;
+  };
+  function step(){
+    if(S2.i >= S2.items.length){ summary(); return; }
+    meta();
+    const it = S2.items[S2.i], v = verseById(it.id);
+    if(!v){ S2.i++; step(); return; }
+    runMode(v, it.mode, r => between(v, it, r));
+  }
+  function between(v, it, r){
+    if(STAGE.run && STAGE.run.destroy) try{ STAGE.run.destroy(); }catch(e){}
+    S2.xp += r.xp || 0;
+    if(r.acc !== undefined){ S2.accs.push(r.acc); S2.combo = r.acc >= 90 ? S2.combo + 1 : 0; S2.best = Math.max(S2.best, S2.combo); }
+    S2.seen.set(v.id, { v, last:r });
+    // a miss comes back once at the end, in an easier mode
+    if(r.q !== null && r.q !== undefined && r.q < 3 && !S2.requeued.has(v.id)){ S2.requeued.add(v.id); S2.items.push({ id:v.id, mode: it.mode === "build" || it.mode === "learn" ? "fade" : "build" }); }
+    S2.i++;
+    meta();
+    const last = S2.i >= S2.items.length;
+    stBody().innerHTML = resultHTML(v, it.mode, r, S2.combo >= 3 ? `<span class="vs-chip-s hot">${ic("flame")}${S2.combo} in a row</span>` : "");
+    stFoot().innerHTML = `<span class="vs-f-note">${last ? "That's the last one" : `Up next: ${h((verseById(S2.items[S2.i].id) || {}).ref || "")} · ${h(MODES[S2.items[S2.i].mode].name)}`}</span><button class="vs-btn primary" data-n="go">${last ? "Finish" : "Continue"}${ic("next")}</button>`;
+    if((r.acc ?? 0) === 100) confetti(40);
+    STAGE.run = { key(e){ if(e.key === "Enter"){ e.preventDefault(); step(); } } };
+    $q('[data-n="go"]', stFoot()).onclick = step;
+  }
+  function summary(){
+    STAGE.run = { key(e){ if(e.key === "Enter"){ e.preventDefault(); closeStage(); } } };
+    document.getElementById("vsStProg").innerHTML = `<div class="vs-st-bar"><i style="width:100%"></i></div><span>Done</span>`;
+    stTitle(null, "learn"); document.getElementById("vsStTitle").innerHTML = `<span class="vs-st-mode">${ic("trophy")}Review complete</span>`;
+    const avg = S2.accs.length ? Math.round(S2.accs.reduce((a, b) => a + b, 0) / S2.accs.length) : null;
+    const st = state(), streak = streakOf(st.days || {}), mins = Math.max(1, Math.round((Date.now() - S2.start) / 60000));
+    const rows = [...S2.seen.values()].map(({ v }) => { const cur = verseById(v.id) || v; return `<div class="vs-sum-row"><div><b>${h(cur.ref)}</b>${stagePill(cur)}</div><span>${h(dueLabel(cur))}</span></div>`; }).join("");
+    stBody().innerHTML = `<div class="vs-summary">
+      <div class="vs-sum-hero">${ic("trophy", "big")}<h3>${avg !== null && avg >= 90 ? "Beautifully done" : "Session complete"}</h3><p>${S2.seen.size} verse${S2.seen.size === 1 ? "" : "s"} in ${mins} min</p></div>
+      <div class="vs-sum-stats">
+        <div><b>+${S2.xp}</b><span>XP earned</span></div>
+        <div><b>${avg === null ? "—" : avg + "%"}</b><span>avg accuracy</span></div>
+        <div><b>${S2.best}</b><span>best streak</span></div>
+        <div><b>${streak.n}</b><span>day${streak.n === 1 ? "" : "s"} in a row</span></div>
+      </div>
+      <div class="vs-sum-list">${rows}</div>
+    </div>`;
+    stFoot().innerHTML = `<button class="vs-btn primary" data-n="close">Done${ic("check")}</button>`;
+    $q('[data-n="close"]', stFoot()).onclick = () => closeStage();
+    confetti(160);
+  }
+  step();
+}
+
+/* ---------- reference quiz across the whole list ---------- */
+function startQuiz(){
+  const all = verses().filter(v => v.text);
+  if(all.length < 2){ toast("Add at least two verses for the quiz"); return; }
+  const pool = shuffle(all).slice(0, Math.min(8, all.length));
+  const extraRefs = SUGGEST.flatMap(s => s[1]).map(r => { const p = parseRef(r); return p.ok ? refLabel(p) : r; });
+  const Q = pool.map((v, k) => {
+    const kind = all.length >= 4 && k % 2 === 1 ? "text" : "ref";
+    let opts;
+    if(kind === "ref"){
+      const others = shuffle(all.filter(x => x.id !== v.id).map(x => x.ref));
+      const fill = shuffle(extraRefs.filter(r => r !== v.ref && !others.includes(r)));
+      opts = shuffle([v.ref, ...others.concat(fill).slice(0, 3)]).map(r => ({ label:r, right:r === v.ref }));
+    }else{
+      opts = shuffle([v, ...shuffle(all.filter(x => x.id !== v.id)).slice(0, 3)]).map(x => ({ label:excerpt(x.text, 18), right:x.id === v.id }));
+    }
+    return { v, kind, opts };
+  });
+  let i = 0, score = 0, xp = 0, locked = false;
+  openStage();
+  function meta(){
+    document.getElementById("vsStMeta").innerHTML = `<span class="vs-xp">${ic("check")}<b>${score}</b>/${Q.length}</span>`;
+    document.getElementById("vsStProg").innerHTML = `<div class="vs-st-bar"><i style="width:${100 * i / Q.length}%"></i></div><span>${Math.min(i + 1, Q.length)} of ${Q.length}</span>`;
+  }
+  function paint(){
+    if(i >= Q.length) return end();
+    locked = false; meta();
+    const q = Q[i];
+    document.getElementById("vsStTitle").innerHTML = `<span class="vs-st-mode">${ic("quiz")}Reference quiz</span><b>${q.kind === "ref" ? "Where is it found?" : "Which verse is it?"}</b>`;
+    const body = stBody(); body.classList.remove("in"); void body.offsetWidth; body.classList.add("in");
+    body.innerHTML = `<div class="vs-quiz">
+      <div class="vs-quiz-prompt">${q.kind === "ref" ? `<div class="vs-scripture vs-st-text">“${h(excerpt(q.v.text, 26))}”</div>` : `<div class="vs-quiz-ref">${h(q.v.ref)}</div>`}</div>
+      <div class="vs-opts${q.kind === "text" ? " long" : ""}">${q.opts.map((o, k) => `<button class="vs-opt" data-o="${k}"><kbd>${k + 1}</kbd><span>${h(o.label)}</span></button>`).join("")}</div>
+    </div>`;
+    stFoot().innerHTML = `<span class="vs-f-note">Tap an answer, or press 1–4</span>`;
+    $qa(".vs-opt", body).forEach(b => b.onclick = () => pick(+b.dataset.o));
+  }
+  function pick(k){
+    if(locked) return; locked = true;
+    const q = Q[i], o = q.opts[k], right = !!(o && o.right);
+    $qa(".vs-opt", stBody()).forEach((b, j) => { b.disabled = true; if(q.opts[j].right) b.classList.add("ok"); else if(j === k) b.classList.add("bad"); });
+    if(right){ score++; xp += 4; }
+    api().review(q.v.id, { q:null, mode:"quiz", acc:right ? 100 : 0, xp:right ? 4 : 0 });
+    stFoot().innerHTML = `<span class="vs-f-note">${right ? "Correct" : `It's ${h(q.v.ref)}`}</span><button class="vs-btn primary" data-qz="next">${i + 1 >= Q.length ? "Finish" : "Next"}${ic("next")}</button>`;
+    $q('[data-qz="next"]', stFoot()).onclick = () => { i++; paint(); };
+    meta();
+  }
+  function end(){
+    meta();
+    document.getElementById("vsStTitle").innerHTML = `<span class="vs-st-mode">${ic("trophy")}Quiz complete</span>`;
+    const pct = Math.round(100 * score / Q.length);
+    stBody().innerHTML = resultHTML({ srs:{} }, "quiz", { q:null, acc:pct, xp }).replace(/<span class="vs-chip-s">.*?<\/span>/, `<span class="vs-chip-s">${score} of ${Q.length} right</span>`);
+    stFoot().innerHTML = `<button class="vs-btn ghost" data-qz="again">${ic("refresh")}New quiz</button><button class="vs-btn primary" data-qz="done">Done${ic("check")}</button>`;
+    $q('[data-qz="again"]', stFoot()).onclick = () => startQuiz();
+    $q('[data-qz="done"]', stFoot()).onclick = () => closeStage();
+    if(pct >= 90) confetti(120);
+    STAGE.run = { key(e){ if(e.key === "Enter"){ e.preventDefault(); closeStage(); } } };
+  }
+  STAGE.run = { key(e){ if(!locked && /^[1-4]$/.test(e.key)){ e.preventDefault(); pick(+e.key - 1); } else if(locked && e.key === "Enter"){ e.preventDefault(); i++; paint(); } } };
+  paint();
+}
+function excerpt(t, n){ const w = String(t || "").split(/\s+/); return w.length <= n ? t : w.slice(0, n).join(" ").replace(/[,;:]$/, "") + "…"; }
+
+/* ---------- confetti ---------- */
+function confetti(count){
+  if(reduceMotion()) return;
+  const cv = document.getElementById("vsConfetti"); if(!cv) return;
+  const ctx = cv.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr;
+  const cs = getComputedStyle(document.documentElement);
+  const accent = (cs.getPropertyValue("--accent") || "").trim() || "#2F7DE1";
+  const cols = [accent, "#F5B941", "#4ADE9A", "#FF7B72", "#A78BFA", "#ffffff"];
+  const N = count || 110, P = [];
+  for(let i = 0; i < N; i++) P.push({ x:W / 2 + (Math.random() - .5) * W * .3, y:H * .38, vx:(Math.random() - .5) * 16 * dpr, vy:(-Math.random() * 14 - 6) * dpr, s:(Math.random() * 6 + 4) * dpr, r:Math.random() * 6, vr:(Math.random() - .5) * .3, c:cols[i % cols.length], life:0 });
+  let t0 = null;
+  function frame(ts){
+    if(!t0) t0 = ts; const el = ts - t0;
+    ctx.clearRect(0, 0, W, H);
+    P.forEach(p => { p.vy += .42 * dpr; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, 1 - el / 2200); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+    if(el < 2200 && STAGE.open) requestAnimationFrame(frame); else ctx.clearRect(0, 0, W, H);
+  }
+  requestAnimationFrame(frame);
+}
+
+})();
+</script>
+<!-- /VERSES:JS -->
+<script src="sync-core.js?v=2"></script>
 <script type="module">
   // ---- Firebase-backed sync: to-dos, friends, countdown chips, treatment doses (rewritten Oct 10 2026) ----
   // todos/main   = { items:[{id,text,kind,list,done,due,note,subitems}], history:[...], backupPreMerge,
@@ -16889,7 +18946,7 @@ function skyArrive(){
   // Security rules require an authenticated (anonymous) request; nothing here is sensitive enough to
   // need more, and a write-capable token in page JS would be a real hole, so this is deliberate.
   // sync-core.js normally arrives as a classic script just above; if that request failed, try once more
-  if(!window.DHSync){ try{ await import("./sync-core.js?v=1"); }catch(e){} }
+  if(!window.DHSync){ try{ await import("./sync-core.js?v=2"); }catch(e){} }
   const SY = window.DHSync;
   if(!SY){
     console.error("Daily Hub: sync-core.js did not load — sync is off for this visit");
@@ -16944,6 +19001,7 @@ function skyArrive(){
 
   let todosState = { items: [], history: [] }, todosReady = false;
   let friendsState = { people: [] }, friendsReady = false;
+  let bibleState = { verses: {}, days: {}, settings: {} }, bibleReady = false;
   let nowState = { chips: [], hidden: [], seeded: false }, nowReady = false;
   let protocolData = null;
   const syncStatus = { pending: 0, error: null, online: navigator.onLine, connected: false };
@@ -16979,8 +19037,16 @@ function skyArrive(){
       // only once a real copy exists: projecting doses onto "nothing" would hide this device's history
       if(server.todos !== undefined && changed("protocol", protocolData)) protocolNotify();
     }else{
-      if(!server.friends && !pending("friends").length) return;
+      if(!server.friends && !pending("friends").length){
+        if(server.friends === null && !bibleReady){ bibleReady = true; call("__onBibleSnapshot", bibleState, "verses"); }
+        return;
+      }
       const v = SY.project("friends", server.friends || null, pending("friends"));
+      // scripture memory rides in the same doc (the rules only allow todos/main and friends/main)
+      const bv = v.bible && typeof v.bible === "object" ? v.bible : {};
+      bibleState = { verses: bv.verses && typeof bv.verses === "object" ? bv.verses : {}, days: bv.days && typeof bv.days === "object" ? bv.days : {}, settings: bv.settings && typeof bv.settings === "object" ? bv.settings : {} };
+      if(server.friends !== undefined) bibleReady = true;
+      if(bibleReady && changed("bible", bibleState)) call("__onBibleSnapshot", bibleState, "verses");
       if(!Array.isArray(v.people)) return;          // not seeded yet: stay "not ready", like before
       friendsState = { people: v.people };
       friendsReady = true;
@@ -17059,6 +19125,25 @@ function skyArrive(){
       const t = whenIso ? new Date(whenIso) : new Date();
       enqueue("friends", { t: "friend.log", personId: id, date: (isFinite(t.getTime()) ? t : new Date()).toISOString(), method: (method || "").trim() });
     }
+  };
+
+  // Scripture memory (Verses tab). Every edit is an op on friends/main -> bible; see sync-core.js
+  window.__bibleApi = {
+    isReady: () => bibleReady,
+    getState: () => bibleState,
+    add(verse){ if(verse && verse.id) enqueue("friends", { t: "bible.add", verse }); },
+    remove(id){ enqueue("friends", { t: "bible.remove", id }); },
+    restore(verse){ if(verse && verse.id) enqueue("friends", { t: "bible.add", verse }); },
+    patch(id, set, unset){ enqueue("friends", { t: "bible.patch", id, set: set || {}, unset: unset || [] }); },
+    reset(id){ enqueue("friends", { t: "bible.reset", id }); },
+    // q: 0-5 reschedules; q null = exposure only (learn modes). acc: 0-100, best per mode is kept
+    review(id, r){
+      r = r || {};
+      const d = new Date(), day = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      enqueue("friends", { t: "bible.review", id, rid: genId(), at: d.getTime(), day, q: r.q === undefined ? null : r.q, mode: r.mode || "", acc: r.acc, xp: r.xp || 0 });
+    },
+    settings(set){ enqueue("friends", { t: "bible.settings", set: set || {} }); },
+    schedule: (srs, q, at) => SY.bibleSchedule(srs, q, at)
   };
 
   // Now-strip countdowns / deadlines (Eli adds and removes these himself; synced via todos/main -> now)

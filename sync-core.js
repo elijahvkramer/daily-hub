@@ -10,7 +10,7 @@
    deterministic ids for anything created by a replayable op.
 
    Docs:  "todos"   -> todos/main   { items, history, backupPreMerge, protocol, now }
-          "friends" -> friends/main { people }
+          "friends" -> friends/main { people, bible }   (bible = scripture memory, see bibleOf)
    Tests: node scripts/test_sync.js */
 (function(root){
   "use strict";
@@ -89,6 +89,55 @@
     if(!Array.isArray(p.entries[day][k])){ if(!create) return null; p.entries[day][k] = []; }
     return p.entries[day][k];
   };
+
+
+  /* ---------- Scripture memory (friends/main -> bible) ----------
+     bible = { verses:{ [id]:{ id, ref, book, c1, v1, c2, v2, verses:[{c,v,t}], text, tr, addedAt, note?, srs? } },
+               days:{ "YYYY-MM-DD":{ xp, n } }, settings:{ goal } }
+     Verses are a map keyed by a deterministic id ("jhn-3-16"), so adding the same verse on two
+     devices gives one entry. A review carries its own id (rid) and is skipped if the verse already
+     saw it, so a review whose acknowledgement was lost can replay without counting twice. */
+  const BIBLE_RID_CAP = 16, BIBLE_DAYS_CAP = 400, DAY_MS = 86400000;
+  const isObj = v => !!v && typeof v === "object" && !Array.isArray(v);
+  const bibleOf = data => {
+    const b = isObj(data.bible) ? data.bible : (data.bible = {});
+    if(!isObj(b.verses)) b.verses = {};
+    if(!isObj(b.days)) b.days = {};
+    if(!isObj(b.settings)) b.settings = {};
+    return b;
+  };
+  /* SM-2 style scheduling. q: 0..5 (0-2 = forgot, 3 = hard, 4 = good, 5 = easy). Pure, so the page
+     can preview "next review in N days" with exactly what the op will do. */
+  function bibleSchedule(srs, q, at){
+    const s = isObj(srs) ? clone(srs) : {};
+    q = Math.max(0, Math.min(5, Math.round(Number(q) || 0)));
+    at = at === undefined || at === null || !Number.isFinite(Number(at)) ? Date.now() : Number(at);
+    let ef = Number(s.ef) || 2.5, reps = Number(s.reps) || 0, ivl = Number(s.ivl) || 0, lapses = Number(s.lapses) || 0;
+    // practising again before the verse is due (several modes in one sitting) doesn't stretch the
+    // interval again; only a slip counts. Learning steps (reps 0) always move forward.
+    const early = reps > 0 && Number(s.due) > 0 && at < Number(s.due) - 6 * 3600 * 1000;
+    if(early && q >= 3){
+      s.n = (Number(s.n) || 0) + 1; s.last = at; s.ef = Math.round(ef * 100) / 100; s.reps = reps; s.ivl = ivl; s.lapses = lapses;
+      return s;
+    }
+    if(q < 3){
+      if(reps > 0) lapses++;
+      reps = 0; ivl = 0;
+      s.due = at + 10 * 60 * 1000;                       // see it again in ten minutes
+    }else{
+      reps++;
+      if(reps === 1) ivl = q === 5 ? 2 : 1;
+      else if(reps === 2) ivl = q === 5 ? 4 : 3;
+      else ivl = Math.max(ivl + 1, Math.round(ivl * ef * (q === 3 ? 0.8 : q === 5 ? 1.15 : 1)));
+      ivl = Math.min(ivl, 365);
+      const d = new Date(at + ivl * DAY_MS); d.setHours(3, 0, 0, 0);   // due from early that morning
+      s.due = d.getTime();
+    }
+    ef = Math.max(1.3, Math.min(3, ef + 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+    s.ef = Math.round(ef * 100) / 100; s.reps = reps; s.ivl = ivl; s.lapses = lapses;
+    s.n = (Number(s.n) || 0) + 1; s.last = at;
+    return s;
+  }
 
   const APPLY = {
     /* ----- to-dos ----- */
@@ -217,6 +266,43 @@
       if(d[o.field] === undefined && o.value !== undefined) d[o.field] = clone(o.value);
     },
 
+    /* ----- scripture memory ----- */
+    "bible.add"(d, o){
+      const b = bibleOf(d), v = o.verse;
+      if(v && v.id && !b.verses[v.id]) b.verses[v.id] = clone(v);
+    },
+    "bible.remove"(d, o){ const b = bibleOf(d); delete b.verses[o.id]; },
+    "bible.patch"(d, o){
+      const b = bibleOf(d), v = b.verses[o.id]; if(!v) return;
+      Object.keys(o.set || {}).forEach(k => { if(k !== "id" && k !== "srs") v[k] = clone(o.set[k]); });
+      arr(o.unset).forEach(k => { if(k !== "id") delete v[k]; });
+    },
+    /* one practice result: reschedules the verse (when q is given) and adds to that day's tally */
+    "bible.review"(d, o){
+      const b = bibleOf(d), v = b.verses[o.id]; if(!v || !o.rid) return;
+      const srs = isObj(v.srs) ? v.srs : {};
+      if(arr(srs.rids).includes(o.rid)) return;            // already counted (replayed op)
+      const at = o.at === undefined || o.at === null || !Number.isFinite(Number(o.at)) ? Date.now() : Number(o.at);
+      let next = clone(srs);
+      if(o.q !== undefined && o.q !== null) next = bibleSchedule(srs, o.q, at);
+      else { next.seen = (Number(next.seen) || 0) + 1; if(!next.due) next.due = at + 10 * 60 * 1000; next.last = at; }
+      if(o.mode && Number.isFinite(Number(o.acc))){
+        next.best = isObj(next.best) ? next.best : {};
+        next.best[o.mode] = Math.max(Number(next.best[o.mode]) || 0, Math.round(Number(o.acc)));
+      }
+      next.rids = [...arr(srs.rids), o.rid].slice(-BIBLE_RID_CAP);
+      v.srs = next;
+      if(/^\d{4}-\d{2}-\d{2}$/.test(o.day || "")){
+        const cur = isObj(b.days[o.day]) ? b.days[o.day] : {};
+        b.days[o.day] = { xp: (Number(cur.xp) || 0) + Math.max(0, Math.round(Number(o.xp) || 0)), n: (Number(cur.n) || 0) + 1 };
+        const keys = Object.keys(b.days).sort();
+        keys.slice(0, Math.max(0, keys.length - BIBLE_DAYS_CAP)).forEach(k => { delete b.days[k]; });
+      }
+    },
+    /* forget all progress on one verse (keeps the verse) */
+    "bible.reset"(d, o){ const b = bibleOf(d), v = b.verses[o.id]; if(v) delete v.srs; },
+    "bible.settings"(d, o){ const b = bibleOf(d); Object.keys(o.set || {}).forEach(k => { b.settings[k] = clone(o.set[k]); }); },
+
     /* ----- friends ----- */
     "friend.seed"(d, o){ if(!Array.isArray(d.people)) d.people = clone(arr(o.people)); },
     "friend.add"(d, o){
@@ -294,5 +380,5 @@
     };
   }
 
-  root.DHSync = { normalizeTodos, project, changedFields, makeOutbox, APPLY, HISTORY_CAP, PREFIX };
+  root.DHSync = { normalizeTodos, project, changedFields, makeOutbox, APPLY, HISTORY_CAP, PREFIX, bibleSchedule };
 })(typeof window !== "undefined" ? window : globalThis);

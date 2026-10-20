@@ -2,7 +2,7 @@
    Everything under data/ is AES-GCM ciphertext, so caching it locally leaks nothing:
    without the passphrase the cache is noise. The app shell is cached so the Hub opens
    instantly and still works with no signal, showing the last editions it saw. */
-const VERSION = "dh-2026-10-15s2";
+const VERSION = "dh-2026-10-20v1";
 const SHELL_CACHE = "shell-" + VERSION;
 const DATA_CACHE  = "data-v2";        // survives shell upgrades
 const IMG_CACHE   = "img-v1";
@@ -11,7 +11,7 @@ const LIB_CACHE   = "lib-v1";        // Firebase SDK: versioned URLs never chang
 const SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./favicon.svg",
-  "./sync-core.js?v=1", "./app-shell.js?v=1"
+  "./sync-core.js?v=2", "./app-shell.js?v=1"
 ];
 
 self.addEventListener("install", e => {

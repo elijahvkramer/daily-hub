@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-20T23:30:48+00:00",
+ "updated": "2026-10-20T23:36:17+00:00",
  "date": "2026-10-20",
  "items": 26,
  "had_photos": 26,
@@ -21,7 +21,7 @@
  },
  "dropped_stale": 0,
  "topped_up": 0,
- "guard_feeds_ok": 0,
+ "guard_feeds_ok": 43,
  "still_thin": [],
  "details_added": 0,
  "sports_groups": {

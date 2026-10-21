@@ -83,7 +83,7 @@
     var a = document.activeElement;
     if(a && a !== document.body && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return false;
     var open = Array.prototype.some.call(document.querySelectorAll(".modal-overlay, [aria-modal='true']"), function(el){
-      return !el.closest("#rxRemind") && el.getClientRects().length > 0;   // the dose reminder comes straight back after a reload
+      return el.getClientRects().length > 0;
     });
     return !open;
   }

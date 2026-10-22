@@ -1,15 +1,15 @@
 {
- "updated": "2026-10-22T09:47:16+00:00",
+ "updated": "2026-10-22T09:58:48+00:00",
  "date": "2026-10-22",
  "items": 25,
- "had_photos": 15,
- "filled_this_run": 9,
- "from_feed": 1,
- "from_article": 3,
- "from_wikipedia": 5,
+ "had_photos": 24,
+ "filled_this_run": 0,
+ "from_feed": 0,
+ "from_article": 0,
+ "from_wikipedia": 0,
  "feed_pool": 138,
- "videos": 0,
- "with_video": 0,
+ "videos": 1,
+ "with_video": 1,
  "still_missing": 1,
  "section_counts": {
   "US Military & Foreign Conflict": 4,
@@ -20,16 +20,13 @@
   "Sports": 5
  },
  "dropped_stale": 0,
- "topped_up": 7,
- "guard_feeds_ok": 43,
+ "topped_up": 0,
+ "guard_feeds_ok": 0,
  "still_thin": [],
- "details_added": 7,
+ "details_added": 0,
  "sports_groups": {
   "Favorites": 3,
   "General": 2
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

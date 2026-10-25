@@ -1,16 +1,16 @@
 {
- "updated": "2026-10-25T09:47:33+00:00",
+ "updated": "2026-10-25T09:56:14+00:00",
  "date": "2026-10-25",
  "items": 25,
- "had_photos": 24,
- "filled_this_run": 0,
+ "had_photos": 19,
+ "filled_this_run": 6,
  "from_feed": 0,
- "from_article": 0,
+ "from_article": 6,
  "from_wikipedia": 0,
- "feed_pool": 139,
+ "feed_pool": 0,
  "videos": 0,
  "with_video": 0,
- "still_missing": 1,
+ "still_missing": 0,
  "section_counts": {
   "US Military & Foreign Conflict": 4,
   "Politics & Policy": 4,
@@ -28,8 +28,5 @@
   "Favorites": 3,
   "General": 2
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

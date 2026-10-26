@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-26T22:03:51+00:00",
+ "updated": "2026-10-26T22:18:52+00:00",
  "ok": true,
  "sources": [
   "effr",
+  "gold",
   "btc",
-  "eth",
-  "gold:paxg"
+  "eth"
  ],
  "rows": 10,
  "prices": 3

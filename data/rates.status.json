@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-26T16:32:57+00:00",
+ "updated": "2026-10-26T16:48:35+00:00",
  "ok": true,
  "sources": [
   "effr",
-  "gold",
   "btc",
   "eth",
+  "gold:paxg",
   "y:s&p 500",
   "y:nasdaq",
   "y:dow",

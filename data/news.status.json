@@ -1,12 +1,12 @@
 {
- "updated": "2026-10-29T09:48:10+00:00",
+ "updated": "2026-10-29T09:59:57+00:00",
  "date": "2026-10-29",
  "items": 25,
- "had_photos": 10,
- "filled_this_run": 14,
- "from_feed": 1,
- "from_article": 10,
- "from_wikipedia": 3,
+ "had_photos": 24,
+ "filled_this_run": 0,
+ "from_feed": 0,
+ "from_article": 0,
+ "from_wikipedia": 0,
  "feed_pool": 138,
  "videos": 0,
  "with_video": 0,
@@ -20,16 +20,13 @@
   "Sports": 5
  },
  "dropped_stale": 0,
- "topped_up": 13,
- "guard_feeds_ok": 43,
+ "topped_up": 0,
+ "guard_feeds_ok": 0,
  "still_thin": [],
- "details_added": 11,
+ "details_added": 0,
  "sports_groups": {
   "Favorites": 3,
   "General": 2
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

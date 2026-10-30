@@ -1,12 +1,12 @@
 {
- "updated": "2026-10-30T09:34:32+00:00",
+ "updated": "2026-10-30T09:36:25+00:00",
  "date": "2026-10-30",
- "items": 25,
- "had_photos": 24,
- "filled_this_run": 0,
+ "items": 26,
+ "had_photos": 21,
+ "filled_this_run": 4,
  "from_feed": 0,
  "from_article": 0,
- "from_wikipedia": 0,
+ "from_wikipedia": 4,
  "feed_pool": 138,
  "videos": 0,
  "with_video": 0,
@@ -28,8 +28,5 @@
   "Favorites": 3,
   "General": 3
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

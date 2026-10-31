@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-31T09:24:54+00:00",
- "date": "2026-10-30",
+ "updated": "2026-10-31T09:40:19+00:00",
+ "date": "2026-10-31",
  "items": 26,
  "had_photos": 26,
  "filled_this_run": 0,
@@ -25,8 +25,11 @@
  "still_thin": [],
  "details_added": 0,
  "sports_groups": {
-  "Favorites": 3,
-  "General": 3
+  "Favorites": 4,
+  "General": 2
  },
- "repairs": 0
+ "repairs": 0,
+ "fixes": 0,
+ "auto_edition": false,
+ "enforced_by": "enforce_news.py"
 }

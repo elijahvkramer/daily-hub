@@ -1,12 +1,18 @@
 {
- "updated": "2026-11-03T08:09:46+00:00",
+ "updated": "2026-11-03T08:26:02+00:00",
  "ok": true,
  "sources": [
   "effr",
   "gold",
   "btc",
-  "eth"
+  "eth",
+  "y:s&p 500",
+  "y:nasdaq",
+  "y:dow",
+  "y:vti",
+  "y:brent crude",
+  "y:dollar"
  ],
  "rows": 10,
- "prices": 3
+ "prices": 9
 }

@@ -1,12 +1,12 @@
 {
- "updated": "2026-11-03T10:41:20+00:00",
+ "updated": "2026-11-03T10:55:12+00:00",
  "date": "2026-11-03",
  "items": 27,
- "had_photos": 15,
- "filled_this_run": 9,
- "from_feed": 1,
- "from_article": 3,
- "from_wikipedia": 5,
+ "had_photos": 24,
+ "filled_this_run": 0,
+ "from_feed": 0,
+ "from_article": 0,
+ "from_wikipedia": 0,
  "feed_pool": 138,
  "videos": 0,
  "with_video": 0,
@@ -23,7 +23,7 @@
  "topped_up": 0,
  "guard_feeds_ok": 0,
  "still_thin": [],
- "details_added": 2,
+ "details_added": 0,
  "sports_groups": {
   "Favorites": 4,
   "General": 2

@@ -1,8 +1,7 @@
 {
- "updated": "2026-11-06T22:13:53+00:00",
+ "updated": "2026-11-06T22:29:00+00:00",
  "ok": true,
  "sources": [
-  "effr",
   "gold",
   "btc",
   "eth",
@@ -13,6 +12,6 @@
   "y:brent crude",
   "y:dollar"
  ],
- "rows": 10,
+ "rows": 9,
  "prices": 9
 }

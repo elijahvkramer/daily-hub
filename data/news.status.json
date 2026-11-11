@@ -1,8 +1,8 @@
 {
- "updated": "2026-11-11T10:34:49+00:00",
+ "updated": "2026-11-11T10:36:22+00:00",
  "date": "2026-11-11",
- "items": 26,
- "had_photos": 26,
+ "items": 24,
+ "had_photos": 24,
  "filled_this_run": 0,
  "from_feed": 0,
  "from_article": 0,
@@ -28,8 +28,5 @@
   "Favorites": 2,
   "General": 2
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

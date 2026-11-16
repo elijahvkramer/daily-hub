@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-16T10:16:37+00:00",
- "date": "2026-11-15",
+ "updated": "2026-11-16T10:29:29+00:00",
+ "date": "2026-11-16",
  "items": 26,
  "had_photos": 26,
  "filled_this_run": 0,
@@ -12,7 +12,7 @@
  "with_video": 0,
  "still_missing": 0,
  "section_counts": {
-  "US Military & Foreign Conflict": 5,
+  "US Military & Foreign Conflict": 4,
   "Politics & Policy": 4,
   "Tech & AI": 4,
   "Major International Headlines": 4,
@@ -28,5 +28,8 @@
   "Favorites": 3,
   "General": 2
  },
- "repairs": 0
+ "repairs": 0,
+ "fixes": 0,
+ "auto_edition": false,
+ "enforced_by": "enforce_news.py"
 }

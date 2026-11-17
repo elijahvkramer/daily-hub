@@ -1,12 +1,12 @@
 {
- "updated": "2026-11-17T10:43:57+00:00",
+ "updated": "2026-11-17T10:51:53+00:00",
  "date": "2026-11-17",
- "items": 25,
- "had_photos": 24,
- "filled_this_run": 0,
+ "items": 28,
+ "had_photos": 20,
+ "filled_this_run": 7,
  "from_feed": 0,
- "from_article": 0,
- "from_wikipedia": 0,
+ "from_article": 6,
+ "from_wikipedia": 1,
  "feed_pool": 137,
  "videos": 0,
  "with_video": 0,
@@ -28,8 +28,5 @@
   "Favorites": 4,
   "General": 3
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

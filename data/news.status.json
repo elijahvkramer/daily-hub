@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-18T10:41:44+00:00",
- "date": "2026-11-17",
+ "updated": "2026-11-18T10:50:28+00:00",
+ "date": "2026-11-18",
  "items": 28,
  "had_photos": 28,
  "filled_this_run": 0,
@@ -12,12 +12,12 @@
  "with_video": 0,
  "still_missing": 0,
  "section_counts": {
-  "US Military & Foreign Conflict": 5,
+  "US Military & Foreign Conflict": 4,
   "Politics & Policy": 4,
   "Tech & AI": 4,
   "Major International Headlines": 4,
   "Random": 4,
-  "Sports": 7
+  "Sports": 5
  },
  "dropped_stale": 0,
  "topped_up": 0,
@@ -25,8 +25,11 @@
  "still_thin": [],
  "details_added": 0,
  "sports_groups": {
-  "Favorites": 4,
+  "Favorites": 2,
   "General": 3
  },
- "repairs": 0
+ "repairs": 0,
+ "fixes": 0,
+ "auto_edition": false,
+ "enforced_by": "enforce_news.py"
 }

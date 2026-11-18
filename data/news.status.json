@@ -1,11 +1,11 @@
 {
- "updated": "2026-11-18T10:50:28+00:00",
+ "updated": "2026-11-18T10:56:52+00:00",
  "date": "2026-11-18",
- "items": 28,
- "had_photos": 28,
- "filled_this_run": 0,
+ "items": 25,
+ "had_photos": 23,
+ "filled_this_run": 2,
  "from_feed": 0,
- "from_article": 0,
+ "from_article": 2,
  "from_wikipedia": 0,
  "feed_pool": 0,
  "videos": 0,
@@ -28,8 +28,5 @@
   "Favorites": 2,
   "General": 3
  },
- "repairs": 0,
- "fixes": 0,
- "auto_edition": false,
- "enforced_by": "enforce_news.py"
+ "repairs": 0
 }

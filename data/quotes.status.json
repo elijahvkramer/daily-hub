@@ -1,10 +1,10 @@
 {
- "updated": "2026-11-18T16:58:49+00:00",
+ "updated": "2026-11-18T17:13:19+00:00",
  "ok": true,
  "source": "cnbc",
  "refreshed": 12,
  "symbols": 12,
- "series": 5,
+ "series": 10,
  "board": 12,
  "note": "written"
 }
